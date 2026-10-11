@@ -132,6 +132,13 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .arrow{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px}
 .wa{display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:auto}
 .wa svg{display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45))}
+.wa .wrot{display:block;line-height:0}
+/* animation : la flèche avance dans le sens du vent, plus vite et plus loin quand il souffle fort */
+.anim .wa .wmove{animation:wdrift var(--d,2s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+.anim .wa .wmove.calm{animation-name:wbreath}
+@keyframes wdrift{0%{transform:translateY(var(--a,3px));opacity:.6}55%{transform:translateY(calc(var(--a,3px) * -1));opacity:1}100%{transform:translateY(var(--a,3px));opacity:.6}}
+@keyframes wbreath{0%,100%{opacity:.55}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.anim .wa .wmove{animation:none}}
 .wa b{font:600 10.5px/1 var(--f-mono);color:#15202a;background:rgba(255,255,255,.92);border-radius:7px;padding:2px 4px;box-shadow:0 0 0 1px rgba(0,0,0,.15);white-space:nowrap}
 .legend .wscale{display:inline-flex;align-items:center;gap:0;border-radius:4px;overflow:hidden;vertical-align:middle;margin-left:6px}
 .legend .wscale span{font:600 10.5px/1 var(--f-mono);color:#15202a;padding:3px 6px}
@@ -212,6 +219,7 @@ footer a{color:inherit}
       <div class="card-head">
         <h2>Carte météo du parcours</h2>
         <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
+        <label class="arrows-toggle"><input type="checkbox" id="animOn" checked> Animation</label>
         <div class="seg" role="group" aria-label="Colorer la trace selon">
           <button type="button" data-metric="wind" aria-pressed="true">Vent ressenti</button>
           <button type="button" data-metric="temp" aria-pressed="false">Température</button>
@@ -653,7 +661,10 @@ function renderWindArrows() {
     shown.push(px);
     const [, col, lbl] = windStrength(sv.w.ws);
     const sz = Math.round(clamp(20 + sv.w.ws * 0.45, 20, 40));
-    const html = `<div class="wa"><svg viewBox="0 0 24 24" width="${sz}" height="${sz}" style="transform:rotate(${(sv.w.wd + 180) % 360}deg)"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg><b>${n0(sv.w.ws)}</b></div>`;
+    // durée du cycle et amplitude du mouvement selon la vitesse du vent
+    const dur = clamp(2.8 - sv.w.ws * 0.05, 0.55, 2.8).toFixed(2), amp = clamp(1.5 + sv.w.ws * 0.16, 1.5, 9).toFixed(1);
+    const delay = (-(k * 0.37) % dur).toFixed(2), calm = sv.w.ws < 5 ? ' calm' : '';
+    const html = `<div class="wa"><span class="wrot" style="transform:rotate(${(sv.w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${sz}" height="${sz}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg></span><b>${n0(sv.w.ws)}</b></div>`;
     L.marker([s.lat, s.lon], { icon: L.divIcon({ html, className: '', iconSize: [44, sz + 16], iconAnchor: [22, sz / 2] }), keyboard: false })
       .bindTooltip(`<b>km ${n1(s.km)}</b> · passage ${hm.format(new Date(sv.t))}<br>Vent de ${compass(sv.w.wd)} : ${n0(sv.w.ws)} km/h (${lbl.toLowerCase()})<br>Rafales ${n0(sv.w.gust)} km/h<br>Pour vous : ${relLabel(sv.head).txt}`)
       .addTo(windLayer);
@@ -908,6 +919,10 @@ document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type 
 $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; });
 $('#csv').addEventListener('click', exportCsv);
 $('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
+function applyAnim() { $('#map').classList.toggle('anim', $('#animOn').checked); try { localStorage.setItem('pmr-anim', $('#animOn').checked ? '1' : '0'); } catch (e) {} }
+try { if (localStorage.getItem('pmr-anim') === '0') $('#animOn').checked = false; } catch (e) {}
+$('#animOn').addEventListener('change', applyAnim);
+applyAnim();
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
   S.metric = b.dataset.metric;
   document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
