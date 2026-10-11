@@ -287,14 +287,10 @@ function openDay(k){
 async function stravaSync(){
   $('stravasync').disabled = true; setMsg($('stravamsg'), 'Synchronisation en cours…');
   try {
-    const { data, error } = await sb.functions.invoke('strava-sync', { body: {} });
-    if (error || (data && data.error)){
-      const detail = error ? await fnErrorText(error) : data.error;
-      setMsg($('stravamsg'), 'Échec : '+detail, true);
-      return;
-    }
+    const r = await callFn('strava-sync', {});
+    if (!r.ok){ setMsg($('stravamsg'), 'Échec de la synchronisation (v2) : '+r.detail, true); return; }
     await loadActivities(); renderActs();
-    setMsg($('stravamsg'), (data.imported||0)+' activité(s) importée(s) sur 6 mois.');
+    setMsg($('stravamsg'), (r.data.imported||0)+' activité(s) importée(s) sur 6 mois.');
   } finally { $('stravasync').disabled = false; }
 }
 async function handleStravaReturn(){
@@ -304,20 +300,31 @@ async function handleStravaReturn(){
   history.replaceState(null, '', location.pathname);
   if (err){ setMsg($('stravamsg'), 'Connexion Strava annulée.', true); return; }
   setMsg($('stravamsg'), 'Connexion à Strava…');
-  const { data, error } = await sb.functions.invoke('strava-link', { body: { code } });
-  if (error || (data && data.error)){
-    const detail = error ? await fnErrorText(error) : data.error;
-    setMsg($('stravamsg'), 'Échec de la connexion Strava : '+detail, true);
+  const r = await callFn('strava-link', { code });
+  if (!r.ok){
+    setMsg($('stravamsg'), 'Échec de la connexion Strava (v2) : '+r.detail, true);
     return;
   }
   setMsg($('stravamsg'), 'Strava connecté. Import des activités…');
   await stravaSync();
 }
-async function fnErrorText(error){
+// Appel direct : on lit le corps de la réponse pour afficher la vraie cause.
+async function callFn(name, body){
   try {
-    const body = await error.context.json();
-    return (body.error || 'erreur') + (body.status ? ' (Strava '+body.status+')' : '');
-  } catch(_){ return error.message || String(error); }
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return { ok:false, detail:'session expirée, reconnecte-toi' };
+    const res = await fetch(SUPABASE_URL+'/functions/v1/'+name, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer '+session.access_token },
+      body: JSON.stringify(body || {})
+    });
+    let json = null; try { json = await res.json(); } catch(_){}
+    if (res.ok && json && !json.error) return { ok:true, data: json };
+    const extra = json && json.status ? ' (Strava '+json.status+')' : '';
+    return { ok:false, detail: 'HTTP '+res.status+' · '+((json && json.error) || 'réponse vide')+extra };
+  } catch(e){
+    return { ok:false, detail: 'réseau : '+(e.message||e) };
+  }
 }
 $('stravaconnect').addEventListener('click', () => {
   const redirect = 'https://rynbzhuxwvfvblgwnhkk.supabase.co/functions/v1/strava-callback';
