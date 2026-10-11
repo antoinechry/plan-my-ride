@@ -266,6 +266,18 @@ const SPORT_LABEL = { Ride:'Vélo', GravelRide:'Gravel', MountainBikeRide:'VTT',
   Swim:'Natation' };
 const sportCls = t => SPORT_CLS[t] || 'other';
 const sportLabel = t => SPORT_LABEL[t] || t || 'Activité';
+const fmtHM = s => { const h = Math.floor(s/3600), m = Math.round((s%3600)/60); return h ? h+' h '+pad(m) : m+' min'; };
+const fmtKmC = km => (km >= 10 ? Math.round(km) : km.toFixed(1).replace('.',','))+' km';
+function weekTotals(ws, byDay){
+  const t = { ride:{s:0,km:0}, run:{s:0,km:0} };
+  for (let i=0;i<7;i++){
+    for (const a of byDay.get(key(addDays(ws,i))) || []){
+      const c = sportCls(a.sport_type);
+      if (c === 'ride' || c === 'run'){ t[c].s += a.moving_time_s || 0; t[c].km += (a.distance_m || 0)/1000; }
+    }
+  }
+  return t;
+}
 function actsByDay(){
   const m = new Map();
   for (const a of state.acts){
@@ -305,7 +317,12 @@ function renderCalendar(){
         + '</button>';
     }
     let sum = '';
-    if (ws >= PLAN_START) sum = '<div class="weeksum">Semaine <b>'+planWeek(ws)+'</b></div>';
+    const tot = weekTotals(ws, byDay);
+    sum = '<div class="weeksum">'
+      + (ws >= PLAN_START ? 'Semaine <b>'+planWeek(ws)+'</b> · ' : '')
+      + 'Vélo <b>'+fmtHM(tot.ride.s)+'</b>, <b>'+fmtKmC(tot.ride.km)+'</b>'
+      + ' · Course <b>'+fmtHM(tot.run.s)+'</b>, <b>'+fmtKmC(tot.run.km)+'</b>'
+      + '</div>';
     html.push('<div class="week"><div class="days">'+days+'</div>'+sum+'</div>');
   }
   $('cal').innerHTML = html.join('');
