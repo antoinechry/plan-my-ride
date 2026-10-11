@@ -130,8 +130,14 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .rel{font-weight:600}
 .rel.h{color:var(--head)} .rel.t{color:var(--tail)} .rel.c{color:var(--cross)}
 .arrow{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px}
-.wa{width:26px;height:26px;display:grid;place-items:center}
-.wa svg{width:22px;height:22px;filter:drop-shadow(0 0 1.5px #fff)}
+.wa{display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:auto}
+.wa svg{display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45))}
+.wa b{font:600 10.5px/1 var(--f-mono);color:#15202a;background:rgba(255,255,255,.92);border-radius:7px;padding:2px 4px;box-shadow:0 0 0 1px rgba(0,0,0,.15);white-space:nowrap}
+.legend .wscale{display:inline-flex;align-items:center;gap:0;border-radius:4px;overflow:hidden;vertical-align:middle;margin-left:6px}
+.legend .wscale span{font:600 10.5px/1 var(--f-mono);color:#15202a;padding:3px 6px}
+.legend .wrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%}
+.arrows-toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
+.arrows-toggle input{accent-color:var(--accent)}
 
 .drop-overlay{position:fixed;inset:0;background:rgba(31,79,143,.18);border:3px dashed var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-size:30px;color:var(--accent);z-index:2000;pointer-events:none}
 footer{max-width:1440px;margin:24px auto 0;font-size:12.5px;color:var(--muted)}
@@ -205,6 +211,7 @@ footer a{color:inherit}
     <section class="card">
       <div class="card-head">
         <h2>Carte météo du parcours</h2>
+        <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
         <div class="seg" role="group" aria-label="Colorer la trace selon">
           <button type="button" data-metric="wind" aria-pressed="true">Vent ressenti</button>
           <button type="button" data-metric="temp" aria-pressed="false">Température</button>
@@ -502,6 +509,8 @@ function tempColor(t) {
   return TEMP_STOPS[TEMP_STOPS.length - 1][1];
 }
 function rainColor(p) { return p < 0.1 ? cssVar('--cross') : mix('#9cc7ef', '#123f8c', clamp(Math.log10(p * 10) / Math.log10(80), 0, 1)); }
+const WIND_SCALE = [[0, '#7cc6b6', 'Calme'], [10, '#a6d05a', 'Faible'], [20, '#f2c932', 'Modéré'], [30, '#f2922a', 'Assez fort'], [40, '#e0452f', 'Fort'], [50, '#a43bb5', 'Très fort']];
+function windStrength(ws) { let r = WIND_SCALE[0]; for (const w of WIND_SCALE) if (ws >= w[0]) r = w; return r; }
 function sunColor(s) { return mix(cssVar('--cross'), cssVar('--sun'), clamp(s, 0, 1)); }
 
 function skyLabel(code, day) {
@@ -587,6 +596,7 @@ function initMap() {
   try { const saved = localStorage.getItem('pmr-base2'); if (saved && bases[saved] && !(isLocal && saved === 'Plan (OSM)')) baseName = saved; } catch (e) {}
   bases[baseName].addTo(map);
   L.control.layers(bases, null, { position: 'topright' }).addTo(map);
+  map.on('zoomend', () => renderWindArrows());
   map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base2', e.name); } catch (err) {} });
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
 }
@@ -614,17 +624,9 @@ function renderMap() {
     const sv = svs[k + 1] || svs[k];
     L.polyline(ll.slice(a, b + 1), { color: metricColor(sv), weight: 5, opacity: 1 }).addTo(routeLayer);
   }
-  if (S.wx) {
-    const stride = Math.max(1, Math.ceil(S.samples.length / 22));
-    for (let k = 0; k < S.samples.length; k += stride) {
-      const sv = svs[k]; if (!sv) continue;
-      const s = S.samples[k], col = windColor(sv.head), sz = clamp(14 + sv.w.ws * 0.5, 14, 30);
-      const html = `<div class="wa"><svg viewBox="0 0 24 24" style="width:${sz}px;height:${sz}px;transform:rotate(${(sv.w.wd + 180) % 360}deg)"><path d="M12 2 L19 20 L12 15.5 L5 20 Z" fill="${col}" stroke="#fff" stroke-width="1.2"/></svg></div>`;
-      L.marker([s.lat, s.lon], { icon: L.divIcon({ html, className: '', iconSize: [26, 26] }), interactive: true })
-        .bindTooltip(`km ${n1(s.km)} · ${hm.format(new Date(sv.t))}<br>Vent ${compass(sv.w.wd)} ${n0(sv.w.ws)} km/h (rafales ${n0(sv.w.gust)})<br>${relLabel(sv.head).txt}`)
-        .addTo(routeLayer);
-    }
-  }
+  if (!S.fitted) { map.fitBounds(L.latLngBounds(ll), { padding: [24, 24] }); S.fitted = true; }
+  S.svs = svs;
+  renderWindArrows();
   const startP = P.pts[0], endP = P.pts[P.n - 1];
   L.circleMarker([startP.lat, startP.lon], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--tail'), fillOpacity: 1 }).bindTooltip('Départ ' + hm.format(new Date(S.tl.start))).addTo(routeLayer);
   L.circleMarker([endP.lat, endP.lon], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--head'), fillOpacity: 1 }).bindTooltip('Arrivée ' + whenTxt(S.tl.end, S.tl.start)).addTo(routeLayer);
@@ -633,16 +635,38 @@ function renderMap() {
     const i = idxAtKm(st.km), p = P.pts[i];
     L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: cssVar('--elev-line'), fillOpacity: 1 }).bindTooltip(`Bivouac km ${n0(st.km)} · reprise ${whenTxt(st.to, S.tl.start)}`).addTo(routeLayer);
   }
-  if (!S.fitted) { map.fitBounds(L.latLngBounds(ll), { padding: [24, 24] }); S.fitted = true; }
   renderLegend();
+}
+let windLayer;
+function renderWindArrows() {
+  if (!map) return;
+  if (windLayer) windLayer.remove();
+  windLayer = L.layerGroup().addTo(map);
+  if (!S.wx || !S.svs || !$('#arrowsOn').checked) return;
+  // une flèche tous les ~75 px à l'écran (aussi quand la trace revient sur elle-même), quel que soit le zoom
+  const shown = [];
+  const lastIdx = S.samples.length - 1;
+  for (let k = 0; k <= lastIdx; k++) {
+    const sv = S.svs[k]; if (!sv) continue;
+    const s = S.samples[k], px = map.latLngToLayerPoint([s.lat, s.lon]);
+    if (shown.some(q => px.distanceTo(q) < 75)) continue;
+    shown.push(px);
+    const [, col, lbl] = windStrength(sv.w.ws);
+    const sz = Math.round(clamp(20 + sv.w.ws * 0.45, 20, 40));
+    const html = `<div class="wa"><svg viewBox="0 0 24 24" width="${sz}" height="${sz}" style="transform:rotate(${(sv.w.wd + 180) % 360}deg)"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg><b>${n0(sv.w.ws)}</b></div>`;
+    L.marker([s.lat, s.lon], { icon: L.divIcon({ html, className: '', iconSize: [44, sz + 16], iconAnchor: [22, sz / 2] }), keyboard: false })
+      .bindTooltip(`<b>km ${n1(s.km)}</b> · passage ${hm.format(new Date(sv.t))}<br>Vent de ${compass(sv.w.wd)} : ${n0(sv.w.ws)} km/h (${lbl.toLowerCase()})<br>Rafales ${n0(sv.w.gust)} km/h<br>Pour vous : ${relLabel(sv.head).txt}`)
+      .addTo(windLayer);
+  }
 }
 function renderLegend() {
   const el = $('#legend');
   if (!S.wx) { el.innerHTML = '<span>Trace sans données météo.</span>'; return; }
-  if (S.metric === 'wind') el.innerHTML = `<span><i style="background:${cssVar('--head')}"></i>Vent de face</span><span><i style="background:${cssVar('--cross')}"></i>Travers ou faible</span><span><i style="background:${cssVar('--tail')}"></i>Vent de dos</span><span>Flèches : sens où souffle le vent, taille selon sa force</span>`;
+  if (S.metric === 'wind') el.innerHTML = `<span><i style="background:${cssVar('--head')}"></i>Vent de face</span><span><i style="background:${cssVar('--cross')}"></i>Travers ou faible</span><span><i style="background:${cssVar('--tail')}"></i>Vent de dos</span>`;
   else if (S.metric === 'temp') el.innerHTML = `<span>Température ressentie</span><span>−5 °C <i class="ramp" style="background:linear-gradient(90deg,${TEMP_STOPS.map(s => s[1]).join(',')})"></i> 33 °C</span>`;
   else if (S.metric === 'rain') el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Sec</span><span>0,1 mm/h <i class="ramp" style="background:linear-gradient(90deg,#9cc7ef,#123f8c)"></i> 8 mm/h</span>`;
   else el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Couvert</span><span><i style="background:${cssVar('--sun')}"></i>Plein soleil</span><span><i style="background:#3a4552"></i>Nuit</span>`;
+  if ($('#arrowsOn').checked) el.innerHTML += `<div class="wrow"><span>Flèches : sens où va le vent, chiffre en km/h</span><span>Force<span class="wscale">${WIND_SCALE.map((w, i) => `<span style="background:${w[1]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? w[0] + '+' : w[0] + '–' + WIND_SCALE[i + 1][0]}</span>`).join('')}</span></span></div>`;
 }
 function idxAtKm(km) { const d = S.P.d; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (d[m] < km) lo = m + 1; else hi = m; } return lo; }
 
@@ -777,7 +801,7 @@ function renderTable() {
     const w = r.w, rel = relLabel(r.head);
     return `<tr class="${w && !w.day ? 'night' : ''}"><td class="num">${n1(r.s.km)}</td><td class="num">${whenTxt(r.t, tl.start)}</td><td class="num">${n0(r.ele)} m</td>` +
       (w ? `<td>${skyLabel(w.code, w.day)}</td><td class="num">${n0(w.temp)}° / ${n0(w.app)}°</td>
-        <td class="num">${arrowSvg((w.wd + 180) % 360, windColor(r.head))}${compass(w.wd)} ${n0(w.ws)} <span style="color:var(--muted)">raf. ${n0(w.gust)}</span></td>
+        <td class="num">${arrowSvg((w.wd + 180) % 360, windStrength(w.ws)[1])}${compass(w.wd)} ${n0(w.ws)} <span style="color:var(--muted)">raf. ${n0(w.gust)}</span></td>
         <td><span class="rel ${rel.cls}">${rel.txt}</span></td>
         <td class="num" style="color:${w.pr >= 0.1 ? 'var(--rain)' : 'var(--muted)'}">${n1(w.pr)} mm · ${n0(w.prob)} %</td>`
         : `<td colspan="5" style="color:var(--muted)">Hors prévisions</td>`) + '</tr>';
@@ -883,6 +907,7 @@ function schedule() { syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 25
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
 $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; });
 $('#csv').addEventListener('click', exportCsv);
+$('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
   S.metric = b.dataset.metric;
   document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
