@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coach Miguel</title>
+<link rel="icon" href="coach-miguel-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6EBE3; --surface:#F7F9F4; --surface-2:#EDF1EA; --ink:#16221B; --muted:#56635A; --line:#C7D0C3;
+  --ride:#2A6A5B; --run:#B2404D;
+  --libre:#CBE2C1; --libre-ink:#2C5726;
+  --court:#F0DDA0; --court-ink:#6A5210;
+  --indispo:#E8C4C7; --indispo-ink:#792A33;
+  --focus:#2D5288;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33;
+    --ride:#6DB4A2; --run:#E37C87;
+    --libre:#28452A; --libre-ink:#B7DDAD;
+    --court:#4A3F18; --court-ink:#F0D98E;
+    --indispo:#4E262B; --indispo-ink:#F1B7BD;
+    --focus:#86A9E0;
+  }
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+a{color:inherit}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:44px;height:44px;border-radius:10px}
+h1{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(1.6rem,4.5vw,2.4rem);line-height:1}
+.sub{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+.navlinks{font-size:.88rem}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:.45rem .95rem;cursor:pointer;font-weight:600;font-size:.9rem;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--surface-2)}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.card{background:var(--surface);border-radius:12px;padding:16px}
+.msg{font-size:.9rem;color:var(--muted);margin:10px 0 0}
+.msg.err{color:var(--run)}
+input[type=email]{width:100%;max-width:340px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .65rem}
+section{margin-top:24px}
+.sechead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
+.monthnav{display:flex;align-items:center;gap:6px}
+.monthnav .label{min-width:9.5em;text-align:center;font-weight:650}
+.iconbtn{width:2.2rem;height:2.2rem;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.05rem}
+.paint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.paint .tool{border:1px solid var(--line);border-radius:999px;padding:.3rem .75rem;background:var(--surface);cursor:pointer;font-size:.86rem;font-weight:600}
+.paint .tool[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.sw{display:inline-block;width:.8em;height:.8em;border-radius:3px;margin-right:.4em;vertical-align:-.05em}
+.dow,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{font-size:.8rem;color:var(--muted);padding:0 2px 4px}
+.week{margin-bottom:6px}
+.day{min-height:78px;padding:6px;border-radius:7px;border:1px solid transparent;background:var(--surface);text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.day:hover{border-color:var(--line)}
+.day.out{opacity:.45}
+.day.today{border-color:var(--ink)}
+.day.d-libre{background:var(--libre)}
+.day.d-court{background:var(--court)}
+.day.d-indispo{background:var(--indispo)}
+.dnum{font-weight:700;font-variant-numeric:tabular-nums;font-size:.95rem}
+.j1{font-size:.68rem;font-weight:700;background:var(--ink);color:var(--bg);border-radius:4px;padding:0 .35em}
+.dtag{font-size:.72rem;font-weight:650}
+.dnote{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;padding-left:6px;border-left:3px solid currentColor}
+.chip.ride{color:var(--ride)} .chip.run{color:var(--run)}
+.weeksum{font-size:.84rem;color:var(--muted);padding:4px 4px 0}
+.weeksum b{color:var(--ink);font-weight:650}
+dialog{border:none;border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(460px,calc(100vw - 24px))}
+dialog::backdrop{background:rgba(10,16,12,.45)}
+.dlg{padding:18px}
+.dlg h3{margin:0 0 12px;font-size:1.2rem;font-weight:750}
+.dlg h4{margin:14px 0 6px;font-size:.92rem}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.seg button{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .6rem;text-align:left;cursor:pointer;font-size:.9rem}
+.seg button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.seg small{display:block;color:var(--muted);font-size:.76rem}
+textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.5rem .6rem;resize:vertical}
+.dlgfoot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
+.saved{font-size:.82rem;color:var(--muted)}
+.alist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.alist li{border-left:3px solid var(--ride);padding-left:10px;font-size:.9rem}
+.alist .meta{color:var(--muted);font-size:.82rem}
+@media (max-width:640px){
+  .wrap{padding:16px 10px 40px}
+  .day{min-height:60px;padding:4px}
+  .chip,.dnote{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <img src="coach-miguel-logo.png" alt="">
+      <div>
+        <h1>Coach Miguel</h1>
+        <p class="sub" id="state">Connexion…</p>
+      </div>
+    </div>
+    <div class="navlinks"><a class="btn" href="index.html">Plan My Ride</a>
+      <button class="btn" id="logout" hidden>Se déconnecter</button></div>
+  </header>
+
+  <!-- Connexion -->
+  <div id="authbox" class="card" hidden>
+    <h2>Connexion</h2>
+    <p class="sub">Entre ton e-mail : tu reçois un lien de connexion, sans mot de passe.</p>
+    <form id="authform" style="margin-top:12px">
+      <input type="email" id="email" required placeholder="ton@email.fr" autocomplete="email">
+      <div style="margin-top:10px"><button class="btn primary" type="submit" id="sendlink">Recevoir le lien</button></div>
+    </form>
+    <p class="msg" id="authmsg"></p>
+  </div>
+
+  <!-- App -->
+  <div id="app" hidden>
+    <section aria-labelledby="h-cal">
+      <div class="sechead">
+        <h2 id="h-cal">Calendrier</h2>
+        <div class="monthnav">
+          <button class="iconbtn" id="prev" aria-label="Mois précédent">‹</button>
+          <span class="label" id="monthlabel"></span>
+          <button class="iconbtn" id="next" aria-label="Mois suivant">›</button>
+        </div>
+      </div>
+      <div class="paint" role="group" aria-label="Remplir mes dispos">
+        <span>Remplir mes dispos :</span>
+        <button class="tool" data-paint="libre" aria-pressed="false"><span class="sw" style="background:var(--libre)"></span>Libre</button>
+        <button class="tool" data-paint="court" aria-pressed="false"><span class="sw" style="background:var(--court)"></span>Créneau court</button>
+        <button class="tool" data-paint="indispo" aria-pressed="false"><span class="sw" style="background:var(--indispo)"></span>Indispo</button>
+        <button class="tool" data-paint="erase" aria-pressed="false">Effacer</button>
+      </div>
+      <div class="dow" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+      <div id="cal"></div>
+    </section>
+
+    <section aria-labelledby="h-act">
+      <div class="sechead"><h2 id="h-act">Activités Strava</h2></div>
+      <div class="card" id="acts"><p class="sub">Synchronisation Strava pas encore branchée.</p></div>
+    </section>
+  </div>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgtitle">
+  <div class="dlg">
+    <h3 id="dlgtitle"></h3>
+    <h4>Ma dispo</h4>
+    <div class="seg" id="dlgseg">
+      <button data-s="libre" aria-pressed="false"><b>Libre</b><small>sortie longue possible</small></button>
+      <button data-s="court" aria-pressed="false"><b>Créneau court</b><small>1 h à 1 h 30</small></button>
+      <button data-s="indispo" aria-pressed="false"><b>Indispo</b><small>pas d'entraînement</small></button>
+      <button data-s="" aria-pressed="false"><b>Non renseigné</b><small>effacer</small></button>
+    </div>
+    <h4><label for="dlgnote">Note</label></h4>
+    <textarea id="dlgnote" maxlength="300" placeholder="Ex. dispo seulement l'après-midi…"></textarea>
+    <div class="dlgfoot">
+      <span class="saved" id="savestate"></span>
+      <button class="btn primary" id="dlgclose">Fermer</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+const SUPABASE_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
+const PLAN_START = new Date(2026,9,5); // lundi 5 octobre 2026 = jour 1
+const DISPO_LABEL = {libre:'Libre', court:'Créneau court', indispo:'Indispo'};
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const key = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const startOfWeek = d => addDays(d, -((d.getDay()+6)%7));
+const today0 = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+const planDay = d => Math.round((d - PLAN_START)/86400000) + 1;
+const planWeek = d => Math.floor((planDay(d)-1)/7) + 1;
+const monthFmt = new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'});
+const longFmt = new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+const t0 = today0();
+const state = { user: null, month: new Date(t0.getFullYear(), t0.getMonth(), 1), dispos: {}, paint: null, openKey: null, acts: [] };
+let sb = null, saveTimer = null;
+
+function setMsg(el, text, isErr){ el.textContent = text || ''; el.classList.toggle('err', !!isErr); }
+
+/* ---------- Supabase ---------- */
+function initSupabase(){
+  if (!window.supabase){ return false; }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
+  return true;
+}
+async function loadDispos(){
+  const { data, error } = await sb.from('plan_docs').select('data').eq('doc','dispos').maybeSingle();
+  if (error) throw error;
+  state.dispos = (data && data.data && data.data.days) || {};
+}
+async function saveDispos(){
+  const body = { days: state.dispos, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('plan_docs').upsert({ user_id: state.user.id, doc: 'dispos', data: body }, { onConflict: 'user_id,doc' });
+  if (error) throw error;
+}
+function scheduleSave(){
+  $('savestate').textContent = 'Enregistrement…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await saveDispos(); $('savestate').textContent = 'Enregistré'; }
+    catch(e){ $('savestate').textContent = 'Échec de l\'enregistrement, réessaie.'; }
+  }, 500);
+}
+async function loadActivities(){
+  const { data, error } = await sb.from('activities').select('*').order('start_local', {ascending:false}).limit(30);
+  if (error) throw error;
+  state.acts = data || [];
+}
+
+/* ---------- Calendar ---------- */
+function setDispo(k, s, note){
+  const cur = state.dispos[k] || {};
+  const next = Object.assign({}, cur);
+  if (s !== undefined){ if (s) next.s = s; else delete next.s; }
+  if (note !== undefined){ if (note) next.note = note; else delete next.note; }
+  if (!next.s && !next.note) delete state.dispos[k]; else state.dispos[k] = next;
+  scheduleSave();
+}
+function renderCalendar(){
+  const m = state.month;
+  $('monthlabel').textContent = cap(monthFmt.format(m));
+  const last = new Date(m.getFullYear(), m.getMonth()+1, 0);
+  const html = [];
+  for (let ws = startOfWeek(m); ws <= last; ws = addDays(ws,7)){
+    let days = '';
+    for (let i=0;i<7;i++){
+      const d = addDays(ws,i), k = key(d), dispo = state.dispos[k] || {};
+      const cls = ['day'];
+      if (d.getMonth() !== m.getMonth()) cls.push('out');
+      if (k === key(t0)) cls.push('today');
+      if (dispo.s) cls.push('d-'+dispo.s);
+      const j1 = k === key(PLAN_START) ? ' <span class="j1">J1</span>' : '';
+      days += '<button class="'+cls.join(' ')+'" data-k="'+k+'" aria-label="'+esc(longFmt.format(d)+(dispo.s ? ', '+DISPO_LABEL[dispo.s] : ''))+'">'
+        + '<span class="dnum">'+d.getDate()+j1+'</span>'
+        + (dispo.s ? '<span class="dtag">'+DISPO_LABEL[dispo.s]+'</span>' : '')
+        + (dispo.note ? '<span class="dnote">'+esc(dispo.note)+'</span>' : '')
+        + '</button>';
+    }
+    let sum = '';
+    if (ws >= PLAN_START) sum = '<div class="weeksum">Semaine <b>'+planWeek(ws)+'</b></div>';
+    html.push('<div class="week"><div class="days">'+days+'</div>'+sum+'</div>');
+  }
+  $('cal').innerHTML = html.join('');
+}
+function openDay(k){
+  state.openKey = k;
+  const d = new Date(k+'T00:00:00'), dispo = state.dispos[k] || {};
+  const pd = planDay(d);
+  $('dlgtitle').textContent = cap(longFmt.format(d)) + (pd >= 1 ? ' · jour '+pd : '');
+  for (const b of $('dlgseg').querySelectorAll('button')) b.setAttribute('aria-pressed', String((b.dataset.s||'') === (dispo.s||'')));
+  $('dlgnote').value = dispo.note || '';
+  $('savestate').textContent = '';
+  $('dlg').showModal();
+}
+
+/* ---------- Activities ---------- */
+function renderActs(){
+  const el = $('acts');
+  if (!state.acts.length){ el.innerHTML = '<p class="sub">Aucune activité importée pour le moment.</p>'; return; }
+  el.innerHTML = '<ul class="alist">' + state.acts.map(a => {
+    const km = a.distance_m ? (a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
+    const meta = [a.sport_type, km, a.start_local ? String(a.start_local).slice(0,10) : ''].filter(Boolean).join(', ');
+    return '<li><b>'+esc(a.name||a.sport_type)+'</b><div class="meta">'+esc(meta)+'</div></li>';
+  }).join('') + '</ul>';
+}
+
+/* ---------- Auth flow ---------- */
+function showAuth(){
+  $('authbox').hidden = false; $('app').hidden = true; $('logout').hidden = true;
+  $('state').textContent = 'Connecte-toi pour accéder à ton plan.';
+}
+async function showApp(user){
+  state.user = user;
+  $('authbox').hidden = true; $('app').hidden = false; $('logout').hidden = false;
+  $('state').textContent = 'Connecté : '+user.email;
+  try {
+    await loadDispos();
+    await loadActivities();
+  } catch(e){
+    setMsg($('authmsg'), 'Impossible de charger tes données : '+(e.message||e), true);
+  }
+  renderCalendar(); renderActs();
+}
+
+async function init(){
+  if (!initSupabase()){
+    $('state').textContent = 'Le chargement de la base a échoué. Recharge la page.';
+    return;
+  }
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) await showApp(data.session.user);
+  else showAuth();
+  sb.auth.onAuthStateChange((_ev, session) => {
+    if (session && (!state.user || state.user.id !== session.user.id)) showApp(session.user);
+    if (!session && state.user){ state.user = null; showAuth(); }
+  });
+}
+
+$('authform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('email').value.trim();
+  $('sendlink').disabled = true;
+  setMsg($('authmsg'), 'Envoi du lien…');
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split('#')[0] } });
+  $('sendlink').disabled = false;
+  if (error) setMsg($('authmsg'), 'Échec : '+error.message, true);
+  else setMsg($('authmsg'), 'Lien envoyé. Ouvre l\'e-mail sur cet appareil et clique sur le lien.');
+});
+$('logout').addEventListener('click', async () => { await sb.auth.signOut(); });
+
+/* ---------- Calendar events ---------- */
+$('prev').addEventListener('click', () => { state.month = new Date(state.month.getFullYear(), state.month.getMonth()-1, 1); renderCalendar(); });
+$('next').addEventListener('click', () => { state.month = new Date(state.month.getFullYear(), state.month.getMonth()+1, 1); renderCalendar(); });
+for (const b of document.querySelectorAll('.paint .tool')) b.addEventListener('click', () => {
+  state.paint = state.paint === b.dataset.paint ? null : b.dataset.paint;
+  for (const t of document.querySelectorAll('.paint .tool')) t.setAttribute('aria-pressed', String(t.dataset.paint === state.paint));
+});
+$('cal').addEventListener('click', e => {
+  const b = e.target.closest('.day'); if (!b) return;
+  const k = b.dataset.k;
+  if (state.paint){
+    setDispo(k, state.paint === 'erase' ? null : state.paint);
+    renderCalendar();
+  } else openDay(k);
+});
+$('dlgseg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !state.openKey) return;
+  setDispo(state.openKey, b.dataset.s || null);
+  openDay(state.openKey); renderCalendar();
+});
+let noteTimer = null;
+$('dlgnote').addEventListener('input', e => {
+  if (!state.openKey) return;
+  const k = state.openKey, v = e.target.value.trim();
+  clearTimeout(noteTimer); noteTimer = setTimeout(() => { setDispo(k, undefined, v); renderCalendar(); }, 400);
+});
+$('dlgclose').addEventListener('click', () => $('dlg').close());
+$('dlg').addEventListener('close', () => { state.openKey = null; });
+$('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').close(); });
+
+init();
+})();
+</script>
+</body>
+</html>
