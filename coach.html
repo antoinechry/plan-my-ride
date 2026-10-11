@@ -147,7 +147,14 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 
     <section aria-labelledby="h-act">
       <div class="sechead"><h2 id="h-act">Activités Strava</h2></div>
-      <div class="card" id="acts"><p class="sub">Synchronisation Strava pas encore branchée.</p></div>
+      <div class="card">
+        <div id="actsbody"></div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn primary" id="stravaconnect">Connecter Strava</button>
+          <button class="btn" id="stravasync" hidden>Synchroniser Strava</button>
+        </div>
+        <p class="msg" id="stravamsg"></p>
+      </div>
     </section>
   </div>
 </div>
@@ -277,9 +284,49 @@ function openDay(k){
 }
 
 /* ---------- Activities ---------- */
+async function stravaSync(){
+  $('stravasync').disabled = true; setMsg($('stravamsg'), 'Synchronisation en cours…');
+  try {
+    const { data, error } = await sb.functions.invoke('strava-sync', { body: {} });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    await loadActivities(); renderActs();
+    setMsg($('stravamsg'), (data.imported||0)+' activité(s) importée(s) sur 6 mois.');
+  } catch(e){
+    let m = e && e.message ? e.message : String(e);
+    if (/not_connected/.test(m)) m = 'Strava n\'est pas encore connecté.';
+    else if (/rate_limited/.test(m)) m = 'Strava limite les requêtes : réessaie dans 15 minutes.';
+    setMsg($('stravamsg'), 'Échec : '+m, true);
+  } finally { $('stravasync').disabled = false; }
+}
+async function handleStravaReturn(){
+  const p = new URLSearchParams(location.search);
+  const code = p.get('strava_code'), err = p.get('strava_error');
+  if (!code && !err) return;
+  history.replaceState(null, '', location.pathname);
+  if (err){ setMsg($('stravamsg'), 'Connexion Strava annulée.', true); return; }
+  setMsg($('stravamsg'), 'Connexion à Strava…');
+  try {
+    const { data, error } = await sb.functions.invoke('strava-link', { body: { code } });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    setMsg($('stravamsg'), 'Strava connecté. Import des activités…');
+    await stravaSync();
+  } catch(e){
+    setMsg($('stravamsg'), 'Échec de la connexion Strava : '+(e.message||e), true);
+  }
+}
+$('stravaconnect').addEventListener('click', () => {
+  const redirect = 'https://rynbzhuxwvfvblgwnhkk.supabase.co/functions/v1/strava-callback';
+  location.href = 'https://www.strava.com/oauth/authorize?client_id=286571&response_type=code'
+    + '&redirect_uri=' + encodeURIComponent(redirect) + '&approval_prompt=auto&scope=activity:read_all';
+});
+$('stravasync').addEventListener('click', stravaSync);
+
 function renderActs(){
-  const el = $('acts');
-  if (!state.acts.length){ el.innerHTML = '<p class="sub">Aucune activité importée pour le moment.</p>'; return; }
+  const el = $('actsbody');
+  $('stravasync').hidden = false;
+  if (!state.acts.length){ el.innerHTML = '<p class="sub">Aucune activité importée pour le moment. Connecte Strava puis synchronise.</p>'; return; }
   el.innerHTML = '<ul class="alist">' + state.acts.map(a => {
     const km = a.distance_m ? (a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
     const meta = [a.sport_type, km, a.start_local ? String(a.start_local).slice(0,10) : ''].filter(Boolean).join(', ');
@@ -303,6 +350,7 @@ async function showApp(user){
     setMsg($('authmsg'), 'Impossible de charger tes données : '+(e.message||e), true);
   }
   renderCalendar(); renderActs();
+  handleStravaReturn();
 }
 
 async function init(){
