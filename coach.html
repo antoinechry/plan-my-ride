@@ -391,14 +391,8 @@ $('stravaconnect').addEventListener('click', () => {
 $('stravasync').addEventListener('click', stravaSync);
 
 function renderActs(){
-  const el = $('actsbody');
   $('stravasync').hidden = false;
-  if (!state.acts.length){ el.innerHTML = '<p class="sub">Aucune activité importée pour le moment. Connecte Strava puis synchronise.</p>'; return; }
-  el.innerHTML = '<ul class="alist">' + state.acts.map(a => {
-    const km = a.distance_m ? (a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
-    const meta = [a.sport_type, km, a.start_local ? String(a.start_local).slice(0,10) : ''].filter(Boolean).join(', ');
-    return '<li><b>'+esc(a.name||a.sport_type)+'</b><div class="meta">'+esc(meta)+'</div></li>';
-  }).join('') + '</ul>';
+  $('actsbody').innerHTML = '';
 }
 
 /* ---------- Auth flow ---------- */
