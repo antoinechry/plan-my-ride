@@ -6,7 +6,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Tout tient dans `index.html` (pas de build, pas de framework). Garder ce choix sauf demande contraire.
 - Déploiement : GitHub Pages depuis la branche `main`, racine du dépôt.
 - Interface en français.
-- Leaflet 1.9.4 via cdnjs. Pas de tuiles `tile.openstreetmap.org` : elles sont refusées hors site web avec Referer ; utiliser CARTO / OpenTopoMap.
+- Leaflet 1.9.4 via cdnjs. Fonds sans clé uniquement (CARTO exige désormais une clé) : OSM standard (seulement servi en http(s), il exige un Referer), CyclOSM, OpenTopoMap, Esri Topo/Satellite. En `file://`, le fond par défaut est Esri Topo.
 
 ## Architecture du script (dans `index.html`)
 - `parseGPX` → `prepare` (distances cumulées, altitude lissée, D+/D− avec seuil 3 m, cap sur ~150 m)

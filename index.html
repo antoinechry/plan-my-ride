@@ -155,7 +155,6 @@ footer a{color:inherit}
       <span class="tag" id="routeTag">Exemple</span>
       <strong id="routeName">—</strong>
       <span class="hint mono" id="routeMeta"></span>
-      <button class="btn small" id="loadSample" type="button" hidden>Recharger l'exemple</button>
     </div>
 
     <div class="row2">
@@ -254,7 +253,7 @@ footer a{color:inherit}
     </section>
   </main>
 </div>
-<footer>Données météo : <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0) · Fonds de carte © contributeurs OpenStreetMap, CARTO, OpenTopoMap. Les temps de passage sont une estimation à partir de vos réglages.</footer>
+<footer>Données météo : <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0) · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages.</footer>
 <div class="drop-overlay" id="dropOverlay" hidden>Déposez le fichier GPX</div>
 
 <script>
@@ -573,17 +572,22 @@ let map, routeLayer, hoverMarker;
 function initMap() {
   if (typeof L === 'undefined') { $('#map').innerHTML = '<p class="hint" style="padding:16px">La carte n\'a pas pu se charger (connexion requise).</p>'; return; }
   map = L.map('map', { zoomControl: true, attributionControl: true });
-  // Les tuiles OSM standard sont refusées hors site web (pas de Referer) → fonds CARTO et OpenTopoMap
+  // Fonds de carte sans clé d'API. OSM standard exige un Referer : il ne marche qu'une fois l'app servie en http(s).
   const osmAttr = '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  const esriAttr = 'Tuiles © <a href="https://www.esri.com">Esri</a>';
   const bases = {
-    'Plan': L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd', attribution: osmAttr + ' © <a href="https://carto.com/attributions">CARTO</a>' }),
-    'Clair': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd', attribution: osmAttr + ' © <a href="https://carto.com/attributions">CARTO</a>' }),
-    'Relief': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: osmAttr + ', SRTM · © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)' })
+    'Plan (OSM)': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: osmAttr }),
+    'Vélo (CyclOSM)': L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', { maxZoom: 20, subdomains: 'abc', attribution: osmAttr + ' · <a href="https://www.cyclosm.org">CyclOSM</a>' }),
+    'Relief (OpenTopoMap)': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: osmAttr + ', SRTM · © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)' }),
+    'Topo (Esri)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr }),
+    'Satellite (Esri)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr + ', Maxar, Earthstar Geographics' })
   };
-  let baseName = 'Plan'; try { baseName = localStorage.getItem('pmr-base') || 'Plan'; } catch (e) {}
-  (bases[baseName] || bases.Plan).addTo(map);
+  const isLocal = location.protocol === 'file:';
+  let baseName = isLocal ? 'Topo (Esri)' : 'Plan (OSM)';
+  try { const saved = localStorage.getItem('pmr-base2'); if (saved && bases[saved] && !(isLocal && saved === 'Plan (OSM)')) baseName = saved; } catch (e) {}
+  bases[baseName].addTo(map);
   L.control.layers(bases, null, { position: 'topright' }).addTo(map);
-  map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base', e.name); } catch (err) {} });
+  map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base2', e.name); } catch (err) {} });
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
 }
 function sampleValue(k) {
@@ -824,7 +828,6 @@ function loadRoute(raw, name, isSample) {
   $('#routeName').textContent = name || 'Trace sans nom';
   $('#routeTag').textContent = isSample ? 'Exemple' : 'Votre trace';
   $('#routeMeta').textContent = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${n0(P.n)} points`;
-  $('#loadSample').hidden = isSample;
   run();
 }
 function handleFile(file) {
@@ -879,7 +882,6 @@ function schedule() { syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 25
 /* ---------- événements ---------- */
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
 $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; });
-$('#loadSample').addEventListener('click', () => loadRoute(sampleRoute(), 'Boucle Strasbourg – Mont Sainte-Odile', true));
 $('#csv').addEventListener('click', exportCsv);
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
   S.metric = b.dataset.metric;
