@@ -147,6 +147,16 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .arrows-toggle input{accent-color:var(--accent)}
 
 .drop-overlay{position:fixed;inset:0;background:rgba(31,79,143,.18);border:3px dashed var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-size:30px;color:var(--accent);z-index:2000;pointer-events:none}
+.empty{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;display:flex;flex-direction:column;gap:18px}
+.empty h2{font-size:30px;font-weight:700}
+.empty p{margin:0;color:var(--muted);max-width:60ch}
+.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:240px;border:2px dashed var(--line);border-radius:10px;background:var(--bg);cursor:pointer;text-align:center;padding:24px;transition:border-color .15s}
+.dropzone:hover,.dropzone:focus-within{border-color:var(--accent)}
+.dropzone svg{width:46px;height:46px;color:var(--accent)}
+.dropzone strong{font-family:var(--f-display);font-size:22px;font-weight:600}
+.dropzone span{color:var(--muted);font-size:14px}
+.empty ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.empty ul b{color:var(--ink);font-weight:600}
 footer{max-width:1440px;margin:24px auto 0;font-size:12.5px;color:var(--muted)}
 footer a{color:inherit}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -165,9 +175,9 @@ footer a{color:inherit}
 <div class="app">
   <aside class="settings" aria-label="Réglages de la sortie">
     <div class="route-card" id="routeCard">
-      <span class="tag" id="routeTag">Exemple</span>
-      <strong id="routeName">—</strong>
-      <span class="hint mono" id="routeMeta"></span>
+      <span class="tag" id="routeTag">Aucune trace</span>
+      <strong id="routeName">Pas encore de parcours</strong>
+      <span class="hint mono" id="routeMeta">Importez un fichier .gpx pour commencer</span>
     </div>
 
     <div class="row2">
@@ -210,8 +220,24 @@ footer a{color:inherit}
   <main>
     <div class="status load" id="status" hidden></div>
 
+    <section class="empty" id="empty">
+      <h2>Importez votre trace GPX</h2>
+      <p>Plan My Ride calcule votre heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là : vent de face ou de dos, pluie, température, soleil.</p>
+      <label class="dropzone" for="file">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 36c6-2 9-10 15-10s7 7 12 7 7-5 9-8"/><circle cx="6" cy="36" r="3"/><circle cx="42" cy="25" r="3"/><path d="M24 4v14M18 12l6 6 6-6"/></svg>
+        <strong>Déposez un fichier .gpx ici</strong>
+        <span>ou cliquez pour le choisir sur votre ordinateur</span>
+      </label>
+      <ul>
+        <li><b>Strava</b> : itinéraire → Exporter le GPX</li>
+        <li><b>Komoot</b> : tour → Télécharger → Fichier GPX</li>
+        <li><b>Garmin Connect, RideWithGPS, Openrunner</b> : exportez le parcours au format GPX</li>
+      </ul>
+    </section>
+
+    <div id="results" hidden style="display:flex;flex-direction:column;gap:20px;min-width:0">
     <section aria-label="Résumé">
-      <p class="verdict" id="verdict">Chargement de la trace…</p>
+      <p class="verdict" id="verdict">Calcul en cours…</p>
     </section>
     <div class="stats" id="stats"></div>
 
@@ -266,6 +292,7 @@ footer a{color:inherit}
         </table>
       </div>
     </section>
+    </div>
   </main>
 </div>
 <footer>Données météo : <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0) · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages.</footer>
@@ -284,7 +311,7 @@ const n1 = x => (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFract
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 /* ---------- état ---------- */
-const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', isSample: true, name: '' };
+const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '' };
 
 /* ---------- géométrie ---------- */
 function hav(a, b) {
@@ -856,12 +883,14 @@ function exportCsv() {
 }
 
 /* ---------- chargement de trace ---------- */
-function loadRoute(raw, name, isSample) {
+function loadRoute(raw, name) {
   const P = prepare(raw);
   if (P.total < 0.2) throw new Error('La trace est trop courte pour être planifiée.');
-  S.P = P; S.samples = makeSamples(P); S.wxKey = ''; S.wx = null; S.fitted = false; S.isSample = isSample; S.name = name;
+  S.P = P; S.samples = makeSamples(P); S.wxKey = ''; S.wx = null; S.fitted = false; S.name = name;
   $('#routeName').textContent = name || 'Trace sans nom';
-  $('#routeTag').textContent = isSample ? 'Exemple' : 'Votre trace';
+  $('#routeTag').textContent = 'Votre trace';
+  $('#empty').hidden = true; $('#results').hidden = false;
+  if (map) map.invalidateSize();
   $('#routeMeta').textContent = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${n0(P.n)} points`;
   run();
 }
@@ -874,25 +903,6 @@ function handleFile(file) {
   };
   rd.readAsText(file);
 }
-function sampleRoute() {
-  // Boucle d'exemple : Strasbourg – Molsheim – Mont Sainte-Odile – Obernai – Strasbourg
-  const wp = [[48.5839,7.7455,140],[48.5600,7.7180,142],[48.5300,7.6650,148],[48.5370,7.6150,152],[48.5420,7.5550,165],[48.5410,7.4920,185],
-    [48.5250,7.4650,195],[48.4970,7.4710,190],[48.4760,7.4410,215],[48.4600,7.4250,265],[48.4520,7.4120,420],[48.4440,7.4060,610],[48.4370,7.4040,760],
-    [48.4420,7.4190,620],[48.4500,7.4330,430],[48.4570,7.4560,265],[48.4620,7.4820,185],[48.4800,7.5300,160],[48.4950,7.5900,152],[48.5100,7.6450,148],
-    [48.5350,7.6950,143],[48.5600,7.7300,140],[48.5839,7.7455,140]];
-  const pts = [];
-  for (let k = 0; k < wp.length - 1; k++) {
-    const a = { lat: wp[k][0], lon: wp[k][1] }, b = { lat: wp[k + 1][0], lon: wp[k + 1][1] };
-    const n = Math.max(2, Math.round(hav(a, b) / 0.12));
-    for (let j = 0; j < n; j++) {
-      const f = j / n, wig = Math.sin((k * 7 + j) * 0.9) * 0.00025;
-      pts.push({ lat: a.lat + (b.lat - a.lat) * f + wig, lon: a.lon + (b.lon - a.lon) * f - wig, ele: wp[k][2] + (wp[k + 1][2] - wp[k][2]) * f });
-    }
-  }
-  pts.push({ lat: wp[wp.length - 1][0], lon: wp[wp.length - 1][1], ele: wp[wp.length - 1][2] });
-  return pts;
-}
-
 /* ---------- réglages ---------- */
 function saveOpt(o) { try { localStorage.setItem('pmr-opt', JSON.stringify({ ...o, date: undefined })); } catch (e) {} }
 function initInputs() {
@@ -942,7 +952,6 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { 
 
 initInputs();
 initMap();
-loadRoute(sampleRoute(), 'Boucle Strasbourg – Mont Sainte-Odile', true);
 })();
 </script>
 </body>
