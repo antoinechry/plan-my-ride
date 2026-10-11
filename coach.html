@@ -11,7 +11,7 @@
 <style>
 :root{
   --bg:#E6EBE3; --surface:#F7F9F4; --surface-2:#EDF1EA; --ink:#16221B; --muted:#56635A; --line:#C7D0C3;
-  --ride:#2A6A5B; --run:#B2404D;
+  --ride:#2A6A5B; --run:#B2404D; --other:#8B7A4F;
   --libre:#CBE2C1; --libre-ink:#2C5726;
   --court:#F0DDA0; --court-ink:#6A5210;
   --indispo:#E8C4C7; --indispo-ink:#792A33;
@@ -21,7 +21,7 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33;
-    --ride:#6DB4A2; --run:#E37C87;
+    --ride:#6DB4A2; --run:#E37C87; --other:#C9B37E;
     --libre:#28452A; --libre-ink:#B7DDAD;
     --court:#4A3F18; --court-ink:#F0D98E;
     --indispo:#4E262B; --indispo-ink:#F1B7BD;
@@ -72,8 +72,14 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .j1{font-size:.68rem;font-weight:700;background:var(--ink);color:var(--bg);border-radius:4px;padding:0 .35em}
 .dtag{font-size:.72rem;font-weight:650}
 .dnote{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chip{font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;padding-left:6px;border-left:3px solid currentColor}
-.chip.ride{color:var(--ride)} .chip.run{color:var(--run)}
+.chip{font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;padding-left:6px;border-left:3px solid currentColor;color:var(--ink)}
+.chip.ride{border-left-color:var(--ride)} .chip.run{border-left-color:var(--run)} .chip.other{border-left-color:var(--other)}
+.chips{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dots{display:none;gap:3px;margin-top:auto}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot.ride{background:var(--ride)} .dot.run{background:var(--run)} .dot.other{background:var(--other)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.84rem;color:var(--muted);margin:0 0 10px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 .weeksum{font-size:.84rem;color:var(--muted);padding:4px 4px 0}
 .weeksum b{color:var(--ink);font-weight:650}
 dialog{border:none;border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(460px,calc(100vw - 24px))}
@@ -94,7 +100,8 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 @media (max-width:640px){
   .wrap{padding:16px 10px 40px}
   .day{min-height:60px;padding:4px}
-  .chip,.dnote{display:none}
+  .chip,.dnote,.chips{display:none}
+  .dots{display:flex}
 }
 </style>
 </head>
@@ -140,6 +147,11 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
         <button class="tool" data-paint="court" aria-pressed="false"><span class="sw" style="background:var(--court)"></span>Créneau court</button>
         <button class="tool" data-paint="indispo" aria-pressed="false"><span class="sw" style="background:var(--indispo)"></span>Indispo</button>
         <button class="tool" data-paint="erase" aria-pressed="false">Effacer</button>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span style="--c:var(--ride)">Vélo</span>
+        <span style="--c:var(--run)">Course à pied</span>
+        <span style="--c:var(--other)">Autre</span>
       </div>
       <div class="dow" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
       <div id="cal"></div>
@@ -246,24 +258,50 @@ function setDispo(k, s, note){
   if (!next.s && !next.note) delete state.dispos[k]; else state.dispos[k] = next;
   scheduleSave();
 }
+// Catégorie de couleur par sport : vélo, course, autre.
+const SPORT_CLS = { Ride:'ride', GravelRide:'ride', MountainBikeRide:'ride', VirtualRide:'ride', EBikeRide:'ride',
+  Run:'run', TrailRun:'run', VirtualRun:'run' };
+const SPORT_LABEL = { Ride:'Vélo', GravelRide:'Gravel', MountainBikeRide:'VTT', VirtualRide:'Home trainer', EBikeRide:'VAE',
+  Run:'Course', TrailRun:'Trail', VirtualRun:'Tapis', Hike:'Rando', Walk:'Marche', WeightTraining:'Renfo', Workout:'Séance',
+  Swim:'Natation' };
+const sportCls = t => SPORT_CLS[t] || 'other';
+const sportLabel = t => SPORT_LABEL[t] || t || 'Activité';
+function actsByDay(){
+  const m = new Map();
+  for (const a of state.acts){
+    const k = String(a.start_local||'').slice(0,10);
+    if (!m.has(k)) m.set(k, []);
+    m.get(k).push(a);
+  }
+  return m;
+}
 function renderCalendar(){
   const m = state.month;
   $('monthlabel').textContent = cap(monthFmt.format(m));
+  const byDay = actsByDay();
   const last = new Date(m.getFullYear(), m.getMonth()+1, 0);
   const html = [];
   for (let ws = startOfWeek(m); ws <= last; ws = addDays(ws,7)){
     let days = '';
     for (let i=0;i<7;i++){
       const d = addDays(ws,i), k = key(d), dispo = state.dispos[k] || {};
+      const acts = byDay.get(k) || [];
       const cls = ['day'];
       if (d.getMonth() !== m.getMonth()) cls.push('out');
       if (k === key(t0)) cls.push('today');
       if (dispo.s) cls.push('d-'+dispo.s);
       const j1 = k === key(PLAN_START) ? ' <span class="j1">J1</span>' : '';
-      days += '<button class="'+cls.join(' ')+'" data-k="'+k+'" aria-label="'+esc(longFmt.format(d)+(dispo.s ? ', '+DISPO_LABEL[dispo.s] : ''))+'">'
+      const chips = acts.map(a => {
+        const km = a.distance_m ? ' '+(a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
+        return '<span class="chip '+sportCls(a.sport_type)+'">'+esc(sportLabel(a.sport_type))+km+'</span>';
+      }).join('');
+      const dots = acts.map(a => '<i class="dot '+sportCls(a.sport_type)+'"></i>').join('');
+      days += '<button class="'+cls.join(' ')+'" data-k="'+k+'" aria-label="'+esc(longFmt.format(d)+(dispo.s ? ', '+DISPO_LABEL[dispo.s] : '')+(acts.length ? ', '+acts.length+' activité(s)' : ''))+'">'
         + '<span class="dnum">'+d.getDate()+j1+'</span>'
         + (dispo.s ? '<span class="dtag">'+DISPO_LABEL[dispo.s]+'</span>' : '')
         + (dispo.note ? '<span class="dnote">'+esc(dispo.note)+'</span>' : '')
+        + '<span class="chips">'+chips+'</span>'
+        + '<span class="dots">'+dots+'</span>'
         + '</button>';
     }
     let sum = '';
