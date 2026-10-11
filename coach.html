@@ -158,14 +158,22 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
     </section>
 
     <section aria-labelledby="h-act">
-      <div class="sechead"><h2 id="h-act">Activités Strava</h2></div>
+      <div class="sechead"><h2 id="h-act">Activités</h2></div>
       <div class="card">
-        <div id="actsbody"></div>
-        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-          <button class="btn primary" id="stravaconnect">Connecter Strava</button>
-          <button class="btn" id="stravasync" hidden>Synchroniser Strava</button>
+        <p class="sub" id="icustate">Source : intervals.icu</p>
+        <form id="icuform" hidden style="margin-top:10px">
+          <p class="sub">Dans intervals.icu : <b>Settings → Developer Settings</b>, copie ta clé API et ton identifiant athlète (ex. i123456). La clé reste côté serveur, elle n'est jamais réaffichée.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+            <input type="text" id="icuathlete" placeholder="Identifiant athlète (i123456)" autocomplete="off" style="flex:1 1 180px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .65rem">
+            <input type="password" id="icukey" required placeholder="Clé API" autocomplete="off" style="flex:2 1 220px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .65rem">
+          </div>
+          <div style="margin-top:10px"><button class="btn primary" type="submit" id="icuconnect">Connecter intervals.icu</button></div>
+        </form>
+        <div id="icuactions" hidden style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn primary" id="icusync">Synchroniser</button>
+          <button class="btn" id="icuunlink">Changer de clé</button>
         </div>
-        <p class="msg" id="stravamsg"></p>
+        <p class="msg" id="icumsg"></p>
       </div>
     </section>
   </div>
@@ -340,31 +348,7 @@ function openDay(k){
   $('dlg').showModal();
 }
 
-/* ---------- Activities ---------- */
-async function stravaSync(){
-  $('stravasync').disabled = true; setMsg($('stravamsg'), 'Synchronisation en cours…');
-  try {
-    const r = await callFn('strava-sync', {});
-    if (!r.ok){ setMsg($('stravamsg'), 'Échec de la synchronisation (v2) : '+r.detail, true); return; }
-    await loadActivities(); renderActs();
-    setMsg($('stravamsg'), (r.data.imported||0)+' activité(s) importée(s) sur 6 mois.');
-  } finally { $('stravasync').disabled = false; }
-}
-async function handleStravaReturn(){
-  const p = new URLSearchParams(location.search);
-  const code = p.get('strava_code'), err = p.get('strava_error');
-  if (!code && !err) return;
-  history.replaceState(null, '', location.pathname);
-  if (err){ setMsg($('stravamsg'), 'Connexion Strava annulée.', true); return; }
-  setMsg($('stravamsg'), 'Connexion à Strava…');
-  const r = await callFn('strava-link', { code });
-  if (!r.ok){
-    setMsg($('stravamsg'), 'Échec de la connexion Strava (v2) : '+r.detail, true);
-    return;
-  }
-  setMsg($('stravamsg'), 'Strava connecté. Import des activités…');
-  await stravaSync();
-}
+/* ---------- Activities (intervals.icu) ---------- */
 // Appel direct : on lit le corps de la réponse pour afficher la vraie cause.
 async function callFn(name, body){
   try {
@@ -377,23 +361,48 @@ async function callFn(name, body){
     });
     let json = null; try { json = await res.json(); } catch(_){}
     if (res.ok && json && !json.error) return { ok:true, data: json };
-    const extra = json && json.status ? ' (Strava '+json.status+')' : '';
-    return { ok:false, detail: 'HTTP '+res.status+' · '+((json && json.error) || 'réponse vide')+extra };
+    const extra = json && json.status ? ' (intervals.icu '+json.status+')' : '';
+    return { ok:false, detail: ((json && json.error) || 'HTTP '+res.status)+extra };
   } catch(e){
     return { ok:false, detail: 'réseau : '+(e.message||e) };
   }
 }
-$('stravaconnect').addEventListener('click', () => {
-  const redirect = 'https://rynbzhuxwvfvblgwnhkk.supabase.co/functions/v1/strava-callback';
-  location.href = 'https://www.strava.com/oauth/authorize?client_id=286571&response_type=code'
-    + '&redirect_uri=' + encodeURIComponent(redirect) + '&approval_prompt=auto&scope=activity:read_all';
-});
-$('stravasync').addEventListener('click', stravaSync);
-
-function renderActs(){
-  $('stravasync').hidden = false;
-  $('actsbody').innerHTML = '';
+function showIcu(connected, athlete){
+  $('icuform').hidden = connected;
+  $('icuactions').hidden = !connected;
+  $('icustate').textContent = connected ? 'Source : intervals.icu · athlète '+athlete : 'Source : intervals.icu · non connecté';
 }
+async function icuStatus(){
+  const r = await callFn('intervals', { action:'status' });
+  if (!r.ok){ setMsg($('icumsg'), 'Statut intervals.icu indisponible : '+r.detail, true); showIcu(false); return; }
+  showIcu(r.data.connected, r.data.athlete_id);
+}
+async function icuSync(){
+  $('icusync').disabled = true; setMsg($('icumsg'), 'Synchronisation en cours…');
+  try {
+    const r = await callFn('intervals', { action:'sync' });
+    if (!r.ok){ setMsg($('icumsg'), 'Échec de la synchronisation : '+r.detail, true); return; }
+    await loadActivities(); renderCalendar();
+    let m = (r.data.imported||0)+' activité(s) importée(s) depuis le 1er septembre.';
+    if (r.data.skipped) m += ' '+r.data.skipped+' ignorée(s) (venues de Strava : connecte ta montre ou ton compteur directement à intervals.icu).';
+    setMsg($('icumsg'), m);
+  } finally { $('icusync').disabled = false; }
+}
+$('icuform').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('icuconnect').disabled = true; setMsg($('icumsg'), 'Vérification de la clé…');
+  const r = await callFn('intervals', { action:'link', api_key: $('icukey').value.trim(), athlete_id: $('icuathlete').value.trim() });
+  $('icuconnect').disabled = false; $('icukey').value = '';
+  if (!r.ok){ setMsg($('icumsg'), 'Connexion refusée : '+r.detail, true); return; }
+  showIcu(true, r.data.athlete_id);
+  await icuSync();
+});
+$('icusync').addEventListener('click', icuSync);
+$('icuunlink').addEventListener('click', async () => {
+  const r = await callFn('intervals', { action:'unlink' });
+  if (!r.ok){ setMsg($('icumsg'), 'Échec : '+r.detail, true); return; }
+  showIcu(false); setMsg($('icumsg'), 'Clé supprimée. Saisis la nouvelle.');
+});
 
 /* ---------- Auth flow ---------- */
 function showAuth(){
@@ -410,8 +419,8 @@ async function showApp(user){
   } catch(e){
     setMsg($('authmsg'), 'Impossible de charger tes données : '+(e.message||e), true);
   }
-  renderCalendar(); renderActs();
-  handleStravaReturn();
+  renderCalendar();
+  icuStatus();
 }
 
 async function init(){
