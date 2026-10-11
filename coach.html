@@ -288,15 +288,13 @@ async function stravaSync(){
   $('stravasync').disabled = true; setMsg($('stravamsg'), 'Synchronisation en cours…');
   try {
     const { data, error } = await sb.functions.invoke('strava-sync', { body: {} });
-    if (error) throw error;
-    if (data && data.error) throw new Error(data.error);
+    if (error || (data && data.error)){
+      const detail = error ? await fnErrorText(error) : data.error;
+      setMsg($('stravamsg'), 'Échec : '+detail, true);
+      return;
+    }
     await loadActivities(); renderActs();
     setMsg($('stravamsg'), (data.imported||0)+' activité(s) importée(s) sur 6 mois.');
-  } catch(e){
-    let m = e && e.message ? e.message : String(e);
-    if (/not_connected/.test(m)) m = 'Strava n\'est pas encore connecté.';
-    else if (/rate_limited/.test(m)) m = 'Strava limite les requêtes : réessaie dans 15 minutes.';
-    setMsg($('stravamsg'), 'Échec : '+m, true);
   } finally { $('stravasync').disabled = false; }
 }
 async function handleStravaReturn(){
@@ -306,15 +304,20 @@ async function handleStravaReturn(){
   history.replaceState(null, '', location.pathname);
   if (err){ setMsg($('stravamsg'), 'Connexion Strava annulée.', true); return; }
   setMsg($('stravamsg'), 'Connexion à Strava…');
-  try {
-    const { data, error } = await sb.functions.invoke('strava-link', { body: { code } });
-    if (error) throw error;
-    if (data && data.error) throw new Error(data.error);
-    setMsg($('stravamsg'), 'Strava connecté. Import des activités…');
-    await stravaSync();
-  } catch(e){
-    setMsg($('stravamsg'), 'Échec de la connexion Strava : '+(e.message||e), true);
+  const { data, error } = await sb.functions.invoke('strava-link', { body: { code } });
+  if (error || (data && data.error)){
+    const detail = error ? await fnErrorText(error) : data.error;
+    setMsg($('stravamsg'), 'Échec de la connexion Strava : '+detail, true);
+    return;
   }
+  setMsg($('stravamsg'), 'Strava connecté. Import des activités…');
+  await stravaSync();
+}
+async function fnErrorText(error){
+  try {
+    const body = await error.context.json();
+    return (body.error || 'erreur') + (body.status ? ' (Strava '+body.status+')' : '');
+  } catch(_){ return error.message || String(error); }
 }
 $('stravaconnect').addEventListener('click', () => {
   const redirect = 'https://rynbzhuxwvfvblgwnhkk.supabase.co/functions/v1/strava-callback';
