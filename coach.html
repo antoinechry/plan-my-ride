@@ -17,6 +17,7 @@
   --indispo:#E8C4C7; --indispo-ink:#792A33;
   --focus:#2D5288;
   --c-alt:#8A958C; --c-spd:#2D6FA8; --c-hr:#C23B4A; --c-pw:#6A4FB0; --c-cad:#A8711A;
+  --c-fit:#5E9E2A; --c-fat:#3A72C9; --c-ratio:#C9701F;
   box-sizing:border-box;
 }
 @media (prefers-color-scheme: dark){
@@ -28,6 +29,7 @@
     --indispo:#4E262B; --indispo-ink:#F1B7BD;
     --focus:#86A9E0;
     --c-alt:#93A399; --c-spd:#7FB3E6; --c-hr:#F07C88; --c-pw:#AE97F0; --c-cad:#E3B45C;
+    --c-fit:#A6D86E; --c-fat:#7FB0F5; --c-ratio:#F0A35A;
   }
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -58,6 +60,20 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .monthnav .label{min-width:9.5em;text-align:center;font-weight:650}
 .iconbtn{width:2.2rem;height:2.2rem;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.05rem}
 .paint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.loadcard{background:var(--surface);border-radius:12px;padding:10px 12px 6px;margin-bottom:14px}
+.loadhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.lmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lmode button{border:none;background:var(--surface);padding:.28rem .75rem;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.lmode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.lkeys{flex:1;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 14px;font-size:.82rem;color:var(--muted)}
+.lkeys b{font-weight:700;color:var(--c,var(--ink));font-variant-numeric:tabular-nums}
+.lkeys i{font-style:normal;display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--c);margin-right:.35em}
+.iconbtn.sm{width:1.8rem;height:1.8rem;font-size:.85rem}
+.lwrap{position:relative;margin-top:6px}
+.lwrap canvas{display:block;width:100%;height:170px;cursor:pointer}
+.ltip{position:absolute;top:4px;z-index:2;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:6px 9px;font-size:.78rem;line-height:1.35;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.ltip b{font-weight:700}
+@media (max-width:640px){ .lwrap canvas{height:140px} .lkeys{justify-content:flex-start} }
 .paint .tool{border:1px solid var(--line);border-radius:999px;padding:.3rem .75rem;background:var(--surface);cursor:pointer;font-size:.86rem;font-weight:600}
 .paint .tool[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .sw{display:inline-block;width:.8em;height:.8em;border-radius:3px;margin-right:.4em;vertical-align:-.05em}
@@ -254,6 +270,16 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
           <span class="label" id="monthlabel"></span>
           <button class="iconbtn" id="next" aria-label="Mois suivant">›</button>
         </div>
+      </div>
+      <div class="loadcard" id="loadcard">
+        <div class="loadhead">
+          <div class="lmode" id="lmode" role="group" aria-label="Mesure">
+            <button data-m="load" aria-pressed="true">Charge</button><button data-m="time" aria-pressed="false">Temps</button><button data-m="dist" aria-pressed="false">Distance</button>
+          </div>
+          <div class="lkeys" id="lkeys"></div>
+          <button class="iconbtn sm" id="ltoggle" aria-expanded="true" aria-controls="lwrap" aria-label="Replier le graphique">▴</button>
+        </div>
+        <div class="lwrap" id="lwrap"><canvas id="lcv" height="170"></canvas><div class="ltip" id="ltip" hidden></div></div>
       </div>
       <div class="paint" role="group" aria-label="Remplir mes dispos">
         <span>Remplir mes dispos :</span>
@@ -538,6 +564,7 @@ function renderCalendar(){
     html.push('<div class="week"><div class="days">'+days+'</div>'+sum+'</div>');
   }
   $('cal').innerHTML = html.join('');
+  renderLoad();
 }
 function openDay(k){
   state.openKey = k;
@@ -1045,6 +1072,173 @@ async function runStudy(id){
   } catch(e){ delete studyRuns[id]; paintStudy(id, e.message || 'L\'étude a échoué.'); }
 }
 
+/* ---------- Graphique de charge au-dessus du calendrier ---------- */
+// Barres hebdomadaires (charge, temps ou distance) empilées par sport, sur 26 semaines passées et 6 à venir
+// (séances prévues en clair) ; en mode Charge, courbes quotidiennes de forme (42 j) et de fatigue (7 j).
+const LOADV = { mode: 'load', weeks: [], daily: null, hover: null, geo: null };
+try { LOADV.mode = localStorage.getItem('cm-load-mode') || 'load'; } catch(_){}
+const PAST_WEEKS = 26, NEXT_WEEKS = 6;
+function loadData(){
+  const byDay = actsByDay(), w0 = addDays(startOfWeek(t0), -7*PAST_WEEKS), wEnd = addDays(startOfWeek(t0), 7*NEXT_WEEKS);
+  const metricA = a => LOADV.mode === 'load' ? actLoad(a).load : LOADV.mode === 'time' ? (a.moving_time_s||0)/3600 : (a.distance_m||0)/1000;
+  const metricP = p => LOADV.mode === 'load' ? planLoad(p) : LOADV.mode === 'time' ? (Number(p.duree_min)||0)/60 : Number(p.distance_km)||0;
+  const weeks = [];
+  for (let ws = w0; ws <= wEnd; ws = addDays(ws, 7)){
+    const w = { ws, done: { ride:0, run:0, other:0 }, plan: { ride:0, run:0, other:0 } };
+    for (let i = 0; i < 7; i++){
+      const d = addDays(ws, i), k = key(d);
+      if (d <= t0) for (const a of byDay.get(k) || []) w.done[sportCls(a.sport_type)] += metricA(a);
+      else for (const p of state.seances[k] || []) w.plan[sportCls(p.sport)] += metricP(p);
+    }
+    w.total = Object.values(w.done).reduce((s,x) => s+x, 0) + Object.values(w.plan).reduce((s,x) => s+x, 0);
+    weeks.push(w);
+  }
+  // forme / fatigue quotidiennes (démarrage 120 j avant pour stabiliser)
+  const daily = []; let ctl = 0, atl = 0;
+  for (let d = addDays(w0, -120); d <= addDays(wEnd, 6); d = addDays(d, 1)){
+    const k = key(d), fut = d > t0; let load = 0;
+    if (!fut) for (const a of byDay.get(k) || []) load += actLoad(a).load;
+    else for (const p of state.seances[k] || []) load += planLoad(p);
+    ctl += (load - ctl)/42; atl += (load - atl)/7;
+    if (d >= w0) daily.push({ d, k, ctl, atl, fut });
+  }
+  LOADV.weeks = weeks; LOADV.daily = daily; LOADV.w0 = w0;
+}
+const fmtMetric = v => LOADV.mode === 'load' ? nf0.format(v) : LOADV.mode === 'time' ? fmtHM(v*3600) : nf0.format(v)+' km';
+function renderKeys(){
+  const today = LOADV.daily.find(x => x.k === key(t0));
+  if (LOADV.mode === 'load' && today){
+    const ratio = today.ctl > 0.5 ? Math.round(100*today.atl/today.ctl) : null;
+    $('lkeys').innerHTML = '<span>auj.</span>'
+      + '<span style="--c:var(--c-fit)"><i></i>Forme <b>'+nf0.format(today.ctl)+'</b></span>'
+      + '<span style="--c:var(--c-fat)"><i></i>Fatigue <b>'+nf0.format(today.atl)+'</b></span>'
+      + (ratio != null ? '<span style="--c:var(--c-ratio)" title="Fatigue ÷ forme : 80–130 % équilibré, au-delà de 150 % surcharge"><i></i>Ratio <b>'+ratio+' %</b></span>' : '');
+  } else {
+    const cur = LOADV.weeks[PAST_WEEKS], last4 = LOADV.weeks.slice(PAST_WEEKS - 4, PAST_WEEKS);
+    const avg = last4.reduce((s,w) => s + w.total, 0)/Math.max(1, last4.length);
+    $('lkeys').innerHTML = '<span>Cette semaine <b>'+fmtMetric(cur ? cur.total : 0)+'</b></span><span>Moyenne 4 sem. <b>'+fmtMetric(avg)+'</b></span>';
+  }
+}
+function renderLoad(){
+  if (!$('loadcard') || $('lwrap').hidden) { if ($('loadcard')) { loadData(); renderKeys(); } return; }
+  loadData(); renderKeys(); drawLoad();
+}
+function drawLoad(){
+  const cv = $('lcv'), W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const weeks = LOADV.weeks, n = weeks.length, L = 34, R = 6, T = 8, B = 20, pw = W - L - R, ph = H - T - B, band = pw/n;
+  LOADV.geo = { L, band, n, T, ph };
+  const muted = cssVar('--muted'), line = cssVar('--line'), ink = cssVar('--ink'), font = '11px Archivo, system-ui, sans-serif';
+  const maxBar = Math.max(1, ...weeks.map(w => w.total))*1.12;
+  const Yb = v => T + ph - v/maxBar*ph;
+  // repères de mois et semaine en cours
+  g.font = font; g.textBaseline = 'top'; g.textAlign = 'left';
+  const cur = PAST_WEEKS;
+  g.fillStyle = cssVar('--surface-2'); g.fillRect(L + cur*band, T - 4, band, ph + 4);
+  let lastM = -1;
+  weeks.forEach((w, i) => {
+    const m = addDays(w.ws, 3).getMonth();
+    if (m !== lastM){
+      const x = Math.round(L + i*band) + .5;
+      g.strokeStyle = line; g.setLineDash([2,3]); g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + ph); g.stroke(); g.setLineDash([]);
+      g.fillStyle = muted; g.fillText(cap(new Intl.DateTimeFormat('fr-FR',{month:'short'}).format(addDays(w.ws, 3))).replace('.',''), x + 3, T + ph + 5);
+      lastM = m;
+    }
+  });
+  // graduation des barres
+  const step = niceStep(maxBar, 2);
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (let v = step; v < maxBar; v += step){
+    const y = Math.round(Yb(v)) + .5;
+    g.strokeStyle = line; g.globalAlpha = .6; g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke(); g.globalAlpha = 1;
+    g.fillStyle = muted; g.fillText(LOADV.mode === 'time' ? Math.round(v)+' h' : nf0.format(v), L - 5, y);
+  }
+  g.strokeStyle = line; g.beginPath(); g.moveTo(L, T + ph + .5); g.lineTo(W - R, T + ph + .5); g.stroke();
+  // barres empilées par sport (réalisé plein, prévu en clair)
+  const bw = Math.max(3, band*0.62), cols = { ride: cssVar('--ride'), run: cssVar('--run'), other: cssVar('--other') };
+  weeks.forEach((w, i) => {
+    const x = L + i*band + (band - bw)/2; let y = T + ph;
+    for (const part of ['done', 'plan']) for (const c of ['ride', 'run', 'other']){
+      const v = w[part][c]; if (!v) continue;
+      const h = v/maxBar*ph; y -= h;
+      g.globalAlpha = part === 'plan' ? .35 : (LOADV.hover === i ? 1 : .88);
+      g.fillStyle = cols[c]; g.fillRect(x, y, bw, h);
+      if (part === 'plan'){ g.globalAlpha = .9; g.strokeStyle = cols[c]; g.setLineDash([3,2]); g.strokeRect(x + .5, y + .5, bw - 1, h - 1); g.setLineDash([]); }
+      g.globalAlpha = 1;
+    }
+  });
+  // courbes forme / fatigue (mode Charge), sur leur propre échelle
+  if (LOADV.mode === 'load' && LOADV.daily.length){
+    const maxL = Math.max(5, ...LOADV.daily.map(x => Math.max(x.ctl, x.atl)))*1.15;
+    const X = i => L + (i/7)*band, Y = v => T + ph - v/maxL*ph;
+    for (const [k, c] of [['ctl', '--c-fit'], ['atl', '--c-fat']]){
+      g.strokeStyle = cssVar(c); g.lineWidth = k === 'ctl' ? 2 : 1.4;
+      // passé en trait plein, à venir (séances prévues) en pointillés, raccordés au dernier jour réalisé
+      const firstFut = LOADV.daily.findIndex(x => x.fut), cut = firstFut < 0 ? LOADV.daily.length : firstFut;
+      for (const [a, b, fut] of [[0, cut, false], [Math.max(0, cut - 1), LOADV.daily.length, true]]){
+        if (b - a < 2) continue;
+        g.beginPath();
+        for (let i = a; i < b; i++){ const x = LOADV.daily[i]; if (i === a) g.moveTo(X(i + .5), Y(x[k])); else g.lineTo(X(i + .5), Y(x[k])); }
+        g.setLineDash(fut ? [4,3] : []); g.globalAlpha = fut ? .7 : 1; g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+      }
+    }
+    g.lineWidth = 1;
+  }
+  // semaine survolée
+  if (LOADV.hover != null){
+    g.strokeStyle = ink; g.globalAlpha = .35; g.strokeRect(Math.round(L + LOADV.hover*band) + .5, T - 3.5, Math.round(band) - 1, ph + 3); g.globalAlpha = 1;
+  }
+}
+function loadTip(i, clientX){
+  const tip = $('ltip'), w = LOADV.weeks[i];
+  if (!w){ tip.hidden = true; return; }
+  const end = addDays(w.ws, 6), lab = { ride: 'Vélo', run: 'Course', other: 'Autre' }, rows = [];
+  for (const c of ['ride', 'run', 'other']){
+    const d = w.done[c], p = w.plan[c];
+    if (d || p) rows.push(lab[c]+' <b>'+fmtMetric(d + p)+'</b>'+(p ? ' (dont '+fmtMetric(p)+' prévu)' : ''));
+  }
+  const last = LOADV.daily.find(x => x.k === key(end > t0 && w.ws <= t0 ? t0 : end));
+  const head = shortFmt(w.ws)+' – '+shortFmt(end)+(w.ws <= t0 && t0 <= end ? ' · cette semaine' : '');
+  tip.innerHTML = '<div><b>'+head+'</b></div>' + (rows.length ? rows.join('<br>') : 'Rien d’enregistré')
+    + (LOADV.mode === 'load' && last ? '<br>Forme <b>'+nf0.format(last.ctl)+'</b> · Fatigue <b>'+nf0.format(last.atl)+'</b>' : '')
+    + '<div style="opacity:.7;margin-top:2px">Clic : voir le mois</div>';
+  tip.hidden = false;
+  const box = $('lwrap').getBoundingClientRect(), tw = tip.offsetWidth;
+  let x = clientX - box.left + 12; if (x + tw > box.width) x = clientX - box.left - tw - 12;
+  tip.style.left = Math.max(0, x)+'px';
+}
+const shortFmt = d => new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(d);
+function loadIndexAt(clientX){
+  const g = LOADV.geo; if (!g) return null;
+  const r = $('lcv').getBoundingClientRect(), i = Math.floor((clientX - r.left - g.L)/g.band);
+  return i >= 0 && i < g.n ? i : null;
+}
+$('lcv').addEventListener('pointermove', e => { const i = loadIndexAt(e.clientX); if (i !== LOADV.hover){ LOADV.hover = i; drawLoad(); } if (i == null) $('ltip').hidden = true; else loadTip(i, e.clientX); });
+$('lcv').addEventListener('pointerleave', () => { LOADV.hover = null; $('ltip').hidden = true; drawLoad(); });
+$('lcv').addEventListener('click', e => {
+  const i = loadIndexAt(e.clientX); if (i == null) return;
+  const d = addDays(LOADV.weeks[i].ws, 3); state.month = new Date(d.getFullYear(), d.getMonth(), 1); renderCalendar();
+});
+$('lmode').addEventListener('click', e => {
+  const b = e.target.closest('[data-m]'); if (!b) return;
+  LOADV.mode = b.dataset.m; try { localStorage.setItem('cm-load-mode', LOADV.mode); } catch(_){}
+  for (const x of $('lmode').querySelectorAll('[data-m]')) x.setAttribute('aria-pressed', String(x === b));
+  renderLoad();
+});
+for (const x of $('lmode').querySelectorAll('[data-m]')) x.setAttribute('aria-pressed', String(x.dataset.m === LOADV.mode));
+function setLoadOpen(open){
+  $('lwrap').hidden = !open; $('ltoggle').textContent = open ? '▴' : '▾';
+  $('ltoggle').setAttribute('aria-expanded', String(open)); $('ltoggle').setAttribute('aria-label', open ? 'Replier le graphique' : 'Déplier le graphique');
+  try { localStorage.setItem('cm-load-open', open ? '1' : '0'); } catch(_){}
+  if (open) renderLoad();
+}
+$('ltoggle').addEventListener('click', () => setLoadOpen($('lwrap').hidden));
+try { if (localStorage.getItem('cm-load-open') === '0') setLoadOpen(false); } catch(_){}
+new ResizeObserver(() => { if (!$('lwrap').hidden && LOADV.weeks.length) drawLoad(); }).observe($('lwrap'));
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (LOADV.weeks.length) drawLoad(); });
+
 /* ---------- Charge, forme et fatigue (pour Miguel) ---------- */
 // Charge d'une activité : charge intervals.icu, sinon effort relatif Strava, sinon estimation par heure selon le sport.
 const LOAD_PER_H = { Ride:60, GravelRide:60, MountainBikeRide:65, VirtualRide:65, EBikeRide:25, Run:70, TrailRun:70, VirtualRun:70, Hike:12, Walk:8, WeightTraining:30, Workout:35, Swim:60 };
@@ -1058,7 +1252,7 @@ function actLoad(a){
   if (a.relative_effort != null) return { load: a.relative_effort, est: false };
   return { load: Math.round((a.moving_time_s||0)/3600*(LOAD_PER_H[a.sport_type] || 40)), est: true };
 }
-const planLoad = p => Math.round((Number(p.duree_min)||0)/60*(LOAD_PER_H[p.sport] || 40));
+const planLoad = p => p.icu && p.icu.charge != null ? Number(p.icu.charge) : Math.round((Number(p.duree_min)||0)/60*(LOAD_PER_H[p.sport] || 40));
 function computeSeries(){
   const byDay = actsByDay(), start = addDays(t0, -180);
   const hasFuture = Object.keys(state.seances).some(k => k > key(t0) && (state.seances[k]||[]).length);
@@ -1329,7 +1523,7 @@ function renderProposal(){
   $('askout').innerHTML = '<div class="proposal" style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><div class="meta">'+esc(meta)+'</div>'
     + (p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
     + (p.pourquoi ? '<p class="why">'+esc(p.pourquoi)+'</p>' : '')
-    + '<div class="askact"><button class="btn primary" data-act="add">Ajouter au calendrier</button><button class="btn" data-act="again">Autre proposition</button></div></div>';
+    + '<div class="askact"><button class="btn primary" data-act="addsend">Ajouter et envoyer sur '+(DEVICE[sportCls(p.sport)] || DEVICE.other)+'</button><button class="btn" data-act="add">Ajouter seulement</button><button class="btn" data-act="again">Autre proposition</button></div></div>';
 }
 const COACH_ERR = {
   no_key: 'La clé API Anthropic n\'est pas encore enregistrée côté serveur (secret ANTHROPIC_API_KEY dans Supabase).',
@@ -1391,6 +1585,8 @@ $('askout').addEventListener('click', e => {
   ask.proposal = null;
   $('askout').innerHTML = '<span class="wait">Séance ajoutée au calendrier.</span> <button class="linkbtn" data-goto="plans">Voir dans Sorties prévues</button>';
   renderPlans(k); renderCalendar();
+  // « Ajouter et envoyer » : envoi vers intervals.icu → Dura / Garmin, suivi dans l'onglet Sorties prévues.
+  if (b.dataset.act === 'addsend'){ setTab('plans'); sendSession(k, state.seances[k].length - 1); }
 });
 
 /* ---------- Activities (intervals.icu) ---------- */
