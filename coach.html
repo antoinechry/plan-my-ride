@@ -98,6 +98,21 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 .alist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .alist li{border-left:3px solid var(--ride);padding-left:10px;font-size:.9rem}
 .alist .meta{color:var(--muted);font-size:.82rem}
+.acts{display:flex;flex-direction:column;gap:14px;margin-bottom:6px}
+.act{border-left:3px solid var(--c);padding:2px 0 2px 10px}
+.acthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
+.acthead b{font-size:1rem}
+.acthead .meta{color:var(--muted);font-size:.84rem}
+.acthead a{margin-left:auto;font-size:.82rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px 12px;margin:8px 0 0}
+.stats div{display:flex;flex-direction:column}
+.stats dt{font-size:.74rem;color:var(--muted)}
+.stats dd{margin:0;font-weight:650;font-variant-numeric:tabular-nums}
+.feel{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;font-size:.8rem;color:var(--muted)}
+.feel label{display:flex;flex-direction:column;gap:3px;min-width:0}
+.feel select,.feel input{font-size:.9rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.35rem .45rem;width:100%;min-width:0}
+.feel .wide{grid-column:1/-1}
+.feelhead{grid-column:1/-1;font-size:.86rem;font-weight:650;color:var(--ink)}
 .chip.plan{border-left-style:dotted;font-weight:500}
 .dot.plan{background:transparent;border:1.5px dashed var(--muted)}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -204,6 +219,7 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 <dialog id="dlg" aria-labelledby="dlgtitle">
   <div class="dlg">
     <h3 id="dlgtitle"></h3>
+    <div id="dlgacts"></div>
     <h4>Ma dispo</h4>
     <div class="seg" id="dlgseg">
       <button data-s="libre" aria-pressed="false"><b>Libre</b><small>sortie longue possible</small></button>
@@ -319,7 +335,10 @@ async function saveSeances(){
   if (error) throw error;
 }
 async function loadActivities(){
-  const { data, error } = await sb.from('activities').select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,relative_effort,training_load,is_trainer').order('start_local', {ascending:false}).limit(2000);
+  // Détails lus dans les données brutes (mêmes noms chez intervals.icu et Strava, sauf la puissance).
+  const { data, error } = await sb.from('activities').select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,relative_effort,training_load,is_trainer,'
+    + 'hr:raw->average_heartrate,hrmax:raw->max_heartrate,elapsed:raw->elapsed_time,w:raw->icu_average_watts,np:raw->icu_weighted_avg_watts,w2:raw->average_watts,np2:raw->weighted_average_watts')
+    .order('start_local', {ascending:false}).limit(2000);
   if (error) throw error;
   state.acts = data || [];
 }
@@ -341,7 +360,7 @@ const SPORT_LABEL = { Ride:'Vélo', GravelRide:'Gravel', MountainBikeRide:'VTT',
   Swim:'Natation' };
 const sportCls = t => SPORT_CLS[t] || 'other';
 const sportLabel = t => SPORT_LABEL[t] || t || 'Activité';
-const fmtHM = s => { const h = Math.floor(s/3600), m = Math.round((s%3600)/60); return h ? h+' h '+pad(m) : m+' min'; };
+const fmtHM = s => { const t = Math.round(s/60), h = Math.floor(t/60), m = t%60; return h ? h+' h '+pad(m) : m+' min'; };
 const fmtKmC = km => (km >= 10 ? Math.round(km) : km.toFixed(1).replace('.',','))+' km';
 function weekTotals(ws, byDay){
   const t = { ride:{s:0,km:0}, run:{s:0,km:0}, all:0 };
@@ -414,9 +433,85 @@ function openDay(k){
   for (const b of $('dlgseg').querySelectorAll('button')) b.setAttribute('aria-pressed', String((b.dataset.s||'') === (dispo.s||'')));
   $('dlgnote').value = dispo.note || '';
   $('savestate').textContent = '';
-  renderPlans(k); setupAsk(k);
+  renderActs(k); renderPlans(k); setupAsk(k);
   $('dlg').showModal();
 }
+
+/* ---------- Activités du jour et ressentis ---------- */
+const RPE_OPTS = ['', '1 · très facile', '2', '3 · facile', '4', '5 · modéré', '6', '7 · difficile', '8', '9 · très difficile', '10 · maximal'];
+const FORME_OPTS = ['', '1 · très mauvaises', '2 · mauvaises', '3 · moyennes', '4 · bonnes', '5 · excellentes'];
+const PAIN_OPTS = [['', '—'], ['aucune', 'Aucune'], ['gêne', 'Gêne'], ['douleur', 'Douleur']];
+const num = v => (v == null || v === '' || isNaN(Number(v))) ? null : Number(v);
+function actLink(a){
+  if (a.source === 'intervals') return { url: 'https://intervals.icu/activities/'+encodeURIComponent(a.ext_id), label: 'intervals.icu' };
+  if (a.source === 'strava') return { url: 'https://www.strava.com/activities/'+encodeURIComponent(a.ext_id), label: 'Strava' };
+  return null;
+}
+function actStats(a){
+  const out = [], km = (a.distance_m||0)/1000, mv = a.moving_time_s||0, el = num(a.elapsed), c = sportCls(a.sport_type);
+  const add = (t, v) => out.push('<div><dt>'+t+'</dt><dd>'+v+'</dd></div>');
+  if (km > 0) add('Distance', nf1.format(km)+' km');
+  if (mv) add('En mouvement', fmtHM(mv));
+  if (el && el - mv >= 300) add('Temps total', fmtHM(el));
+  if (a.elevation_gain_m) add('Dénivelé', nf0.format(a.elevation_gain_m)+' m D+');
+  if (km > 0 && mv){
+    if (c === 'run'){ const p = Math.round(mv/km); add('Allure', Math.floor(p/60)+':'+pad(p%60)+' /km'); }
+    else add('Vitesse moyenne', nf1.format(km/(mv/3600))+' km/h');
+  }
+  const hr = num(a.hr), hrmax = num(a.hrmax);
+  if (hr) add('FC moy / max', Math.round(hr)+(hrmax ? ' / '+Math.round(hrmax) : '')+' bpm');
+  const w = num(a.w) ?? num(a.w2), np = num(a.np) ?? num(a.np2);
+  if (w) add('Puissance', Math.round(w)+' W'+(np ? ' · NP '+Math.round(np) : ''));
+  const L = actLoad(a);
+  add(a.training_load != null ? 'Charge' : a.relative_effort != null ? 'Effort relatif' : 'Charge estimée', (L.est ? '≈ ' : '')+nf0.format(L.load));
+  return '<dl class="stats">'+out.join('')+'</dl>';
+}
+function renderActs(k){
+  const acts = (actsByDay().get(k) || []).slice().sort((x,y) => String(x.start_local).localeCompare(String(y.start_local)));
+  if (!acts.length){ $('dlgacts').innerHTML = ''; return; }
+  $('dlgacts').innerHTML = '<div class="acts">' + acts.map(a => {
+    const id = String(a.ext_id), r = state.ressentis[id] || {}, link = actLink(a);
+    const hm = String(a.start_local||'').slice(11,16).replace(':',' h ');
+    const meta = [sportLabel(a.sport_type)+(a.is_trainer && a.sport_type !== 'VirtualRide' ? ' (intérieur)' : ''), hm].filter(Boolean).join(' · ');
+    const opt = (list, v) => list.map((t,i) => '<option value="'+(i||'')+'"'+(String(v||'') === String(i||'') ? ' selected' : '')+'>'+(t || '—')+'</option>').join('');
+    const pain = r.douleur || '';
+    return '<div class="act" data-id="'+esc(id)+'" style="--c:var(--'+sportCls(a.sport_type)+')">'
+      + '<div class="acthead"><b>'+esc(a.name || sportLabel(a.sport_type))+'</b><span class="meta">'+esc(meta)+'</span>'
+      + (link ? '<a href="'+link.url+'" target="_blank" rel="noopener">Voir sur '+link.label+' ↗</a>' : '') + '</div>'
+      + actStats(a)
+      + '<div class="feel"><span class="feelhead">Mon ressenti</span>'
+      + '<label>Effort<select data-f="rpe">'+opt(RPE_OPTS, r.rpe)+'</select></label>'
+      + '<label>Sensations<select data-f="forme">'+opt(FORME_OPTS, r.forme)+'</select></label>'
+      + '<label>Douleur<select data-f="douleur">'+PAIN_OPTS.map(([v,t]) => '<option value="'+v+'"'+(v === pain ? ' selected' : '')+'>'+t+'</option>').join('')+'</select></label>'
+      + '<label class="wide"'+(pain && pain !== 'aucune' ? '' : ' hidden')+'>Où ?<input data-f="zone" type="text" maxlength="80" placeholder="Ex. genou droit, mollet…" value="'+esc(r.zone||'')+'"></label>'
+      + '<label class="wide">Note pour Miguel<input data-f="note" type="text" maxlength="300" placeholder="Ex. jambes lourdes, vent de face au retour…" value="'+esc(r.note||'')+'"></label>'
+      + '</div></div>';
+  }).join('') + '</div>';
+}
+let feelTimer = null;
+function setRessenti(id, f, v){
+  const r = Object.assign({}, state.ressentis[id] || {});
+  if (v === '' || v == null) delete r[f]; else r[f] = (f === 'rpe' || f === 'forme') ? Number(v) : v;
+  if (f === 'douleur' && (!v || v === 'aucune')) delete r.zone;
+  if (Object.keys(r).filter(x => x !== 'maj').length) { r.maj = new Date().toISOString(); state.ressentis[id] = r; }
+  else delete state.ressentis[id];
+  clearTimeout(feelTimer);
+  $('savestate').textContent = '…';
+  feelTimer = setTimeout(saveRessentis, 500);
+}
+async function saveRessentis(){
+  const body = { activities: state.ressentis, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('plan_docs').upsert({ user_id: state.user.id, doc: 'ressentis', data: body }, { onConflict: 'user_id,doc' });
+  $('savestate').textContent = error ? 'Échec de l\'enregistrement du ressenti, réessaie.' : 'Ressenti enregistré';
+}
+function onFeel(e){
+  const el = e.target.closest('[data-f]'), box = e.target.closest('.act'); if (!el || !box) return;
+  const f = el.dataset.f, v = f === 'zone' || f === 'note' ? el.value.trim() : el.value;
+  if (f === 'douleur'){ const z = box.querySelector('[data-f="zone"]'); z.closest('label').hidden = !v || v === 'aucune'; if (z.closest('label').hidden) z.value = ''; }
+  setRessenti(box.dataset.id, f, v);
+}
+$('dlgacts').addEventListener('change', e => { if (e.target.tagName === 'SELECT') onFeel(e); });
+$('dlgacts').addEventListener('input', e => { if (e.target.tagName === 'INPUT') onFeel(e); });
 
 /* ---------- Charge, forme et fatigue (pour Miguel) ---------- */
 // Charge d'une activité : charge intervals.icu, sinon effort relatif Strava, sinon estimation par heure selon le sport.
@@ -746,7 +841,8 @@ for (const b of document.querySelectorAll('.paint .tool')) b.addEventListener('c
 $('cal').addEventListener('click', e => {
   const b = e.target.closest('.day'); if (!b) return;
   const k = b.dataset.k;
-  if (state.paint){
+  // Avec un pinceau actif, un clic sur une activité ou une séance ouvre quand même la journée.
+  if (state.paint && !e.target.closest('.chip')){
     setDispo(k, state.paint === 'erase' ? null : state.paint);
     renderCalendar();
   } else openDay(k);
