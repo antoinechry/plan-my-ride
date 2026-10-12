@@ -64,9 +64,6 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .paint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
 .profbtn{display:inline-flex;align-items:center;gap:.45em}
 .profbtn .av{display:inline-grid;place-items:center;width:1.55em;height:1.55em;border-radius:50%;background:var(--ink);color:var(--bg);font-size:.76rem;font-weight:700;line-height:1}
-.authmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0 2px}
-.authmode button{border:none;background:var(--surface);padding:.35rem .9rem;font-size:.86rem;font-weight:600;cursor:pointer;color:var(--muted)}
-.authmode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .authform{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-width:380px}
 .authform label{display:flex;flex-direction:column;gap:4px;font-size:.86rem;color:var(--muted)}
 .authform input{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .65rem;max-width:none}
@@ -277,21 +274,12 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
   <!-- Connexion -->
   <div id="authbox" class="card" hidden>
     <h2>Connexion</h2>
-    <div class="authmode" id="authmode" role="group" aria-label="Mode de connexion">
-      <button type="button" data-mode="pw" aria-pressed="true">Mot de passe</button><button type="button" data-mode="link" aria-pressed="false">Lien par e-mail</button>
-    </div>
     <form id="pwform" class="authform">
       <label>E-mail<input type="email" id="pwemail" required placeholder="ton@email.fr" autocomplete="username"></label>
       <label>Mot de passe<input type="password" id="pwpass" required minlength="8" autocomplete="current-password"></label>
       <div class="authact"><button class="btn primary" type="submit" id="pwgo">Se connecter</button><button class="linkbtn" type="button" id="pwforgot">Mot de passe oublié ?</button></div>
     </form>
-    <form id="authform" class="authform" hidden>
-      <p class="sub">Tu reçois un lien de connexion par e-mail, sans mot de passe.</p>
-      <label>E-mail<input type="email" id="email" required placeholder="ton@email.fr" autocomplete="email"></label>
-      <div class="authact"><button class="btn primary" type="submit" id="sendlink">Recevoir le lien</button></div>
-    </form>
     <p class="msg" id="authmsg"></p>
-    <p class="sub hint">Pas encore de mot de passe ? Connecte-toi avec le lien par e-mail, puis définis-le dans ton profil.</p>
   </div>
 
   <!-- App -->
@@ -349,7 +337,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       <button class="iconbtn" id="profx" aria-label="Fermer">×</button>
     </div>
     <h4>Mot de passe</h4>
-    <p class="sub" id="pwstate">Définis un mot de passe pour te connecter sans attendre de lien par e-mail.</p>
+    <p class="sub" id="pwstate">Change ton mot de passe de connexion.</p>
     <form id="pwset" class="authform">
       <input type="email" id="pwuser" autocomplete="username" hidden>
       <label>Nouveau mot de passe<input type="password" id="pwnew" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
@@ -1814,8 +1802,8 @@ $('icuunlink').addEventListener('click', async () => {
 });
 
 /* ---------- Auth flow ---------- */
-// Connexion par mot de passe (signInWithPassword) ou par lien e-mail (signInWithOtp). Le mot de passe se définit
-// ou se change dans le profil (updateUser) ; « Mot de passe oublié » envoie un lien de réinitialisation qui ouvre le profil.
+// Connexion par mot de passe seulement (signInWithPassword). Le mot de passe se change dans le profil (updateUser) ;
+// « Mot de passe oublié » envoie un lien de réinitialisation qui ouvre le profil.
 function showAuth(){
   $('authbox').hidden = false; $('app').hidden = true; $('profbtn').hidden = true;
   if ($('profdlg').open) $('profdlg').close();
@@ -1856,28 +1844,10 @@ async function init(){
   });
 }
 
-$('authform').addEventListener('submit', async e => {
-  e.preventDefault();
-  const email = $('email').value.trim();
-  $('sendlink').disabled = true;
-  setMsg($('authmsg'), 'Envoi du lien…');
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split('#')[0] } });
-  $('sendlink').disabled = false;
-  if (error) setMsg($('authmsg'), 'Échec : '+error.message, true);
-  else setMsg($('authmsg'), 'Lien envoyé. Ouvre l\'e-mail sur cet appareil et clique sur le lien.');
-});
 $('logout').addEventListener('click', async () => { if ($('profdlg').open) $('profdlg').close(); await sb.auth.signOut(); });
 
-// Mode de connexion : mot de passe ou lien
-$('authmode').addEventListener('click', e => {
-  const b = e.target.closest('[data-mode]'); if (!b) return;
-  const pw = b.dataset.mode === 'pw';
-  for (const x of $('authmode').querySelectorAll('[data-mode]')) x.setAttribute('aria-pressed', String(x === b));
-  if (pw && !$('pwemail').value) $('pwemail').value = $('email').value; if (!pw && !$('email').value) $('email').value = $('pwemail').value;
-  $('pwform').hidden = !pw; $('authform').hidden = pw; setMsg($('authmsg'), '');
-});
-const AUTH_ERR = m => /invalid login credentials/i.test(m) ? 'E-mail ou mot de passe incorrect. Pas encore de mot de passe ? Connecte-toi par lien, puis définis-le dans ton profil.'
-  : /email not confirmed/i.test(m) ? 'Adresse e-mail pas encore confirmée : utilise le lien reçu par e-mail.'
+const AUTH_ERR = m => /invalid login credentials/i.test(m) ? 'E-mail ou mot de passe incorrect.'
+  : /email not confirmed/i.test(m) ? 'Adresse e-mail pas encore confirmée : ouvre le lien de confirmation reçu par e-mail.'
   : /rate limit|too many/i.test(m) ? 'Trop de tentatives, réessaie dans quelques minutes.' : m;
 $('pwform').addEventListener('submit', async e => {
   e.preventDefault();
@@ -1899,7 +1869,7 @@ $('pwforgot').addEventListener('click', async () => {
 // Profil : mot de passe, intervals.icu, déconnexion
 function openProfile(recovery){
   setMsg($('pwmsg'), ''); $('pwnew').value = ''; $('pwnew2').value = '';
-  $('pwstate').textContent = recovery ? 'Choisis ton nouveau mot de passe.' : 'Définis ou change ton mot de passe pour te connecter sans attendre de lien par e-mail.';
+  $('pwstate').textContent = recovery ? 'Choisis ton nouveau mot de passe.' : 'Change ton mot de passe de connexion.';
   if (!$('profdlg').open) $('profdlg').showModal();
   if (recovery) $('pwnew').focus();
 }
