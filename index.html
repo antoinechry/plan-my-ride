@@ -59,6 +59,13 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .modes a+a{border-left:1px solid var(--line)}
 .modes a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
 .mode-ultra{display:flex;flex-direction:column;gap:18px}
+.seg2{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg2 button{border:0;background:transparent;padding:6px 8px;font-size:13.5px;cursor:pointer;color:var(--muted)}
+.seg2 button+button{border-left:1px solid var(--line)}
+.seg2 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.profile-card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg);font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.profile-card b{font-weight:600}
+.profile-card .hint a{color:inherit}
 .day-list{display:flex;flex-direction:column}
 .dayrow{padding:12px 14px;border-top:1px solid var(--line);display:grid;gap:5px}
 .dayrow:first-child{border-top:0}
@@ -266,6 +273,31 @@ footer a{color:inherit}
       <div class="field"><label class="label" for="time">Heure</label><input type="time" id="time" step="900"></div>
     </div>
 
+    <div class="mode-ultra" id="ultraSplit" hidden>
+      <div class="field">
+        <span class="label" id="splitLbl">Découpage des jours</span>
+        <div class="seg2" role="group" aria-labelledby="splitLbl" id="splitSeg">
+          <button type="button" data-v="profile" aria-pressed="true">Mon profil</button>
+          <button type="button" data-v="window" aria-pressed="false">Plage horaire</button>
+        </div>
+      </div>
+      <div class="mode-ultra" id="profileBox">
+        <div class="field">
+          <span class="label" id="stratLbl">Stratégie</span>
+          <div class="seg2" role="group" aria-labelledby="stratLbl" id="stratSeg">
+            <button type="button" data-v="course" aria-pressed="true">Course</button>
+            <button type="button" data-v="aventure" aria-pressed="false">Aventure</button>
+          </div>
+          <p class="hint" id="stratHint"></p>
+        </div>
+        <div class="field">
+          <label class="label" for="terrain">Terrain</label>
+          <select id="terrain"><option value="1">Route</option><option value="0.9">Mixte</option><option value="0.8">Gravel</option></select>
+        </div>
+        <div class="profile-card" id="profileCard"></div>
+      </div>
+    </div>
+    <div class="mode-ultra" id="manualSettings">
     <div class="field">
       <label class="label" for="speed">Vitesse sur le plat</label>
       <div class="range"><input type="range" id="speed" min="12" max="40" step="0.5"><output id="speedOut" class="mono"></output></div>
@@ -307,6 +339,7 @@ footer a{color:inherit}
         </details>
       </div>
     </div>
+    </div>
     <div class="field">
       <label class="label" for="windOn">Effet du vent</label>
       <label class="toggle"><input type="checkbox" id="windOn"> Ralentir face au vent, accélérer vent de dos</label>
@@ -314,7 +347,7 @@ footer a{color:inherit}
 
     <div class="mode-ultra" id="ultraSettings">
       <hr class="sep">
-      <div class="field">
+      <div class="field" id="windowBox">
         <label class="toggle"><input type="checkbox" id="windowOn"> <span class="label" style="color:var(--ink)">Rouler sur plusieurs jours</span></label>
         <p class="hint">Rouler seulement dans une plage horaire ; la nuit, la progression s'arrête et reprend le lendemain.</p>
         <div class="row2" id="windowFields">
@@ -578,7 +611,8 @@ function readOpt() {
   return { date: $('#date').value, time: $('#time').value || '08:00', speed: +$('#speed').value, vam: +$('#vam').value,
     pause: +$('#pause').value, windOn: $('#windOn').checked, windowOn: S.mode === 'ultra' && $('#windowOn').checked,
     dayStart: $('#dayStart').value || '07:00', dayEnd: $('#dayEnd').value || '20:00',
-    poiRadius: +$('#poiRadius').value || 500 };
+    poiRadius: +$('#poiRadius').value || 500,
+    split: segVal('#splitSeg'), strat: segVal('#stratSeg'), terrain: +$('#terrain').value || 1 };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -597,8 +631,11 @@ function windowAdjust(t, opt, stops, km) {
 
 function simulate(t0, opt, useWx) {
   const P = S.P, N = P.n, times = new Float64Array(N), stops = [];
-  let t = t0;
-  if (opt.windowOn && useWx !== 'dry-nowin') t = windowAdjust(t, opt, stops, 0);
+  // Page Ultra, découpage « Mon profil » : coût de pente, fatigue, arrêts et sommeil du modèle FlyUltra (opt.fly)
+  const F = opt.fly, FC = F ? flyPrep(P) : null;
+  const dsc = F && F.strat === 'course' ? clamp(FC.rem[0] / (F.vf * 0.9) * (1 + F.rate) / 60, 0.6, 1) : 1;
+  let t = t0, awakeH = 0;
+  if (!F && opt.windowOn && useWx !== 'dry-nowin') t = windowAdjust(t, opt, stops, 0);
   times[0] = t;
   const st = { rain: 0, wetH: 0, headKm: 0, tailKm: 0, crossKm: 0, sunH: 0, rideH: 0, nightH: 0, coldH: 0, missKm: 0,
     tmin: Infinity, tmax: -Infinity, amin: Infinity, amax: -Infinity, gust: 0, prob: 0, headSum: 0 };
@@ -612,8 +649,9 @@ function simulate(t0, opt, useWx) {
     let head = 0;
     if (w) head = w.ws * Math.cos((w.wd - P.b[i]) * RAD);
     const f = (w && opt.windOn) ? clamp(1 - 0.012 * head, 0.55, 1.35) : 1;
-    let dtH = dk / (v * f) + (grade > 0.005 ? dh / opt.vam : 0);
-    dtH *= 1 + opt.pause / 100;
+    let dtH;
+    if (F) dtH = FC.cost[i] / (F.vf * F.fat((t - t0) / 3600e3) * f) * (1 + F.rate);
+    else { dtH = dk / (v * f) + (grade > 0.005 ? dh / opt.vam : 0); dtH *= 1 + opt.pause / 100; }
     if (w) {
       st.rain += w.pr * dtH; if (w.pr >= 0.2) st.wetH += dtH;
       if (head > 5) st.headKm += dk; else if (head < -5) st.tailKm += dk; else st.crossKm += dk;
@@ -625,7 +663,17 @@ function simulate(t0, opt, useWx) {
     } else st.missKm += dk;
     st.rideH += dtH;
     t += dtH * 3600e3;
-    if (opt.windowOn && useWx !== 'dry-nowin') t = windowAdjust(t, opt, stops, P.d[i]);
+    if (F) {
+      awakeH += dtH;
+      if (i < N - 1) {
+        const tt = (t - t0) / 3600e3, dt = new Date(t), clock = dt.getHours() + dt.getMinutes() / 60;
+        const remH = FC.rem[i] / (F.vf * F.fat(tt)) * (1 + F.rate);
+        let sleepH = 0;
+        if (F.strat === 'aventure') { if ((clock >= F.bed || clock < Math.min(F.wake, 4)) && remH > F.push) sleepH = ((F.wake - clock) % 24 + 24) % 24; }
+        else if (((clock - F.ws + 24) % 24) < 4.5 && awakeH >= F.A && remH > F.push) sleepH = F.D * dsc;
+        if (sleepH > 0) { stops.push({ km: P.d[i], from: t, to: t + sleepH * 3600e3, sleep: true }); t += sleepH * 3600e3; awakeH = 0; }
+      }
+    } else if (opt.windowOn && useWx !== 'dry-nowin') t = windowAdjust(t, opt, stops, P.d[i]);
     times[i] = t;
   }
   return { times, stops, st, start: times[0], end: t };
@@ -642,6 +690,7 @@ async function run() {
   if (!S.P) return;
   const id = ++runId, opt = readOpt();
   saveOpt(opt);
+  if (S.mode === 'ultra' && opt.split === 'profile') { opt.fly = flyRider(opt); flyProfileLoad(); }
   const t0 = startMs(opt);
   const cand = []; // meilleure heure de départ : page Sortie seulement
   if (S.mode === 'ride') for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
@@ -1079,7 +1128,7 @@ function handleFile(file) {
 const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : 'pmr-opt');
 const MODE_DEF = {
   ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, windowOn: false, dayStart: '07:00', dayEnd: '20:00', poiRadius: 500 },
-  ultra: { time: '06:00', speed: 22, vam: 600, pause: 20, windOn: true, windowOn: true, dayStart: '06:00', dayEnd: '21:00', poiRadius: 500 }
+  ultra: { time: '06:00', speed: 22, vam: 600, pause: 20, windOn: true, windowOn: true, dayStart: '06:00', dayEnd: '21:00', poiRadius: 500, split: 'profile', strat: 'course', terrain: 1 }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
@@ -1090,6 +1139,8 @@ function initInputs() {
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn; $('#windowOn').checked = !!def.windowOn; $('#dayStart').value = def.dayStart; $('#dayEnd').value = def.dayEnd;
   $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
+  setSeg('#splitSeg', def.split === 'window' ? 'window' : 'profile'); setSeg('#stratSeg', def.strat === 'aventure' ? 'aventure' : 'course');
+  $('#terrain').value = String([1, 0.9, 0.8].includes(+def.terrain) ? +def.terrain : 1);
   try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
   // type de sorties de référence pour le calage : « route » sur la page Sortie, « voyage » sur la page Ultra (modifiable)
   let k = ''; try { k = localStorage.getItem('pmr-calib-kind-' + S.mode) || ''; } catch (e) {}
@@ -1099,8 +1150,16 @@ function initInputs() {
   syncOutputs();
   if (def.calibOn) calibStart(true);
 }
+const segVal = sel => (document.querySelector(sel + ' button[aria-pressed="true"]') || document.querySelector(sel + ' button')).dataset.v;
+function setSeg(sel, v) { for (const b of document.querySelectorAll(sel + ' button')) b.setAttribute('aria-pressed', String(b.dataset.v === v)); }
 function applyModeUI() {
-  const ultra = S.mode === 'ultra';
+  const ultra = S.mode === 'ultra', prof = ultra && segVal('#splitSeg') === 'profile';
+  $('#ultraSplit').hidden = !ultra; $('#profileBox').hidden = !prof;
+  $('#manualSettings').hidden = prof; $('#windowBox').hidden = prof;
+  $('#stratHint').textContent = segVal('#stratSeg') === 'aventure'
+    ? 'Tu dors chaque nuit, à heures régulières (profil Aventure de FlyUltra, calé sur Chasing the Sun).'
+    : 'Tu dors quand la fatigue l\'impose, en nuits courtes (profils course de FlyUltra).';
+  if (prof) { flyProfileLoad(); renderProfileCard(); }
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
   $('#optCard').hidden = ultra; $('#roadCard').hidden = ultra;
@@ -1112,7 +1171,7 @@ function switchMode(m) {
   saveOpt(readOpt()); // réglages de la page qu'on quitte
   if (CAL.on) { CAL.seq++; CAL.on = false; lockSliders(false); $('#calibBox').hidden = true; }
   S.mode = m;
-  applyModeUI(); initInputs(); renderPois(); renderDays();
+  applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderDays();
   schedule();
 }
 window.addEventListener('hashchange', () => switchMode(location.hash === '#ultra' ? 'ultra' : 'ride'));
@@ -1191,6 +1250,7 @@ async function calibFetch() {
   const rides = (data || []).filter(a => RIDE_TYPES.has(a.sport_type) && !a.is_trainer && a.distance_m >= 10000 && a.moving_time_s >= 1200)
     .map(a => ({ key: rideKey(a), date: String(a.start_local).slice(0, 10), name: a.name || '', km: a.distance_m / 1000,
       dplus: a.elevation_gain_m || 0, h: a.moving_time_s / 3600, moving: a.moving_time_s, elapsed: +a.elapsed || 0,
+      startH: (m => (m ? +m[1] + m[2] / 60 : null))(String(a.start_local).match(/T(\d\d):(\d\d)/)),
       ll: Array.isArray(a.ll) && a.ll.length === 2 && Number.isFinite(+a.ll[0]) ? [+a.ll[0], +a.ll[1]] : null,
       tz: a.tz ? String(a.tz).replace(/^\(GMT[^)]*\)\s*/, '') : '' }));
   classifyRides(rides);
@@ -1577,6 +1637,105 @@ $('#poiRows').addEventListener('click', e => {
   $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
+/* ---------- page Ultra : profil de rouleur (modèle FlyUltra) ---------- */
+// FlyUltra (simulateur d'arrivées d'ultra, calé sur 21 courses / ~3 000 traces) appliqué à un seul coureur :
+// - vitesse « équivalent plat » vf tirée des longues sorties route de l'historique, avec le coût de pente FlyUltra
+//   (montée ×(1+18·pente), descente ×max(0,7 ; 1−9·pente)) ; à défaut, coureur médian du profil Standard ;
+// - position p dans un peloton Standard (vf = 27·(1 − 0,30·0,95·p)) → groupe, arrêts courts et sommeil du modèle ;
+// - stratégie Course (sommeil quand la fatigue l'impose) ou Aventure (chaque nuit, heures tirées des voyages).
+const FLY = { prof: null, loading: false };
+const FLY_GROUPS = [['Tête de course', 0.10], ['Poursuivants', 0.25], ['Peloton', 0.50], ['Suite de peloton', 0.80], ['Queue de peloton', 1.01]];
+const flyCost = (km, dplusM) => { const h = dplusM / 1000; return km + 18 * h - Math.min(9 * h, 0.15 * km); };
+function flyPrep(P) {
+  if (P._fly) return P._fly;
+  const n = P.n, g = new Float32Array(n), cost = new Float64Array(n), rem = new Float64Array(n);
+  let j0 = 0, j1 = 0;
+  for (let i = 0; i < n; i++) { // pente lissée sur ±250 m, bornée à ±15 %
+    while (P.d[j0] < P.d[i] - 0.25) j0++;
+    if (j1 < i) j1 = i;
+    while (j1 < n - 1 && P.d[j1 + 1] <= P.d[i] + 0.25) j1++;
+    const span = P.d[j1] - P.d[j0];
+    g[i] = span > 0.05 ? clamp((P.es[j1] - P.es[j0]) / (span * 1000), -0.15, 0.15) : 0;
+  }
+  for (let i = 1; i < n; i++) { const dk = P.d[i] - P.d[i - 1], gg = g[i]; cost[i] = dk * (gg >= 0 ? 1 + 18 * gg : Math.max(0.7, 1 - 9 * -gg)); }
+  for (let i = n - 2; i >= 0; i--) rem[i] = rem[i + 1] + cost[i + 1];
+  return (P._fly = { g, cost, rem });
+}
+async function flyProfileLoad(force) {
+  if ((FLY.prof || FLY.loading) && !force) return;
+  FLY.loading = true; renderProfileCard();
+  let res; try { res = await calibFetch(); } catch (e) { res = { error: 'réseau' }; }
+  FLY.loading = false;
+  FLY.prof = flyProfileFrom(res.rides || [], res.error);
+  renderProfileCard();
+  if (S.mode === 'ultra' && segVal('#splitSeg') === 'profile') schedule();
+}
+function flyProfileFrom(rides, error) {
+  const med = a => { const x = [...a].sort((u, v) => u - v); return x.length ? x[Math.floor(x.length / 2)] : null; };
+  let long = rides.filter(r => r.cat === 'route' && (r.h >= 3 || r.km >= 80));
+  if (long.length < 3) long = rides.filter(r => r.cat === 'route' && r.h >= 1.5);
+  let vf = null, rateHist = null;
+  if (long.length >= 3) {
+    vf = long.reduce((s, r) => s + flyCost(r.km, r.dplus), 0) / long.reduce((s, r) => s + r.h, 0);
+    rateHist = med(long.filter(r => r.elapsed > r.moving).map(r => (r.elapsed - r.moving) / r.moving));
+  }
+  // journées enchaînées (au moins 2 jours de suite à 50 km ou plus) : rythme de voyage
+  const byDay = new Map();
+  for (const r of rides) {
+    const d = byDay.get(r.date) || { date: r.date, km: 0, h: 0, el: 0, s: 99, e: 0 };
+    const elH = (r.elapsed || r.moving) / 3600;
+    d.km += r.km; d.h += r.h; d.el += elH;
+    if (r.startH != null) { d.s = Math.min(d.s, r.startH); d.e = Math.max(d.e, r.startH + elH); }
+    byDay.set(r.date, d);
+  }
+  const days = [...byDay.values()].filter(d => d.km >= 50).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const seqs = []; let seq = [];
+  for (const d of days) { const p = seq[seq.length - 1]; if (p && dayGap(p.date, d.date) <= 1.01) seq.push(d); else { if (seq.length >= 2) seqs.push(seq); seq = [d]; } }
+  if (seq.length >= 2) seqs.push(seq);
+  const multi = seqs.flat();
+  // heure de départ : hors 1er jour (souvent après le trajet) ; heure d'arrêt : hors dernier jour (souvent écourté)
+  const starts = seqs.flatMap(q => q.slice(1)).filter(d => d.s < 99).map(d => d.s);
+  const ends = seqs.flatMap(q => q.slice(0, -1)).filter(d => d.e > 0).map(d => d.e);
+  const trip = multi.length ? { days: multi.length, trips: seqs.length, km: med(multi.map(d => d.km)), rideH: med(multi.map(d => d.h)),
+    start: med(starts), end: med(ends), rate: med(multi.map(d => (d.el > d.h ? (d.el - d.h) / d.h : 0))) } : null;
+  return { n: long.length, vf, rateHist, trip, source: vf ? 'history' : (error === 'login' ? 'login' : error ? 'error' : 'none') };
+}
+function flyRider(opt) {
+  const pr = FLY.prof, terr = +opt.terrain || 1;
+  const vf0 = pr && pr.vf ? pr.vf : 27 * (1 - 0.3 * 0.95 * 0.5);
+  const p = clamp((1 - vf0 / 27) / (0.3 * 0.95), 0, 1), q = p * p, vf = vf0 * terr;
+  if (opt.strat === 'aventure') {
+    const tr = pr && pr.trip;
+    return { strat: 'aventure', vf, p, q, rate: tr && tr.rate != null ? clamp(tr.rate, 0.1, 0.8) : 0.425,
+      wake: tr && tr.start != null ? clamp(tr.start, 5, 10) : 7.6, bed: tr && tr.end != null ? clamp(tr.end, 16, 22.5) : 18.9, push: 4.63,
+      fat: tt => (tt < 24 ? 1 : 0.949) };
+  }
+  return { strat: 'course', vf, p, q, rate: 0.01 + 0.23 * 0.95 * p, D: Math.min(12, 3.5 + 3.5 * 0.95 * p), A: 12.5 + 6 * (1 - p), ws: 22,
+    push: q < 0.25 ? 6 : 3, fat: tt => (tt < 6 ? 1 : tt < 36 ? 0.9 : 0.85) };
+}
+const hhmm = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60) % 24} h ${String(m % 60).padStart(2, '0')}`; };
+function renderProfileCard() {
+  const el = $('#profileCard'); if (!el) return;
+  if (FLY.loading) { el.innerHTML = '<p class="hint">Analyse de tes sorties…</p>'; return; }
+  const pr = FLY.prof, opt = readOpt(), R = flyRider(opt), grp = FLY_GROUPS.find(g => R.q <= g[1])[0];
+  const L = [];
+  if (!pr || pr.source !== 'history') L.push(pr && pr.source === 'login'
+    ? '<p class="hint">Connecte-toi à <a href="coach.html">Coach Miguel</a> pour caler ce profil sur tes sorties. En attendant : coureur médian du modèle.</p>'
+    : '<p class="hint">Pas assez de longues sorties pour caler ton profil : coureur médian du modèle.</p>');
+  L.push(`<div>Ton profil : <b>${grp}</b> d'un ultra « Standard » (environ ${Math.round(R.q * 100)} % des participants devant toi).</div>`);
+  L.push(`<div>Vitesse équivalent plat : <b>${n1(R.vf)} km/h</b>${(+opt.terrain || 1) !== 1 ? ' (terrain compris)' : ''}${pr && pr.n ? `, d'après tes ${pr.n} plus longues sorties route` : ''}.</div>`);
+  L.push(`<div>Arrêts courts : <b>${n0(R.rate * 60)} min</b> par heure roulée.</div>`);
+  if (R.strat === 'course') L.push(`<div>Sommeil : <b>${durTxt(R.D)}</b> par nuit (moins sur une course courte), entre 22 h et 2 h 30, après au moins ${n0(R.A)} h d'éveil ; pas d'arrêt s'il reste moins de ${R.push} h de vélo.</div>`);
+  else L.push(`<div>Journées : départ vers <b>${hhmm(R.wake)}</b>, arrêt vers <b>${hhmm(R.bed)}</b>${pr && pr.trip ? `, comme sur tes sorties de plusieurs jours (${pr.trip.trips} séjours, ${pr.trip.days} jours, ${n0(pr.trip.km)} km par jour en médiane)` : ''}.</div>`);
+  L.push('<p class="hint">Modèle FlyUltra (calé sur 21 courses, environ 3 000 traces) appliqué à ton historique.</p>');
+  el.innerHTML = L.join('');
+}
+for (const sel of ['#splitSeg', '#stratSeg']) $(sel).addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  setSeg(sel, b.dataset.v); applyModeUI(); renderProfileCard(); schedule();
+});
+$('#terrain').addEventListener('change', () => { renderProfileCard(); schedule(); });
+
 /* ---------- page Ultra : jour par jour ---------- */
 // Découpage selon la plage de roulage (reprise / bivouac). Pour chaque jour : distance, D+, horaires, météo si
 // disponible, hébergements autour du bivouac, dernier ravito ouvert avant le bivouac et premier ravito ouvert le lendemain.
@@ -1590,7 +1749,7 @@ function renderDays() {
   const card = $('#dayCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
   card.hidden = !on; if (!on) return;
   const P = S.P, tl = S.tl, up = cumUp();
-  const nights = tl.stops.filter(s => s.to - s.from >= 3 * 3600e3 && s.km > 0);
+  const nights = tl.stops.filter(s => (s.sleep || s.to - s.from >= 3 * 3600e3) && s.km > 0);
   const days = []; let a = { km: 0, t: tl.start };
   for (const n of nights) { days.push({ a, b: { km: n.km, t: n.from }, night: n }); a = { km: n.km, t: n.to }; }
   days.push({ a, b: { km: P.total, t: tl.end }, night: null });
@@ -1611,9 +1770,10 @@ function renderDays() {
       ? `Météo : <b>${n0(tmin)} à ${n0(tmax)} °C</b> ressentis · pluie <b>${n1(rain)} mm</b> · vent de face <b>${Math.round(headKm / cov * 100)} %</b>`
       : 'Météo : pas encore de prévision pour ce jour (disponible 16 jours avant).';
     const lines = [`<div class="ln">${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)}</div>`, `<div class="ln">${wxLine}</div>`];
+    if (d.night) lines.push(`<div class="ln">Nuit au km ${n0(d.b.km)} : <b>${hm.format(new Date(d.night.from))} → ${hm.format(new Date(d.night.to))}</b> (${durTxt((d.night.to - d.night.from) / 3600e3)})</div>`);
     if (d.night && POI.list.length) {
       const beds = POI.list.filter(p => p.g === 'sleep' && Math.abs(p.km - d.b.km) <= 10).sort((x, y) => Math.abs(x.km - d.b.km) - Math.abs(y.km - d.b.km)).slice(0, 4);
-      lines.push(`<div class="ln">Bivouac km ${n0(d.b.km)} : ${beds.length ? beds.map(poiFmt).join(' · ') : 'aucun hébergement référencé à moins de 10 km'}</div>`);
+      lines.push(`<div class="ln">Pour dormir : ${beds.length ? beds.map(poiFmt).join(' · ') : 'aucun hébergement référencé à moins de 10 km'}</div>`);
       const lastOpen = resup.filter(p => p.km <= d.b.km && p.km >= d.b.km - 40 && p.st.cls === 'open').sort((x, y) => y.km - x.km)[0];
       lines.push(`<div class="ln">Dernier ravito ouvert avant le bivouac : ${lastOpen ? poiFmt(lastOpen) + ` à ${whenTxt(lastOpen.t, d.a.t)}` : '<b>aucun dans les 40 derniers km</b>, prévois des réserves'}</div>`);
       const firstOpen = resup.filter(p => p.km >= d.b.km && p.km <= d.b.km + 60 && p.st.cls === 'open').sort((x, y) => x.km - y.km)[0];
@@ -1622,8 +1782,10 @@ function renderDays() {
     return `<div class="dayrow"><div class="top"><h3>Jour ${k + 1} · ${dayFmt.format(new Date(d.a.t))}</h3><span class="kpi">${n0(dist)} km · D+ ${n0(dplus)} m · ${durTxt((d.b.t - d.a.t) / 3600e3)}</span></div>${lines.join('')}</div>`;
   });
   $('#dayList').innerHTML = html.join('');
-  $('#dayHint').textContent = $('#windowOn').checked
-    ? `Découpage selon ta plage de roulage (${$('#dayStart').value} → ${$('#dayEnd').value}). Le découpage selon ton profil de rouleur arrive bientôt.`
+  $('#dayHint').textContent = segVal('#splitSeg') === 'profile'
+    ? `Découpage selon ton profil de rouleur (modèle FlyUltra, stratégie ${segVal('#stratSeg') === 'aventure' ? 'Aventure' : 'Course'}).`
+    : $('#windowOn').checked
+    ? `Découpage selon ta plage de roulage (${$('#dayStart').value} → ${$('#dayEnd').value}). Choisis « Mon profil » pour un découpage selon ton profil de rouleur.`
     : 'Sans plage de roulage, la sortie est d\'une traite. Coche « Rouler sur plusieurs jours » pour un découpage par jour.';
 }
 
@@ -1790,6 +1952,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { 
 
 applyModeUI();
 initInputs();
+applyModeUI();
 initMap();
 libInit();
 })();

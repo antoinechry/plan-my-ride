@@ -26,6 +26,15 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Sortie : meilleure heure de départ (`#optCard`) et feuille de route (`#roadCard`). Ultra : plage de roulage multi-jours, rayon des ravitos, cartes « Jour par jour » (`renderDays`) et « Ravitaillement et hébergement » (`renderPois`). Le profil (`#chartCard`) est sur les deux.
 - `renderDays` : un jour par arrêt de nuit de `simulate` (≥ 3 h) ; distance, D+ (`cumUp`), horaires, météo des points d'échantillonnage, hébergements à ±10 km du bivouac, dernier ravito ouvert avant, premier ravito ouvert le lendemain.
 
+## Page Ultra : découpage selon le profil de rouleur (modèle FlyUltra)
+- Réglage « Découpage des jours » : « Mon profil » (défaut) ou « Plage horaire » (ancien modèle vitesse plat + VAM + plage reprise/bivouac).
+- « Mon profil » applique à un seul coureur le modèle de FlyUltra (simulateur d'arrivées d'ultra de l'utilisateur, calé sur 21 courses / ~3 000 traces ; spécification d'origine dans le zip FLYUltra, docs/MODELE.md) :
+  - coût par segment `flyPrep` : pente lissée ±250 m bornée ±15 %, montée ×(1 + 18·g), descente ×max(0,70 ; 1 − 9·|g|) ; `rem` = coût restant ;
+  - `flyProfileFrom` : vitesse équivalent plat vf = Σ coût / Σ temps de déplacement sur les longues sorties « route » (≥ 3 h ou ≥ 80 km), coût d'une sortie résumée = km + 18·D+ − min(9·D+, 0,15·km) ; rythme de voyage (heure de départ hors 1er jour, heure d'arrêt hors dernier jour, arrêts) sur les séjours d'au moins 2 jours à ≥ 50 km/jour ;
+  - `flyRider` : position p dans un peloton Standard (vf = 27·(1 − 0,30·0,95·p)) → groupe ; stratégie Course : arrêts 0,01 + 0,23·0,95·p, sommeil min(12, 3,5 + 3,5·0,95·p) h (× temps de roulage / 60 h, plancher 60 %), entre 22 h et 2 h 30 après 12,5 + 6·(1 − p) h d'éveil, pas d'arrêt s'il reste < 6 h (25 % les plus rapides) ou < 3 h ; fatigue ×0,9 après 6 h, ×0,85 après 36 h. Stratégie Aventure : chaque nuit, de l'heure d'arrêt à l'heure de départ des voyages (à défaut 18 h 54 → 7 h 36), arrêts des voyages (à défaut 0,425), fatigue ×0,949 après 24 h, pas d'arrêt s'il reste < 4 h 38 ;
+  - terrain Route ×1 / Mixte ×0,9 / Gravel ×0,8 sur vf. Le vent (option) s'applique en plus.
+- Dans `simulate`, `opt.fly` remplace la vitesse/VAM/arrêts et la plage horaire ; les nuits sont des `stops` marqués `sleep: true`.
+
 ## Page Ultra : lieux le long de la trace
 - Rayon `#poiRadius` (200 m → 2 km) : requête Overpass (overpass-api.de, repli overpass.kumi.systems) avec `around` sur la trace simplifiée (Douglas-Peucker, morceaux de 180 points). Catégories et étiquettes dans `POI_GROUPS` / `POI_TYPES`.
 - Chaque lieu est rattaché au point de trace le plus proche (km, écart) ; l'heure de passage vient de `S.tl.times`. Horaires évalués avec opening_hours.js 3.15.0 (+ suncalc 1.9.0), chargés à la demande depuis jsDelivr.
