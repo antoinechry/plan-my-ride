@@ -252,7 +252,7 @@ function scheduleSave(){
   }, 500);
 }
 async function loadActivities(){
-  const { data, error } = await sb.from('activities').select('*').order('start_local', {ascending:false}).limit(30);
+  const { data, error } = await sb.from('activities').select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,relative_effort,training_load,is_trainer').order('start_local', {ascending:false}).limit(2000);
   if (error) throw error;
   state.acts = data || [];
 }
@@ -383,7 +383,7 @@ async function icuSync(){
     const r = await callFn('intervals', { action:'sync' });
     if (!r.ok){ setMsg($('icumsg'), 'Échec de la synchronisation : '+r.detail, true); return; }
     await loadActivities(); renderCalendar();
-    let m = (r.data.imported||0)+' activité(s) importée(s) depuis le 1er septembre.';
+    let m = (r.data.imported||0)+' activité(s) importée(s) sur les 12 derniers mois.';
     if (r.data.skipped) m += ' '+r.data.skipped+' ignorée(s) (venues de Strava : connecte ta montre ou ton compteur directement à intervals.icu).';
     setMsg($('icumsg'), m);
   } finally { $('icusync').disabled = false; }

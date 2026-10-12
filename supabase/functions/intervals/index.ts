@@ -5,7 +5,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 //   status                      → { connected, athlete_id }
 //   link { api_key, athlete_id? } → vérifie la clé auprès d'intervals.icu puis l'enregistre
 //   unlink                      → supprime la clé
-//   sync                        → importe les activités depuis IMPORT_FROM
+//   sync                        → importe les activités des IMPORT_DAYS derniers jours
 // La clé n'est jamais renvoyée au navigateur.
 
 const CORS = {
@@ -17,7 +17,8 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
 const API = 'https://intervals.icu/api/v1';
-const IMPORT_FROM = '2026-09-01';
+// Fenêtre glissante d'import : 12 mois (intervals.icu doit avoir l'historique, cf. « Téléch. d'anciennes données »).
+const IMPORT_DAYS = 365;
 
 const auth = (key: string) => 'Basic ' + btoa('API_KEY:' + key);
 const cleanAthlete = (v: unknown) => {
@@ -81,7 +82,8 @@ Deno.serve(async (req: Request) => {
     if (!k) return json({ error: 'not_connected' }, 409);
 
     const newest = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-    const url = `${API}/athlete/${k.athlete_id}/activities?oldest=${IMPORT_FROM}&newest=${newest}`;
+    const oldest = new Date(Date.now() - IMPORT_DAYS * 86400000).toISOString().slice(0, 10);
+    const url = `${API}/athlete/${k.athlete_id}/activities?oldest=${oldest}&newest=${newest}`;
     const r = await fetch(url, { headers: { Authorization: auth(k.api_key) } });
     if (r.status === 401 || r.status === 403) return json({ error: 'clé refusée par intervals.icu', status: r.status }, 502);
     if (r.status === 429) return json({ error: 'rate_limited' }, 429);
@@ -114,12 +116,28 @@ Deno.serve(async (req: Request) => {
     if (rows.length) {
       const { error: upErr } = await admin.from('activities').upsert(rows, { onConflict: 'user_id,source,ext_id' });
       if (upErr) return json({ error: 'store_failed', detail: upErr.message }, 500);
-      // Évite les doublons avec l'ancien cache Strava sur la période couverte par intervals.icu.
-      const earliest = rows.map((x) => String(x.start_local)).sort()[0];
-      await admin.from('activities').delete()
-        .eq('user_id', user.id).eq('source', 'strava').gte('start_local', earliest.slice(0, 10));
+      // Évite les doublons avec l'ancien cache Strava : on ne supprime une ligne Strava que si intervals.icu
+      // a la même sortie (même jour, même sport, distance à 3 % près). Le reste du cache Strava est conservé,
+      // car l'API Strava n'est plus accessible pour le recharger.
+      const earliest = rows.map((x) => String(x.start_local)).sort()[0].slice(0, 10);
+      const { data: old } = await admin.from('activities').select('ext_id,start_local,sport_type,distance_m')
+        .eq('user_id', user.id).eq('source', 'strava').gte('start_local', earliest);
+      const byDay = new Map<string, Record<string, unknown>[]>();
+      for (const x of rows) {
+        const d = String(x.start_local).slice(0, 10);
+        if (!byDay.has(d)) byDay.set(d, []);
+        byDay.get(d)!.push(x);
+      }
+      const dup = (old ?? []).filter((s) => (byDay.get(String(s.start_local).slice(0, 10)) ?? []).some((x) => {
+        const ds = Number(s.distance_m) || 0, dx = Number(x.distance_m) || 0;
+        const sameSport = String(x.sport_type).replace('Virtual', '') === String(s.sport_type).replace('Virtual', '');
+        return sameSport && Math.abs(ds - dx) <= Math.max(300, 0.03 * Math.max(ds, dx));
+      })).map((s) => s.ext_id as string);
+      for (let i = 0; i < dup.length; i += 200) {
+        await admin.from('activities').delete().eq('user_id', user.id).eq('source', 'strava').in('ext_id', dup.slice(i, i + 200));
+      }
     }
-    return json({ ok: true, imported: rows.length, skipped, from: IMPORT_FROM });
+    return json({ ok: true, imported: rows.length, skipped, from: oldest });
   }
 
   return json({ error: 'action inconnue' }, 400);
