@@ -905,14 +905,15 @@ async function run() {
   saveOpt(opt);
   if (S.mode === 'ultra' && opt.split === 'profile') { opt.fly = flyRider(opt); flyProfileLoad(); }
   const t0 = startMs(opt);
-  const cand = []; // meilleure heure de départ : page Sortie seulement
-  if (S.mode === 'ride') for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
-  // fenêtre de prévision nécessaire
-  let endMax = simulate(t0, opt, false).end;
-  for (const c of cand) endMax = Math.max(endMax, simulate(startMs(opt, c), opt, false).end);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const maxDay = new Date(today); maxDay.setDate(maxDay.getDate() + 15);
   const from = new Date(t0); from.setHours(0, 0, 0, 0);
+  // meilleure heure de départ (départs de 4 h à 16 h le même jour), seulement si la date a des prévisions
+  const cand = [];
+  if (from <= maxDay) for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
+  // fenêtre de prévision nécessaire
+  let endMax = simulate(t0, opt, false).end;
+  for (const c of cand) endMax = Math.max(endMax, simulate(startMs(opt, c), opt, false).end);
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
   const src = wxSrc();
@@ -1186,6 +1187,15 @@ async function drawMapTo(c, x0, y0, W, H) {
       c.fillStyle = '#15202a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(lbl, x, by + 7.5); c.textAlign = 'left'; c.textBaseline = 'alphabetic';
     }
   }
+  // lieux le long de la trace (page Ultra), comme les marqueurs de la carte
+  if (S.mode === 'ultra' && POI.shown && POI.shown.length) {
+    for (const p of POI.shown) {
+      const [x, y] = pt(p.lat, p.lon); if (x < x0 - 8 || y < y0 - 8 || x > x0 + W + 8 || y > y0 + H + 8) continue;
+      const closed = p.st && p.st.cls === 'closed';
+      c.globalAlpha = closed ? 0.45 : 1; c.beginPath(); c.arc(x, y, 5.5, 0, 7); c.fillStyle = POI_GROUPS[p.g].col; c.fill();
+      c.lineWidth = 1.6; c.strokeStyle = '#fff'; c.stroke(); c.globalAlpha = 1;
+    }
+  }
   // départ / arrivée
   for (const [p, col] of [[P.pts[0], cssVar('--tail')], [P.pts[P.n - 1], cssVar('--head')]]) {
     const [x, y] = pt(p.lat, p.lon); c.beginPath(); c.arc(x, y, 7, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke();
@@ -1211,10 +1221,20 @@ async function exportImage() {
     const disp = `${cssVar('--f-display').split(',')[0]}, sans-serif`, body = `${cssVar('--f-body').split(',')[0]}, sans-serif`;
     const meas = document.createElement('canvas').getContext('2d'); meas.font = `500 17px ${body}`;
     const tl = S.tl, P = S.P;
-    const sub = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${durTxt((tl.end - tl.start) / 3600e3)} de sortie`; // départ et arrivée sont dans la phrase de résumé
+    const ultra = S.mode === 'ultra';
+    const sub = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${durTxt((tl.end - tl.start) / 3600e3)} ${ultra ? 'au total' : 'de sortie'}`; // départ et arrivée sont dans la phrase de résumé
     const verdictLines = wrapText(meas, $('#verdict').innerText.trim(), MW);
+    // page Ultra : jour par jour (2 lignes par jour)
+    const days = ultra ? daySummaries() : [];
+    const dayLines = days.map((d, k) => ({
+      head: `Jour ${k + 1} · ${dayFmt.format(new Date(d.a.t))}`,
+      main: `${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)} · ${n0(d.dist)} km · D+ ${n0(d.dplus)} m`,
+      sub: (d.wx ? `${n0(d.wx.tmin)} à ${n0(d.wx.tmax)} °C ressentis · pluie ${n1(d.wx.rain)} mm · vent de face ${d.wx.head} %` : 'Pas encore de prévision météo pour ce jour')
+        + (d.night ? ` · nuit au km ${n0(d.b.km)}, ${hm.format(new Date(d.night.from))} → ${hm.format(new Date(d.night.to))}` : ''),
+    }));
+    const daysH = days.length > 1 ? 16 + 28 + dayLines.length * 46 : 0;
     const headH = 34 + 24 + verdictLines.length * 23 + 14, legH = 40, keysH = 26, footH = 30;
-    const H = pad + headH + MH + legH + CH + keysH + footH + pad;
+    const H = pad + headH + MH + legH + CH + keysH + daysH + footH + pad;
     const out = document.createElement('canvas'); out.width = W * s; out.height = H * s;
     const c = out.getContext('2d'); c.scale(s, s);
     c.fillStyle = cssVar('--panel'); c.fillRect(0, 0, W, H);
@@ -1235,6 +1255,15 @@ async function exportImage() {
       c.fillStyle = cssVar('--muted'); c.fillText('Flèches : sens du vent, en km/h', lx, ly); lx += c.measureText('Flèches : sens du vent, en km/h').width + 10;
       for (const w of WIND_SCALE) { c.fillStyle = w[1]; c.beginPath(); c.roundRect(lx, ly - 10, 14, 12, 3); c.fill(); lx += 18; }
     }
+    if (ultra && POI.shown && POI.shown.length) {
+      // une pastille par catégorie de lieux affichée, puis le libellé
+      const groups = [...new Set(POI.shown.map(p => p.g))], txt = 'Lieux (couleur de leur catégorie)';
+      lx += 14;
+      if (lx + groups.length * 12 + 6 + c.measureText(txt).width < pad + MW) {
+        for (const g of groups) { c.fillStyle = POI_GROUPS[g].col; c.beginPath(); c.arc(lx + 5, ly - 4, 5, 0, 7); c.fill(); lx += 12; }
+        lx += 6; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ly);
+      }
+    }
     y += legH;
     c.drawImage(cv, pad, y, MW, CH); y += CH;
     // légende du graphique
@@ -1243,10 +1272,20 @@ async function exportImage() {
       c.fillStyle = col; c.fillRect(lx, ky - 5, 14, 3); lx += 20; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ky); lx += c.measureText(txt).width + 16;
     }
     y += keysH;
+    if (daysH) {
+      y += 16; c.fillStyle = cssVar('--ink'); c.font = `700 18px ${disp}`; c.fillText('Jour par jour', pad, y + 18); y += 28;
+      for (const l of dayLines) {
+        c.font = `700 14.5px ${body}`; c.fillStyle = cssVar('--ink'); c.fillText(l.head, pad, y + 15);
+        const hw = c.measureText(l.head).width + 12;
+        c.font = `500 14.5px ${body}`; c.fillText(l.main, pad + hw, y + 15);
+        c.font = `13px ${body}`; c.fillStyle = cssVar('--muted'); c.fillText(l.sub, pad, y + 35);
+        y += 46;
+      }
+    }
     c.font = `11.5px ${body}`; c.fillStyle = cssVar('--muted');
     c.fillText('Plan My Ride · ' + wxCreditTxt() + ' · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri' + (missing ? ' (fond partiel)' : '') + ' · Horaires estimés', pad, y + 18);
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
-    const fname = `${(S.name || 'sortie').replace(/[^\w\-]+/g, '_')}_${ymd(new Date(tl.start))}.png`;
+    const fname = `${(S.name || (ultra ? 'ultra' : 'sortie')).replace(/[^\w\-]+/g, '_')}_${ymd(new Date(tl.start))}.png`;
     const file = new File([blob], fname, { type: 'image/png' });
     if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: S.name || 'Ma sortie' }); return; } catch (e) { if (e.name === 'AbortError') return; }
@@ -1384,10 +1423,11 @@ function tableRows() {
   }
   return rows;
 }
+const isNight = st => !!st.sleep || st.to - st.from >= 3 * 3600e3;
 function renderTable() {
   const tl = S.tl;
   $('#rows').innerHTML = tableRows().map(r => {
-    if (r.stop) return `<tr class="stop"><td colspan="8">Arrêt au km ${n0(r.stop.km)} : ${whenTxt(r.stop.from, tl.start)} → reprise ${whenTxt(r.stop.to, tl.start)}</td></tr>`;
+    if (r.stop) return `<tr class="stop"><td colspan="8">${isNight(r.stop) ? 'Nuit' : 'Arrêt'} au km ${n0(r.stop.km)} : ${whenTxt(r.stop.from, tl.start)} → reprise ${whenTxt(r.stop.to, tl.start)} (${durTxt((r.stop.to - r.stop.from) / 3600e3)})</td></tr>`;
     const w = r.w, rel = relLabel(r.head);
     return `<tr class="${w && !w.day ? 'night' : ''}"><td class="num">${n1(r.s.km)}</td><td class="num">${whenTxt(r.t, tl.start)}</td><td class="num">${n0(r.ele)} m</td>` +
       (w ? `<td>${skyLabel(w.code, w.day)}</td><td class="num">${n0(w.temp)}° / ${n0(w.app)}°</td>
@@ -1431,14 +1471,14 @@ function exportCsv() {
   const head = ['km', 'passage', 'altitude_m', 'ciel', 'temp_C', 'ressenti_C', 'vent_dir', 'vent_kmh', 'rafales_kmh', 'vent_relatif_kmh(+face)', 'pluie_mm_h', 'proba_pluie_%'];
   const lines = [head.join(';')];
   for (const r of tableRows()) {
-    if (r.stop) { lines.push(`;arrêt ${new Date(r.stop.from).toLocaleString('fr-FR')} -> ${new Date(r.stop.to).toLocaleString('fr-FR')}`); continue; }
+    if (r.stop) { lines.push(`${r.stop.km.toFixed(1)};${isNight(r.stop) ? 'nuit' : 'arrêt'} ${new Date(r.stop.from).toLocaleString('fr-FR')} -> ${new Date(r.stop.to).toLocaleString('fr-FR')}`); continue; }
     const w = r.w;
     lines.push([r.s.km.toFixed(1), new Date(r.t).toLocaleString('fr-FR'), Math.round(r.ele), w ? skyLabel(w.code, w.day) : '', w ? w.temp.toFixed(1) : '', w ? w.app.toFixed(1) : '',
       w ? compass(w.wd) : '', w ? Math.round(w.ws) : '', w && isFinite(w.gust) ? Math.round(w.gust) : '', w ? Math.round(r.head) : '', w ? w.pr.toFixed(1) : '', w ? Math.round(w.prob) : ''].join(';'));
   }
   const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = (S.name || 'sortie').replace(/[^\w\-]+/g, '_') + '_feuille_de_route.csv';
+  a.download = (S.name || (S.mode === 'ultra' ? 'ultra' : 'sortie')).replace(/[^\w\-]+/g, '_') + '_feuille_de_route.csv';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
@@ -1509,7 +1549,6 @@ function applyModeUI() {
   if (prof) { flyProfileLoad(); renderProfileCard(); }
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
-  $('#optCard').hidden = ultra; $('#roadCard').hidden = ultra; $('#exportImg').hidden = ultra;
   $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et étapes jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
   document.title = ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride';
 }
@@ -1963,6 +2002,7 @@ function renderPois() {
   const on = S.mode === 'ultra' && !!S.P;
   $('#poiCard').hidden = !on;
   if (POI.layer) { POI.layer.remove(); POI.layer = null; }
+  POI.shown = [];
   if (!on) return;
   if (!POI.key.startsWith(routeSig() + '|') || !POI.key.endsWith('|' + $('#poiRadius').value)) { poiEnsure(); }
   renderPoiStatus();
@@ -1977,6 +2017,7 @@ function renderPois() {
   }
   const shown = POI.list.filter(p => POI.groups.has(p.g) && (!openOnly || p.st.cls === 'open' || p.g === 'sleep' || p.g === 'water'))
     .sort((a, b) => a.km - b.km || a.off - b.off);
+  POI.shown = shown;
   renderPoiGaps();
   if (map) {
     POI.layer = L.layerGroup().addTo(map);
@@ -2194,19 +2235,16 @@ function cumUp() {
   for (let i = 1; i < S.P.n; i++) c[i] = c[i - 1] + Math.max(0, es[i] - es[i - 1]);
   return (S.P._cumUp = c);
 }
-function renderDays() {
-  const card = $('#dayCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
-  card.hidden = !on; if (!on) return;
-  if (segVal('#splitSeg') === 'profile' && !FLY.loading) fillStrategyTimes(); // valeurs du profil recalculées pour cette trace
+// Découpage en jours (un jour par arrêt de nuit de la simulation) : distance, D+, horaires et météo du jour.
+function daySummaries() {
   const P = S.P, tl = S.tl, up = cumUp();
-  const nights = tl.stops.filter(s => (s.sleep || s.to - s.from >= 3 * 3600e3) && s.km > 0);
+  const nights = tl.stops.filter(s => isNight(s) && s.km > 0);
   const days = []; let a = { km: 0, t: tl.start };
   for (const n of nights) { days.push({ a, b: { km: n.km, t: n.from }, night: n }); a = { km: n.km, t: n.to }; }
   days.push({ a, b: { km: P.total, t: tl.end }, night: null });
-  const poiFmt = p => `${POI_GROUPS[p.g].emo} ${escH(p.name || p.type)} <span class="mono">(km ${n0(p.km)}${p.off >= 100 ? ', ' + (p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km') : ''})</span>`;
-  const resup = POI.list.filter(p => POI_GROUPS[p.g].resupply && p.st);
-  const html = days.map((d, k) => {
-    const ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km), dist = d.b.km - d.a.km, dplus = up[ib] - up[ia];
+  for (const d of days) {
+    const ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km);
+    d.dist = d.b.km - d.a.km; d.dplus = up[ib] - up[ia];
     // météo du jour à partir des points d'échantillonnage
     let tmin = Infinity, tmax = -Infinity, rain = 0, headKm = 0, cov = 0, prev = null;
     if (S.wx) for (let j = 0; j < S.samples.length; j++) {
@@ -2216,8 +2254,21 @@ function renderDays() {
       if (prev) { const dk = sm.km - prev.km, dh = (t - prev.t) / 3600e3; cov += dk; rain += w.pr * Math.max(0, dh); if (w.ws * Math.cos((w.wd - P.b[sm.i]) * RAD) > 5) headKm += dk; }
       prev = { km: sm.km, t };
     }
-    const wxLine = cov > dist * 0.5
-      ? `Météo : <b>${n0(tmin)} à ${n0(tmax)} °C</b> ressentis · pluie <b>${n1(rain)} mm</b> · vent de face <b>${Math.round(headKm / cov * 100)} %</b>`
+    d.wx = cov > d.dist * 0.5 ? { tmin, tmax, rain, head: Math.round(headKm / cov * 100) } : null;
+  }
+  return days;
+}
+function renderDays() {
+  const card = $('#dayCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
+  card.hidden = !on; if (!on) return;
+  if (segVal('#splitSeg') === 'profile' && !FLY.loading) fillStrategyTimes(); // valeurs du profil recalculées pour cette trace
+  const tl = S.tl, days = daySummaries();
+  const poiFmt = p => `${POI_GROUPS[p.g].emo} ${escH(p.name || p.type)} <span class="mono">(km ${n0(p.km)}${p.off >= 100 ? ', ' + (p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km') : ''})</span>`;
+  const resup = POI.list.filter(p => POI_GROUPS[p.g].resupply && p.st);
+  const html = days.map((d, k) => {
+    const dist = d.dist, dplus = d.dplus;
+    const wxLine = d.wx
+      ? `Météo : <b>${n0(d.wx.tmin)} à ${n0(d.wx.tmax)} °C</b> ressentis · pluie <b>${n1(d.wx.rain)} mm</b> · vent de face <b>${d.wx.head} %</b>`
       : 'Météo : pas encore de prévision pour ce jour (disponible 16 jours avant).';
     const lines = [`<div class="ln">${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)}</div>`, `<div class="ln">${wxLine}</div>`];
     if (d.night) lines.push(`<div class="ln">Nuit au km ${n0(d.b.km)} : <b>${hm.format(new Date(d.night.from))} → ${hm.format(new Date(d.night.to))}</b> (${durTxt((d.night.to - d.night.from) / 3600e3)})</div>`);

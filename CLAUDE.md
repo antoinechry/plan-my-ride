@@ -29,8 +29,8 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 ## Deux pages : Sortie et Ultra
 - Onglets « Sortie » / « Ultra » dans l'en-tête ; la page Ultra a l'adresse `#ultra` (`S.mode`, `switchMode`, `applyModeUI`).
 - Chaque page a ses réglages (`pmr-opt` / `pmr-opt-ultra`, défauts dans `MODE_DEF`) ; la page Ultra garde aussi la date de départ. Type de sorties de référence du calage par page (`pmr-calib-kind-ride` / `-ultra`, « voyage » par défaut en Ultra).
-- Sortie : meilleure heure de départ (`#optCard`) et feuille de route (`#roadCard`). Ultra : plage de roulage multi-jours, rayon des ravitos, cartes « Jour par jour » (`renderDays`) et « Ravitaillement et hébergement » (`renderPois`). Le profil (`#chartCard`) est sur les deux.
-- `renderDays` : un jour par arrêt de nuit de `simulate` (≥ 3 h) ; distance, D+ (`cumUp`), horaires, météo des points d'échantillonnage, hébergements à ±10 km du bivouac, dernier ravito ouvert avant, premier ravito ouvert le lendemain.
+- Sur les deux pages : profil (`#chartCard`), meilleure heure de départ (`#optCard`, départs de 4 h à 16 h, calculée seulement si la date a des prévisions), feuille de route (`#roadCard`, nuits en lignes « Nuit au km … » via `isNight`, export CSV) et « Exporter l'image ». Ultra en plus : plage de roulage multi-jours, rayon des ravitos, cartes « Jour par jour » (`renderDays`) et « Ravitaillement et hébergement » (`renderPois`).
+- `daySummaries` : un jour par arrêt de nuit de `simulate` (`sleep` ou ≥ 3 h) avec distance, D+, horaires et météo du jour ; utilisé par `renderDays` et par l'export image de la page Ultra (bloc « Jour par jour », lieux affichés dessinés sur la carte avec la couleur de leur catégorie, `POI.shown`). `renderDays` : distance, D+ (`cumUp`), horaires, météo des points d'échantillonnage, hébergements à ±10 km du bivouac, dernier ravito ouvert avant, premier ravito ouvert le lendemain.
 
 ## Page Ultra : découpage selon le profil de rouleur (modèle FlyUltra)
 - Réglage « Découpage des jours » : « Mon profil » (défaut) ou « Plage horaire » (ancien modèle vitesse plat + VAM + plage reprise/bivouac).
