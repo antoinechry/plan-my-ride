@@ -16,6 +16,7 @@
   --court:#F0DDA0; --court-ink:#6A5210;
   --indispo:#E8C4C7; --indispo-ink:#792A33;
   --focus:#2D5288;
+  --c-alt:#8A958C; --c-spd:#2D6FA8; --c-hr:#C23B4A; --c-pw:#6A4FB0; --c-cad:#A8711A;
   box-sizing:border-box;
 }
 @media (prefers-color-scheme: dark){
@@ -26,6 +27,7 @@
     --court:#4A3F18; --court-ink:#F0D98E;
     --indispo:#4E262B; --indispo-ink:#F1B7BD;
     --focus:#86A9E0;
+    --c-alt:#93A399; --c-spd:#7FB3E6; --c-hr:#F07C88; --c-pw:#AE97F0; --c-cad:#E3B45C;
   }
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -129,6 +131,43 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 .study .set b{font-size:.84rem;color:var(--ink)}
 .study .meta{margin-top:8px;font-size:.76rem;color:var(--muted)}
 .chip.plan{border-left-style:dotted;font-weight:500}
+.chip[data-act]{cursor:zoom-in}
+.chip[data-act]:hover{text-decoration:underline}
+.actrow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:8px;background:var(--surface-2);padding:.5rem .7rem;cursor:pointer}
+.actrow:hover{border-color:var(--ink);border-left-color:var(--c)}
+.actrow .atitle b{font-size:.95rem}
+.actrow .meta{color:var(--muted);font-size:.8rem;margin-left:6px}
+.actrow .asum{grid-column:1;font-size:.84rem;color:var(--muted)}
+.actrow .ago{grid-row:1/3;grid-column:2;font-size:.84rem;font-weight:650}
+dialog.big{width:min(960px,calc(100vw - 24px))}
+.ahead{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.ahead .atitle{flex:1;min-width:0}
+.ahead h3{margin:0 0 2px}
+.ahead .meta{color:var(--muted);font-size:.86rem}
+.ahead a{display:inline-block;font-size:.84rem;color:var(--muted);margin-top:2px}
+#actstats .stats{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.chartbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.chartbar h4{margin:0}
+.xmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.xmode button{border:none;background:var(--surface);padding:.25rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.xmode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.readout{min-height:1.5em;font-size:.82rem;color:var(--muted);margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.readout b{color:var(--ink);font-weight:650}
+.readout i{font-style:normal;display:inline-block;width:.6em;height:.6em;border-radius:2px;margin:0 .25em 0 .7em;background:var(--c)}
+.chartwrap{position:relative;touch-action:pan-y;user-select:none}
+.chartwrap canvas{display:block;width:100%}
+.chartwrap .wait,.zones .wait{color:var(--muted);font-size:.86rem;padding:10px 0}
+.zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px 24px;margin-top:12px}
+.zones h4{margin:0 0 6px}
+.zrow{display:grid;grid-template-columns:10.5em 1fr auto;gap:2px 10px;align-items:center;font-size:.8rem;margin:5px 0}
+.zrow .zl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.zrow .zl small{display:block;color:var(--muted);font-size:.74rem}
+.zrow .zb{height:12px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.zrow .zb span{display:block;height:100%;border-radius:3px}
+.zrow .zv{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:6.5em}
+#actfeel .act{border-left:none;padding:0;margin-top:14px}
+#actfeel .feel{margin-top:4px}
+@media (max-width:640px){ .zrow{grid-template-columns:8.5em 1fr auto} }
 .dot.plan{background:transparent;border:1.5px dashed var(--muted)}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .plist li{border-left:3px dotted var(--c);padding:2px 0 2px 10px;font-size:.9rem}
@@ -282,6 +321,30 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
   </div>
 </dialog>
 
+<dialog id="actdlg" class="big" aria-labelledby="actname">
+  <div class="dlg">
+    <div class="ahead">
+      <div class="atitle"><h3 id="actname"></h3><div class="meta" id="actmeta"></div><a id="actlink" target="_blank" rel="noopener" hidden></a></div>
+      <button class="iconbtn" id="actx" aria-label="Fermer">×</button>
+    </div>
+    <div id="actstats"></div>
+    <div class="chartbar">
+      <h4>Courbes</h4>
+      <div class="xmode" id="xmode" role="group" aria-label="Axe horizontal">
+        <button data-x="dist" aria-pressed="true">Distance</button><button data-x="time" aria-pressed="false">Temps</button>
+      </div>
+    </div>
+    <div class="readout" id="actread" aria-live="off"></div>
+    <div id="actcharts" class="chartwrap"></div>
+    <div id="actzones" class="zones"></div>
+    <div id="actfeel"></div>
+    <div class="dlgfoot">
+      <span class="saved" id="actsave"></span>
+      <button class="btn primary" id="actclose">Fermer</button>
+    </div>
+  </div>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
@@ -416,7 +479,7 @@ function renderCalendar(){
       const j1 = k === key(PLAN_START) ? ' <span class="j1">J1</span>' : '';
       const chips = acts.map(a => {
         const km = a.distance_m ? ' '+(a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
-        return '<span class="chip '+sportCls(a.sport_type)+'">'+esc(sportLabel(a.sport_type))+km+'</span>';
+        return '<span class="chip '+sportCls(a.sport_type)+'" data-act="'+esc(String(a.ext_id))+'" title="Voir la sortie">'+esc(sportLabel(a.sport_type))+km+'</span>';
       }).join('');
       const plans = state.seances[k] || [];
       const planChips = plans.map(p => '<span class="chip plan '+sportCls(p.sport)+'">'+esc(p.titre || sportLabel(p.sport))+'</span>').join('');
@@ -482,32 +545,256 @@ function actStats(a){
   add(a.training_load != null ? 'Charge' : a.relative_effort != null ? 'Effort relatif' : 'Charge estimée', (L.est ? '≈ ' : '')+nf0.format(L.load));
   return '<dl class="stats">'+out.join('')+'</dl>';
 }
+// Fenêtre du jour : liste compacte des activités, chacune ouvre la fenêtre de la sortie.
 function renderActs(k){
   const acts = (actsByDay().get(k) || []).slice().sort((x,y) => String(x.start_local).localeCompare(String(y.start_local)));
   if (!acts.length){ $('dlgacts').innerHTML = ''; return; }
-  $('dlgacts').innerHTML = '<div class="acts">' + acts.map(a => {
-    const id = String(a.ext_id), r = state.ressentis[id] || {}, link = actLink(a);
-    const hm = String(a.start_local||'').slice(11,16).replace(':',' h ');
-    const meta = [sportLabel(a.sport_type)+(a.is_trainer && a.sport_type !== 'VirtualRide' ? ' (intérieur)' : ''), hm].filter(Boolean).join(' · ');
-    const opt = (list, v) => list.map((t,i) => '<option value="'+(i||'')+'"'+(String(v||'') === String(i||'') ? ' selected' : '')+'>'+(t || '—')+'</option>').join('');
-    const pain = r.douleur || '';
-    return '<div class="act" data-id="'+esc(id)+'" style="--c:var(--'+sportCls(a.sport_type)+')">'
-      + '<div class="acthead"><b>'+esc(a.name || sportLabel(a.sport_type))+'</b><span class="meta">'+esc(meta)+'</span>'
-      + (link ? '<a href="'+link.url+'" target="_blank" rel="noopener">Voir sur '+link.label+' ↗</a>' : '') + '</div>'
-      + actStats(a)
-      + '<div class="feel"><span class="feelhead">Mon ressenti</span>'
-      + '<label>Effort<select data-f="rpe">'+opt(RPE_OPTS, r.rpe)+'</select></label>'
-      + '<label>Sensations<select data-f="forme">'+opt(FORME_OPTS, r.forme)+'</select></label>'
-      + '<label>Douleur<select data-f="douleur">'+PAIN_OPTS.map(([v,t]) => '<option value="'+v+'"'+(v === pain ? ' selected' : '')+'>'+t+'</option>').join('')+'</select></label>'
-      + '<label class="wide"'+(pain && pain !== 'aucune' ? '' : ' hidden')+'>Où ?<input data-f="zone" type="text" maxlength="80" placeholder="Ex. genou droit, mollet…" value="'+esc(r.zone||'')+'"></label>'
-      + '<label class="wide">Note pour Miguel<input data-f="note" type="text" maxlength="300" placeholder="Ex. jambes lourdes, vent de face au retour…" value="'+esc(r.note||'')+'"></label>'
-      + '</div>'
-      + '<div class="studybar"><button class="btn" data-study></button><span class="hint"'+(Object.keys(r).length ? ' hidden' : '')+'>Remplis ton ressenti avant : Miguel en tiendra compte.</span></div>'
-      + '<div class="studyout" aria-live="polite"></div>'
-      + '</div>';
+  $('dlgacts').innerHTML = '<h4>Réalisé</h4><div class="acts">' + acts.map(a => {
+    const km = (a.distance_m||0)/1000, L = actLoad(a), hm = String(a.start_local||'').slice(11,16).replace(':',' h ');
+    const sum = [km ? nf1.format(km)+' km' : '', a.moving_time_s ? fmtHM(a.moving_time_s) : '', a.elevation_gain_m ? nf0.format(a.elevation_gain_m)+' m D+' : '', 'charge '+(L.est ? '≈' : '')+nf0.format(L.load)].filter(Boolean).join(' · ');
+    return '<button class="actrow" data-open="'+esc(String(a.ext_id))+'" style="--c:var(--'+sportCls(a.sport_type)+')">'
+      + '<span class="atitle"><b>'+esc(a.name || sportLabel(a.sport_type))+'</b><span class="meta">'+esc(sportLabel(a.sport_type)+(hm ? ' · '+hm : ''))+'</span></span>'
+      + '<span class="ago">Voir la sortie ›</span><span class="asum">'+esc(sum)+'</span></button>';
   }).join('') + '</div>';
-  for (const a of acts) paintStudy(String(a.ext_id));
 }
+$('dlgacts').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openAct(b.dataset.open); });
+
+/* ---------- Fenêtre de la sortie : infos, courbes, zones, ressenti, étude ---------- */
+const rawCache = new Map(), streamCache = new Map();
+const actView = { id: null, a: null, raw: null, st: null, x: 'dist', hover: null, panels: [], frame: 0 };
+const saved = t => { $('actsave').textContent = t; $('savestate').textContent = t; };
+const findAct = id => state.acts.find(x => String(x.ext_id) === String(id));
+function feelHTML(a){
+  const id = String(a.ext_id), r = state.ressentis[id] || {}, pain = r.douleur || '';
+  const opt = (list, v) => list.map((t,i) => '<option value="'+(i||'')+'"'+(String(v||'') === String(i||'') ? ' selected' : '')+'>'+(t || '—')+'</option>').join('');
+  return '<div class="act" data-id="'+esc(id)+'">'
+    + '<div class="feel"><span class="feelhead">Mon ressenti</span>'
+    + '<label>Effort<select data-f="rpe">'+opt(RPE_OPTS, r.rpe)+'</select></label>'
+    + '<label>Sensations<select data-f="forme">'+opt(FORME_OPTS, r.forme)+'</select></label>'
+    + '<label>Douleur<select data-f="douleur">'+PAIN_OPTS.map(([v,t]) => '<option value="'+v+'"'+(v === pain ? ' selected' : '')+'>'+t+'</option>').join('')+'</select></label>'
+    + '<label class="wide"'+(pain && pain !== 'aucune' ? '' : ' hidden')+'>Où ?<input data-f="zone" type="text" maxlength="80" placeholder="Ex. genou droit, mollet…" value="'+esc(r.zone||'')+'"></label>'
+    + '<label class="wide">Note pour Miguel<input data-f="note" type="text" maxlength="300" placeholder="Ex. jambes lourdes, vent de face au retour…" value="'+esc(r.note||'')+'"></label>'
+    + '</div>'
+    + '<div class="studybar"><button class="btn" data-study></button><span class="hint"'+(Object.keys(r).length ? ' hidden' : '')+'>Remplis ton ressenti avant : Miguel en tiendra compte.</span></div>'
+    + '<div class="studyout" aria-live="polite"></div>'
+    + '</div>';
+}
+function actStatsFull(a, raw){
+  let html = actStats(a);
+  if (!raw) return html;
+  const extra = [], add = (t, v) => extra.push('<div><dt>'+t+'</dt><dd>'+v+'</dd></div>'), c = sportCls(a.sport_type);
+  const cad = rawNum(raw,'average_cadence'), IF = rawNum(raw,'icu_intensity'), dec = rawNum(raw,'decoupling'), cal = rawNum(raw,'calories'), tmp = rawNum(raw,'average_weather_temp','average_temp'), vmax = rawNum(raw,'max_speed');
+  if (vmax && c !== 'run') add('Vitesse max', nf1.format(vmax*3.6)+' km/h');
+  if (cad) add('Cadence moyenne', Math.round(cad)+(c === 'run' ? ' pas/min' : ' tr/min'));
+  if (IF) add('Intensité (IF)', nf2.format(IF/100)+(raw.icu_ftp ? ' · FTP '+raw.icu_ftp+' W' : ''));
+  if (dec != null) add('Découplage', nf1.format(dec)+' %');
+  if (cal) add('Calories', nf0.format(cal)+' kcal');
+  if (tmp != null) add('Température', Math.round(tmp)+' °C');
+  return html.replace('</dl>', extra.join('')+'</dl>');
+}
+async function openAct(id){
+  const a = findAct(id); if (!a) return;
+  Object.assign(actView, { id: String(id), a, raw: rawCache.get(String(id)) || null, st: null, hover: null, panels: [] });
+  const d = new Date(String(a.start_local).slice(0,10)+'T00:00:00'), hm = String(a.start_local||'').slice(11,16).replace(':',' h ');
+  $('actname').textContent = a.name || sportLabel(a.sport_type);
+  $('actmeta').textContent = cap(longFmt.format(d))+' '+d.getFullYear()+(hm ? ' · '+hm : '')+' · '+sportLabel(a.sport_type)+(a.is_trainer && a.sport_type !== 'VirtualRide' ? ' (intérieur)' : '');
+  const link = actLink(a);
+  $('actlink').hidden = !link; if (link){ $('actlink').href = link.url; $('actlink').textContent = 'Voir sur '+link.label+' ↗'; }
+  $('actstats').innerHTML = actStatsFull(a, actView.raw);
+  $('actfeel').innerHTML = feelHTML(a); paintStudy(String(id));
+  $('actsave').textContent = '';
+  actView.x = a.is_trainer || !(a.distance_m > 0) ? 'time' : 'dist';
+  for (const b of $('xmode').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.x === actView.x));
+  $('xmode').querySelector('[data-x="dist"]').disabled = !(a.distance_m > 0);
+  $('actread').textContent = '';
+  $('actcharts').innerHTML = '<div class="wait">Chargement des courbes…</div>';
+  $('actzones').innerHTML = '';
+  if (!$('actdlg').open) $('actdlg').showModal();
+  $('actdlg').scrollTop = 0;
+  if (!actView.raw){
+    const { data } = await sb.from('activities').select('raw').eq('source', a.source).eq('ext_id', a.ext_id).maybeSingle();
+    if (actView.id !== String(id)) return;
+    actView.raw = (data && data.raw) || {}; rawCache.set(String(id), actView.raw);
+    $('actstats').innerHTML = actStatsFull(a, actView.raw);
+  }
+  renderZones();
+  if (a.source !== 'intervals'){ $('actcharts').innerHTML = '<div class="wait">Courbes non disponibles : cette activité vient de l\'ancien import Strava.</div>'; return; }
+  let st = streamCache.get(String(id));
+  if (!st){
+    const res = await callFn('intervals', { action: 'streams', ext_id: a.ext_id });
+    if (actView.id !== String(id)) return;
+    if (!res.ok){ $('actcharts').innerHTML = '<div class="wait">'+(/no_streams/.test(res.detail) ? 'Pas de courbes enregistrées pour cette activité.' : 'Courbes indisponibles ('+esc(res.detail)+').')+'</div>'; return; }
+    st = res.data; streamCache.set(String(id), st);
+  }
+  actView.st = st;
+  buildCharts();
+}
+
+/* Zones de puissance et de FC (réglages intervals.icu au moment de l'activité) */
+const ZONE_COLORS = ['#8E9AA6', '#3E86C4', '#3FA66B', '#E0B12F', '#E07A32', '#D24B4B', '#8C46B0'];
+const PZ_NAMES = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'VO2max', 'Anaérobie', 'Neuromusculaire'];
+const HZ_NAMES = ['Récupération', 'Aérobie', 'Tempo', 'Sous-seuil', 'Super-seuil', 'Capacité aérobie', 'Anaérobie'];
+function zoneBlock(title, rows){
+  const tot = rows.reduce((s,r) => s + r.secs, 0); if (!tot) return '';
+  return '<div><h4>'+title+'</h4>' + rows.map((r,i) => {
+    const pct = Math.round(100*r.secs/tot);
+    return '<div class="zrow"><span class="zl">Z'+(i+1)+' '+esc(r.name)+(r.range ? ' <small>'+esc(r.range)+'</small>' : '')+'</span>'
+      + '<span class="zb"><span style="width:'+(100*r.secs/tot).toFixed(1)+'%;background:'+ZONE_COLORS[i]+'"></span></span>'
+      + '<span class="zv">'+(r.secs ? fmtHM(r.secs)+' · '+pct+' %' : '—')+'</span></div>';
+  }).join('') + '</div>';
+}
+function renderZones(){
+  const raw = actView.raw || {}, out = [];
+  const zt = Array.isArray(raw.icu_zone_times) ? raw.icu_zone_times.filter(z => /^Z\d$/.test(z.id)) : [];
+  const pz = Array.isArray(raw.icu_power_zones) ? raw.icu_power_zones : [], ftp = num(raw.icu_ftp);
+  if (zt.length){
+    out.push(zoneBlock('Temps par zone de puissance', zt.map((z,i) => {
+      const lo = i ? pz[i-1] : 0, hi = pz[i];
+      const range = ftp && pz.length ? (hi == null || hi >= 900 ? '> '+Math.round(ftp*lo/100)+' W' : (i ? Math.round(ftp*lo/100)+1 : 0)+'–'+Math.round(ftp*hi/100)+' W') : '';
+      return { name: PZ_NAMES[i] || z.id, range, secs: z.secs || 0 };
+    })));
+  }
+  const ht = Array.isArray(raw.icu_hr_zone_times) ? raw.icu_hr_zone_times : [], hz = Array.isArray(raw.icu_hr_zones) ? raw.icu_hr_zones : [];
+  if (ht.some(x => x > 0)){
+    out.push(zoneBlock('Temps par zone de FC', ht.map((x,i) => ({ name: HZ_NAMES[i] || 'Z'+(i+1), secs: x || 0,
+      range: hz.length ? (i ? (hz[i-1]+1)+'–'+hz[i] : '< '+hz[0])+' bpm' : '' }))));
+  }
+  $('actzones').innerHTML = out.join('');
+}
+
+/* Courbes : altitude, vitesse (ou allure), FC, puissance, cadence — canvas, curseur commun */
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmtClock = s => { s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60); return h+':'+pad(m)+':'+pad(s%60); };
+const fmtPace = v => { const p = Math.round(v*60); return Math.floor(p/60)+':'+pad(p%60); };
+function chartDefs(){
+  const st = actView.st, run = sportCls(actView.a.sport_type) === 'run', defs = [];
+  const v = st.velocity ? st.velocity.map(x => x == null ? null : x*3.6) : null;
+  if (st.altitude) defs.push({ key:'alt', label:'Altitude', unit:' m', color:'--c-alt', h:70, area:true, data: st.altitude, fmt: x => nf0.format(x) });
+  if (v && !run) defs.push({ key:'spd', label:'Vitesse', unit:' km/h', color:'--c-spd', h:76, data: v, zero:true, fmt: x => nf1.format(x) });
+  if (v && run) defs.push({ key:'pace', label:'Allure', unit:' /km', color:'--c-spd', h:76, invert:true, data: v.map(x => x == null || x < 3 ? null : Math.min(15, 60/x)), fmt: fmtPace });
+  if (st.heartrate) defs.push({ key:'hr', label:'FC', unit:' bpm', color:'--c-hr', h:80, data: st.heartrate, fmt: x => Math.round(x) });
+  if (st.watts) defs.push({ key:'pw', label:'Puissance', unit:' W', color:'--c-pw', h:80, data: st.watts, zero:true, fmt: x => Math.round(x) });
+  if (st.cadence) defs.push({ key:'cad', label:'Cadence', unit: run ? ' pas/min' : ' tr/min', color:'--c-cad', h:64, data: st.cadence, zero:true, nz:true, fmt: x => Math.round(x) });
+  return defs;
+}
+function quant(arr, q){ const v = arr.filter(x => x != null).sort((a,b) => a-b); return v.length ? v[Math.min(v.length-1, Math.floor(q*(v.length-1)))] : 0; }
+function niceStep(range, n){ const raw = range/n, p = 10**Math.floor(Math.log10(raw)), m = raw/p; return (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10)*p; }
+function buildCharts(){
+  const st = actView.st, wrap = $('actcharts');
+  const defs = chartDefs();
+  if (!defs.length){ wrap.innerHTML = '<div class="wait">Pas de courbes enregistrées pour cette activité.</div>'; return; }
+  // Axe horizontal : distance (km) ou temps (s), complété là où il manque.
+  let lastD = 0;
+  actView.xd = (st.distance || []).map(x => (x == null ? lastD : (lastD = x)) / 1000);
+  actView.xt = st.time || st.altitude.map((_,i) => i*(st.step||1));
+  for (const d of defs){
+    const vals = d.data.filter(x => x != null && (!d.nz || x > 0));
+    d.avg = vals.length ? vals.reduce((s,x) => s+x, 0)/vals.length : null;
+    d.max = d.invert ? quant(d.data, 0) : Math.max(...vals);
+    let lo = d.zero ? 0 : quant(d.data, 0.005), hi = quant(d.data, d.key === 'pw' ? 0.995 : 1);
+    if (d.invert){ lo = quant(d.data, 0.01); hi = quant(d.data, 0.97); }
+    const pad = (hi - lo || 1)*0.08;
+    d.lo = d.zero ? 0 : lo - pad; d.hi = hi + pad;
+  }
+  wrap.innerHTML = defs.map((d,i) => '<canvas data-i="'+i+'" height="'+(d.h + (i === defs.length-1 ? 18 : 0))+'"></canvas>').join('');
+  actView.panels = defs.map((d,i) => Object.assign(d, { cv: wrap.querySelectorAll('canvas')[i], last: i === defs.length-1 }));
+  drawCharts(); readout(null);
+}
+const CH_L = 46, CH_R = 10, CH_T = 16;
+function xsNow(){ return actView.x === 'dist' && actView.xd.length ? actView.xd : actView.xt; }
+function drawCharts(){
+  const xs = xsNow(), n = xs.length; if (!n) return;
+  const x0 = xs[0], x1 = xs[n-1] || 1, dpr = window.devicePixelRatio || 1;
+  const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line'), font = '11px Archivo, system-ui, sans-serif';
+  for (const p of actView.panels){
+    const cv = p.cv, W = cv.parentElement.clientWidth, H = p.h + (p.last ? 18 : 0);
+    if (cv.width !== Math.round(W*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); cv.style.height = H+'px'; }
+    const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+    const pw = W - CH_L - CH_R, ph = p.h - CH_T - 4, X = x => CH_L + (x - x0)/(x1 - x0)*pw;
+    const Y = v => { const t = (v - p.lo)/(p.hi - p.lo); return CH_T + (p.invert ? t : 1 - t)*ph; };
+    // grille et graduations
+    g.font = font; g.textBaseline = 'middle'; g.strokeStyle = line; g.lineWidth = 1; g.fillStyle = muted; g.textAlign = 'right';
+    const step = niceStep(p.hi - p.lo, 3);
+    for (let v = Math.ceil(p.lo/step)*step; v <= p.hi; v += step){
+      const y = Math.round(Y(v)) + .5; if (y < CH_T - 2 || y > CH_T + ph + 2) continue;
+      g.beginPath(); g.moveTo(CH_L, y); g.lineTo(W - CH_R, y); g.stroke();
+      g.fillText(p.fmt(v), CH_L - 6, y);
+    }
+    // titre du panneau
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillStyle = ink; g.font = '600 11px Archivo, system-ui, sans-serif';
+    const head = p.label + (p.avg != null ? '  moy. '+p.fmt(p.avg)+p.unit : '') + (p.max != null && isFinite(p.max) ? (p.invert ? '  meilleure ' : '  max ')+p.fmt(p.max)+p.unit : '');
+    g.fillText(head, CH_L, 11);
+    // courbe
+    const col = cssVar(p.color);
+    g.save(); g.beginPath(); g.rect(CH_L, CH_T - 1, pw, ph + 2); g.clip();
+    g.beginPath(); let on = false, firstX = null, lastX = null;
+    for (let i = 0; i < n; i++){
+      const v = p.data[i]; if (v == null){ on = false; continue; }
+      const x = X(xs[i]), y = Y(Math.max(p.lo, Math.min(p.hi, v)));
+      if (!on){ g.moveTo(x, y); on = true; if (firstX == null) firstX = x; } else g.lineTo(x, y);
+      lastX = x;
+    }
+    g.strokeStyle = col; g.lineWidth = p.area ? 1.2 : 1.1; g.stroke();
+    if (p.area && firstX != null){
+      g.lineTo(lastX, CH_T + ph); g.lineTo(firstX, CH_T + ph); g.closePath();
+      g.globalAlpha = .22; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
+    }
+    g.restore();
+    // axe horizontal (dernier panneau)
+    if (p.last){
+      g.fillStyle = muted; g.font = font; g.textAlign = 'center'; g.textBaseline = 'top';
+      const dist = actView.x === 'dist' && actView.xd.length;
+      const st2 = dist ? niceStep(x1 - x0, 7) : [300,600,900,1800,3600,7200].find(s => (x1 - x0)/s <= 8) || 7200;
+      for (let v = Math.ceil(x0/st2)*st2; v <= x1; v += st2){
+        const x = X(v); if (x < CH_L + 10 || x > W - CH_R - 10) continue;
+        g.fillText(dist ? nf0.format(v)+' km' : Math.floor(v/3600)+':'+pad(Math.round(v%3600/60)), x, p.h + 2);
+      }
+    }
+    // curseur
+    if (actView.hover != null){
+      const x = Math.round(X(xs[actView.hover])) + .5;
+      g.strokeStyle = ink; g.globalAlpha = .55; g.beginPath(); g.moveTo(x, CH_T - 2); g.lineTo(x, CH_T + ph + 2); g.stroke(); g.globalAlpha = 1;
+      const v = p.data[actView.hover];
+      if (v != null){ g.fillStyle = col; g.beginPath(); g.arc(x, Y(Math.max(p.lo, Math.min(p.hi, v))), 3, 0, 7); g.fill(); }
+    }
+  }
+}
+function readout(i){
+  const el = $('actread');
+  if (i == null){ el.textContent = 'Survole ou fais glisser le doigt sur les courbes pour lire les valeurs.'; return; }
+  const parts = [];
+  if (actView.xd.length) parts.push('<b>'+nf1.format(actView.xd[i])+' km</b>');
+  parts.push('<b>'+fmtClock(actView.xt[i] || 0)+'</b>');
+  for (const p of actView.panels){ const v = p.data[i]; if (v != null) parts.push('<i style="--c:var('+p.color+')"></i>'+esc(p.label)+' <b>'+p.fmt(v)+p.unit+'</b>'); }
+  el.innerHTML = parts.join(' ');
+}
+function hoverAt(clientX){
+  const cv = actView.panels[0] && actView.panels[0].cv; if (!cv) return;
+  const r = cv.getBoundingClientRect(), W = r.width, pw = W - CH_L - CH_R, xs = xsNow(), n = xs.length;
+  const t = (clientX - r.left - CH_L)/pw;
+  if (t < 0 || t > 1){ actView.hover = null; readout(null); }
+  else {
+    const target = xs[0] + t*(xs[n-1] - xs[0]); let lo = 0, hi = n - 1;
+    while (lo < hi){ const m = (lo + hi) >> 1; if (xs[m] < target) lo = m + 1; else hi = m; }
+    actView.hover = lo; readout(lo);
+  }
+  cancelAnimationFrame(actView.frame); actView.frame = requestAnimationFrame(drawCharts);
+}
+$('actcharts').addEventListener('pointermove', e => hoverAt(e.clientX));
+$('actcharts').addEventListener('pointerdown', e => hoverAt(e.clientX));
+$('actcharts').addEventListener('pointerleave', () => { actView.hover = null; readout(null); drawCharts(); });
+$('xmode').addEventListener('click', e => {
+  const b = e.target.closest('button[data-x]'); if (!b || b.disabled || !actView.panels.length) return;
+  actView.x = b.dataset.x;
+  for (const x of $('xmode').querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+  drawCharts();
+});
+new ResizeObserver(() => { if ($('actdlg').open && actView.panels.length) drawCharts(); }).observe($('actcharts'));
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if ($('actdlg').open && actView.panels.length) drawCharts(); });
+$('actclose').addEventListener('click', () => $('actdlg').close());
+$('actx').addEventListener('click', () => $('actdlg').close());
+$('actdlg').addEventListener('click', e => { if (e.target === $('actdlg')) $('actdlg').close(); });
+$('actdlg').addEventListener('close', () => { actView.id = null; actView.panels = []; });
 let feelTimer = null;
 function setRessenti(id, f, v){
   const r = Object.assign({}, state.ressentis[id] || {});
@@ -516,13 +803,13 @@ function setRessenti(id, f, v){
   if (Object.keys(r).filter(x => x !== 'maj').length) { r.maj = new Date().toISOString(); state.ressentis[id] = r; }
   else delete state.ressentis[id];
   clearTimeout(feelTimer);
-  $('savestate').textContent = '…';
+  saved('…');
   feelTimer = setTimeout(saveRessentis, 500);
 }
 async function saveRessentis(){
   const body = { activities: state.ressentis, updated_at: new Date().toISOString() };
   const { error } = await sb.from('plan_docs').upsert({ user_id: state.user.id, doc: 'ressentis', data: body }, { onConflict: 'user_id,doc' });
-  $('savestate').textContent = error ? 'Échec de l\'enregistrement du ressenti, réessaie.' : 'Ressenti enregistré';
+  saved(error ? 'Échec de l\'enregistrement du ressenti, réessaie.' : 'Ressenti enregistré');
 }
 function onFeel(e){
   const el = e.target.closest('[data-f]'), box = e.target.closest('.act'); if (!el || !box) return;
@@ -531,9 +818,9 @@ function onFeel(e){
   setRessenti(box.dataset.id, f, v);
   const hint = box.querySelector('.studybar .hint'); if (hint) hint.hidden = !!state.ressentis[box.dataset.id];
 }
-$('dlgacts').addEventListener('change', e => { if (e.target.tagName === 'SELECT') onFeel(e); });
-$('dlgacts').addEventListener('input', e => { if (e.target.tagName === 'INPUT') onFeel(e); });
-$('dlgacts').addEventListener('click', e => { const b = e.target.closest('[data-study]'), box = e.target.closest('.act'); if (b && box) runStudy(box.dataset.id); });
+$('actfeel').addEventListener('change', e => { if (e.target.tagName === 'SELECT') onFeel(e); });
+$('actfeel').addEventListener('input', e => { if (e.target.tagName === 'INPUT') onFeel(e); });
+$('actfeel').addEventListener('click', e => { const b = e.target.closest('[data-study]'), box = e.target.closest('.act'); if (b && box) runStudy(box.dataset.id); });
 
 /* ---------- Étude de la sortie par Miguel ---------- */
 // Étude enregistrée dans le doc « etudes » (activities[ext_id]) : rouvrir la journée ne relance pas l'API.
@@ -664,7 +951,7 @@ function studyHTML(e){
     + (when ? '<div class="meta">Étude du '+esc(when)+'</div>' : '') + '</div>';
 }
 function paintStudy(id, err){
-  const box = Array.from($('dlgacts').querySelectorAll('.act')).find(b => b.dataset.id === id); if (!box) return;
+  const box = Array.from($('actfeel').querySelectorAll('.act')).find(b => b.dataset.id === id); if (!box) return;
   const btn = box.querySelector('[data-study]'), out = box.querySelector('.studyout'), e = state.etudes[id];
   btn.disabled = !!studyRuns[id];
   btn.textContent = e ? 'Refaire l\'étude' : 'Étude de la sortie par Miguel';
@@ -674,7 +961,7 @@ function paintStudy(id, err){
 async function saveEtudes(){
   const body = { activities: state.etudes, updated_at: new Date().toISOString() };
   const { error } = await sb.from('plan_docs').upsert({ user_id: state.user.id, doc: 'etudes', data: body }, { onConflict: 'user_id,doc' });
-  if (error) $('savestate').textContent = 'Échec de l\'enregistrement de l\'étude.';
+  if (error) saved('Échec de l\'enregistrement de l\'étude.');
 }
 async function runStudy(id){
   const a = state.acts.find(x => String(x.ext_id) === id); if (!a || studyRuns[id]) return;
@@ -1031,6 +1318,8 @@ for (const b of document.querySelectorAll('.paint .tool')) b.addEventListener('c
 $('cal').addEventListener('click', e => {
   const b = e.target.closest('.day'); if (!b) return;
   const k = b.dataset.k;
+  const chip = e.target.closest('.chip[data-act]');
+  if (chip){ openAct(chip.dataset.act); return; }
   // Avec un pinceau actif, un clic sur une activité ou une séance ouvre quand même la journée.
   if (state.paint && !e.target.closest('.chip')){
     setDispo(k, state.paint === 'erase' ? null : state.paint);

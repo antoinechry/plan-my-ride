@@ -6,6 +6,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 //   link { api_key, athlete_id? } → vérifie la clé auprès d'intervals.icu puis l'enregistre
 //   unlink                      → supprime la clé
 //   sync                        → importe les activités des IMPORT_DAYS derniers jours
+//   streams { ext_id }          → courbes d'une activité (temps, distance, altitude, vitesse, FC, puissance, cadence),
+//                                 moyennées par paquets pour tenir en STREAM_POINTS points au plus
 // La clé n'est jamais renvoyée au navigateur.
 
 const CORS = {
@@ -19,6 +21,8 @@ const json = (body: unknown, status = 200) =>
 const API = 'https://intervals.icu/api/v1';
 // Fenêtre glissante d'import : 12 mois (intervals.icu doit avoir l'historique, cf. « Téléch. d'anciennes données »).
 const IMPORT_DAYS = 365;
+const STREAM_POINTS = 1500;
+const STREAM_TYPES = ['time', 'distance', 'altitude', 'velocity_smooth', 'heartrate', 'watts', 'cadence'];
 
 const auth = (key: string) => 'Basic ' + btoa('API_KEY:' + key);
 const cleanAthlete = (v: unknown) => {
@@ -138,6 +142,43 @@ Deno.serve(async (req: Request) => {
       }
     }
     return json({ ok: true, imported: rows.length, skipped, from: oldest });
+  }
+
+  if (action === 'streams') {
+    const id = String(body.ext_id ?? '');
+    if (!/^i?\d+$/.test(id)) return json({ error: 'bad_id' }, 400);
+    const { data: act } = await admin.from('activities').select('ext_id').eq('user_id', user.id).eq('source', 'intervals').eq('ext_id', id).maybeSingle();
+    if (!act) return json({ error: 'not_found' }, 404);
+    const { data: k, error: kErr } = await admin.from('intervals_keys').select('*').eq('user_id', user.id).maybeSingle();
+    if (kErr) return json({ error: 'read_failed' }, 500);
+    if (!k) return json({ error: 'not_connected' }, 409);
+    const r = await fetch(`${API}/activity/${id}/streams.json?types=${STREAM_TYPES.join(',')}`, { headers: { Authorization: auth(k.api_key) } });
+    if (r.status === 401 || r.status === 403) return json({ error: 'clé refusée par intervals.icu', status: r.status }, 502);
+    if (r.status === 404) return json({ error: 'no_streams' }, 404);
+    if (r.status === 429) return json({ error: 'rate_limited' }, 429);
+    if (!r.ok) return json({ error: 'intervals_failed', status: r.status }, 502);
+    const list = await r.json() as { type: string; data: (number | null)[] }[];
+    const get = (t: string) => (Array.isArray(list) ? list.find((x) => x && x.type === t) : null)?.data ?? null;
+    const time = get('time');
+    const n = time?.length ?? 0;
+    if (!n) return json({ error: 'no_streams' }, 404);
+    const step = Math.max(1, Math.ceil(n / STREAM_POINTS));
+    // Moyenne de chaque paquet de `step` points (valeurs absentes ignorées), arrondie à `dec` décimales.
+    const pack = (arr: (number | null)[] | null, dec: number) => {
+      if (!arr || !arr.some((v) => typeof v === 'number')) return null;
+      const out: (number | null)[] = [], f = 10 ** dec;
+      for (let i = 0; i < n; i += step) {
+        let s = 0, c = 0;
+        for (let j = i; j < Math.min(n, i + step); j++) { const v = arr[j]; if (typeof v === 'number' && isFinite(v)) { s += v; c++; } }
+        out.push(c ? Math.round((s / c) * f) / f : null);
+      }
+      return out;
+    };
+    return json({
+      ok: true, n, step,
+      time: pack(time, 0), distance: pack(get('distance'), 0), altitude: pack(get('altitude'), 1),
+      velocity: pack(get('velocity_smooth'), 2), heartrate: pack(get('heartrate'), 0), watts: pack(get('watts'), 0), cadence: pack(get('cadence'), 0),
+    });
   }
 
   return json({ error: 'action inconnue' }, 400);
