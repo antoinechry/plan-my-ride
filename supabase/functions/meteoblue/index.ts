@@ -6,6 +6,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 // POST { points: [{ lat, lon, asl? }], days } → { ok, days, pkg, points: [{ t[], temp[], app[], pr[], prob[], pic[], day[],
 //   ws[] (km/h), wd[], gust[] (km/h), cc[], sun[], sunUnit, asl, modelrun, updated }] }
 // POST { debug: true, points: [un point], pkg? } → aperçu brut de la réponse meteoblue (unités, champs).
+// POST { usage: true } → { ok, used, today, quota, remaining } : crédits consommés (API Accounting de meteoblue,
+//   toutes dates) et reste du forfait (METEOBLUE_QUOTA, 10 millions par défaut = essai gratuit).
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +23,7 @@ const OWNER = 'e51d871e-c7bb-4aa7-aaf1-4aa96ca3e36b';
 // 32 000, quelle que soit la durée (1 à 7 jours). Par défaut basic-1h seul ; au plus MAX_POINTS points par appel.
 const PKGS = ['basic-1h', 'basic-1h_clouds-3h', 'basic-1h_wind-3h_clouds-3h'];
 const MAX_POINTS = 10;
+const QUOTA_DEFAULT = 10_000_000;
 
 type Pt = { lat: number; lon: number; asl: number | null };
 
@@ -41,6 +44,32 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch (_) { /* corps vide */ }
+
+  if (body.usage) {
+    // Consommation réelle lue chez meteoblue (une ligne par jour et par type de requête, paginée).
+    const quota = Number(Deno.env.get('METEOBLUE_QUOTA')) || QUOTA_DEFAULT;
+    const today = new Date().toISOString().slice(0, 10);
+    let used = 0, usedToday = 0, seen = 0, total = Infinity;
+    const raw: unknown[] = [];
+    try {
+      for (let page = 1; page <= 30 && seen < total; page++) {
+        const r = await fetch(`https://my.meteoblue.com/account/usage?apikey=${encodeURIComponent(key)}` +
+          `&date_start=2020-01-01&date_end=${today}&per=100&page=${page}`);
+        const text = mask(await r.text());
+        if (!r.ok) return json({ error: 'meteoblue', detail: `${r.status} ${text.slice(0, 200)}` }, 502);
+        const j = JSON.parse(text) as { items?: { request_date: string; request_type: string; request_credits: number; request_count: number }[]; metadata?: { total?: number } };
+        const items = j.items ?? [];
+        if (body.debug && page === 1) raw.push(...items.slice(0, 10), j.metadata);
+        for (const it of items) { const c = Number(it.request_credits) || 0; used += c; if (it.request_date === today) usedToday += c; }
+        seen += items.length; total = Number(j.metadata?.total ?? seen);
+        if (!items.length) break;
+      }
+    } catch (e) {
+      return json({ error: 'meteoblue', detail: mask(String((e as Error).message || e)) }, 502);
+    }
+    return json({ ok: true, used, today: usedToday, quota, remaining: Math.max(0, quota - used), ...(body.debug ? { raw } : {}) });
+  }
+
   const pts = (Array.isArray(body.points) ? body.points : []).slice(0, MAX_POINTS) as Record<string, unknown>[];
   const clean: Pt[] = pts.map((p) => ({ lat: Number(p.lat), lon: Number(p.lon), asl: p.asl == null ? null : Math.round(Number(p.asl)) }))
     .filter((p) => isFinite(p.lat) && isFinite(p.lon) && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180);
@@ -67,9 +96,11 @@ Deno.serve(async (req: Request) => {
       fields3h: Object.fromEntries(Object.entries(d3).map(([k, v]) => [k, Array.isArray(v) ? [v.length, ...v.slice(0, 3)] : v])) });
   }
 
+  let credits = 0; // crédits facturés par meteoblue pour cet appel (en-tête mb-credits-accounted)
   const one = async (p: Pt) => {
     const r = await fetch(urlFor(p));
     if (!r.ok) throw new Error(`${r.status} ${mask(await r.text()).slice(0, 200)}`);
+    credits += Number(r.headers.get('mb-credits-accounted')) || 0;
     const j = await r.json() as Record<string, unknown>;
     const d = (j.data_1h ?? {}) as Record<string, (number | string | null)[]>;
     const units = (j.units ?? {}) as Record<string, string>;
@@ -107,7 +138,7 @@ Deno.serve(async (req: Request) => {
     let next = 0;
     const worker = async () => { while (next < clean.length) { const i = next++; out[i] = await one(clean[i]); } };
     await Promise.all([worker(), worker(), worker(), worker()]);
-    return json({ ok: true, days, pkg, points: out });
+    return json({ ok: true, days, pkg, credits, points: out });
   } catch (e) {
     return json({ error: 'meteoblue', detail: mask(String((e as Error).message || e)) }, 502);
   }

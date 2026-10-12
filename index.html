@@ -89,6 +89,11 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .toggle{display:flex;align-items:center;gap:8px;cursor:pointer}
 .toggle input{accent-color:var(--accent);width:16px;height:16px}
 .hint{font-size:12.5px;color:var(--muted);margin:0}
+.wxuse{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.35}
+.wxuse .bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden;margin-bottom:4px}
+.wxuse .bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.wxuse.low .bar i{background:var(--head)}
+.wxuse b{font-weight:600;color:var(--ink)}
 .route-card{border:1px dashed var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px}
 .route-card strong{font-family:var(--f-display);font-size:18px;font-weight:600;overflow-wrap:anywhere}
 .route-card .tag{align-self:flex-start;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
@@ -385,6 +390,7 @@ footer a{color:inherit}
         <button type="button" data-v="om" aria-pressed="true">Open-Meteo</button>
       </div>
       <p class="hint" id="wxSrcHint"></p>
+      <div class="wxuse" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
   </aside>
 
@@ -610,6 +616,7 @@ async function fetchOM(from, to) {
 const MB_DAYS = 7, MB_KM = 20, MB_MAX = 8, MB_TTL = 2 * 3600e3, MB_CACHE = 'pmr-mb-pts', MB_CREDITS = 8000;
 const WX_SRC = { om: 'Open-Meteo', mb: 'meteoblue' };
 const MB_PENDING = new Map();
+const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
   try { const v = localStorage.getItem('pmr-wxsrc'); if (v === 'om' || v === 'mb') return v; } catch (e) {}
   return hasSbToken() ? 'mb' : 'om';
@@ -651,6 +658,8 @@ async function fetchMB() {
       const c = mbCacheRead(), at = Date.now();
       miss.forEach((p, j) => { c[mbKey(p)] = { at, q: res.points[j] }; });
       mbCacheWrite(c);
+      S.mbSpent = { credits: Number(res.credits) || miss.length * MB_CREDITS, at };
+      setTimeout(() => mbUsageRefresh(true), 1500); // consommation à jour chez meteoblue
       return c;
     })().finally(() => MB_PENDING.delete(rk)));
     const c = await MB_PENDING.get(rk);
@@ -659,6 +668,7 @@ async function fetchMB() {
   const L = pts.map(p => mbSeries(cache[mbKey(p)].q, p));
   if (L.some(x => !x)) throw new Error('réponse incomplète.');
   return { wx: S.samples.map(s => mbSample(s, pts, L)), points: pts.length, fetched: miss.length,
+    credits: miss.length ? ((S.mbSpent && S.mbSpent.credits) || miss.length * MB_CREDITS) : 0,
     at: Math.min(...pts.map(p => cache[mbKey(p)].at)) };
 }
 function mbSeries(q, p) {
@@ -737,12 +747,46 @@ function renderWxSrc() {
     if (used === 'mb+om') h += ' ; au-delà, Open-Meteo prend le relais';
     if (S.wxFallback === 'horizon') h = 'meteoblue ne prévoit que 7 jours : prévisions Open-Meteo pour cette date';
     else if (S.wxFallback === 'error') h = 'meteoblue n\'a pas répondu : prévisions Open-Meteo pour l\'instant';
-    else if (I) h += ` · ${I.points} points du parcours, prévision de ${hm.format(new Date(I.at))}` +
-      (I.fetched ? ` (${(I.fetched * MB_CREDITS).toLocaleString('fr-FR')} crédits)` : ' (gardée 2 h, sans nouveau crédit)');
+    else if (I) h += ` · ${I.points} points du parcours, prévision de ${hm.format(new Date(I.at))}`;
     h += '. Vent à 10 m' + (src === 'mb' && !S.wxFallback && S.wxUsed ? ', sans rafales.' : '.');
   } else h = 'Prévisions Open-Meteo (modèles AROME / ICON / GFS selon la zone), jusqu\'à 16 jours. Vent à 10 m.';
   $('#wxSrcHint').textContent = h;
   $('#wxCredit').innerHTML = used === 'mb' ? MB_LINK : used === 'mb+om' ? MB_LINK + ' et ' + OM_LINK : OM_LINK;
+  renderWxUse(src, logged, S.wxFallback ? null : I);
+  if (src === 'mb' && logged) mbUsageRefresh(false);
+}
+// Consommation meteoblue : crédits de ce chargement et reste du forfait (lu chez meteoblue, au plus toutes les 10 min).
+const fmtCr = x => x >= 1e6 ? (x / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' M' : Math.round(x).toLocaleString('fr-FR');
+function mbUsageGet() { try { const u = JSON.parse(localStorage.getItem(MB_USAGE) || 'null'); return u && isFinite(u.remaining) ? u : null; } catch (e) { return null; } }
+async function mbUsageRefresh(force) {
+  if (wxSrc() !== 'mb' || !hasSbToken()) return;
+  const u = mbUsageGet();
+  if (!force && (S.mbUsageBusy || (u && Date.now() - u.at < MB_USAGE_TTL))) return;
+  S.mbUsageBusy = true;
+  try {
+    const sb = await sbIfLogged(); if (!sb) return;
+    const { data, error } = await sb.functions.invoke('meteoblue', { body: { usage: true } });
+    if (error || !data || !data.ok || !isFinite(data.remaining)) return;
+    try { localStorage.setItem(MB_USAGE, JSON.stringify({ used: data.used, today: data.today, quota: data.quota, remaining: data.remaining, at: Date.now() })); } catch (e) {}
+    renderWxUse(wxSrc(), hasSbToken(), S.wxFallback ? null : S.wxInfo);
+  } catch (e) { /* affichage seulement */ } finally { S.mbUsageBusy = false; }
+}
+function renderWxUse(src, logged, I) {
+  const el = $('#wxUse'), u = mbUsageGet();
+  if (src !== 'mb' || !logged || (!u && !I)) { el.hidden = true; return; }
+  const lines = [];
+  if (I) lines.push(I.credits ? `Ce chargement : <b>${fmtCr(I.credits)}</b> crédits` : 'Ce chargement : 0 crédit (prévision gardée 2 h)');
+  if (u) {
+    const per = I ? I.points * MB_CREDITS : 0;
+    lines.push(`Forfait : <b>${fmtCr(u.remaining)}</b> crédits restants sur ${fmtCr(u.quota)}` + (per ? `, environ ${n0(Math.floor(u.remaining / per))} chargements de ce parcours` : ''));
+  }
+  const frac = u ? clamp(u.remaining / u.quota, 0, 1) : 1;
+  el.hidden = false;
+  el.querySelector('span').innerHTML = lines.join('<br>');
+  el.querySelector('.bar').hidden = !u;
+  el.querySelector('.bar i').style.width = (frac * 100).toFixed(1) + '%';
+  el.classList.toggle('low', !!u && frac < 0.15);
+  el.title = u ? `meteoblue : ${u.used.toLocaleString('fr-FR')} crédits utilisés dont ${u.today.toLocaleString('fr-FR')} aujourd'hui (relevé à ${hm.format(new Date(u.at))})` : '';
 }
 
 function wxAt(k, tMs) {
