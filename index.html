@@ -1114,9 +1114,10 @@ function handleFile(file) {
   const rd = new FileReader();
   rd.onload = () => {
     try {
-      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, '');
-      loadRoute(g.pts, name, false);
-      libSave(g.pts, name);
+      // On travaille sur la trace simplifiée (celle qui est enregistrée) : rouvrir le parcours donne exactement les mêmes calculs.
+      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts));
+      loadRoute(pts, name, false);
+      libSave(pts, name);
     }
     catch (e) { setStatus(e.message, 'err'); }
   };
@@ -1463,11 +1464,13 @@ function overpassQuery(chunk, radius) {
 async function overpassFetch(q) {
   let last;
   for (const url of OVERPASS) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 75000);
     try {
-      const r = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }) });
+      const r = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }), signal: ctl.signal });
       if (r.ok) return (await r.json()).elements || [];
-      last = new Error('le service OpenStreetMap a répondu ' + r.status + (r.status === 429 || r.status === 504 ? ' (surchargé, réessaie dans une minute)' : ''));
-    } catch (e) { last = new Error('pas de connexion au service OpenStreetMap'); }
+      last = new Error('le service OpenStreetMap a répondu ' + r.status + (r.status === 429 || r.status === 504 ? ' (surchargé)' : ''));
+    } catch (e) { last = new Error(e.name === 'AbortError' ? 'le service OpenStreetMap ne répond pas' : 'pas de connexion au service OpenStreetMap'); }
+    finally { clearTimeout(timer); }
   }
   throw last;
 }
@@ -1476,13 +1479,26 @@ function classifyPoi(tags) {
   return null;
 }
 // Rattache chaque lieu au point de la trace le plus proche (km, écart en m).
+function routeGrid(P) {
+  if (P._grid) return P._grid;
+  const g = new Map();
+  for (let i = 0; i < P.n; i++) { const k = Math.floor(P.pts[i].lat * 100) + ':' + Math.floor(P.pts[i].lon * 100); let c = g.get(k); if (!c) g.set(k, (c = [])); c.push(i); }
+  return (P._grid = g);
+}
 function attachToRoute(items) {
-  const P = S.P, n = P.n, la = new Float64Array(n), lo = new Float64Array(n);
-  for (let i = 0; i < n; i++) { la[i] = P.pts[i].lat; lo[i] = P.pts[i].lon; }
+  const P = S.P, grid = routeGrid(P);
   for (const it of items) {
-    const c = Math.cos(it.lat * RAD); let best = Infinity, bi = 0;
-    for (let i = 0; i < n; i++) { const dy = la[i] - it.lat, dx = (lo[i] - it.lon) * c, d = dx * dx + dy * dy; if (d < best) { best = d; bi = i; } }
-    it.i = bi; it.km = P.d[bi]; it.off = Math.round(Math.sqrt(best) * 111195);
+    if (it._sig === P.n) continue; // déjà rattaché à cette trace
+    const c = Math.cos(it.lat * RAD), la0 = Math.floor(it.lat * 100), lo0 = Math.floor(it.lon * 100);
+    let best = Infinity, bi = -1;
+    for (let r = 4; bi < 0 && r <= 64; r *= 4) { // cherche autour (±4 cases ≈ 3 à 4 km), puis plus loin si besoin
+      for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) {
+        const cell = grid.get((la0 + a) + ':' + (lo0 + b)); if (!cell) continue;
+        for (const i of cell) { const dy = P.pts[i].lat - it.lat, dx = (P.pts[i].lon - it.lon) * c, d = dx * dx + dy * dy; if (d < best) { best = d; bi = i; } }
+      }
+    }
+    if (bi < 0) { bi = 0; best = 1; }
+    it.i = bi; it.km = P.d[bi]; it.off = Math.round(Math.sqrt(best) * 111195); it._sig = P.n;
   }
   return items;
 }
@@ -1495,32 +1511,39 @@ async function poiEnsure(force) {
   const seq = ++POI.seq;
   POI.key = key; POI.list = []; POI.error = ''; POI.loading = 'Recherche des lieux le long de la trace…';
   renderPois();
-  try {
-    let cached = null;
-    try { cached = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
-    if (cached && Date.now() - cached.at < 14 * 864e5) { if (seq !== POI.seq) return; POI.list = attachToRoute(cached.items); POI.loading = ''; renderPois(); return; }
-    const chunks = routeForQuery(S.P, Math.min(0.05, radius / 4000));
-    const seen = new Map();
-    for (let c = 0; c < chunks.length; c++) {
+  let cached = null;
+  try { cached = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
+  if (seq !== POI.seq) return;
+  if (cached && Date.now() - cached.at < 14 * 864e5) { POI.list = attachToRoute(cached.items).filter(p => p.off <= radius); POI.loading = ''; renderPois(); return; }
+  // Trace simplifiée à ~1/5 du rayon : on interroge un rayon un peu plus large, puis on ne garde que les lieux à moins du rayon.
+  const tol = clamp(radius / 5000, 0.04, 0.3), chunks = routeForQuery(S.P, tol), qRadius = Math.round(radius + tol * 1000);
+  const seen = new Map(); let next = 0, done = 0, failed = 0, lastErr = null;
+  const progress = () => { POI.loading = chunks.length > 1 ? `Recherche des lieux le long de la trace… (${done}/${chunks.length} portions)` : 'Recherche des lieux le long de la trace…'; };
+  progress(); renderPoiStatus();
+  const worker = async () => {
+    while (next < chunks.length) {
+      const c = next++;
+      let els = null;
+      try { els = await overpassFetch(overpassQuery(chunks[c], qRadius)); } catch (e) { lastErr = e; failed++; }
       if (seq !== POI.seq) return;
-      POI.loading = chunks.length > 1 ? `Recherche des lieux le long de la trace… (${c + 1}/${chunks.length})` : 'Recherche des lieux le long de la trace…';
-      renderPoiStatus();
-      for (const el of await overpassFetch(overpassQuery(chunks[c], radius))) {
+      done++;
+      for (const el of els || []) {
         const id = el.type + el.id; if (seen.has(id)) continue;
         const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon, tags = el.tags || {};
         const cls = classifyPoi(tags); if (!cls || lat == null) continue;
         seen.set(id, { id, lat, lon, g: cls[0], type: cls[1], name: tags.name || tags.brand || '', oh: tags.opening_hours || '',
           web: tags.website || tags['contact:website'] || '', tel: tags.phone || tags['contact:phone'] || '' });
       }
+      POI.list = attachToRoute([...seen.values()]).filter(p => p.off <= radius);
+      if (done < chunks.length) progress();
+      renderPois(); // affichage au fur et à mesure
     }
-    if (seq !== POI.seq) return;
-    const items = [...seen.values()];
-    try { await idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), items })); } catch (e) {}
-    POI.list = attachToRoute(items); POI.loading = '';
-  } catch (e) {
-    if (seq !== POI.seq) return;
-    POI.loading = ''; POI.error = 'Recherche impossible : ' + e.message + '.';
-  }
+  };
+  await Promise.all([worker(), worker()]); // 2 requêtes à la fois (limite du service Overpass)
+  if (seq !== POI.seq) return;
+  POI.loading = '';
+  if (failed) POI.error = `${failed} portion${failed > 1 ? 's' : ''} sur ${chunks.length} n'${failed > 1 ? 'ont' : 'a'} pas pu être chargée${failed > 1 ? 's' : ''} (${lastErr ? lastErr.message : 'erreur'}).`;
+  else { const items = [...seen.values()].map(({ _sig, i, km, off, t, st, _ohObj, ...rest }) => rest); try { await idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), items })); } catch (e) {} }
   renderPois();
 }
 

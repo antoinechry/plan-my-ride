@@ -36,7 +36,8 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Dans `simulate`, `opt.fly` remplace la vitesse/VAM/arrêts et la plage horaire ; les nuits sont des `stops` marqués `sleep: true`.
 
 ## Page Ultra : lieux le long de la trace
-- Rayon `#poiRadius` (200 m → 2 km) : requête Overpass (overpass-api.de, repli overpass.kumi.systems) avec `around` sur la trace simplifiée (Douglas-Peucker, morceaux de 180 points). Catégories et étiquettes dans `POI_GROUPS` / `POI_TYPES`.
+- Rayon `#poiRadius` (200 m → 2 km) : requête Overpass (overpass-api.de, repli overpass.kumi.systems, 75 s max par requête) avec `around` sur la trace simplifiée (Douglas-Peucker à rayon/5, morceaux de 180 points, rayon interrogé = rayon + tolérance puis filtrage à l'écart réel). Deux requêtes à la fois, résultats affichés au fur et à mesure ; une portion en échec n'arrête pas les autres (pas de mise en cache si incomplet). Rattachement à la trace par index spatial (`routeGrid`, cases de 0,01°).
+- Un GPX importé est d'abord simplifié comme à l'enregistrement (`unpackPts(packPts(...))`) : rouvrir le parcours redonne la même trace (même signature, même cache). Catégories et étiquettes dans `POI_GROUPS` / `POI_TYPES`.
 - Chaque lieu est rattaché au point de trace le plus proche (km, écart) ; l'heure de passage vient de `S.tl.times`. Horaires évalués avec opening_hours.js 3.15.0 (+ suncalc 1.9.0), chargés à la demande depuis jsDelivr.
 - Résultats mis en cache 14 jours dans IndexedDB (store `pois`, clé = signature de la trace + rayon). Les marqueurs sont dans le volet Leaflet `poiPane` (au-dessus des flèches de vent).
 - Tronçons sans ravitaillement (alimentation, restos, bars, stations) : le plus long en général, et ceux de plus de 30 km sans lieu ouvert au passage (les lieux sans horaires comptent comme possibles).
