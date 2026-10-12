@@ -17,6 +17,12 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - `score` : classement des heures de départ
 - Rendu : `renderSummary`, `renderMap`, `renderChart` (canvas), `renderTable`, `renderOpts`
 
+## Calage sur l'historique (option « Caler sur mes sorties »)
+- Lit la table `activities` du projet Supabase de Coach Miguel (même origine GitHub Pages, donc session de connexion partagée avec `coach.html`). supabase-js chargé à la demande.
+- Sorties retenues : Ride / GravelRide / EBikeRide, hors home trainer, ≥ 10 km et ≥ 20 min, sur la période choisie ; l'utilisateur peut en décocher (exclusions dans `localStorage` `pmr-calib-excl`).
+- `fitRides` : moindres carrés pondérés par la durée sur temps ≈ (D − 0,0039·D+)/v + D+/VAM (le terme 0,0039·D+ approche le gain de descente du modèle). Si la VAM sort de [300 ; 1400], elle est bornée et seule v est calée. Arrêts = médiane de (temps écoulé − temps de déplacement) / temps de déplacement.
+- Quand l'option est active, les curseurs sont verrouillés et `pmr-opt` garde les réglages manuels, restaurés à la désactivation.
+
 ## Modèle de vitesse
 - montée : temps = distance / vitesse plat + D+ / VAM
 - descente (pente < −1 %) : vitesse × (1 + (pente − 1 %) × 6), plafonné à ×1,35

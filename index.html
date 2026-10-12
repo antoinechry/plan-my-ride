@@ -72,6 +72,15 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .route-card strong{font-family:var(--f-display);font-size:18px;font-weight:600;overflow-wrap:anywhere}
 .route-card .tag{align-self:flex-start;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
 hr.sep{border:0;border-top:1px solid var(--line);margin:0}
+.field select{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 10px;width:100%;font-size:14px}
+.calib-box{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg)}
+details.calib summary{cursor:pointer;font-size:13px;font-weight:500}
+.calib-list{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto;display:flex;flex-direction:column}
+.calib-list label{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:start;font-size:12.5px;cursor:pointer;padding:4px 0;border-top:1px solid var(--line)}
+.calib-list input{accent-color:var(--accent);margin:2px 0 0;width:15px;height:15px}
+.calib-list .d{font-family:var(--f-mono);font-size:12px}
+.calib-list .m{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.range input:disabled{opacity:.55}
 
 main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .status{border-radius:8px;padding:10px 14px;font-size:14px;border:1px solid var(--line);background:var(--panel)}
@@ -199,6 +208,25 @@ footer a{color:inherit}
       <label class="label" for="pause">Arrêts courts</label>
       <div class="range"><input type="range" id="pause" min="0" max="40" step="1"><output id="pauseOut" class="mono"></output></div>
       <p class="hint">Ravitos, photos, feux : ajouté au temps de roulage.</p>
+    </div>
+    <div class="field">
+      <label class="toggle"><input type="checkbox" id="calibOn"> <span class="label" style="color:var(--ink)">Caler sur mes sorties</span></label>
+      <p class="hint" id="calibHint">Règle la vitesse sur le plat, la VAM et les arrêts d'après tes sorties enregistrées dans Coach Miguel.</p>
+      <div class="calib-box" id="calibBox" hidden>
+        <div class="field">
+          <label class="label" for="calibDays">Sorties prises en compte</label>
+          <select id="calibDays">
+            <option value="60">60 derniers jours</option>
+            <option value="120">4 derniers mois</option>
+            <option value="365">12 derniers mois</option>
+          </select>
+        </div>
+        <details class="calib">
+          <summary id="calibSum">Sorties utilisées</summary>
+          <p class="hint" style="margin-top:6px">Décoche celles qui ne ressemblent pas à la sortie prévue (bikepacking chargé, balade, sortie de groupe…).</p>
+          <ul class="calib-list" id="calibList"></ul>
+        </details>
+      </div>
     </div>
     <div class="field">
       <label class="label" for="windOn">Effet du vent</label>
@@ -905,7 +933,8 @@ function handleFile(file) {
   rd.readAsText(file);
 }
 /* ---------- réglages ---------- */
-function saveOpt(o) { try { localStorage.setItem('pmr-opt', JSON.stringify({ ...o, date: undefined })); } catch (e) {} }
+// Quand le calage est actif, on garde en mémoire les réglages manuels (pas les valeurs calées).
+function saveOpt(o) { try { localStorage.setItem('pmr-opt', JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: undefined })); } catch (e) {} }
 function initInputs() {
   const tm = new Date(); tm.setDate(tm.getDate() + 1);
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('pmr-opt') || '{}') || {}; } catch (e) {}
@@ -913,17 +942,150 @@ function initInputs() {
   $('#date').value = ymd(tm);
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn; $('#windowOn').checked = !!def.windowOn; $('#dayStart').value = def.dayStart; $('#dayEnd').value = def.dayEnd;
+  try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
   syncOutputs();
+  if (def.calibOn) { $('#calibOn').checked = true; calibStart(true); }
 }
 function syncOutputs() {
-  $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h';
-  $('#vamOut').textContent = $('#vam').value + ' m/h';
-  $('#pauseOut').textContent = '+' + $('#pause').value + ' %';
+  const c = CAL.on ? ' · calé' : '';
+  $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h' + c;
+  $('#vamOut').textContent = $('#vam').value + ' m/h' + c;
+  $('#pauseOut').textContent = '+' + $('#pause').value + ' %' + c;
   $('#windowFields').style.opacity = $('#windowOn').checked ? 1 : .45;
   $('#dayStart').disabled = $('#dayEnd').disabled = !$('#windowOn').checked;
 }
 let deb;
 function schedule() { syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250); }
+
+/* ---------- calage sur l'historique (activités Coach Miguel, Supabase) ---------- */
+// Même projet Supabase et même origine que coach.html : la session de connexion est partagée.
+const SB_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
+const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+const RIDE_TYPES = new Set(['Ride', 'GravelRide', 'EBikeRide']);
+const CAL = { on: false, manual: null, rides: [], excl: new Set(), sb: null, seq: 0 };
+try { CAL.excl = new Set(JSON.parse(localStorage.getItem('pmr-calib-excl') || '[]')); } catch (e) {}
+const shortDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+
+function loadScript(src) {
+  return new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => ko(new Error('script')); document.head.appendChild(s); });
+}
+async function sbClient() {
+  if (CAL.sb) return CAL.sb;
+  if (!window.supabase) await loadScript(SB_JS);
+  CAL.sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+  return CAL.sb;
+}
+const rideKey = r => r.source + ':' + r.ext_id;
+
+// Modèle de l'app sur une sortie entière : temps ≈ (D − k·D+)/v + D+/VAM.
+// Le terme k·D+ approche le gain de la descente (pente moyenne ~5 %), pour ne pas le compter deux fois.
+function fitRides(list, fallbackVam) {
+  const K = 0.0039;
+  let sxx = 0, sxy = 0, syy = 0, sxt = 0, syt = 0;
+  const pts = list.map(r => ({ x: r.km - K * r.dplus, y: r.dplus, t: r.h }));
+  for (const p of pts) { const w = p.t; sxx += w * p.x * p.x; sxy += w * p.x * p.y; syy += w * p.y * p.y; sxt += w * p.x * p.t; syt += w * p.y * p.t; }
+  const det = sxx * syy - sxy * sxy;
+  let a = det > 0 ? (sxt * syy - syt * sxy) / det : NaN, b = det > 0 ? (syt * sxx - sxt * sxy) / det : NaN;
+  let vam = b > 0 ? 1 / b : NaN;
+  if (!(a > 0) || !(vam >= 300 && vam <= 1400)) {
+    // Pas assez de variété de dénivelé : on borne la VAM et on ne cale que la vitesse sur le plat.
+    vam = clamp(Number.isFinite(vam) && vam > 0 ? vam : fallbackVam, 300, 1400);
+    let num = 0, den = 0;
+    for (const p of pts) { num += p.t * p.x * (p.t - p.y / vam); den += p.t * p.x * p.x; }
+    a = num / den;
+  }
+  const speed = clamp(Math.round(2 / a) / 2, 12, 40);
+  vam = clamp(Math.round(vam / 50) * 50, 300, 1400);
+  const errs = pts.map(p => Math.abs(p.x / speed + p.y / vam - p.t) / p.t).sort((u, v) => u - v);
+  const pauses = list.filter(r => r.elapsed > 0).map(r => Math.max(0, (r.elapsed - r.moving) / r.moving * 100)).sort((u, v) => u - v);
+  const pause = pauses.length ? clamp(Math.round(pauses[Math.floor(pauses.length / 2)]), 0, 40) : null;
+  return { speed, vam, pause, err: errs[Math.floor(errs.length / 2)] };
+}
+
+async function calibFetch() {
+  const sb = await sbClient();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return { error: 'login' };
+  const since = new Date(); since.setDate(since.getDate() - +$('#calibDays').value);
+  const { data, error } = await sb.from('activities')
+    .select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,is_trainer,elapsed:raw->elapsed_time')
+    .gte('start_local', ymd(since)).order('start_local', { ascending: false }).limit(500);
+  if (error) return { error: error.message };
+  return {
+    rides: (data || []).filter(a => RIDE_TYPES.has(a.sport_type) && !a.is_trainer && a.distance_m >= 10000 && a.moving_time_s >= 1200)
+      .map(a => ({ key: rideKey(a), date: String(a.start_local).slice(0, 10), name: a.name || '', km: a.distance_m / 1000,
+        dplus: a.elevation_gain_m || 0, h: a.moving_time_s / 3600, moving: a.moving_time_s, elapsed: +a.elapsed || 0 }))
+  };
+}
+
+function calibRenderList() {
+  const ul = $('#calibList'); ul.textContent = '';
+  for (const r of CAL.rides) {
+    const li = document.createElement('li'), lb = document.createElement('label'), cb = document.createElement('input'), tx = document.createElement('span');
+    cb.type = 'checkbox'; cb.checked = !CAL.excl.has(r.key); cb.dataset.key = r.key;
+    const d = new Date(r.date + 'T12:00:00');
+    const dl = document.createElement('span'); dl.className = 'd';
+    dl.textContent = `${shortDate.format(d)} · ${n0(r.km)} km · ${n0(r.dplus)} m · ${n1(r.km / r.h)} km/h`;
+    const nm = document.createElement('span'); nm.className = 'm'; nm.textContent = r.name;
+    tx.append(dl, nm); lb.append(cb, tx); li.append(lb); ul.append(li);
+  }
+}
+
+function calibApply() {
+  const used = CAL.rides.filter(r => !CAL.excl.has(r.key));
+  $('#calibSum').textContent = `Sorties utilisées : ${used.length} sur ${CAL.rides.length}`;
+  if (used.length < 3) {
+    setSliders(CAL.manual);
+    $('#calibHint').textContent = 'Il faut au moins 3 sorties cochées pour caler les réglages. Tes réglages manuels restent appliqués.';
+    syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250);
+    return;
+  }
+  const f = fitRides(used, CAL.manual.vam);
+  setSliders({ speed: f.speed, vam: f.vam, pause: f.pause ?? CAL.manual.pause });
+  $('#calibHint').textContent = `Calé sur ${used.length} sortie${used.length > 1 ? 's' : ''} : ${n1(f.speed)} km/h sur le plat, VAM ${f.vam} m/h`
+    + (f.pause != null ? `, arrêts +${f.pause} %` : '') + `. Écart médian avec tes temps réels : ±${Math.round(f.err * 100)} %.`;
+  syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250);
+}
+function setSliders(v) { $('#speed').value = v.speed; $('#vam').value = v.vam; $('#pause').value = v.pause; }
+function lockSliders(on) { for (const id of ['#speed', '#vam', '#pause']) $(id).disabled = on; }
+
+async function calibStart(silent) {
+  const seq = ++CAL.seq;
+  if (!CAL.on) CAL.manual = { speed: +$('#speed').value, vam: +$('#vam').value, pause: +$('#pause').value };
+  CAL.on = true; lockSliders(true); $('#calibBox').hidden = false;
+  $('#calibHint').textContent = 'Lecture de tes sorties…';
+  let res;
+  try { res = await calibFetch(); } catch (e) { res = { error: 'réseau' }; }
+  if (seq !== CAL.seq || !CAL.on) return;
+  if (res.error) {
+    calibStop();
+    $('#calibOn').checked = false;
+    const hint = $('#calibHint');
+    if (res.error === 'login') {
+      hint.textContent = 'Connecte-toi d\'abord dans ';
+      const a = document.createElement('a'); a.href = 'coach.html'; a.textContent = 'Coach Miguel'; hint.append(a, ' (même navigateur), puis recoche la case.');
+    } else hint.textContent = silent ? 'Calage indisponible pour le moment : réglages manuels appliqués.' : 'Impossible de lire tes sorties (' + res.error + '). Réglages manuels appliqués.';
+    return;
+  }
+  CAL.rides = res.rides;
+  calibRenderList(); calibApply();
+}
+function calibStop() {
+  CAL.seq++;
+  if (CAL.on && CAL.manual) setSliders(CAL.manual);
+  CAL.on = false; lockSliders(false); $('#calibBox').hidden = true;
+  $('#calibHint').textContent = 'Règle la vitesse sur le plat, la VAM et les arrêts d\'après tes sorties enregistrées dans Coach Miguel.';
+  syncOutputs();
+}
+$('#calibOn').addEventListener('change', e => { if (e.target.checked) calibStart(false); else { calibStop(); schedule(); } });
+$('#calibDays').addEventListener('change', () => { try { localStorage.setItem('pmr-calib-days', $('#calibDays').value); } catch (e) {} if (CAL.on) calibStart(false); });
+$('#calibList').addEventListener('change', e => {
+  const k = e.target.dataset && e.target.dataset.key; if (!k) return;
+  if (e.target.checked) CAL.excl.delete(k); else CAL.excl.add(k);
+  try { localStorage.setItem('pmr-calib-excl', JSON.stringify([...CAL.excl].slice(-500))); } catch (err) {}
+  calibApply();
+});
 
 /* ---------- événements ---------- */
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
