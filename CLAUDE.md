@@ -16,6 +16,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - `simulate(t0, opt, useWx)` : temps de passage segment par segment (plat + VAM, descente, arrêts, vent, plage horaire multi-jours) + statistiques
 - `score` : classement des heures de départ
 - Rendu : `renderSummary`, `renderMap`, `renderChart` (canvas), `renderTable`, `renderOpts`
+- `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
 ## Calage sur l'historique (option « Caler sur mes sorties »)
 - Lit la table `activities` du projet Supabase de Coach Miguel (même origine GitHub Pages, donc session de connexion partagée avec `coach.html`). supabase-js chargé à la demande.

@@ -678,7 +678,7 @@ function initMap() {
   try { const saved = localStorage.getItem('pmr-base2'); if (saved && bases[saved] && !(isLocal && saved === 'Plan (OSM)')) baseName = saved; } catch (e) {}
   bases[baseName].addTo(map);
   L.control.layers(bases, null, { position: 'topright' }).addTo(map);
-  map.on('zoomend', () => renderWindArrows());
+  map.on('moveend', () => renderWindArrows());
   map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base2', e.name); } catch (err) {} });
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
 }
@@ -720,27 +720,34 @@ function renderMap() {
   renderLegend();
 }
 let windLayer;
+const ARROW_GAP = 40; // écart à l'écran entre deux flèches de vent, en pixels (75 auparavant)
 function renderWindArrows() {
   if (!map) return;
   if (windLayer) windLayer.remove();
   windLayer = L.layerGroup().addTo(map);
-  if (!S.wx || !S.svs || !$('#arrowsOn').checked) return;
-  // une flèche tous les ~75 px à l'écran (aussi quand la trace revient sur elle-même), quel que soit le zoom
-  const shown = [];
-  const lastIdx = S.samples.length - 1;
-  for (let k = 0; k <= lastIdx; k++) {
-    const sv = S.svs[k]; if (!sv) continue;
-    const s = S.samples[k], px = map.latLngToLayerPoint([s.lat, s.lon]);
-    if (shown.some(q => px.distanceTo(q) < 75)) continue;
-    shown.push(px);
-    const [, col, lbl] = windStrength(sv.w.ws);
-    const sz = Math.round(clamp(20 + sv.w.ws * 0.45, 20, 40));
+  if (!S.wx || !S.tl || !$('#arrowsOn').checked) return;
+  // Une flèche tous les ~40 px le long de la trace, quel que soit le zoom, et seulement dans la zone visible.
+  // Entre deux points météo, la flèche prend le point le plus proche à l'heure de passage à cet endroit.
+  const P = S.P, view = map.getBounds().pad(0.2), shown = [];
+  let run = ARROW_GAP / 2, prev = null;
+  for (let i = 0; i < P.n; i++) {
+    const p = P.pts[i], px = map.latLngToLayerPoint([p.lat, p.lon]);
+    if (prev) run += px.distanceTo(prev);
+    prev = px;
+    if (run < ARROW_GAP || !view.contains([p.lat, p.lon])) continue;
+    if (shown.some(q => px.distanceTo(q) < ARROW_GAP * 0.8)) continue; // trace qui revient sur elle-même
+    const t = S.tl.times[i], w = wxAt(sIdx(P.d[i]), t);
+    if (!w) continue;
+    run = 0; shown.push(px);
+    const head = w.ws * Math.cos((w.wd - P.b[i]) * RAD);
+    const [, col, lbl] = windStrength(w.ws);
+    const sz = Math.round(clamp(16 + w.ws * 0.35, 16, 30));
     // durée du cycle et amplitude du mouvement selon la vitesse du vent
-    const dur = clamp(2.8 - sv.w.ws * 0.05, 0.55, 2.8).toFixed(2), amp = clamp(1.5 + sv.w.ws * 0.16, 1.5, 9).toFixed(1);
-    const delay = (-(k * 0.37) % dur).toFixed(2), calm = sv.w.ws < 5 ? ' calm' : '';
-    const html = `<div class="wa"><span class="wrot" style="transform:rotate(${(sv.w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${sz}" height="${sz}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg></span><b>${n0(sv.w.ws)}</b></div>`;
-    L.marker([s.lat, s.lon], { icon: L.divIcon({ html, className: '', iconSize: [44, sz + 16], iconAnchor: [22, sz / 2] }), keyboard: false })
-      .bindTooltip(`<b>km ${n1(s.km)}</b> · passage ${hm.format(new Date(sv.t))}<br>Vent de ${compass(sv.w.wd)} : ${n0(sv.w.ws)} km/h (${lbl.toLowerCase()})<br>Rafales ${n0(sv.w.gust)} km/h<br>Pour vous : ${relLabel(sv.head).txt}`)
+    const dur = clamp(2.8 - w.ws * 0.05, 0.55, 2.8).toFixed(2), amp = clamp(1.5 + w.ws * 0.16, 1.5, 9).toFixed(1);
+    const delay = (-(shown.length * 0.37) % dur).toFixed(2), calm = w.ws < 5 ? ' calm' : '';
+    const html = `<div class="wa"><span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${sz}" height="${sz}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg></span><b>${n0(w.ws)}</b></div>`;
+    L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', iconSize: [44, sz + 16], iconAnchor: [22, sz / 2] }), keyboard: false })
+      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})<br>Rafales ${n0(w.gust)} km/h<br>Pour vous : ${relLabel(head).txt}`)
       .addTo(windLayer);
   }
 }
