@@ -647,9 +647,9 @@ function buildStudyPrompt(a, raw){
 function cleanStudy(r){
   if (!r || typeof r !== 'object') throw new Error('L\'étude reçue était illisible. Réessaie.');
   const str = (v, n) => v ? String(v).slice(0, n) : '';
-  const arr = v => Array.isArray(v) ? v.map(x => String(x).slice(0, 300)).filter(Boolean).slice(0, 6) : [];
-  const o = { titre: str(r.titre, 80), resume: str(r.resume, 800), intensite: str(r.intensite, 800), points_forts: arr(r.points_forts), a_surveiller: arr(r.a_surveiller),
-    comparaison: str(r.comparaison, 700), recuperation: str(r.recuperation, 600), prochaine_fois: str(r.prochaine_fois, 600), reglages: str(r.reglages, 500) };
+  const arr = v => Array.isArray(v) ? v.map(x => String(x).slice(0, 500)).filter(Boolean).slice(0, 6) : [];
+  const o = { titre: str(r.titre, 100), resume: str(r.resume, 1500), intensite: str(r.intensite, 2000), points_forts: arr(r.points_forts), a_surveiller: arr(r.a_surveiller),
+    comparaison: str(r.comparaison, 1500), recuperation: str(r.recuperation, 1500), prochaine_fois: str(r.prochaine_fois, 1500), reglages: str(r.reglages, 1500) };
   if (!o.resume && !o.intensite) throw new Error('L\'étude reçue était illisible. Réessaie.');
   return o;
 }
@@ -882,6 +882,7 @@ async function callCoach(task, prompt, signal){
       if (/credit balance/i.test(j.detail || '')) throw new Error('Crédit API Claude épuisé : recharge-le sur console.anthropic.com (Billing).');
       throw new Error('Le service Claude a répondu '+j.status+(j.detail ? ' : '+j.detail : '')+'.');
     }
+    if (code === 'invalid_json' && j.stop === 'max_tokens') throw new Error('La réponse de Miguel a été coupée car trop longue. Réessaie.');
     throw new Error(COACH_ERR[code] || 'La demande a échoué (HTTP '+res.status+'). Réessaie dans un instant.');
   }
   return j;

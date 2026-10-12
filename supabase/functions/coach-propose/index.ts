@@ -19,13 +19,13 @@ const JSON_ONLY = 'Réponds uniquement avec un objet JSON valide, sans texte aut
 const TASKS: Record<string, { system: string; maxTokens: number }> = {
   propose: {
     system: ROLE + 'Tu proposes des séances prudentes, concrètes et adaptées à sa forme du moment. ' + JSON_ONLY,
-    maxTokens: 1500,
+    maxTokens: 2500,
   },
   study: {
     system: ROLE + "Tu fais l'étude d'une sortie qu'il vient de réaliser : lecture honnête, précise et bienveillante, " +
       "appuyée sur les chiffres fournis, sans inventer de données ni de détails sur le parcours. Tu le tutoies, phrases courtes, en français. " +
       JSON_ONLY,
-    maxTokens: 2000,
+    maxTokens: 4000,
   },
 };
 
@@ -64,11 +64,21 @@ Deno.serve(async (req: Request) => {
   }
   const out = await r.json();
   const text = (out.content ?? []).filter((c: { type: string }) => c.type === 'text').map((c: { text: string }) => c.text).join('');
-  const m = text.match(/\{[\s\S]*\}/);
-  if (!m) return json({ error: 'invalid_json' }, 502);
-  try {
-    return json({ ok: true, proposal: JSON.parse(m[0]), model });
-  } catch (_) {
-    return json({ error: 'invalid_json' }, 502);
-  }
+  const proposal = parseJson(text);
+  if (proposal) return json({ ok: true, proposal, model });
+  // Réponse illisible : on renvoie de quoi comprendre (raison d'arrêt, début et fin du texte).
+  console.log('invalid_json', out.stop_reason, text.length, text.slice(0, 400), '…', text.slice(-200));
+  return json({ error: 'invalid_json', stop: out.stop_reason ?? '', length: text.length, head: text.slice(0, 160), tail: text.slice(-120) }, 502);
 });
+
+// Extrait l'objet JSON du texte (bloc de code éventuel, texte autour, virgules finales).
+function parseJson(text: string): unknown {
+  const t = text.replace(/```(?:json)?/gi, '');
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b <= a) return null;
+  const raw = t.slice(a, b + 1);
+  for (const s of [raw, raw.replace(/,\s*([}\]])/g, '$1')]) {
+    try { return JSON.parse(s); } catch (_) { /* essai suivant */ }
+  }
+  return null;
+}
