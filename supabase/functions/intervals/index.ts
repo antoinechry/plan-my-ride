@@ -12,6 +12,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 //                                 intervals.icu, repérées par external_id ; intervals.icu les envoie ensuite vers
 //                                 COROS / Garmin si « Envoyer les entraînements planifiés » est coché
 //   delete_workouts { external_ids } → retire ces séances du calendrier intervals.icu
+//   wellness { oldest, newest } → données de santé par jour (poids, masse grasse, FC au repos, VFC, sommeil…),
+//                                 importées par intervals.icu depuis Garmin / COROS
 // La clé n'est jamais renvoyée au navigateur.
 
 const CORS = {
@@ -227,6 +229,26 @@ Deno.serve(async (req: Request) => {
       return { id: x.id, external_id: x.external_id, moving_time: x.moving_time, load: x.icu_training_load ?? null,
         steps: Array.isArray(doc.steps) ? (doc.steps as unknown[]).length : 0, duration: doc.duration ?? null, target: x.target ?? null };
     }) });
+  }
+
+  if (action === 'wellness') {
+    const { data: k, error: kErr } = await admin.from('intervals_keys').select('*').eq('user_id', user.id).maybeSingle();
+    if (kErr) return json({ error: 'read_failed' }, 500);
+    if (!k) return json({ error: 'not_connected' }, 409);
+    const day = (x: unknown, def: string) => /^\d{4}-\d{2}-\d{2}$/.test(String(x ?? '')) ? String(x) : def;
+    const newest = day(body.newest, new Date().toISOString().slice(0, 10));
+    const oldest = day(body.oldest, new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10));
+    const r = await fetch(`${API}/athlete/${k.athlete_id}/wellness?oldest=${oldest}&newest=${newest}`, { headers: { Authorization: auth(k.api_key) } });
+    if (r.status === 401 || r.status === 403) return json({ error: 'clé refusée par intervals.icu', status: r.status }, 502);
+    if (!r.ok) return json({ error: 'intervals_failed', status: r.status }, 502);
+    const list = await r.json() as Record<string, unknown>[];
+    const KEYS = ['weight', 'bodyFat', 'restingHR', 'hrv', 'sleepSecs', 'sleepScore', 'sleepQuality', 'readiness', 'vo2max', 'steps', 'kcalConsumed'];
+    const days = (Array.isArray(list) ? list : []).map((x) => {
+      const o: Record<string, unknown> = { date: x.id };
+      for (const key of KEYS) if (x[key] != null) o[key] = x[key];
+      return o;
+    }).filter((o) => Object.keys(o).length > 1);
+    return json({ ok: true, oldest, newest, days });
   }
 
   return json({ error: 'action inconnue' }, 400);
