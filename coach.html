@@ -83,7 +83,7 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 .weeksum{font-size:.84rem;color:var(--muted);padding:4px 4px 0}
 .weeksum b{color:var(--ink);font-weight:650}
-dialog{border:none;border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(460px,calc(100vw - 24px))}
+dialog{border:none;border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(520px,calc(100vw - 24px))}
 dialog::backdrop{background:rgba(10,16,12,.45)}
 .dlg{padding:18px}
 .dlg h3{margin:0 0 12px;font-size:1.2rem;font-weight:750}
@@ -113,6 +113,21 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 .feel select,.feel input{font-size:.9rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.35rem .45rem;width:100%;min-width:0}
 .feel .wide{grid-column:1/-1}
 .feelhead{grid-column:1/-1;font-size:.86rem;font-weight:650;color:var(--ink)}
+.studybar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:10px}
+.studybar .hint{font-size:.8rem;color:var(--muted)}
+.studyout{margin-top:8px;font-size:.9rem}
+.studyout:empty{display:none}
+.studyout .wait{color:var(--muted)}
+.studyout .err{color:var(--run)}
+.study{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface-2)}
+.study b{font-size:1rem}
+.study h5{margin:10px 0 2px;font-size:.84rem}
+.study p{margin:4px 0}
+.study ul{margin:4px 0;padding-left:1.2em}
+.study li{margin:2px 0}
+.study .set{font-size:.84rem;color:var(--muted);margin-top:10px}
+.study .set b{font-size:.84rem;color:var(--ink)}
+.study .meta{margin-top:8px;font-size:.76rem;color:var(--muted)}
 .chip.plan{border-left-style:dotted;font-weight:500}
 .dot.plan{background:transparent;border:1.5px dashed var(--muted)}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -291,7 +306,7 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
 const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 
 const t0 = today0();
-const state = { user: null, month: new Date(t0.getFullYear(), t0.getMonth(), 1), dispos: {}, seances: {}, ressentis: {}, paint: null, openKey: null, acts: [] };
+const state = { user: null, month: new Date(t0.getFullYear(), t0.getMonth(), 1), dispos: {}, seances: {}, ressentis: {}, etudes: {}, paint: null, openKey: null, acts: [] };
 let sb = null, saveTimer = null;
 
 function setMsg(el, text, isErr){ el.textContent = text || ''; el.classList.toggle('err', !!isErr); }
@@ -322,11 +337,12 @@ function scheduleSave(){
 }
 // Séances prévues (doc « seances » : { sessions: { 'AAAA-MM-JJ': [séance, …] } }) et ressentis éventuels (doc « ressentis »).
 async function loadPlanDocs(){
-  const { data, error } = await sb.from('plan_docs').select('doc,data').in('doc', ['seances','ressentis']);
+  const { data, error } = await sb.from('plan_docs').select('doc,data').in('doc', ['seances','ressentis','etudes']);
   if (error) throw error;
   for (const r of data || []){
     if (r.doc === 'seances') state.seances = (r.data && r.data.sessions) || {};
     if (r.doc === 'ressentis') state.ressentis = (r.data && r.data.activities) || {};
+    if (r.doc === 'etudes') state.etudes = (r.data && r.data.activities) || {};
   }
 }
 async function saveSeances(){
@@ -337,7 +353,7 @@ async function saveSeances(){
 async function loadActivities(){
   // Détails lus dans les données brutes (mêmes noms chez intervals.icu et Strava, sauf la puissance).
   const { data, error } = await sb.from('activities').select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,relative_effort,training_load,is_trainer,'
-    + 'hr:raw->average_heartrate,hrmax:raw->max_heartrate,elapsed:raw->elapsed_time,w:raw->icu_average_watts,np:raw->icu_weighted_avg_watts,w2:raw->average_watts,np2:raw->weighted_average_watts')
+    + 'hr:raw->average_heartrate,hrmax:raw->max_heartrate,elapsed:raw->elapsed_time,w:raw->icu_average_watts,np:raw->icu_weighted_avg_watts,w2:raw->average_watts,np2:raw->weighted_average_watts,ef:raw->icu_efficiency_factor,dec:raw->decoupling')
     .order('start_local', {ascending:false}).limit(2000);
   if (error) throw error;
   state.acts = data || [];
@@ -485,8 +501,12 @@ function renderActs(k){
       + '<label>Douleur<select data-f="douleur">'+PAIN_OPTS.map(([v,t]) => '<option value="'+v+'"'+(v === pain ? ' selected' : '')+'>'+t+'</option>').join('')+'</select></label>'
       + '<label class="wide"'+(pain && pain !== 'aucune' ? '' : ' hidden')+'>Où ?<input data-f="zone" type="text" maxlength="80" placeholder="Ex. genou droit, mollet…" value="'+esc(r.zone||'')+'"></label>'
       + '<label class="wide">Note pour Miguel<input data-f="note" type="text" maxlength="300" placeholder="Ex. jambes lourdes, vent de face au retour…" value="'+esc(r.note||'')+'"></label>'
-      + '</div></div>';
+      + '</div>'
+      + '<div class="studybar"><button class="btn" data-study></button><span class="hint"'+(Object.keys(r).length ? ' hidden' : '')+'>Remplis ton ressenti avant : Miguel en tiendra compte.</span></div>'
+      + '<div class="studyout" aria-live="polite"></div>'
+      + '</div>';
   }).join('') + '</div>';
+  for (const a of acts) paintStudy(String(a.ext_id));
 }
 let feelTimer = null;
 function setRessenti(id, f, v){
@@ -509,9 +529,165 @@ function onFeel(e){
   const f = el.dataset.f, v = f === 'zone' || f === 'note' ? el.value.trim() : el.value;
   if (f === 'douleur'){ const z = box.querySelector('[data-f="zone"]'); z.closest('label').hidden = !v || v === 'aucune'; if (z.closest('label').hidden) z.value = ''; }
   setRessenti(box.dataset.id, f, v);
+  const hint = box.querySelector('.studybar .hint'); if (hint) hint.hidden = !!state.ressentis[box.dataset.id];
 }
 $('dlgacts').addEventListener('change', e => { if (e.target.tagName === 'SELECT') onFeel(e); });
 $('dlgacts').addEventListener('input', e => { if (e.target.tagName === 'INPUT') onFeel(e); });
+$('dlgacts').addEventListener('click', e => { const b = e.target.closest('[data-study]'), box = e.target.closest('.act'); if (b && box) runStudy(box.dataset.id); });
+
+/* ---------- Étude de la sortie par Miguel ---------- */
+// Étude enregistrée dans le doc « etudes » (activities[ext_id]) : rouvrir la journée ne relance pas l'API.
+const nf2 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2});
+const studyRuns = {};
+const rawNum = (raw, ...ks) => { for (const k of ks){ const v = num(raw[k]); if (v != null) return v; } return null; };
+const dayFmt = new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+function zoneTxt(raw){
+  const out = [], rng = (b, i, u) => { const lo = i ? b[i-1] : 0, hi = b[i]; return hi == null || hi >= 900 ? '> '+lo+u : (i ? lo+'–'+hi : '< '+hi)+u; };
+  const zt = Array.isArray(raw.icu_zone_times) ? raw.icu_zone_times.filter(z => z && z.secs > 0) : [];
+  const pz = Array.isArray(raw.icu_power_zones) ? raw.icu_power_zones : [], ftp = num(raw.icu_ftp);
+  if (zt.length){
+    const tot = zt.filter(z => /^Z\d$/.test(z.id)).reduce((s,z) => s+z.secs, 0);
+    out.push('Temps par zone de puissance (zones d\'intervals.icu en % de la FTP réglée'+(ftp ? ' à '+ftp+' W' : '')+') : '+zt.map(z => {
+      if (z.id === 'SS') return 'dont sweet spot '+fmtHM(z.secs);
+      const i = Number(String(z.id).slice(1)) - 1;
+      return z.id+(pz.length && i >= 0 ? ' ('+rng(pz, i, ' %')+')' : '')+' '+fmtHM(z.secs)+(tot ? ' ('+Math.round(100*z.secs/tot)+' %)' : '');
+    }).join(', ')+'.');
+  }
+  const hz = Array.isArray(raw.icu_hr_zones) ? raw.icu_hr_zones : [], ht = Array.isArray(raw.icu_hr_zone_times) ? raw.icu_hr_zone_times : [];
+  const htot = ht.reduce((s,x) => s+(x||0), 0);
+  if (htot) out.push('Temps par zone de FC (zones d\'intervals.icu'+(raw.lthr ? ', FC seuil réglée '+raw.lthr : '')+(raw.athlete_max_hr ? ', FC max réglée '+raw.athlete_max_hr : '')+') : '
+    + ht.map((x,i) => x > 0 ? 'Z'+(i+1)+(hz.length ? ' ('+rng(hz, i, ' bpm')+')' : '')+' '+fmtHM(x)+' ('+Math.round(100*x/htot)+' %)' : '').filter(Boolean).join(', ')+'.');
+  return out;
+}
+function actLine(x){
+  const km = (x.distance_m||0)/1000, mv = x.moving_time_s||0, c = sportCls(x.sport_type), L = actLoad(x);
+  const sp = km && mv ? (c === 'run' ? (p => Math.floor(p/60)+':'+pad(p%60)+' /km')(Math.round(mv/km)) : nf1.format(km/(mv/3600))+' km/h') : '';
+  const w = num(x.w) ?? num(x.w2), np = num(x.np) ?? num(x.np2);
+  return '- '+String(x.start_local).slice(0,10)+' '+sportLabel(x.sport_type)+(x.is_trainer ? ' (intérieur)' : '')+' : '+[nf1.format(km)+' km', fmtHM(mv), nf0.format(x.elevation_gain_m||0)+' m D+', sp,
+    num(x.hr) ? 'FC '+Math.round(x.hr) : '', w ? Math.round(w)+' W'+(np ? ' / NP '+Math.round(np) : '') : '', num(x.ef) ? 'EF '+nf2.format(x.ef) : '',
+    num(x.dec) != null ? 'découplage '+nf1.format(x.dec)+' %' : '', 'charge '+(L.est ? '≈' : '')+nf0.format(L.load)].filter(Boolean).join(', ');
+}
+function buildStudyPrompt(a, raw){
+  const k = String(a.start_local||'').slice(0,10), d = new Date(k+'T00:00:00'), c = sportCls(a.sport_type);
+  const km = (a.distance_m||0)/1000, mv = a.moving_time_s||0, L = actLoad(a), S = [], add = x => { if (x) S.push('- '+cap(x)); };
+  add('Sport : '+sportLabel(a.sport_type)+(a.is_trainer ? ' (en intérieur)' : '')+(a.name ? ', nom « '+a.name+' »' : '')+', départ à '+String(a.start_local).slice(11,16).replace(':',' h ')+'.');
+  const el = rawNum(raw,'elapsed_time'), dn = rawNum(raw,'total_elevation_loss');
+  add('Distance '+nf1.format(km)+' km, temps en mouvement '+fmtHM(mv)+(el ? ', temps total '+fmtHM(el) : '')+', D+ '+nf0.format(a.elevation_gain_m||0)+' m'+(dn ? ', D− '+nf0.format(dn)+' m' : '')+'.');
+  if (km && mv){
+    const vmax = rawNum(raw,'max_speed');
+    if (c === 'run'){ const p = Math.round(mv/km); add('Allure moyenne '+Math.floor(p/60)+':'+pad(p%60)+' /km.'); }
+    else add('Vitesse moyenne '+nf1.format(km/(mv/3600))+' km/h'+(vmax ? ', max '+nf1.format(vmax*3.6)+' km/h' : '')+'.');
+  }
+  const hr = num(a.hr), hrmax = num(a.hrmax);
+  if (hr) add('FC moyenne '+Math.round(hr)+' bpm'+(hrmax ? ', max '+Math.round(hrmax)+' bpm' : '')+'.');
+  const w = num(a.w) ?? num(a.w2), np = num(a.np) ?? num(a.np2), ftp = rawNum(raw,'icu_ftp');
+  const IF = rawNum(raw,'icu_intensity'), vi = rawNum(raw,'icu_variability_index'), ef = rawNum(raw,'icu_efficiency_factor'), dec = rawNum(raw,'decoupling');
+  if (w) add('Puissance moyenne '+Math.round(w)+' W'+(np ? ', normalisée '+Math.round(np)+' W' : '')+(vi ? ', indice de variabilité '+nf2.format(vi) : '')
+    + (IF ? ', intensité (IF) '+nf2.format(IF/100)+' par rapport à la FTP réglée dans intervals.icu'+(ftp ? ' ('+ftp+' W)' : '') : '')+'.');
+  if (ef || dec != null) add([ef ? 'facteur d\'efficacité (puissance normalisée / FC) '+nf2.format(ef) : '', dec != null ? 'découplage puissance/FC entre 1re et 2e moitié '+nf1.format(dec)+' %' : ''].filter(Boolean).join(', ')+'.');
+  const eftp = rawNum(raw,'icu_rolling_ftp'), pmftp = rawNum(raw,'icu_pm_ftp'), wt = rawNum(raw,'icu_weight');
+  if (eftp || pmftp) add('Estimations intervals.icu : FTP estimée (eFTP) '+(eftp ? eftp+' W' : 'inconnue')+(pmftp ? ', FTP estimée d\'après cette sortie '+pmftp+' W' : '')+(wt ? ', poids '+wt+' kg' : '')+'.');
+  const cad = rawNum(raw,'average_cadence'), coast = rawNum(raw,'coasting_time');
+  if (c === 'ride' && (cad || coast)) add([cad ? 'cadence moyenne '+Math.round(cad)+' tr/min' : '', coast && mv ? 'roue libre '+Math.round(100*coast/mv)+' % du temps' : ''].filter(Boolean).join(', ')+'.');
+  const trimp = rawNum(raw,'trimp'), cal = rawNum(raw,'calories'), carbs = rawNum(raw,'carbs_used');
+  add('Charge '+(L.est ? '≈ ' : '')+nf0.format(L.load)+(a.training_load != null ? ' (intervals.icu)' : a.relative_effort != null ? ' (effort relatif Strava)' : ' (estimée sur la durée)')
+    + (trimp ? ', TRIMP '+nf0.format(trimp) : '')+(cal ? ', '+nf0.format(cal)+' kcal' : '')+(carbs ? ', glucides consommés estimés '+nf0.format(carbs)+' g' : '')+'.');
+  const wu = rawNum(raw,'icu_warmup_time'), cd = rawNum(raw,'icu_cooldown_time');
+  if (wu || cd) add('Détectés par intervals.icu : échauffement '+fmtHM(wu||0)+', retour au calme '+fmtHM(cd||0)+'.');
+  for (const z of zoneTxt(raw)) add(z);
+  if (Array.isArray(raw.interval_summary) && raw.interval_summary.length) add('Efforts détectés par intervals.icu : '+raw.interval_summary.slice(0,15).join(', ')+'.');
+  const tmp = rawNum(raw,'average_weather_temp','average_temp'), head = rawNum(raw,'headwind_percent'), tail = rawNum(raw,'tailwind_percent');
+  if (tmp != null || head != null) add([tmp != null ? 'température moyenne '+Math.round(tmp)+' °C' : '', head != null ? 'vent de face '+Math.round(head)+' % du temps' : '', tail != null ? 'vent de dos '+Math.round(tail)+' % du temps' : ''].filter(Boolean).join(', ')+'.');
+  const rpe = rawNum(raw,'icu_rpe','perceived_exertion');
+  if (rpe) add('Effort saisi dans intervals.icu : '+rpe+'/10.');
+  if (raw.description) add('Description de l\'activité : '+String(raw.description).slice(0,300));
+
+  const r = state.ressentis[String(a.ext_id)];
+  const plan = (state.seances[k] || []).map(p => '- '+sportLabel(p.sport)+' : '+(p.titre||'')+(p.duree_min ? ', '+p.duree_min+' min' : '')+(p.distance_km ? ', '+p.distance_km+' km' : '')+(p.intensite ? ', '+p.intensite : '')+(p.deroule && p.deroule.length ? ' ; déroulé : '+p.deroule.join(' / ') : ''));
+  const series = computeSeries(), before = series.find(p => p.k === key(addDays(d,-1))), after = series.find(p => p.k === k);
+  const fm = p => 'forme '+nf1.format(p.ctl)+', fatigue '+nf1.format(p.atl)+', fraîcheur '+fmtSigned(p.tsb);
+  const since = key(addDays(t0,-365)), hrMax = {};
+  for (const x of state.acts) if (num(x.hrmax) && String(x.start_local).slice(0,10) >= since){ const cc = sportCls(x.sport_type); hrMax[cc] = Math.max(hrMax[cc]||0, Math.round(x.hrmax)); }
+  const from = key(addDays(d,-150)), start = String(a.start_local);
+  const pool = state.acts.filter(x => x !== a && sportCls(x.sport_type) === c && String(x.start_local) < start && String(x.start_local).slice(0,10) >= from && (x.moving_time_s||0) >= 1200);
+  const near = pool.filter(x => { const q = (x.moving_time_s||0)/(mv||1); return q >= 0.6 && q <= 1.6; });
+  const comps = (near.length >= 3 ? near : pool).slice(0, 8).map(actLine);
+  const prev7 = state.acts.filter(x => x !== a && String(x.start_local) < start && String(x.start_local).slice(0,10) >= key(addDays(d,-7))).slice().reverse().map(actLine);
+  const next = [];
+  for (let i = 1; i <= 5; i++){ const dk = key(addDays(d,i)); for (const p of state.seances[dk] || []) next.push('- '+dk+' '+sportLabel(p.sport)+' : '+(p.titre||'')+(p.duree_min ? ', '+p.duree_min+' min' : '')+(p.intensite ? ', '+p.intensite : '')); }
+  return [
+    'Fais l\'étude de cette sortie réalisée le '+longFmt.format(d)+' '+d.getFullYear()+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.',
+    '',
+    'Profil et objectifs :', ...PROFILE,
+    '',
+    'La sortie :', ...S,
+    '',
+    'Son ressenti : '+(r ? ressentiTxt(r) : 'non saisi.'),
+    'Séance prévue ce jour-là : '+(plan.length ? '\n'+plan.join('\n') : 'aucune.'),
+    'Forme (modèle sur la charge d\'entraînement) : '+(before ? 'la veille '+fm(before) : 'inconnue la veille')+(after ? ' ; après la sortie '+fm(after) : '')+'.',
+    'FC max observées sur 12 mois : '+(Object.keys(hrMax).length ? Object.entries(hrMax).map(([cc,v]) => ({ride:'vélo',run:'course',other:'autres sports'}[cc])+' '+v+' bpm').join(', ') : 'inconnues')+'.',
+    '',
+    'Sorties comparables (même sport, 5 derniers mois, de la plus récente à la plus ancienne) :', comps.length ? comps.join('\n') : '- aucune',
+    '',
+    'Activités des 7 jours précédents :', prev7.length ? prev7.join('\n') : '- aucune',
+    'Séances prévues dans les 5 jours suivants :', next.length ? next.join('\n') : '- aucune',
+    '',
+    'Consignes :',
+    '- Appuie-toi sur ces chiffres sans tous les recopier : explique ce qu\'ils disent de la séance (type de séance réellement faite, répartition de l\'intensité, gestion de l\'effort, dérive cardiaque, régularité, alimentation si la dépense est importante).',
+    '- Vérifie la cohérence des réglages : si les zones d\'intervals.icu (FTP, FC seuil, FC max) ne collent pas avec les FC max observées ou l\'eFTP, dis-le dans "reglages" et raisonne avec des valeurs plausibles. Sinon "reglages" vaut "".',
+    '- Compare avec les sorties comparables (vitesse, FC, puissance, facteur d\'efficacité, découplage) seulement si c\'est parlant.',
+    '- Tiens compte du ressenti, de la séance prévue s\'il y en avait une (a-t-il fait ce qui était prévu ?), de la forme et des séances à venir pour la récupération.',
+    '- S\'il signale une douleur, conseille la prudence et, si elle persiste, l\'avis d\'un médecin ou d\'un kiné.',
+    '',
+    'Réponds uniquement avec un objet JSON, sans autre texte :',
+    '{"titre": "verdict en moins de 8 mots", "resume": "2 à 3 phrases", "intensite": "lecture de l\'intensité et de la gestion de l\'effort, 2 à 4 phrases", "points_forts": ["…"], "a_surveiller": ["…"], "comparaison": "1 à 3 phrases, ou une chaîne vide si rien de parlant", "recuperation": "quoi faire dans les 24 à 48 h", "prochaine_fois": "un conseil concret pour la prochaine sortie de ce type", "reglages": ""}',
+    'points_forts et a_surveiller : 1 à 4 éléments courts chacun.'
+  ].join('\n');
+}
+function cleanStudy(r){
+  if (!r || typeof r !== 'object') throw new Error('L\'étude reçue était illisible. Réessaie.');
+  const str = (v, n) => v ? String(v).slice(0, n) : '';
+  const arr = v => Array.isArray(v) ? v.map(x => String(x).slice(0, 300)).filter(Boolean).slice(0, 6) : [];
+  const o = { titre: str(r.titre, 80), resume: str(r.resume, 800), intensite: str(r.intensite, 800), points_forts: arr(r.points_forts), a_surveiller: arr(r.a_surveiller),
+    comparaison: str(r.comparaison, 700), recuperation: str(r.recuperation, 600), prochaine_fois: str(r.prochaine_fois, 600), reglages: str(r.reglages, 500) };
+  if (!o.resume && !o.intensite) throw new Error('L\'étude reçue était illisible. Réessaie.');
+  return o;
+}
+function studyHTML(e){
+  const p = x => x ? '<p>'+esc(x)+'</p>' : '', ul = l => l && l.length ? '<ul>'+l.map(x => '<li>'+esc(x)+'</li>').join('')+'</ul>' : '';
+  const sec = (t, body) => body ? '<h5>'+t+'</h5>'+body : '';
+  let when = ''; try { when = dayFmt.format(new Date(e.cree_le)); } catch(_){}
+  return '<div class="study"><b>'+esc(e.titre || 'Étude de la sortie')+'</b>'+p(e.resume)
+    + sec('Intensité', p(e.intensite)) + sec('Points forts', ul(e.points_forts)) + sec('À surveiller', ul(e.a_surveiller))
+    + sec('Par rapport à tes sorties', p(e.comparaison)) + sec('Récupération', p(e.recuperation)) + sec('La prochaine fois', p(e.prochaine_fois))
+    + (e.reglages ? '<p class="set"><b>Réglages :</b> '+esc(e.reglages)+'</p>' : '')
+    + (when ? '<div class="meta">Étude du '+esc(when)+'</div>' : '') + '</div>';
+}
+function paintStudy(id, err){
+  const box = Array.from($('dlgacts').querySelectorAll('.act')).find(b => b.dataset.id === id); if (!box) return;
+  const btn = box.querySelector('[data-study]'), out = box.querySelector('.studyout'), e = state.etudes[id];
+  btn.disabled = !!studyRuns[id];
+  btn.textContent = e ? 'Refaire l\'étude' : 'Étude de la sortie par Miguel';
+  btn.classList.toggle('primary', !e);
+  out.innerHTML = studyRuns[id] ? '<span class="wait">Miguel étudie ta sortie…</span>' : err ? '<span class="err">'+esc(err)+'</span>' : e ? studyHTML(e) : '';
+}
+async function saveEtudes(){
+  const body = { activities: state.etudes, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('plan_docs').upsert({ user_id: state.user.id, doc: 'etudes', data: body }, { onConflict: 'user_id,doc' });
+  if (error) $('savestate').textContent = 'Échec de l\'enregistrement de l\'étude.';
+}
+async function runStudy(id){
+  const a = state.acts.find(x => String(x.ext_id) === id); if (!a || studyRuns[id]) return;
+  studyRuns[id] = true; paintStudy(id);
+  try {
+    const { data, error } = await sb.from('activities').select('raw').eq('source', a.source).eq('ext_id', a.ext_id).maybeSingle();
+    if (error) throw new Error('Lecture de l\'activité impossible : '+error.message);
+    const j = await callCoach('study', buildStudyPrompt(a, (data && data.raw) || {}));
+    state.etudes[id] = Object.assign(cleanStudy(j.proposal), { model: j.model || '', cree_le: new Date().toISOString() });
+    delete studyRuns[id]; paintStudy(id);
+    await saveEtudes();
+  } catch(e){ delete studyRuns[id]; paintStudy(id, e.message || 'L\'étude a échoué.'); }
+}
 
 /* ---------- Charge, forme et fatigue (pour Miguel) ---------- */
 // Charge d'une activité : charge intervals.icu, sinon effort relatif Strava, sinon estimation par heure selon le sport.
@@ -604,6 +780,14 @@ function weekStats(ws){
   }
   return { rideKm, runKm, rideMax, runMax };
 }
+const PROFILE = [
+  '- Objectif principal : un trail de 30 km en 2027.',
+  '- Objectifs hebdo du plan : une sortie vélo d\'environ 100 km et une sortie course de 10 à 12 km.',
+  '- Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure.',
+  '- Matériel : vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift). FTP provisoire d\'environ 210 W, pas encore testée : exprime l\'intensité en zones de fréquence cardiaque (Z1 à Z5) et en ressenti (RPE sur 10) ; des watts seulement à titre indicatif.',
+  '- Terrain : autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
+  '- Il fait son renforcement à part : ne le programme pas.'
+];
 function buildPrompt(k, prev){
   const d = new Date(k+'T00:00:00'), pd = planDay(d), series = computeSeries(), alerts = computeAlerts(series);
   const past = series.filter(p => !p.future), now = past[past.length-1], wk = past[Math.max(0, past.length-8)];
@@ -627,12 +811,7 @@ function buildPrompt(k, prev){
     'Propose UNE séance pour le '+longFmt.format(d)+' '+d.getFullYear()+(pd >= 1 ? ' (jour '+pd+' du plan, semaine '+planWeek(d)+')' : '')+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.',
     '',
     'Profil et objectifs :',
-    '- Objectif principal : un trail de 30 km en 2027.',
-    '- Objectifs hebdo du plan : une sortie vélo d\'environ 100 km et une sortie course de 10 à 12 km.',
-    '- Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure.',
-    '- Matériel : vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift). FTP provisoire d\'environ 210 W, pas encore testée : exprime l\'intensité en zones de fréquence cardiaque (Z1 à Z5) et en ressenti (RPE sur 10) ; des watts seulement à titre indicatif.',
-    '- Terrain : autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
-    '- Il fait son renforcement à part : ne le programme pas.',
+    ...PROFILE,
     '',
     'État actuel (modèle forme/fatigue sur la charge d\'entraînement) : '+(now ? 'forme '+nf1.format(now.ctl)+', fatigue '+nf1.format(now.atl)+', fraîcheur '+fmtSigned(now.tsb)+', évolution de la forme sur 7 jours '+fmtSigned(now.ctl-wk.ctl)+'.' : 'pas de données.'),
     'Semaine de la séance, déjà réalisé : vélo '+nf1.format(st.rideKm)+' km (plus longue '+nf1.format(st.rideMax)+' km), course '+nf1.format(st.runKm)+' km (plus longue '+nf1.format(st.runMax)+' km).',
@@ -681,10 +860,32 @@ function renderProposal(){
 }
 const COACH_ERR = {
   no_key: 'La clé API Anthropic n\'est pas encore enregistrée côté serveur (secret ANTHROPIC_API_KEY dans Supabase).',
-  forbidden: 'Demander une sortie est réservé au propriétaire de l\'app.',
-  invalid_json: 'La proposition reçue était illisible. Réessaie.',
+  forbidden: 'Miguel est réservé au propriétaire de l\'app.',
+  invalid_json: 'La réponse reçue était illisible. Réessaie.',
   unauthorized: 'Session expirée : reconnecte-toi.'
 };
+// Appel de la fonction coach-propose (task 'propose' ou 'study') ; erreurs traduites en français.
+async function callCoach(task, prompt, signal){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error(COACH_ERR.unauthorized);
+  const res = await fetch(SUPABASE_URL+'/functions/v1/coach-propose', {
+    method: 'POST', signal,
+    headers: { 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer '+session.access_token },
+    body: JSON.stringify({ task, prompt })
+  });
+  let j = null; try { j = await res.json(); } catch(_){}
+  if (!res.ok || !j || j.error){
+    const code = j && j.error;
+    if (code === 'api'){
+      if (j.status === 401) throw new Error('Clé API Anthropic refusée : vérifie le secret ANTHROPIC_API_KEY.');
+      if (j.status === 429) throw new Error('Limite d\'usage de l\'API atteinte, réessaie plus tard.');
+      if (/credit balance/i.test(j.detail || '')) throw new Error('Crédit API Claude épuisé : recharge-le sur console.anthropic.com (Billing).');
+      throw new Error('Le service Claude a répondu '+j.status+(j.detail ? ' : '+j.detail : '')+'.');
+    }
+    throw new Error(COACH_ERR[code] || 'La demande a échoué (HTTP '+res.status+'). Réessaie dans un instant.');
+  }
+  return j;
+}
 async function requestSession(prev){
   const k = state.openKey; if (!k) return;
   if (ask.ctl) ask.ctl.abort();
@@ -692,19 +893,7 @@ async function requestSession(prev){
   $('askgo').disabled = true; $('askstop').hidden = false;
   $('askout').innerHTML = '<span class="wait">Miguel prépare ta séance…</span>';
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) throw new Error(COACH_ERR.unauthorized);
-    const res = await fetch(SUPABASE_URL+'/functions/v1/coach-propose', {
-      method: 'POST', signal: ctl.signal,
-      headers: { 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer '+session.access_token },
-      body: JSON.stringify({ prompt: buildPrompt(k, prev) })
-    });
-    let j = null; try { j = await res.json(); } catch(_){}
-    if (!res.ok || !j || j.error){
-      const code = j && j.error;
-      if (code === 'api') throw new Error(j.status === 401 ? 'Clé API Anthropic refusée : vérifie le secret ANTHROPIC_API_KEY.' : j.status === 429 ? 'Limite d\'usage de l\'API atteinte, réessaie plus tard.' : 'Le service Claude a répondu '+j.status+(j.detail ? ' : '+j.detail : '')+'.');
-      throw new Error(COACH_ERR[code] || 'La demande a échoué (HTTP '+res.status+'). Réessaie dans un instant.');
-    }
+    const j = await callCoach('propose', buildPrompt(k, prev), ctl.signal);
     if (ask.ctl !== ctl || state.openKey !== k) return;
     ask.proposal = cleanProposal(j.proposal);
     renderProposal();

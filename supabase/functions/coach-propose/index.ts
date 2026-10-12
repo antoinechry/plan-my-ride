@@ -1,9 +1,9 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-// Coach Miguel : « Demander une sortie ».
-// Le navigateur envoie la consigne (profil, forme, activités récentes, dispos, demande) ; cette fonction appelle
-// l'API Claude avec la clé ANTHROPIC_API_KEY (secret Supabase, jamais renvoyée au navigateur) et renvoie la
-// séance proposée en JSON. Réservé aux utilisateurs listés dans COACH_USER_IDS (par défaut : le propriétaire).
+// Coach Miguel : « Demander une sortie » (task 'propose') et « Étude de la sortie » (task 'study').
+// Le navigateur envoie la consigne (profil, forme, activités, dispos, demande ou sortie à étudier) ; cette fonction
+// appelle l'API Claude avec la clé ANTHROPIC_API_KEY (secret Supabase, jamais renvoyée au navigateur) et renvoie
+// la réponse JSON. Réservé aux utilisateurs listés dans COACH_USER_IDS (par défaut : le propriétaire).
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -14,9 +14,20 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
 const OWNER = 'e51d871e-c7bb-4aa7-aaf1-4aa96ca3e36b';
-const SYSTEM = "Tu es Miguel, coach d'endurance (vélo de route et course à pied / trail) d'un athlète amateur. " +
-  'Tu proposes des séances prudentes, concrètes et adaptées à sa forme du moment. ' +
-  'Réponds uniquement avec un objet JSON valide, sans texte autour ni bloc de code.';
+const ROLE = "Tu es Miguel, coach d'endurance (vélo de route et course à pied / trail) d'un athlète amateur. ";
+const JSON_ONLY = 'Réponds uniquement avec un objet JSON valide, sans texte autour ni bloc de code.';
+const TASKS: Record<string, { system: string; maxTokens: number }> = {
+  propose: {
+    system: ROLE + 'Tu proposes des séances prudentes, concrètes et adaptées à sa forme du moment. ' + JSON_ONLY,
+    maxTokens: 1500,
+  },
+  study: {
+    system: ROLE + "Tu fais l'étude d'une sortie qu'il vient de réaliser : lecture honnête, précise et bienveillante, " +
+      "appuyée sur les chiffres fournis, sans inventer de données ni de détails sur le parcours. Tu le tutoies, phrases courtes, en français. " +
+      JSON_ONLY,
+    maxTokens: 2000,
+  },
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
@@ -35,6 +46,8 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch (_) { /* corps vide */ }
+  const task = TASKS[String(body.task ?? 'propose')];
+  if (!task) return json({ error: 'bad_task' }, 400);
   const prompt = String(body.prompt ?? '');
   if (prompt.length < 50 || prompt.length > 30000) return json({ error: 'bad_prompt' }, 400);
 
@@ -42,7 +55,7 @@ Deno.serve(async (req: Request) => {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model, max_tokens: 1500, system: SYSTEM, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({ model, max_tokens: task.maxTokens, system: task.system, messages: [{ role: 'user', content: prompt }] }),
   });
   if (!r.ok) {
     let detail = '';
