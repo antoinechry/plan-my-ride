@@ -8,6 +8,10 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 //   sync                        → importe les activités des IMPORT_DAYS derniers jours
 //   streams { ext_id }          → courbes d'une activité (temps, distance, altitude, vitesse, FC, puissance, cadence),
 //                                 moyennées par paquets pour tenir en STREAM_POINTS points au plus
+//   push_workouts { events }    → crée ou met à jour des séances planifiées (category WORKOUT) dans le calendrier
+//                                 intervals.icu, repérées par external_id ; intervals.icu les envoie ensuite vers
+//                                 COROS / Garmin si « Envoyer les entraînements planifiés » est coché
+//   delete_workouts { external_ids } → retire ces séances du calendrier intervals.icu
 // La clé n'est jamais renvoyée au navigateur.
 
 const CORS = {
@@ -179,6 +183,50 @@ Deno.serve(async (req: Request) => {
       time: pack(time, 0), distance: pack(get('distance'), 0), altitude: pack(get('altitude'), 1),
       velocity: pack(get('velocity_smooth'), 2), heartrate: pack(get('heartrate'), 0), watts: pack(get('watts'), 0), cadence: pack(get('cadence'), 0),
     });
+  }
+
+  if (action === 'push_workouts' || action === 'delete_workouts') {
+    const { data: k, error: kErr } = await admin.from('intervals_keys').select('*').eq('user_id', user.id).maybeSingle();
+    if (kErr) return json({ error: 'read_failed' }, 500);
+    if (!k) return json({ error: 'not_connected' }, 409);
+    const okId = (x: unknown) => typeof x === 'string' && /^coach-miguel-[\w-]{4,60}$/.test(x);
+    if (action === 'delete_workouts') {
+      const ids = (Array.isArray(body.external_ids) ? body.external_ids : []).filter(okId).slice(0, 50);
+      if (!ids.length) return json({ ok: true, deleted: 0 });
+      const r = await fetch(`${API}/athlete/${k.athlete_id}/events/bulk-delete`, {
+        method: 'PUT', headers: { Authorization: auth(k.api_key), 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids.map((external_id) => ({ external_id }))),
+      });
+      if (!r.ok) return json({ error: 'intervals_failed', status: r.status, detail: (await r.text()).slice(0, 200) }, 502);
+      return json({ ok: true, result: await r.json().catch(() => null) });
+    }
+    const list = (Array.isArray(body.events) ? body.events : []).slice(0, 30) as Record<string, unknown>[];
+    const events = [];
+    for (const e of list) {
+      const date = String(e.date ?? '');
+      if (!okId(e.external_id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: 'bad_event' }, 400);
+      const type = ['Ride', 'VirtualRide', 'Run', 'TrailRun'].includes(String(e.type)) ? String(e.type) : 'Ride';
+      events.push({
+        category: 'WORKOUT', start_date_local: `${date}T00:00:00`, type,
+        name: String(e.name ?? 'Séance').slice(0, 80),
+        description: String(e.description ?? '').slice(0, 4000),
+        moving_time: Math.max(0, Math.min(86400, Math.round(Number(e.moving_time) || 0))) || undefined,
+        external_id: e.external_id,
+      });
+    }
+    if (!events.length) return json({ error: 'bad_event' }, 400);
+    const r = await fetch(`${API}/athlete/${k.athlete_id}/events/bulk?upsert=true`, {
+      method: 'POST', headers: { Authorization: auth(k.api_key), 'Content-Type': 'application/json' }, body: JSON.stringify(events),
+    });
+    if (r.status === 401 || r.status === 403) return json({ error: 'clé refusée par intervals.icu', status: r.status }, 502);
+    if (!r.ok) return json({ error: 'intervals_failed', status: r.status, detail: (await r.text()).slice(0, 300) }, 502);
+    const out = await r.json() as Record<string, unknown>[];
+    // On renvoie de quoi vérifier que la séance a bien été comprise (étapes lues par intervals.icu).
+    return json({ ok: true, events: (Array.isArray(out) ? out : []).map((x) => {
+      const doc = (x.workout_doc ?? {}) as Record<string, unknown>;
+      return { id: x.id, external_id: x.external_id, moving_time: x.moving_time, load: x.icu_training_load ?? null,
+        steps: Array.isArray(doc.steps) ? (doc.steps as unknown[]).length : 0, duration: doc.duration ?? null, target: x.target ?? null };
+    }) });
   }
 
   return json({ error: 'action inconnue' }, 400);

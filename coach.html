@@ -105,6 +105,12 @@ dialog::backdrop{background:rgba(10,16,12,.45)}
 .actrow .meta{white-space:nowrap}
 .tabpanel .sub4{margin-top:14px}
 .empty{color:var(--muted);font-size:.9rem;margin:6px 0 10px}
+.wbars{display:flex;align-items:flex-end;gap:1px;height:34px;margin:8px 0 4px;padding:2px;border-radius:6px;background:var(--surface-2)}
+.wbars span{display:block;min-width:2px;border-radius:2px 2px 0 0}
+.sendbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:6px 0 2px;font-size:.84rem}
+.sendbar.sent{color:var(--muted)}
+.sendbar .wait{color:var(--muted)}
+.sendbar .err{color:var(--run)}
 .actrow .feelsum{grid-column:1/-1;font-size:.82rem;color:var(--muted)}
 .actrow .feelsum b{color:var(--ink);font-weight:650}
 .seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
@@ -1098,9 +1104,90 @@ function renderPlans(k){
     const meta = [sportLabel(p.sport), fmtHM((p.duree_min||0)*60), p.distance_km ? '≈ '+nf0.format(p.distance_km)+' km' : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
     return '<li style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><button class="linkbtn" data-rm="'+i+'">Retirer</button><div class="meta">'+esc(meta)+'</div>'
       + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
-      + (p.pourquoi ? '<div class="meta">'+esc(p.pourquoi)+'</div>' : '') + '</li>';
+      + (p.pourquoi ? '<div class="meta">'+esc(p.pourquoi)+'</div>' : '')
+      + workoutBars(p) + sendHTML(p, i, k) + '</li>';
   }).join('') + '</ul>';
   updateTabs();
+}
+
+/* ---------- Envoi des séances vers le compteur / la montre (via intervals.icu) ---------- */
+// Coach Miguel crée la séance structurée dans le calendrier intervals.icu (fonction intervals, push_workouts) ;
+// intervals.icu l'envoie ensuite vers COROS (Dura, vélo) ou Garmin (course) si l'envoi des séances planifiées est
+// coché dans ses connexions. Étapes : { label, min | sec, lo, hi, rampe?, libre? } ou { repeter, label, pas: [...] },
+// lo/hi en % de FTP (vélo) ou de FC seuil (course).
+const DEVICE = { ride: 'ton Dura', run: 'ta Garmin', other: 'ta montre' };
+const DEVICE_VIA = { ride: 'COROS', run: 'Garmin Connect', other: 'ta plateforme' };
+const sendRuns = {};
+const stepSec = st => Math.max(5, Math.round(st.sec != null ? Number(st.sec) : Number(st.min || 0)*60));
+const cleanLabel = t => String(t || '').replace(/[0-9%]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+function defaultEtapes(p){
+  const run = sportCls(p.sport) === 'run', d = Math.max(10, Number(p.duree_min) || 60);
+  const band = run ? { facile: [75, 89], 'modérée': [85, 94], soutenue: [90, 100] } : { facile: [56, 75], 'modérée': [76, 90], soutenue: [84, 97] };
+  const [lo, hi] = band[p.intensite] || band.facile, wu = Math.min(15, Math.round(d*0.15)), cd = Math.min(10, Math.round(d*0.1));
+  return [{ label: 'Échauffement', min: wu, lo: run ? 70 : 45, hi: run ? 80 : 60, rampe: !run }, { label: 'Corps de séance', min: d - wu - cd, lo, hi }, { label: 'Retour au calme', min: cd, lo: run ? 65 : 40, hi: run ? 75 : 55 }];
+}
+const etapesOf = p => Array.isArray(p.etapes) && p.etapes.length ? p.etapes : defaultEtapes(p);
+function fmtIcuDur(s){ const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h+'h' : '')+(m ? m+'m' : '')+(x ? x+'s' : '') || '0s'; }
+function icuStep(st, run){
+  const lab = cleanLabel(st.label), lo = num(st.lo), hi = num(st.hi);
+  let tgt = 'freeride';
+  if (!st.libre && lo != null){
+    const r = hi != null && hi !== lo ? lo+'-'+hi+'%' : lo+'%';
+    tgt = (st.rampe && !run ? 'ramp ' : '') + r + (run ? ' LTHR' : '') + (!run && st.rpm && /^\d{2,3}(-\d{2,3})?$/.test(String(st.rpm)) ? ' '+st.rpm+'rpm' : '');
+  }
+  return '- '+(lab ? lab+' ' : '')+fmtIcuDur(stepSec(st))+' '+tgt;
+}
+function icuText(p){
+  const run = sportCls(p.sport) === 'run', out = [];
+  for (const e of etapesOf(p)){
+    if (e.repeter && Array.isArray(e.pas)){ out.push('', (cleanLabel(e.label) || 'Série')+' '+Math.round(e.repeter)+'x', ...e.pas.map(st => icuStep(st, run)), ''); }
+    else out.push(icuStep(e, run));
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+function flatSteps(p){ const out = []; for (const e of etapesOf(p)){ if (e.repeter && Array.isArray(e.pas)) for (let r = 0; r < e.repeter; r++) out.push(...e.pas); else out.push(e); } return out; }
+const totalSec = p => flatSteps(p).reduce((s, st) => s + stepSec(st), 0);
+function zoneColor(v, run){
+  const b = run ? [85, 90, 95, 100, 103] : [56, 76, 91, 106, 121];
+  const i = v == null ? 0 : b.findIndex(x => v < x);
+  return ZONE_COLORS[i < 0 ? 5 : i];
+}
+function workoutBars(p){
+  const run = sportCls(p.sport) === 'run', st = flatSteps(p); if (!st.length) return '';
+  const top = run ? 105 : 125, bottom = run ? 60 : 30;
+  return '<div class="wbars" title="Profil de la séance">' + st.map(x => {
+    const v = x.libre || x.lo == null ? null : (Number(x.lo) + Number(x.hi ?? x.lo))/2;
+    const h = v == null ? 18 : Math.max(12, Math.min(100, (v - bottom)/(top - bottom)*100));
+    return '<span style="flex:'+stepSec(x)+';height:'+h.toFixed(0)+'%;background:'+(v == null ? 'var(--line)' : zoneColor(v, run))+'"></span>';
+  }).join('') + '</div>';
+}
+function sendHTML(p, i, k){
+  const c = sportCls(p.sport), dev = DEVICE[c] || DEVICE.other;
+  if (sendRuns[k+'#'+i]) return '<div class="sendbar"><span class="wait">Envoi vers intervals.icu…</span></div>';
+  if (p.icu && p.icu.envoye_le){
+    let when = ''; try { when = dayFmt.format(new Date(p.icu.envoye_le)); } catch(_){}
+    return '<div class="sendbar sent"><span>✓ Dans ton calendrier intervals.icu'+(when ? ' depuis le '+esc(when) : '')+(p.icu.charge ? ' · charge prévue '+p.icu.charge : '')+'. Elle arrivera sur '+dev+' via '+DEVICE_VIA[c]+' dans les jours qui précèdent.</span>'
+      + '<button class="linkbtn" data-send="'+i+'">Renvoyer</button><a class="linkbtn" href="https://intervals.icu/?w='+key(startOfWeek(new Date(k+'T00:00:00')))+'" target="_blank" rel="noopener">Voir dans intervals.icu ↗</a></div>';
+  }
+  return '<div class="sendbar"><button class="btn" data-send="'+i+'">Envoyer sur '+dev+'</button>'+(p.icu && p.icu.err ? '<span class="err">'+esc(p.icu.err)+'</span>' : '')+'</div>';
+}
+const newUid = () => Math.random().toString(36).slice(2, 12).padEnd(10, '0');
+async function sendSession(k, i){
+  const list = state.seances[k] || [], p = list[i]; if (!p) return;
+  if (!p.uid) p.uid = newUid();
+  sendRuns[k+'#'+i] = true; renderPlans(k);
+  const ev = { external_id: 'coach-miguel-'+p.uid, date: k, type: p.sport, name: p.titre || sportLabel(p.sport), description: icuText(p), moving_time: totalSec(p) };
+  const res = await callFn('intervals', { action: 'push_workouts', events: [ev] });
+  delete sendRuns[k+'#'+i];
+  if (res.ok && res.data.events && res.data.events[0]){
+    const e = res.data.events[0];
+    p.icu = { id: e.id, external_id: ev.external_id, envoye_le: new Date().toISOString(), charge: e.load ?? null, etapes: e.steps };
+  } else p.icu = Object.assign({}, p.icu, { err: 'Envoi impossible ('+(res.detail || 'erreur')+').' });
+  persistSeances(); if (state.openKey === k) renderPlans(k);
+}
+async function unsendSession(p){
+  if (!p || !p.icu || !p.icu.external_id) return;
+  await callFn('intervals', { action: 'delete_workouts', external_ids: [p.icu.external_id] });
 }
 $('dlgplans').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) setTab(b.dataset.goto); });
 async function persistSeances(){
@@ -1108,8 +1195,10 @@ async function persistSeances(){
   catch(e){ $('savestate').textContent = 'Échec de l\'enregistrement de la séance, réessaie.'; }
 }
 $('dlgplans').addEventListener('click', e => {
+  const sb2 = e.target.closest('[data-send]'); if (sb2 && state.openKey){ sendSession(state.openKey, Number(sb2.dataset.send)); return; }
   const b = e.target.closest('[data-rm]'); if (!b || !state.openKey) return;
-  const k = state.openKey, list = (state.seances[k] || []).slice(); list.splice(Number(b.dataset.rm), 1);
+  const k = state.openKey, list = (state.seances[k] || []).slice(); const gone = list.splice(Number(b.dataset.rm), 1)[0];
+  unsendSession(gone);
   if (list.length) state.seances[k] = list; else delete state.seances[k];
   persistSeances(); renderPlans(k); renderCalendar();
 });
@@ -1190,7 +1279,8 @@ function buildPrompt(k, prev){
     'Règles : respecte le temps disponible. S\'il y a des alertes actives ou une douleur signalée, la séance doit les prendre en compte (plus facile, plus courte, ou vélo plutôt que course si la douleur touche la course) et le champ pourquoi le dit. Adapte l\'intensité à la fraîcheur (fatigue élevée : séance facile ou courte). Évite deux séances intenses d\'affilée en tenant compte des séances prévues et réalisées. En course, la sortie la plus longue ne dépasse pas d\'environ 10 % la plus longue des dernières semaines.',
     '',
     'Réponds uniquement avec un objet JSON, sans autre texte :',
-    '{"titre": "Sortie longue endurance", "sport": "Ride", "duree_min": 180, "distance_km": 75, "denivele_m": 900, "intensite": "facile", "deroule": ["Échauffement 20 min en Z1-Z2", "…"], "pourquoi": "Une ou deux phrases."}',
+    '{"titre": "Sortie longue endurance", "sport": "Ride", "duree_min": 180, "distance_km": 75, "denivele_m": 900, "intensite": "facile", "deroule": ["Échauffement 20 min en Z1-Z2", "…"], "pourquoi": "Une ou deux phrases.", "etapes": [{"label": "Échauffement", "min": 20, "lo": 45, "hi": 65, "rampe": true}, {"repeter": 3, "label": "Tempo", "pas": [{"label": "Effort", "min": 10, "lo": 80, "hi": 88}, {"label": "Récupération", "min": 5, "lo": 45, "hi": 60}]}, {"label": "Retour au calme", "min": 10, "lo": 40, "hi": 55}]}',
+    'etapes décrit la même séance pour le compteur vélo ou la montre : lo et hi en % de la FTP pour le vélo, en % de la FC seuil pour la course ; "sec" au lieu de "min" pour les efforts courts ; "libre": true pour une étape sans cible (marche, accélérations) ; "rampe": true pour une montée progressive (vélo) ; "repeter" pour une série (sans série imbriquée). La somme des durées vaut duree_min. Labels courts, sans chiffres.',
     'sport vaut "Ride" (vélo dehors), "VirtualRide" (home trainer), "Run" (course route) ou "TrailRun". intensite vaut "facile", "modérée" ou "soutenue". Titre de 40 caractères maximum. distance_km et denivele_m approximatifs, null si sans objet. deroule contient 3 à 6 étapes courtes en français.'
   ].filter(x => x !== null).join('\n');
 }
@@ -1205,7 +1295,30 @@ function cleanProposal(r){
     distance_km: num(r.distance_km), denivele_m: num(r.denivele_m) == null ? null : Math.round(num(r.denivele_m)),
     intensite: ['facile','modérée','soutenue'].includes(r.intensite) ? r.intensite : '',
     deroule: Array.isArray(r.deroule) ? r.deroule.map(x => String(x).slice(0,200)).slice(0,8) : [],
-    pourquoi: r.pourquoi ? String(r.pourquoi).slice(0,400) : '' };
+    pourquoi: r.pourquoi ? String(r.pourquoi).slice(0,400) : '', etapes: cleanEtapes(r.etapes, sport) };
+}
+// Étapes proposées par Miguel : bornes vérifiées ; séance trop différente de duree_min → étapes par défaut.
+function cleanEtapes(list, sport){
+  if (!Array.isArray(list)) return null;
+  const run = sportCls(sport) === 'run', [mn, mx] = run ? [50, 110] : [30, 200];
+  const step = x => {
+    if (!x || typeof x !== 'object') return null;
+    const sec = x.sec != null ? Number(x.sec) : Number(x.min)*60;
+    if (!(sec >= 5 && sec <= 6*3600)) return null;
+    const o = { label: cleanLabel(x.label), sec: Math.round(sec) };
+    const lo = num(x.lo), hi = num(x.hi);
+    if (x.libre || lo == null) o.libre = true;
+    else { o.lo = Math.max(mn, Math.min(mx, Math.round(lo))); o.hi = Math.max(o.lo, Math.min(mx, Math.round(hi ?? lo))); if (x.rampe && !run) o.rampe = true; }
+    return o;
+  };
+  const out = [];
+  for (const x of list.slice(0, 20)){
+    if (x && x.repeter && Array.isArray(x.pas)){
+      const pas = x.pas.map(step).filter(Boolean).slice(0, 6), n = Math.round(Number(x.repeter));
+      if (pas.length && n >= 1 && n <= 30) out.push({ repeter: n, label: cleanLabel(x.label), pas });
+    } else { const s1 = step(x); if (s1) out.push(s1); }
+  }
+  return out.length ? out : null;
 }
 function renderProposal(){
   const p = ask.proposal; if (!p) return;
@@ -1270,7 +1383,7 @@ $('askout').addEventListener('click', e => {
   const p = ask.proposal;
   if (b.dataset.act === 'again'){ requestSession(p.titre+', '+p.duree_min+' min, '+p.intensite); return; }
   const k = state.openKey;
-  state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', cree_le: new Date().toISOString() })]);
+  state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', uid: newUid(), cree_le: new Date().toISOString() })]);
   persistSeances();
   ask.proposal = null;
   $('askout').innerHTML = '<span class="wait">Séance ajoutée au calendrier.</span> <button class="linkbtn" data-goto="plans">Voir dans Sorties prévues</button>';
