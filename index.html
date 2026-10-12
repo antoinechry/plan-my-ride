@@ -1428,7 +1428,7 @@ const POI_TYPES = {
   'tourism=wilderness_hut': ['sleep', 'Abri'], 'tourism=chalet': ['sleep', 'Gîte'],
   'shop=bicycle': ['bike', 'Magasin de vélo'], 'amenity=pharmacy': ['health', 'Pharmacie']
 };
-const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const OVERPASS = 'https://overpass-api.de/api'; // les serveurs miroirs (kumi.systems…) ne répondent plus aux navigateurs
 const OH_JS = ['https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js', 'https://cdn.jsdelivr.net/npm/opening_hours@3.15.0/build/opening_hours.js'];
 const POI = { key: '', list: [], loading: '', error: '', seq: 0, layer: null, groups: new Set(Object.keys(POI_GROUPS)), ohState: '' };
 try { const g = JSON.parse(localStorage.getItem('pmr-poi-groups') || 'null'); if (Array.isArray(g)) POI.groups = new Set(g.filter(k => POI_GROUPS[k])); } catch (e) {}
@@ -1461,16 +1461,34 @@ function overpassQuery(chunk, radius) {
   const parts = Object.entries(by).map(([t, vs]) => `nwr(around:${radius},${ll})["${t}"~"^(${vs.join('|')})$"];`).join('\n');
   return `[out:json][timeout:120];\n(\n${parts}\n);\nout center tags;`;
 }
-async function overpassFetch(q) {
+const sleep = (ms, signal) => new Promise(res => { const t = setTimeout(res, ms); signal?.addEventListener('abort', () => { clearTimeout(t); res(); }, { once: true }); });
+// Le service limite le nombre de requêtes simultanées par personne ; au-delà il refuse (souvent sans en-tête CORS,
+// donc vu comme une erreur réseau). On demande alors quand un créneau se libère et on réessaie.
+async function overpassWait(signal) {
+  try {
+    const t = await (await fetch(OVERPASS + '/status', { signal })).text();
+    const free = t.match(/(\d+) slots? available now/);
+    if (free && +free[1] > 0) return 1;
+    const secs = [...t.matchAll(/in (\d+) seconds/g)].map(m => +m[1]);
+    return secs.length ? Math.min(60, Math.min(...secs) + 1) : 10;
+  } catch (e) { return 10; }
+}
+async function overpassFetch(q, signal) {
   let last;
-  for (const url of OVERPASS) {
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 75000);
+  for (let attempt = 0; attempt < 6; attempt++) {
+    if (signal?.aborted) throw new Error('annulé');
+    if (attempt) { POI.waiting = true; renderPoiStatus(); await sleep((await overpassWait(signal)) * 1000, signal); POI.waiting = false; }
+    if (signal?.aborted) throw new Error('annulé');
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 90000), stop = () => ctl.abort();
+    signal?.addEventListener('abort', stop);
     try {
-      const r = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }), signal: ctl.signal });
+      const r = await fetch(OVERPASS + '/interpreter', { method: 'POST', body: new URLSearchParams({ data: q }), signal: ctl.signal });
       if (r.ok) return (await r.json()).elements || [];
-      last = new Error('le service OpenStreetMap a répondu ' + r.status + (r.status === 429 || r.status === 504 ? ' (surchargé)' : ''));
-    } catch (e) { last = new Error(e.name === 'AbortError' ? 'le service OpenStreetMap ne répond pas' : 'pas de connexion au service OpenStreetMap'); }
-    finally { clearTimeout(timer); }
+      last = new Error(r.status === 429 ? 'service OpenStreetMap saturé' : r.status === 504 ? 'service OpenStreetMap surchargé' : 'le service OpenStreetMap a répondu ' + r.status);
+      if (r.status === 400) break; // requête refusée : inutile d'insister
+    } catch (e) {
+      last = new Error(signal?.aborted ? 'annulé' : e.name === 'AbortError' ? 'le service OpenStreetMap ne répond pas' : 'service OpenStreetMap saturé ou injoignable');
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
   }
   throw last;
 }
@@ -1509,6 +1527,8 @@ async function poiEnsure(force) {
   const radius = +$('#poiRadius').value || 500, key = routeSig() + '|' + radius;
   if (POI.key === key && !force) return; // déjà cherché (ou en cours) pour cette trace et ce rayon
   const seq = ++POI.seq;
+  if (POI.ctl) POI.ctl.abort();
+  const ctl = (POI.ctl = new AbortController());
   POI.key = key; POI.list = []; POI.error = ''; POI.loading = 'Recherche des lieux le long de la trace…';
   renderPois();
   let cached = null;
@@ -1524,7 +1544,7 @@ async function poiEnsure(force) {
     while (next < chunks.length) {
       const c = next++;
       let els = null;
-      try { els = await overpassFetch(overpassQuery(chunks[c], qRadius)); } catch (e) { lastErr = e; failed++; }
+      try { els = await overpassFetch(overpassQuery(chunks[c], qRadius), ctl.signal); } catch (e) { lastErr = e; failed++; }
       if (seq !== POI.seq) return;
       done++;
       for (const el of els || []) {
@@ -1573,7 +1593,7 @@ function poiStatusAt(p, t) {
 }
 
 function renderPoiStatus() {
-  const el = $('#poiStatus'), msg = POI.loading || POI.error;
+  const el = $('#poiStatus'), msg = POI.loading ? POI.loading + (POI.waiting ? ' Le service OpenStreetMap est chargé : on attend un créneau libre.' : '') : POI.error;
   el.hidden = !msg; el.textContent = msg || ''; el.className = 'poi-status' + (POI.error ? ' err' : '');
   if (POI.error) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.style.marginLeft = '8px'; b.textContent = 'Réessayer'; b.addEventListener('click', () => poiEnsure(true)); el.append(b); }
 }
