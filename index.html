@@ -408,6 +408,7 @@ footer a{color:inherit}
     <section class="card">
       <div class="card-head">
         <h2>Carte météo du parcours</h2>
+        <button class="btn small" id="exportImg" type="button" title="Image PNG de la carte (vue actuelle) avec le vent, et du profil météo">Exporter l'image</button>
         <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
         <label class="arrows-toggle"><input type="checkbox" id="animOn" checked> Animation</label>
         <div class="seg" role="group" aria-label="Colorer la trace selon">
@@ -924,6 +925,135 @@ function renderLegend() {
   else el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Couvert</span><span><i style="background:${cssVar('--sun')}"></i>Plein soleil</span><span><i style="background:#3a4552"></i>Nuit</span>`;
   if ($('#arrowsOn').checked) el.innerHTML += `<div class="wrow"><span>Flèches : sens où va le vent, chiffre en km/h</span><span>Force<span class="wscale">${WIND_SCALE.map((w, i) => `<span style="background:${w[1]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? w[0] + '+' : w[0] + '–' + WIND_SCALE[i + 1][0]}</span>`).join('')}</span></span></div>`;
 }
+/* ---------- export image (page Sortie) : carte avec la trace et le vent + profil météo ---------- */
+// L'image reprend la vue actuelle de la carte : zoomer / cadrer avant d'exporter. Les tuiles du fond sont rechargées
+// en mode CORS ; si un serveur de tuiles le refuse, le fond est remplacé par un aplat neutre.
+function loadImg(src) {
+  return new Promise(ok => { const im = new Image(); im.crossOrigin = 'anonymous'; const t = setTimeout(() => ok(null), 10000);
+    im.onload = () => { clearTimeout(t); ok(im); }; im.onerror = () => { clearTimeout(t); ok(null); }; im.src = src; });
+}
+async function drawMapTo(c, x0, y0, W, H) {
+  c.save(); c.beginPath(); c.rect(x0, y0, W, H); c.clip();
+  c.fillStyle = cssVar('--bg'); c.fillRect(x0, y0, W, H);
+  // fond de carte
+  let tl = null; map.eachLayer(l => { if (l instanceof L.TileLayer) tl = l; });
+  let missing = 0;
+  if (tl) {
+    const z = map.getZoom(), ts = tl.getTileSize().x, org = map.containerPointToLayerPoint([0, 0]).add(map.getPixelOrigin()), n = 2 ** z, jobs = [];
+    for (let tx = Math.floor(org.x / ts); tx * ts < org.x + W; tx++) for (let ty = Math.floor(org.y / ts); ty * ts < org.y + H; ty++) {
+      if (ty < 0 || ty >= n) continue;
+      const cc = L.point(((tx % n) + n) % n, ty); cc.z = z;
+      jobs.push(loadImg(tl.getTileUrl(cc)).then(im => { if (im) c.drawImage(im, x0 + tx * ts - org.x, y0 + ty * ts - org.y, ts, ts); else missing++; }));
+    }
+    await Promise.all(jobs);
+  }
+  const pt = (lat, lon) => { const q = map.latLngToContainerPoint([lat, lon]); return [x0 + q.x, y0 + q.y]; };
+  // trace : liseré blanc puis couleur selon la métrique choisie
+  const P = S.P;
+  c.lineJoin = c.lineCap = 'round';
+  c.beginPath(); P.pts.forEach((p, i) => { const [x, y] = pt(p.lat, p.lon); i ? c.lineTo(x, y) : c.moveTo(x, y); });
+  c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 9; c.stroke();
+  for (let k = 0; k < S.samples.length - 1; k++) {
+    const a = S.samples[k].i, b = S.samples[k + 1].i, sv = S.svs ? (S.svs[k + 1] || S.svs[k]) : null;
+    c.beginPath(); for (let i = a; i <= b; i++) { const [x, y] = pt(P.pts[i].lat, P.pts[i].lon); i === a ? c.moveTo(x, y) : c.lineTo(x, y); }
+    c.strokeStyle = metricColor(sv); c.lineWidth = 5; c.stroke();
+  }
+  // flèches de vent (même placement qu'à l'écran)
+  if (S.wx && $('#arrowsOn').checked) {
+    const arrow = new Path2D('M12 1.5 L20 21 L12 16 L4 21 Z'), shown = [];
+    let run = ARROW_GAP / 2, prev = null;
+    for (let i = 0; i < P.n; i++) {
+      const [x, y] = pt(P.pts[i].lat, P.pts[i].lon);
+      if (prev) run += Math.hypot(x - prev[0], y - prev[1]);
+      prev = [x, y];
+      if (run < ARROW_GAP || x < x0 - 20 || y < y0 - 20 || x > x0 + W + 20 || y > y0 + H + 20) continue;
+      if (shown.some(q => Math.hypot(x - q[0], y - q[1]) < ARROW_GAP * 0.8)) continue;
+      const w = wxAt(sIdx(P.d[i]), S.tl.times[i]); if (!w) continue;
+      run = 0; shown.push([x, y]);
+      const sz = Math.round(clamp(16 + w.ws * 0.35, 16, 30)), k = sz / 24;
+      c.save(); c.translate(x, y); c.rotate(((w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
+      c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 2; c.shadowOffsetY = 1;
+      c.fillStyle = windStrength(w.ws)[1]; c.fill(arrow); c.shadowColor = 'transparent';
+      c.lineWidth = 1.1; c.strokeStyle = '#15202a'; c.lineJoin = 'round'; c.stroke(arrow); c.restore();
+      const lbl = n0(w.ws); c.font = `600 10.5px ${cssVar('--f-mono').split(',')[0]}, monospace`;
+      const tw = c.measureText(lbl).width, by = y + sz / 2 + 2;
+      c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.roundRect(x - tw / 2 - 4, by, tw + 8, 15, 7); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,.15)'; c.lineWidth = 1; c.stroke();
+      c.fillStyle = '#15202a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(lbl, x, by + 7.5); c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    }
+  }
+  // départ / arrivée
+  for (const [p, col] of [[P.pts[0], cssVar('--tail')], [P.pts[P.n - 1], cssVar('--head')]]) {
+    const [x, y] = pt(p.lat, p.lon); c.beginPath(); c.arc(x, y, 7, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke();
+  }
+  c.restore();
+  c.strokeStyle = cssVar('--line'); c.lineWidth = 1; c.strokeRect(x0 + 0.5, y0 + 0.5, W - 1, H - 1);
+  return missing;
+}
+function wrapText(c, text, maxW) {
+  const out = []; let line = '';
+  for (const w of text.split(/\s+/)) { const t = line ? line + ' ' + w : w; if (c.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out;
+}
+async function exportImage() {
+  if (!S.P || !S.tl || !map) return;
+  const btn = $('#exportImg'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Préparation…';
+  try {
+    try { await document.fonts.ready; } catch (e) {}
+    renderChart(); // graphique propre (sans le curseur de survol)
+    const mapEl = $('#map'), MW = mapEl.clientWidth, MH = mapEl.clientHeight, cv = $('#chart');
+    const CH = Math.round(cv.height / cv.width * MW), pad = 24, W = MW + pad * 2, s = 2;
+    const disp = `${cssVar('--f-display').split(',')[0]}, sans-serif`, body = `${cssVar('--f-body').split(',')[0]}, sans-serif`;
+    const meas = document.createElement('canvas').getContext('2d'); meas.font = `500 17px ${body}`;
+    const tl = S.tl, P = S.P;
+    const sub = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${durTxt((tl.end - tl.start) / 3600e3)} de sortie`; // départ et arrivée sont dans la phrase de résumé
+    const verdictLines = wrapText(meas, $('#verdict').innerText.trim(), MW);
+    const headH = 34 + 24 + verdictLines.length * 23 + 14, legH = 40, keysH = 26, footH = 30;
+    const H = pad + headH + MH + legH + CH + keysH + footH + pad;
+    const out = document.createElement('canvas'); out.width = W * s; out.height = H * s;
+    const c = out.getContext('2d'); c.scale(s, s);
+    c.fillStyle = cssVar('--panel'); c.fillRect(0, 0, W, H);
+    let y = pad;
+    c.fillStyle = cssVar('--ink'); c.font = `700 28px ${disp}`; c.fillText(S.name || 'Ma sortie', pad, y + 26); y += 34;
+    c.fillStyle = cssVar('--muted'); c.font = `500 15px ${body}`; c.fillText(sub, pad, y + 16); y += 24;
+    c.fillStyle = cssVar('--ink'); c.font = `500 17px ${body}`; for (const l of verdictLines) { c.fillText(l, pad, y + 17); y += 23; }
+    y += 14;
+    const missing = await drawMapTo(c, pad, y, MW, MH); y += MH;
+    // légende sous la carte
+    c.font = `13px ${body}`; let lx = pad; const ly = y + 24;
+    const dot = (col, txt) => { c.fillStyle = col; c.beginPath(); c.roundRect(lx, ly - 7, 18, 5, 3); c.fill(); lx += 24; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ly); lx += c.measureText(txt).width + 16; };
+    if (S.metric === 'wind') { dot(cssVar('--head'), 'Vent de face'); dot(cssVar('--cross'), 'Travers ou faible'); dot(cssVar('--tail'), 'Vent de dos'); }
+    else if (S.metric === 'temp') dot(tempColor(15), 'Couleur : température ressentie');
+    else if (S.metric === 'rain') dot(rainColor(2), 'Couleur : pluie');
+    else dot(cssVar('--sun'), 'Couleur : ensoleillement');
+    if (S.wx && $('#arrowsOn').checked) {
+      c.fillStyle = cssVar('--muted'); c.fillText('Flèches : sens du vent, en km/h', lx, ly); lx += c.measureText('Flèches : sens du vent, en km/h').width + 10;
+      for (const w of WIND_SCALE) { c.fillStyle = w[1]; c.beginPath(); c.roundRect(lx, ly - 10, 14, 12, 3); c.fill(); lx += 18; }
+    }
+    y += legH;
+    c.drawImage(cv, pad, y, MW, CH); y += CH;
+    // légende du graphique
+    c.font = `12.5px ${body}`; lx = pad; const ky = y + 18;
+    for (const [col, txt] of [[cssVar('--elev-line'), 'Altitude'], [cssVar('--warm'), 'Température ressentie'], [cssVar('--rain'), 'Pluie (mm/h)'], [cssVar('--head'), 'Bande vent : face / travers / dos'], [cssVar('--elev'), 'Nuit']]) {
+      c.fillStyle = col; c.fillRect(lx, ky - 5, 14, 3); lx += 20; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ky); lx += c.measureText(txt).width + 16;
+    }
+    y += keysH;
+    c.font = `11.5px ${body}`; c.fillStyle = cssVar('--muted');
+    c.fillText('Plan My Ride · Météo Open-Meteo.com (CC BY 4.0) · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri' + (missing ? ' (fond partiel)' : '') + ' · Horaires estimés', pad, y + 18);
+    const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
+    const fname = `${(S.name || 'sortie').replace(/[^\w\-]+/g, '_')}_${ymd(new Date(tl.start))}.png`;
+    const file = new File([blob], fname, { type: 'image/png' });
+    if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: S.name || 'Ma sortie' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  } catch (e) { setStatus('Export impossible : ' + e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+$('#exportImg').addEventListener('click', exportImage);
+
 function idxAtKm(km) { const d = S.P.d; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (d[m] < km) lo = m + 1; else hi = m; } return lo; }
 
 /* graphique */
@@ -1175,7 +1305,7 @@ function applyModeUI() {
   if (prof) { flyProfileLoad(); renderProfileCard(); }
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
-  $('#optCard').hidden = ultra; $('#roadCard').hidden = ultra;
+  $('#optCard').hidden = ultra; $('#roadCard').hidden = ultra; $('#exportImg').hidden = ultra;
   $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et étapes jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
   document.title = ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride';
 }

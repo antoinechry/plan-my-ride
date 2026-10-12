@@ -18,6 +18,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Rendu : `renderSummary`, `renderMap`, `renderChart` (canvas), `renderTable`, `renderOpts`
 - `renderOpts` : deux lignes seulement, le départ choisi (« Ton départ ») et le meilleur créneau parmi les départs de 4 h à 16 h ; une seule ligne si c'est le même.
 - Feuille de route : interrupteur « Afficher les lignes » (`#rowsOn`, mémorisé dans `localStorage` `pmr-rows`) ; l'export CSV reste complet.
+- Export image (page Sortie, bouton « Exporter l'image » de la carte, `exportImage`) : PNG ×2 composé sur un canvas — titre, résumé, vue actuelle de la carte (`drawMapTo` : tuiles du fond rechargées en CORS, sinon aplat ; trace colorée selon la métrique ; flèches de vent comme à l'écran ; départ/arrivée), légende, graphique `#chart` recopié, crédits. Partage natif sur mobile (`navigator.share`), téléchargement sinon.
 - `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
 ## Deux pages : Sortie et Ultra
