@@ -90,6 +90,23 @@ dialog::backdrop{background:rgba(10,16,12,.45)}
 .dlg{padding:18px}
 .dlg h3{margin:0 0 12px;font-size:1.2rem;font-weight:750}
 .dlg h4{margin:14px 0 6px;font-size:.92rem}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 -18px 14px;padding:0 18px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:none;background:none;padding:.5rem .7rem;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabs .n{display:inline-block;min-width:1.4em;margin-left:.35em;padding:0 .35em;border-radius:999px;background:var(--surface-2);font-size:.74rem;text-align:center}
+.tabpanel{min-height:220px}
+@media (max-width:640px){
+  .tabs{gap:0;overflow:visible}
+  .tabs button{flex:1 1 0;white-space:normal;text-align:center;padding:.45rem .3rem;font-size:.8rem;line-height:1.2}
+  .tabs .n{margin-left:.2em}
+}
+.actrow .meta{white-space:nowrap}
+.tabpanel .sub4{margin-top:14px}
+.empty{color:var(--muted);font-size:.9rem;margin:6px 0 10px}
+.actrow .feelsum{grid-column:1/-1;font-size:.82rem;color:var(--muted)}
+.actrow .feelsum b{color:var(--ink);font-weight:650}
 .seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 .seg button{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .6rem;text-align:left;cursor:pointer;font-size:.9rem}
 .seg button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
@@ -170,7 +187,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 @media (max-width:640px){ .zrow{grid-template-columns:8.5em 1fr auto} }
 .dot.plan{background:transparent;border:1.5px dashed var(--muted)}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.plist li{border-left:3px dotted var(--c);padding:2px 0 2px 10px;font-size:.9rem}
+.plist > li{border-left:3px dotted var(--c);padding:2px 0 2px 10px;font-size:.9rem}
 .plist .meta{color:var(--muted);font-size:.82rem}
 .plist ol{margin:4px 0 0;padding-left:1.2em;font-size:.84rem;color:var(--muted)}
 .linkbtn{border:none;background:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.8rem;margin-left:6px}
@@ -273,19 +290,27 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 <dialog id="dlg" aria-labelledby="dlgtitle">
   <div class="dlg">
     <h3 id="dlgtitle"></h3>
-    <div id="dlgacts"></div>
-    <h4>Ma dispo</h4>
+    <div class="tabs" id="dlgtabs" role="tablist" aria-label="Journée">
+      <button role="tab" data-tab="dispo" aria-selected="true">Dispo</button>
+      <button role="tab" data-tab="plans" aria-selected="false">Sorties prévues</button>
+      <button role="tab" data-tab="ask" aria-selected="false">Demander à Miguel</button>
+      <button role="tab" data-tab="done" aria-selected="false">Compte rendu</button>
+    </div>
+    <section class="tabpanel" data-panel="dispo" role="tabpanel">
     <div class="seg" id="dlgseg">
       <button data-s="libre" aria-pressed="false"><b>Libre</b><small>sortie longue possible</small></button>
       <button data-s="court" aria-pressed="false"><b>Créneau court</b><small>1 h à 1 h 30</small></button>
       <button data-s="indispo" aria-pressed="false"><b>Indispo</b><small>pas d'entraînement</small></button>
       <button data-s="" aria-pressed="false"><b>Non renseigné</b><small>effacer</small></button>
     </div>
-    <h4><label for="dlgnote">Note</label></h4>
+    <h4 class="sub4"><label for="dlgnote">Note</label></h4>
     <textarea id="dlgnote" maxlength="300" placeholder="Ex. dispo seulement l'après-midi…"></textarea>
-    <div id="dlgplans"></div>
-    <div id="dlgask" hidden>
-      <h4>Demander une sortie à Miguel</h4>
+    </section>
+    <section class="tabpanel" data-panel="plans" role="tabpanel" hidden>
+      <div id="dlgplans"></div>
+    </section>
+    <section class="tabpanel" data-panel="ask" role="tabpanel" hidden>
+    <div id="dlgask">
       <div class="seg" id="asksport">
         <button data-sport="ride" aria-pressed="true"><b>Vélo</b></button>
         <button data-sport="run" aria-pressed="false"><b>Course à pied</b></button>
@@ -314,6 +339,10 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       </div>
       <div id="askout" aria-live="polite"></div>
     </div>
+    </section>
+    <section class="tabpanel" data-panel="done" role="tabpanel" hidden>
+      <div id="dlgacts"></div>
+    </section>
     <div class="dlgfoot">
       <span class="saved" id="savestate"></span>
       <button class="btn primary" id="dlgclose">Fermer</button>
@@ -513,8 +542,35 @@ function openDay(k){
   $('dlgnote').value = dispo.note || '';
   $('savestate').textContent = '';
   renderActs(k); renderPlans(k); setupAsk(k);
+  // Onglet ouvert : compte rendu s'il y a eu une activité, sinon les sorties prévues, sinon la dispo.
+  const hasActs = (actsByDay().get(k) || []).length, hasPlans = (state.seances[k] || []).length;
+  setTab(hasActs ? 'done' : hasPlans ? 'plans' : 'dispo');
   $('dlg').showModal();
 }
+function updateTabs(){
+  const k = state.openKey; if (!k) return;
+  const nActs = (actsByDay().get(k) || []).length, nPlans = (state.seances[k] || []).length;
+  const tab = n => $('dlgtabs').querySelector('[data-tab="'+n+'"]');
+  tab('plans').innerHTML = 'Sorties prévues'+(nPlans ? '<span class="n">'+nPlans+'</span>' : '');
+  tab('done').innerHTML = 'Compte rendu'+(nActs ? '<span class="n">'+nActs+'</span>' : '');
+  tab('ask').hidden = k < key(t0);
+  tab('done').hidden = !nActs && k > key(t0);
+}
+function setTab(name){
+  updateTabs();
+  const btn = $('dlgtabs').querySelector('[data-tab="'+name+'"]');
+  if (!btn || btn.hidden) name = 'dispo';
+  for (const b of $('dlgtabs').querySelectorAll('[data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === name));
+  for (const p of $('dlg').querySelectorAll('.tabpanel')) p.hidden = p.dataset.panel !== name;
+}
+$('dlgtabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); });
+$('dlgtabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const tabs = Array.from($('dlgtabs').querySelectorAll('[data-tab]')).filter(b => !b.hidden);
+  const i = tabs.findIndex(b => b.getAttribute('aria-selected') === 'true');
+  const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+  setTab(next.dataset.tab); next.focus();
+});
 
 /* ---------- Activités du jour et ressentis ---------- */
 const RPE_OPTS = ['', '1 · très facile', '2', '3 · facile', '4', '5 · modéré', '6', '7 · difficile', '8', '9 · très difficile', '10 · maximal'];
@@ -548,14 +604,21 @@ function actStats(a){
 // Fenêtre du jour : liste compacte des activités, chacune ouvre la fenêtre de la sortie.
 function renderActs(k){
   const acts = (actsByDay().get(k) || []).slice().sort((x,y) => String(x.start_local).localeCompare(String(y.start_local)));
-  if (!acts.length){ $('dlgacts').innerHTML = ''; return; }
-  $('dlgacts').innerHTML = '<h4>Réalisé</h4><div class="acts">' + acts.map(a => {
+  if (!acts.length){ $('dlgacts').innerHTML = '<p class="empty">Aucune activité enregistrée ce jour-là.</p>'; return; }
+  $('dlgacts').innerHTML = '<div class="acts">' + acts.map(a => {
     const km = (a.distance_m||0)/1000, L = actLoad(a), hm = String(a.start_local||'').slice(11,16).replace(':',' h ');
     const sum = [km ? nf1.format(km)+' km' : '', a.moving_time_s ? fmtHM(a.moving_time_s) : '', a.elevation_gain_m ? nf0.format(a.elevation_gain_m)+' m D+' : '', 'charge '+(L.est ? '≈' : '')+nf0.format(L.load)].filter(Boolean).join(' · ');
     return '<button class="actrow" data-open="'+esc(String(a.ext_id))+'" style="--c:var(--'+sportCls(a.sport_type)+')">'
       + '<span class="atitle"><b>'+esc(a.name || sportLabel(a.sport_type))+'</b><span class="meta">'+esc(sportLabel(a.sport_type)+(hm ? ' · '+hm : ''))+'</span></span>'
-      + '<span class="ago">Voir la sortie ›</span><span class="asum">'+esc(sum)+'</span></button>';
+      + '<span class="ago">Voir la sortie ›</span><span class="asum">'+esc(sum)+'</span>'
+      + feelSum(a) + '</button>';
   }).join('') + '</div>';
+}
+function feelSum(a){
+  const id = String(a.ext_id), r = state.ressentis[id], e = state.etudes[id], parts = [];
+  if (r) parts.push('Ressenti : '+esc(ressentiTxt(r)));
+  if (e && e.titre) parts.push('Miguel : <b>'+esc(e.titre)+'</b>');
+  return '<span class="feelsum">'+(parts.length ? parts.join(' · ') : 'Ressenti et étude de Miguel à faire')+'</span>';
 }
 $('dlgacts').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openAct(b.dataset.open); });
 
@@ -794,7 +857,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 $('actclose').addEventListener('click', () => $('actdlg').close());
 $('actx').addEventListener('click', () => $('actdlg').close());
 $('actdlg').addEventListener('click', e => { if (e.target === $('actdlg')) $('actdlg').close(); });
-$('actdlg').addEventListener('close', () => { actView.id = null; actView.panels = []; });
+$('actdlg').addEventListener('close', () => { actView.id = null; actView.panels = []; if ($('dlg').open && state.openKey) renderActs(state.openKey); });
 let feelTimer = null;
 function setRessenti(id, f, v){
   const r = Object.assign({}, state.ressentis[id] || {});
@@ -1026,12 +1089,20 @@ function computeAlerts(series){
 /* ---------- Séances prévues ---------- */
 function renderPlans(k){
   const plans = state.seances[k] || [];
-  $('dlgplans').innerHTML = plans.length ? '<h4>Séances prévues</h4><ul class="plist">' + plans.map((p,i) => {
+  const future = k >= key(t0);
+  if (!plans.length){
+    $('dlgplans').innerHTML = '<p class="empty">Aucune sortie prévue ce jour-là.</p>' + (future ? '<button class="btn" data-goto="ask">Demander une sortie à Miguel</button>' : '');
+    updateTabs(); return;
+  }
+  $('dlgplans').innerHTML = '<ul class="plist">' + plans.map((p,i) => {
     const meta = [sportLabel(p.sport), fmtHM((p.duree_min||0)*60), p.distance_km ? '≈ '+nf0.format(p.distance_km)+' km' : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
     return '<li style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><button class="linkbtn" data-rm="'+i+'">Retirer</button><div class="meta">'+esc(meta)+'</div>'
-      + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '') + '</li>';
-  }).join('') + '</ul>' : '';
+      + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
+      + (p.pourquoi ? '<div class="meta">'+esc(p.pourquoi)+'</div>' : '') + '</li>';
+  }).join('') + '</ul>';
+  updateTabs();
 }
+$('dlgplans').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) setTab(b.dataset.goto); });
 async function persistSeances(){
   try { await saveSeances(); $('savestate').textContent = 'Enregistré'; }
   catch(e){ $('savestate').textContent = 'Échec de l\'enregistrement de la séance, réessaie.'; }
@@ -1046,7 +1117,6 @@ $('dlgplans').addEventListener('click', e => {
 /* ---------- Demander une sortie (Claude, via la fonction serveur coach-propose) ---------- */
 const ask = { sport: 'ride', ctl: null, proposal: null, key: null };
 function setupAsk(k){
-  $('dlgask').hidden = k < key(t0);
   if (ask.key !== k){ ask.key = k; ask.proposal = null; $('askout').innerHTML = ''; $('askwish').value = ''; $('asktime').value = 'auto'; }
   syncAskSport();
 }
@@ -1195,6 +1265,7 @@ async function requestSession(prev){
 $('askgo').addEventListener('click', () => requestSession(null));
 $('askstop').addEventListener('click', () => { if (ask.ctl) ask.ctl.abort(); });
 $('askout').addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (g){ setTab(g.dataset.goto); return; }
   const b = e.target.closest('[data-act]'); if (!b || !ask.proposal || !state.openKey) return;
   const p = ask.proposal;
   if (b.dataset.act === 'again'){ requestSession(p.titre+', '+p.duree_min+' min, '+p.intensite); return; }
@@ -1202,7 +1273,7 @@ $('askout').addEventListener('click', e => {
   state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', cree_le: new Date().toISOString() })]);
   persistSeances();
   ask.proposal = null;
-  $('askout').innerHTML = '<span class="wait">Séance ajoutée au calendrier.</span>';
+  $('askout').innerHTML = '<span class="wait">Séance ajoutée au calendrier.</span> <button class="linkbtn" data-goto="plans">Voir dans Sorties prévues</button>';
   renderPlans(k); renderCalendar();
 });
 
