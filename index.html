@@ -143,6 +143,32 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 @media (max-width:560px){.opt{grid-template-columns:52px minmax(0,1fr)}.opt .bar{display:none}}
 
 .table-scroll{overflow-x:auto}
+.poi-status{padding:10px 14px;font-size:13.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.poi-status.err{color:var(--head)}
+.poi-chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.poi-chips button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.poi-chips button i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.poi-chips button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
+.poi-chips button[aria-pressed="false"] i{opacity:.35}
+.poi-gaps{padding:10px 14px;font-size:13.5px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.poi-gaps:empty{display:none}
+.poi-gaps .warn{color:var(--head);font-weight:600}
+.poi-scroll{max-height:460px;overflow:auto}
+.poi-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.poi-table th{position:sticky;top:0;background:var(--panel);text-align:left;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);z-index:1}
+.poi-table td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.poi-table tr{cursor:pointer}
+.poi-table tr:hover td{background:var(--bg)}
+.poi-table .num{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+.poi-table .nm{font-weight:600}
+.poi-table .ty{display:block;color:var(--muted);font-size:12.5px}
+.poi-table .st-open{color:var(--tail);font-weight:600}
+.poi-table .st-closed{color:var(--head);font-weight:600}
+.poi-table .st-unk{color:var(--muted)}
+.poi-table .oh{display:block;color:var(--muted);font-size:11.5px;font-family:var(--f-mono);overflow-wrap:anywhere}
+.poi-credit{padding:8px 14px 12px}
+.poi-credit a{color:inherit}
+@media (max-width:600px){.poi-table th:nth-child(4),.poi-table td:nth-child(4){display:none}}
 .switch{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
 .switch input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
 .switch .track{flex:none;position:relative;width:34px;height:20px;border-radius:10px;background:var(--line);transition:background .15s}
@@ -279,6 +305,20 @@ footer a{color:inherit}
       </div>
     </div>
     <hr class="sep">
+    <div class="field">
+      <label class="toggle"><input type="checkbox" id="ultraOn"> <span class="label" style="color:var(--ink)">Mode ultra</span></label>
+      <p class="hint">Commerces, restos, bars, hébergements et points d'eau le long de la trace, avec leurs horaires à ton passage.</p>
+      <div class="field" id="ultraFields" hidden>
+        <label class="label" for="poiRadius">Distance max. de la trace</label>
+        <select id="poiRadius">
+          <option value="200">200 m</option>
+          <option value="500">500 m</option>
+          <option value="1000">1 km</option>
+          <option value="2000">2 km</option>
+        </select>
+      </div>
+    </div>
+    <hr class="sep">
     <p class="hint">Prévisions Open-Meteo (modèles AROME / ICON / GFS selon la zone), disponibles jusqu'à 16 jours. Le vent affiché est mesuré à 10 m.</p>
   </aside>
 
@@ -320,6 +360,23 @@ footer a{color:inherit}
       </div>
       <div id="map"></div>
       <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="card" id="poiCard" hidden>
+      <div class="card-head">
+        <h2>Ravitaillement et hébergement</h2>
+        <label class="arrows-toggle"><input type="checkbox" id="poiOpenOnly"> Seulement ouverts à mon passage</label>
+      </div>
+      <div class="poi-status" id="poiStatus" hidden></div>
+      <div class="poi-chips" id="poiChips" role="group" aria-label="Types de lieux affichés"></div>
+      <div class="poi-gaps" id="poiGaps"></div>
+      <div class="poi-scroll">
+        <table class="poi-table">
+          <thead><tr><th>Km</th><th>Passage</th><th>Lieu</th><th>Écart</th><th>À ton passage</th></tr></thead>
+          <tbody id="poiRows"></tbody>
+        </table>
+      </div>
+      <p class="hint poi-credit">Données © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via Overpass. Horaires tels que saisis dans OpenStreetMap : à vérifier pour les lieux clés.</p>
     </section>
 
     <section class="card">
@@ -499,7 +556,8 @@ function wxAt(k, tMs) {
 function readOpt() {
   return { date: $('#date').value, time: $('#time').value || '08:00', speed: +$('#speed').value, vam: +$('#vam').value,
     pause: +$('#pause').value, windOn: $('#windOn').checked, windowOn: $('#windowOn').checked,
-    dayStart: $('#dayStart').value || '07:00', dayEnd: $('#dayEnd').value || '20:00' };
+    dayStart: $('#dayStart').value || '07:00', dayEnd: $('#dayEnd').value || '20:00',
+    ultraOn: $('#ultraOn').checked, poiRadius: +$('#poiRadius').value || 500 };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -649,7 +707,7 @@ function whenTxt(t, ref) {
 
 /* ---------- rendu ---------- */
 function renderAll(opts, opt) {
-  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt);
+  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois();
 }
 
 function renderSummary(opt) {
@@ -702,6 +760,7 @@ function initMap() {
   try { const saved = localStorage.getItem('pmr-base2'); if (saved && bases[saved] && !(isLocal && saved === 'Plan (OSM)')) baseName = saved; } catch (e) {}
   bases[baseName].addTo(map);
   L.control.layers(bases, null, { position: 'topright' }).addTo(map);
+  map.createPane('poiPane').style.zIndex = 620; // lieux du mode ultra au-dessus des flèches de vent
   map.on('moveend', () => renderWindArrows());
   map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base2', e.name); } catch (err) {} });
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
@@ -999,10 +1058,11 @@ function saveOpt(o) { try { localStorage.setItem('pmr-opt', JSON.stringify({ ...
 function initInputs() {
   const tm = new Date(); tm.setDate(tm.getDate() + 1);
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('pmr-opt') || '{}') || {}; } catch (e) {}
-  const def = { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, windowOn: false, dayStart: '07:00', dayEnd: '20:00', ...saved };
+  const def = { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, windowOn: false, dayStart: '07:00', dayEnd: '20:00', ultraOn: false, poiRadius: 500, ...saved };
   $('#date').value = ymd(tm);
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn; $('#windowOn').checked = !!def.windowOn; $('#dayStart').value = def.dayStart; $('#dayEnd').value = def.dayEnd;
+  $('#ultraOn').checked = !!def.ultraOn; $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
   try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
   syncOutputs();
   if (def.calibOn) { $('#calibOn').checked = true; calibStart(true); }
@@ -1235,6 +1295,242 @@ $('#calibList').addEventListener('change', e => {
   calibApply();
 });
 
+/* ---------- mode ultra : lieux utiles le long de la trace (OpenStreetMap / Overpass) ---------- */
+const POI_GROUPS = {
+  food:   { lbl: 'Alimentation', col: '#2c8a46', emo: '🛒', resupply: true },
+  eat:    { lbl: 'Restos et cafés', col: '#d9730b', emo: '🍴', resupply: true },
+  bar:    { lbl: 'Bars', col: '#8e44ad', emo: '🍺', resupply: true },
+  fuel:   { lbl: 'Stations-service', col: '#5d6873', emo: '⛽', resupply: true },
+  water:  { lbl: 'Eau', col: '#2f8fd0', emo: '💧' },
+  sleep:  { lbl: 'Hébergement', col: '#1f4f8f', emo: '🛏️' },
+  bike:   { lbl: 'Vélo', col: '#c3302f', emo: '🔧' },
+  health: { lbl: 'Pharmacies', col: '#16a085', emo: '💊' }
+};
+const POI_TYPES = {
+  'shop=supermarket': ['food', 'Supermarché'], 'shop=convenience': ['food', 'Épicerie'], 'shop=general': ['food', 'Épicerie'],
+  'shop=bakery': ['food', 'Boulangerie'], 'shop=pastry': ['food', 'Pâtisserie'], 'shop=greengrocer': ['food', 'Primeur'],
+  'shop=butcher': ['food', 'Boucherie'], 'shop=deli': ['food', 'Traiteur'], 'shop=farm': ['food', 'Vente à la ferme'], 'shop=kiosk': ['food', 'Kiosque'],
+  'amenity=restaurant': ['eat', 'Restaurant'], 'amenity=fast_food': ['eat', 'Restauration rapide'], 'amenity=cafe': ['eat', 'Café'],
+  'amenity=bar': ['bar', 'Bar'], 'amenity=pub': ['bar', 'Pub'], 'amenity=biergarten': ['bar', 'Biergarten'],
+  'amenity=fuel': ['fuel', 'Station-service'],
+  'amenity=drinking_water': ['water', 'Point d\'eau potable'], 'amenity=water_point': ['water', 'Point d\'eau'],
+  'tourism=hotel': ['sleep', 'Hôtel'], 'tourism=motel': ['sleep', 'Motel'], 'tourism=hostel': ['sleep', 'Auberge'],
+  'tourism=guest_house': ['sleep', 'Chambre d\'hôtes'], 'tourism=camp_site': ['sleep', 'Camping'], 'tourism=alpine_hut': ['sleep', 'Refuge'],
+  'tourism=wilderness_hut': ['sleep', 'Abri'], 'tourism=chalet': ['sleep', 'Gîte'],
+  'shop=bicycle': ['bike', 'Magasin de vélo'], 'amenity=pharmacy': ['health', 'Pharmacie']
+};
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const OH_JS = ['https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js', 'https://cdn.jsdelivr.net/npm/opening_hours@3.15.0/build/opening_hours.js'];
+const POI = { key: '', list: [], loading: '', error: '', seq: 0, layer: null, groups: new Set(Object.keys(POI_GROUPS)), ohState: '' };
+try { const g = JSON.parse(localStorage.getItem('pmr-poi-groups') || 'null'); if (Array.isArray(g)) POI.groups = new Set(g.filter(k => POI_GROUPS[k])); } catch (e) {}
+try { $('#poiOpenOnly').checked = localStorage.getItem('pmr-poi-open') === '1'; } catch (e) {}
+
+// Simplification de la trace pour la requête (Douglas-Peucker, tolérance en km), découpée en morceaux.
+function routeForQuery(P, tolKm) {
+  const n = P.n, keep = new Uint8Array(n); keep[0] = keep[n - 1] = 1;
+  const X = i => P.pts[i].lon * 111.32 * Math.cos(P.pts[i].lat * RAD), Y = i => P.pts[i].lat * 110.57;
+  const stack = [[0, n - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop(); if (b - a < 2) continue;
+    const ax = X(a), ay = Y(a), dx = X(b) - ax, dy = Y(b) - ay, L2 = dx * dx + dy * dy;
+    let md = 0, mi = -1;
+    for (let i = a + 1; i < b; i++) {
+      const px = X(i) - ax, py = Y(i) - ay, t = L2 ? clamp((px * dx + py * dy) / L2, 0, 1) : 0;
+      const ex = t * dx - px, ey = t * dy - py, d = ex * ex + ey * ey;
+      if (d > md) { md = d; mi = i; }
+    }
+    if (mi > 0 && md > tolKm * tolKm) { keep[mi] = 1; stack.push([a, mi], [mi, b]); }
+  }
+  const idx = []; for (let i = 0; i < n; i++) if (keep[i]) idx.push(i);
+  const chunks = [];
+  for (let s = 0; s < idx.length - 1; s += 180) chunks.push(idx.slice(s, Math.min(idx.length, s + 181)));
+  return chunks;
+}
+function overpassQuery(chunk, radius) {
+  const ll = chunk.map(i => S.P.pts[i].lat.toFixed(5) + ',' + S.P.pts[i].lon.toFixed(5)).join(',');
+  const by = {}; for (const k of Object.keys(POI_TYPES)) { const [t, v] = k.split('='); (by[t] = by[t] || []).push(v); }
+  const parts = Object.entries(by).map(([t, vs]) => `nwr(around:${radius},${ll})["${t}"~"^(${vs.join('|')})$"];`).join('\n');
+  return `[out:json][timeout:120];\n(\n${parts}\n);\nout center tags;`;
+}
+async function overpassFetch(q) {
+  let last;
+  for (const url of OVERPASS) {
+    try {
+      const r = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }) });
+      if (r.ok) return (await r.json()).elements || [];
+      last = new Error('le service OpenStreetMap a répondu ' + r.status + (r.status === 429 || r.status === 504 ? ' (surchargé, réessaie dans une minute)' : ''));
+    } catch (e) { last = new Error('pas de connexion au service OpenStreetMap'); }
+  }
+  throw last;
+}
+function classifyPoi(tags) {
+  for (const k of Object.keys(POI_TYPES)) { const [t, v] = k.split('='); if (tags[t] === v) return POI_TYPES[k]; }
+  return null;
+}
+// Rattache chaque lieu au point de la trace le plus proche (km, écart en m).
+function attachToRoute(items) {
+  const P = S.P, n = P.n, la = new Float64Array(n), lo = new Float64Array(n);
+  for (let i = 0; i < n; i++) { la[i] = P.pts[i].lat; lo[i] = P.pts[i].lon; }
+  for (const it of items) {
+    const c = Math.cos(it.lat * RAD); let best = Infinity, bi = 0;
+    for (let i = 0; i < n; i++) { const dy = la[i] - it.lat, dx = (lo[i] - it.lon) * c, d = dx * dx + dy * dy; if (d < best) { best = d; bi = i; } }
+    it.i = bi; it.km = P.d[bi]; it.off = Math.round(Math.sqrt(best) * 111195);
+  }
+  return items;
+}
+const routeSig = () => `${S.P.n}:${S.P.pts[0].lat.toFixed(5)},${S.P.pts[0].lon.toFixed(5)}:${S.P.pts[S.P.n - 1].lat.toFixed(5)}:${S.P.total.toFixed(2)}`;
+
+async function poiEnsure(force) {
+  if (!S.P || !$('#ultraOn').checked) return;
+  const radius = +$('#poiRadius').value || 500, key = routeSig() + '|' + radius;
+  if (POI.key === key && !force) return; // déjà cherché (ou en cours) pour cette trace et ce rayon
+  const seq = ++POI.seq;
+  POI.key = key; POI.list = []; POI.error = ''; POI.loading = 'Recherche des lieux le long de la trace…';
+  renderPois();
+  try {
+    let cached = null;
+    try { cached = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
+    if (cached && Date.now() - cached.at < 14 * 864e5) { if (seq !== POI.seq) return; POI.list = attachToRoute(cached.items); POI.loading = ''; renderPois(); return; }
+    const chunks = routeForQuery(S.P, Math.min(0.05, radius / 4000));
+    const seen = new Map();
+    for (let c = 0; c < chunks.length; c++) {
+      if (seq !== POI.seq) return;
+      POI.loading = chunks.length > 1 ? `Recherche des lieux le long de la trace… (${c + 1}/${chunks.length})` : 'Recherche des lieux le long de la trace…';
+      renderPoiStatus();
+      for (const el of await overpassFetch(overpassQuery(chunks[c], radius))) {
+        const id = el.type + el.id; if (seen.has(id)) continue;
+        const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon, tags = el.tags || {};
+        const cls = classifyPoi(tags); if (!cls || lat == null) continue;
+        seen.set(id, { id, lat, lon, g: cls[0], type: cls[1], name: tags.name || tags.brand || '', oh: tags.opening_hours || '',
+          web: tags.website || tags['contact:website'] || '', tel: tags.phone || tags['contact:phone'] || '' });
+      }
+    }
+    if (seq !== POI.seq) return;
+    const items = [...seen.values()];
+    try { await idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), items })); } catch (e) {}
+    POI.list = attachToRoute(items); POI.loading = '';
+  } catch (e) {
+    if (seq !== POI.seq) return;
+    POI.loading = ''; POI.error = 'Recherche impossible : ' + e.message + '.';
+  }
+  renderPois();
+}
+
+// Horaires d'ouverture (bibliothèque opening_hours, chargée seulement si besoin).
+async function ohLoad() {
+  if (POI.ohState) return;
+  POI.ohState = 'loading';
+  try { for (const src of OH_JS) await loadScript(src); POI.ohState = window.opening_hours ? 'ok' : 'ko'; } catch (e) { POI.ohState = 'ko'; }
+  renderPois();
+}
+function poiStatusAt(p, t) {
+  if (p.g === 'sleep') return { cls: 'unk', txt: p.oh ? '' : '—', sort: 1 };
+  if (!p.oh) return { cls: 'unk', txt: 'Horaires non renseignés', sort: 1 };
+  if (/^24\/7$/.test(p.oh.trim())) return { cls: 'open', txt: 'Ouvert 24 h/24', sort: 0 };
+  if (POI.ohState !== 'ok') { ohLoad(); return { cls: 'unk', txt: 'Lecture des horaires…', sort: 1 }; }
+  try {
+    if (!p._ohObj) p._ohObj = new window.opening_hours(p.oh, { lat: p.lat, lon: p.lon, address: { country_code: 'fr', state: '' } }, { mode: 0, warnings_severity: 0 });
+    const d = new Date(t), o = p._ohObj;
+    if (o.getUnknown(d)) return { cls: 'unk', txt: 'Horaires incertains', sort: 1 };
+    if (o.getState(d)) {
+      const nx = o.getNextChange(d);
+      return { cls: 'open', txt: nx && nx - d < 864e5 ? `Ouvert · ferme à ${hm.format(nx)}` : 'Ouvert', sort: 0 };
+    }
+    const nx = o.getNextChange(d);
+    return { cls: 'closed', txt: nx && nx - d < 3 * 864e5 ? `Fermé · ouvre ${whenTxt(nx, t)}` : 'Fermé', sort: 2 };
+  } catch (e) { return { cls: 'unk', txt: 'Horaires illisibles', sort: 1 }; }
+}
+
+function renderPoiStatus() {
+  const el = $('#poiStatus'), msg = POI.loading || POI.error;
+  el.hidden = !msg; el.textContent = msg || ''; el.className = 'poi-status' + (POI.error ? ' err' : '');
+  if (POI.error) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.style.marginLeft = '8px'; b.textContent = 'Réessayer'; b.addEventListener('click', () => poiEnsure(true)); el.append(b); }
+}
+function renderPois() {
+  const on = $('#ultraOn').checked && !!S.P;
+  $('#ultraFields').hidden = !$('#ultraOn').checked;
+  $('#poiCard').hidden = !on;
+  if (POI.layer) { POI.layer.remove(); POI.layer = null; }
+  if (!on) return;
+  if (!POI.key.startsWith(routeSig() + '|') || !POI.key.endsWith('|' + $('#poiRadius').value)) { poiEnsure(); }
+  renderPoiStatus();
+  const counts = {}; for (const p of POI.list) counts[p.g] = (counts[p.g] || 0) + 1;
+  $('#poiChips').innerHTML = Object.entries(POI_GROUPS).map(([k, g]) =>
+    `<button type="button" data-g="${k}" aria-pressed="${POI.groups.has(k)}" style="--c:${g.col}"><i></i>${g.emo} ${g.lbl}${POI.list.length ? ` <span class="mono">${counts[k] || 0}</span>` : ''}</button>`).join('');
+  const tl = S.tl, openOnly = $('#poiOpenOnly').checked;
+  const rows = [];
+  for (const p of POI.list) {
+    p.t = tl ? tl.times[p.i] : null;
+    p.st = p.t ? poiStatusAt(p, p.t) : { cls: 'unk', txt: '', sort: 1 };
+  }
+  const shown = POI.list.filter(p => POI.groups.has(p.g) && (!openOnly || p.st.cls === 'open' || p.g === 'sleep' || p.g === 'water'))
+    .sort((a, b) => a.km - b.km || a.off - b.off);
+  renderPoiGaps();
+  if (map) {
+    POI.layer = L.layerGroup().addTo(map);
+    for (const p of shown) {
+      const g = POI_GROUPS[p.g], closed = p.st.cls === 'closed';
+      L.circleMarker([p.lat, p.lon], { pane: 'poiPane', radius: 7, color: '#ffffff', weight: 2, fillColor: g.col, fillOpacity: closed ? 0.35 : 0.95, opacity: closed ? 0.6 : 1 })
+        .bindTooltip(poiTip(p)).addTo(POI.layer);
+    }
+  }
+  if (!POI.list.length) { $('#poiRows').innerHTML = POI.loading || POI.error ? '' : '<tr><td colspan="5" class="hint">Aucun lieu trouvé dans ce rayon.</td></tr>'; return; }
+  for (const p of shown) {
+    const g = POI_GROUPS[p.g];
+    rows.push(`<tr data-id="${p.id}"><td class="num">${n1(p.km)}</td><td class="num">${p.t ? whenTxt(p.t, tl.start) : ''}</td>
+      <td><span class="nm">${g.emo} ${escH(p.name || p.type)}</span><span class="ty">${escH(p.type)}</span></td>
+      <td class="num">${p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km'}</td>
+      <td><span class="st-${p.st.cls}">${escH(p.st.txt)}</span>${p.oh && p.oh !== '24/7' ? `<span class="oh">${escH(p.oh)}</span>` : ''}</td></tr>`);
+  }
+  $('#poiRows').innerHTML = rows.join('') || '<tr><td colspan="5" class="hint">Aucun lieu avec ces filtres.</td></tr>';
+}
+const escH = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function poiTip(p) {
+  const g = POI_GROUPS[p.g];
+  return `${g.emo} <b>${escH(p.name || p.type)}</b><br>${escH(p.type)} · km ${n1(p.km)} · à ${p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km'} de la trace`
+    + (p.t ? `<br>Passage ${whenTxt(p.t, S.tl.start)}${p.st.txt ? ' · ' + escH(p.st.txt) : ''}` : '')
+    + (p.oh ? `<br><span style="font-family:var(--f-mono);font-size:11px">${escH(p.oh)}</span>` : '');
+}
+// Plus longs tronçons sans ravitaillement (alimentation, restos, bars, stations), puis sans ravitaillement ouvert au passage.
+function renderPoiGaps() {
+  const el = $('#poiGaps');
+  if (!POI.list.length || !S.tl) { el.innerHTML = ''; return; }
+  const total = S.P.total, tl = S.tl;
+  const gapsOf = list => {
+    const kms = [...new Set(list.map(p => Math.round(p.km * 10) / 10))].sort((a, b) => a - b);
+    const marks = [0, ...kms, total], out = [];
+    for (let i = 1; i < marks.length; i++) out.push({ a: marks[i - 1], b: marks[i], len: marks[i] - marks[i - 1] });
+    return out.sort((x, y) => y.len - x.len);
+  };
+  const timeAt = km => tl.times[idxAtKm(km)];
+  const res = POI.list.filter(p => POI_GROUPS[p.g].resupply);
+  const open = res.filter(p => p.st && (p.st.cls === 'open' || (p.st.cls === 'unk' && !p.oh)));
+  const lines = [];
+  const g1 = gapsOf(res)[0];
+  if (g1) lines.push(`Plus long tronçon sans ravitaillement : <b>${n0(g1.len)} km</b> (km ${n0(g1.a)} → ${n0(g1.b)}).`);
+  const g2 = gapsOf(open).filter(g => g.len >= 30).slice(0, 3);
+  for (const g of g2) lines.push(`<span class="warn">${n0(g.len)} km sans ravitaillement ouvert à ton passage</span> : km ${n0(g.a)} → ${n0(g.b)}, de ${whenTxt(timeAt(g.a), tl.start)} à ${whenTxt(timeAt(g.b), tl.start)}.`);
+  if (!g2.length && open.length) lines.push('Pas de tronçon de plus de 30 km sans ravitaillement ouvert (ou à horaires inconnus) à ton passage.');
+  lines.push('<span class="hint">Ouvert à ton passage : selon les horaires OpenStreetMap ; les lieux sans horaires renseignés sont comptés comme possibles.</span>');
+  el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+}
+$('#ultraOn').addEventListener('change', () => { renderPois(); saveOpt(readOpt()); });
+$('#poiRadius').addEventListener('change', () => { renderPois(); saveOpt(readOpt()); });
+$('#poiOpenOnly').addEventListener('change', () => { try { localStorage.setItem('pmr-poi-open', $('#poiOpenOnly').checked ? '1' : '0'); } catch (e) {} renderPois(); });
+$('#poiChips').addEventListener('click', e => {
+  const b = e.target.closest('button[data-g]'); if (!b) return;
+  if (POI.groups.has(b.dataset.g)) POI.groups.delete(b.dataset.g); else POI.groups.add(b.dataset.g);
+  try { localStorage.setItem('pmr-poi-groups', JSON.stringify([...POI.groups])); } catch (err) {}
+  renderPois();
+});
+$('#poiRows').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-id]'); if (!tr || !map) return;
+  const p = POI.list.find(x => x.id === tr.dataset.id); if (!p) return;
+  map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15));
+  L.popup({ offset: [0, -4] }).setLatLng([p.lat, p.lon]).setContent(poiTip(p)).openOn(map);
+  $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
 /* ---------- mes parcours (navigateur + compte Coach Miguel) ---------- */
 // Chaque GPX chargé est gardé : dans le navigateur (IndexedDB, sans connexion) et, si tu es connecté à
 // Coach Miguel, dans ton compte (table Supabase `routes`) pour le retrouver sur tes autres appareils.
@@ -1248,8 +1544,11 @@ async function sbIfLogged() {
 }
 function idb() {
   if (!LIB.db) LIB.db = new Promise((ok, ko) => {
-    const r = indexedDB.open('pmr', 1);
-    r.onupgradeneeded = () => { r.result.createObjectStore('meta', { keyPath: 'id' }); r.result.createObjectStore('pts', { keyPath: 'id' }); };
+    const r = indexedDB.open('pmr', 2);
+    r.onupgradeneeded = () => {
+      for (const n of ['meta', 'pts']) if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n, { keyPath: 'id' });
+      if (!r.result.objectStoreNames.contains('pois')) r.result.createObjectStore('pois', { keyPath: 'key' });
+    };
     r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
   });
   return LIB.db;

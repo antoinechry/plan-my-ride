@@ -20,6 +20,12 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Feuille de route : interrupteur « Afficher les lignes » (`#rowsOn`, mémorisé dans `localStorage` `pmr-rows`) ; l'export CSV reste complet.
 - `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
+## Mode ultra (lieux le long de la trace)
+- Case « Mode ultra » (`#ultraOn`, rayon `#poiRadius` 200 m → 2 km) : requête Overpass (overpass-api.de, repli overpass.kumi.systems) avec `around` sur la trace simplifiée (Douglas-Peucker, morceaux de 180 points). Catégories et étiquettes dans `POI_GROUPS` / `POI_TYPES`.
+- Chaque lieu est rattaché au point de trace le plus proche (km, écart) ; l'heure de passage vient de `S.tl.times`. Horaires évalués avec opening_hours.js 3.15.0 (+ suncalc 1.9.0), chargés à la demande depuis jsDelivr.
+- Résultats mis en cache 14 jours dans IndexedDB (store `pois`, clé = signature de la trace + rayon). Les marqueurs sont dans le volet Leaflet `poiPane` (au-dessus des flèches de vent).
+- Tronçons sans ravitaillement (alimentation, restos, bars, stations) : le plus long en général, et ceux de plus de 30 km sans lieu ouvert au passage (les lieux sans horaires comptent comme possibles).
+
 ## Mes parcours (GPX gardés en mémoire)
 - Chaque GPX chargé est enregistré (points simplifiés : un tous les ~5 m, `[lat, lon, ele]` à 5 décimales) dans IndexedDB (`pmr` : stores `meta` et `pts`) et, si l'utilisateur est connecté à Coach Miguel, dans la table Supabase `routes` (RLS par utilisateur) pour le retrouver sur ses autres appareils.
 - Identifiant = empreinte du tracé (`routeId`) : recharger le même GPX ne crée pas de doublon. Le dernier parcours ouvert (`localStorage` `pmr-last-route`) se rouvre au démarrage. Au démarrage connecté, les parcours présents seulement dans le navigateur sont envoyés au compte ; ceux du compte sont téléchargés à l'ouverture.
