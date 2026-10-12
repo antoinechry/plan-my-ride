@@ -7,6 +7,7 @@ Importez un GPX, choisissez le jour et l'heure de départ : l'app estime l'heure
 ## Fonctions
 
 - **Horaires de passage** calculés depuis la vitesse sur le plat, la VAM en montée, un bonus en descente, un pourcentage d'arrêts et, en option, l'effet du vent.
+- **Mes parcours** : les GPX chargés sont gardés en mémoire (navigateur, et compte Coach Miguel si vous êtes connecté) ; le dernier parcours se rouvre tout seul.
 - **Calage sur vos sorties** (option) : vitesse sur le plat, VAM et arrêts ajustés d'après vos activités enregistrées dans Coach Miguel, en choisissant les sorties de référence.
 - **Sorties sur plusieurs jours** : plage horaire de roulage, arrêt au bivouac, reprise le lendemain.
 - **Météo le long du tracé** (Open-Meteo, jusqu'à 16 jours) : température et ressenti, pluie et probabilité, ciel, ensoleillement, nuit, vent et rafales.

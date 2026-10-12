@@ -20,6 +20,14 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Feuille de route : interrupteur « Afficher les lignes » (`#rowsOn`, mémorisé dans `localStorage` `pmr-rows`) ; l'export CSV reste complet.
 - `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
+## Mes parcours (GPX gardés en mémoire)
+- Chaque GPX chargé est enregistré (points simplifiés : un tous les ~5 m, `[lat, lon, ele]` à 5 décimales) dans IndexedDB (`pmr` : stores `meta` et `pts`) et, si l'utilisateur est connecté à Coach Miguel, dans la table Supabase `routes` (RLS par utilisateur) pour le retrouver sur ses autres appareils.
+- Identifiant = empreinte du tracé (`routeId`) : recharger le même GPX ne crée pas de doublon. Le dernier parcours ouvert (`localStorage` `pmr-last-route`) se rouvre au démarrage. Au démarrage connecté, les parcours présents seulement dans le navigateur sont envoyés au compte ; ceux du compte sont téléchargés à l'ouverture.
+- supabase-js n'est chargé au démarrage que si un jeton de session existe (`sb-rynbzhuxwvfvblgwnhkk-auth-token`).
+
+## Ciel dans la feuille de route
+- `wxAt` prend le code météo de la même heure que la pluie (l'heure qui se termine) ; un code pluie / bruine / neige / averses avec moins de 0,1 mm sur l'heure est remplacé par la couverture nuageuse.
+
 ## Calage sur l'historique (option « Caler sur mes sorties »)
 - Lit la table `activities` du projet Supabase de Coach Miguel (même origine GitHub Pages, donc session de connexion partagée avec `coach.html`). supabase-js chargé à la demande.
 - Sorties retenues : Ride / GravelRide / EBikeRide, hors home trainer, ≥ 10 km et ≥ 20 min, sur la période choisie ; l'utilisateur peut en décocher (exclusions dans `localStorage` `pmr-calib-excl`).

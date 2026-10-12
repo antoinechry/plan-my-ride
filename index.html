@@ -72,6 +72,8 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .route-card strong{font-family:var(--f-display);font-size:18px;font-weight:600;overflow-wrap:anywhere}
 .route-card .tag{align-self:flex-start;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
 hr.sep{border:0;border-top:1px solid var(--line);margin:0}
+.lib-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.btn.danger{border-color:var(--head);color:var(--head)}
 .field select{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 10px;width:100%;font-size:14px}
 .calib-box{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg)}
 details.calib summary{cursor:pointer;font-size:13px;font-weight:500}
@@ -206,6 +208,14 @@ footer a{color:inherit}
       <span class="tag" id="routeTag">Aucune trace</span>
       <strong id="routeName">Pas encore de parcours</strong>
       <span class="hint mono" id="routeMeta">Importez un fichier .gpx pour commencer</span>
+    </div>
+    <div class="field" id="libBox" hidden>
+      <label class="label" for="libSel">Mes parcours</label>
+      <div class="lib-row">
+        <select id="libSel"></select>
+        <button type="button" class="btn small" id="libDel" title="Supprimer ce parcours de la liste">Supprimer</button>
+      </div>
+      <p class="hint" id="libHint"></p>
     </div>
 
     <div class="row2">
@@ -475,8 +485,13 @@ function wxAt(k, tMs) {
   // précipitation horaire Open-Meteo = cumul de l'heure écoulée → on prend l'heure qui se termine
   const pIdx = Math.min(L.n - 1, Math.ceil(x));
   if (!isFinite(L.temp[i])) return null;
+  // Ciel : même heure que la pluie (l'heure qui se termine). Pas de « pluie / bruine / neige / averses »
+  // quand la prévision donne moins de 0,1 mm sur cette heure : on décrit alors la couverture nuageuse.
+  let code = isFinite(L.code[pIdx]) ? L.code[pIdx] : L.code[near];
+  const prH = isFinite(L.pr[pIdx]) ? L.pr[pIdx] : 0;
+  if (code >= 51 && code <= 86 && prH < 0.1) { const cc = lp(L.cc); code = cc >= 85 ? 3 : cc >= 40 ? 2 : cc >= 15 ? 1 : 0; }
   return { temp: lp(L.temp), app: lp(L.app), pr: isFinite(L.pr[pIdx]) ? L.pr[pIdx] : 0, prob: lp(L.prob) || 0, cc: lp(L.cc),
-    ws: lp(L.ws), wd: (Math.atan2(u, v) / RAD + 360) % 360, gust: lp(L.gust), code: L.code[near], day: L.day[near] > 0.5,
+    ws: lp(L.ws), wd: (Math.atan2(u, v) / RAD + 360) % 360, gust: lp(L.gust), code, day: L.day[near] > 0.5,
     sun: clamp((L.sun[pIdx] || 0) / 3600, 0, 1) };
 }
 
@@ -969,7 +984,11 @@ function handleFile(file) {
   if (!file) return;
   const rd = new FileReader();
   rd.onload = () => {
-    try { const g = parseGPX(rd.result); loadRoute(g.pts, g.name || file.name.replace(/\.gpx$/i, ''), false); }
+    try {
+      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, '');
+      loadRoute(g.pts, name, false);
+      libSave(g.pts, name);
+    }
     catch (e) { setStatus(e.message, 'err'); }
   };
   rd.readAsText(file);
@@ -1216,6 +1235,133 @@ $('#calibList').addEventListener('change', e => {
   calibApply();
 });
 
+/* ---------- mes parcours (navigateur + compte Coach Miguel) ---------- */
+// Chaque GPX chargé est gardé : dans le navigateur (IndexedDB, sans connexion) et, si tu es connecté à
+// Coach Miguel, dans ton compte (table Supabase `routes`) pour le retrouver sur tes autres appareils.
+// Points simplifiés (un point tous les ~5 m, 5 décimales, altitude au décimètre). Le dernier parcours se rouvre au démarrage.
+const LIB = { list: [], current: '', db: null, delArm: 0 };
+const SB_TOKEN_KEY = 'sb-rynbzhuxwvfvblgwnhkk-auth-token';
+const hasSbToken = () => { try { return !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) { return false; } };
+async function sbIfLogged() {
+  if (!hasSbToken()) return null;
+  try { const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession(); return session ? sb : null; } catch (e) { return null; }
+}
+function idb() {
+  if (!LIB.db) LIB.db = new Promise((ok, ko) => {
+    const r = indexedDB.open('pmr', 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('meta', { keyPath: 'id' }); r.result.createObjectStore('pts', { keyPath: 'id' }); };
+    r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+  });
+  return LIB.db;
+}
+async function idbRun(store, mode, fn) {
+  const db = await idb();
+  return new Promise((ok, ko) => {
+    const tx = db.transaction(store, mode), req = fn(tx.objectStore(store));
+    tx.oncomplete = () => ok(req ? req.result : undefined); tx.onerror = () => ko(tx.error); tx.onabort = () => ko(tx.error);
+  });
+}
+function packPts(raw) {
+  const out = []; let last = null;
+  for (const p of raw) {
+    if (last && hav(last, p) < 0.005) continue;
+    out.push([Math.round(p.lat * 1e5) / 1e5, Math.round(p.lon * 1e5) / 1e5, isFinite(p.ele) ? Math.round(p.ele * 10) / 10 : null]);
+    last = p;
+  }
+  const lastRaw = raw[raw.length - 1];
+  if (last !== lastRaw) out.push([Math.round(lastRaw.lat * 1e5) / 1e5, Math.round(lastRaw.lon * 1e5) / 1e5, isFinite(lastRaw.ele) ? Math.round(lastRaw.ele * 10) / 10 : null]);
+  return out;
+}
+const unpackPts = a => a.map(q => ({ lat: q[0], lon: q[1], ele: q[2] == null ? NaN : q[2] }));
+function routeId(packed) { // empreinte du tracé : le même GPX rechargé ne crée pas de doublon
+  let h = 0x811c9dc5; const str = packed.length + ':' + packed.map(q => q[0] + ',' + q[1]).join(';');
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return 'r' + (h >>> 0).toString(36) + packed.length.toString(36);
+}
+
+async function libSave(raw, name) {
+  try {
+    const pts = packPts(raw), id = routeId(pts), now = new Date().toISOString();
+    const meta = { id, name: name || 'Trace sans nom', km: +S.P.total.toFixed(2), dplus: Math.round(S.P.up), used_at: now };
+    LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {}
+    try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
+    libUpsert({ ...meta, local: true });
+    const sb = await sbIfLogged();
+    if (sb) { const { error } = await sb.from('routes').upsert({ ...meta, pts }, { onConflict: 'user_id,id' }); if (!error) libUpsert({ id, remote: true }); }
+    libRender();
+  } catch (e) { /* l'enregistrement est un confort : la trace reste utilisable */ }
+}
+function libUpsert(m) {
+  const i = LIB.list.findIndex(x => x.id === m.id);
+  if (i < 0) LIB.list.push({ local: false, remote: false, ...m }); else LIB.list[i] = { ...LIB.list[i], ...m };
+  LIB.list.sort((a, b) => (a.used_at < b.used_at ? 1 : -1));
+}
+function libRender() {
+  const box = $('#libBox'), sel = $('#libSel');
+  box.hidden = !LIB.list.length;
+  sel.textContent = '';
+  if (!LIB.current) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Choisir un parcours enregistré…'; sel.append(o); }
+  for (const r of LIB.list) {
+    const o = document.createElement('option'); o.value = r.id;
+    o.textContent = `${r.name} · ${n0(r.km || 0)} km · D+ ${n0(r.dplus || 0)} m`;
+    sel.append(o);
+  }
+  sel.value = LIB.current || '';
+  $('#libDel').disabled = !LIB.current;
+  const n = LIB.list.length;
+  $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte Coach Miguel : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur. Connecte-toi à Coach Miguel pour les retrouver sur tes autres appareils.');
+}
+async function libOpen(id) {
+  const m = LIB.list.find(x => x.id === id); if (!m) return;
+  let rec = null;
+  try { rec = await idbRun('pts', 'readonly', st => st.get(id)); } catch (e) {}
+  if (!rec) {
+    const sb = await sbIfLogged();
+    if (sb) { setStatus('Chargement du parcours…', 'load'); const { data } = await sb.from('routes').select('pts').eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; }
+    if (rec) { try { await idbRun('pts', 'readwrite', st => st.put(rec)); await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at })); libUpsert({ id, local: true }); } catch (e) {} }
+  }
+  if (!rec) { setStatus('Ce parcours n\'est plus disponible.', 'err'); return; }
+  LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {}
+  try { loadRoute(unpackPts(rec.pts), m.name); } catch (e) { setStatus(e.message, 'err'); return; }
+  const now = new Date().toISOString(); libUpsert({ id, used_at: now }); libRender();
+  try { await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: now })); } catch (e) {}
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ used_at: now }).eq('id', id).then(() => {});
+}
+async function libDelete(id) {
+  const m = LIB.list.find(x => x.id === id); if (!m) return;
+  try { await idbRun('pts', 'readwrite', st => st.delete(id)); await idbRun('meta', 'readwrite', st => st.delete(id)); } catch (e) {}
+  const sb = await sbIfLogged(); if (sb) await sb.from('routes').delete().eq('id', id);
+  LIB.list = LIB.list.filter(x => x.id !== id);
+  if (LIB.current === id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} }
+  libRender();
+}
+async function libInit() {
+  try { for (const m of await idbRun('meta', 'readonly', st => st.getAll())) libUpsert({ ...m, local: true }); } catch (e) {}
+  let last = ''; try { last = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
+  libRender();
+  if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
+  // Compte Coach Miguel : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
+  const sb = await sbIfLogged(); if (!sb) return;
+  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at').order('used_at', { ascending: false }).limit(200);
+  if (error) return;
+  for (const r of data || []) libUpsert({ ...r, remote: true });
+  libRender();
+  if (!S.P && last && LIB.list.some(x => x.id === last)) await libOpen(last);
+  for (const m of LIB.list.filter(x => x.local && !x.remote)) {
+    try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); if (!rec) continue;
+      const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, pts: rec.pts }, { onConflict: 'user_id,id' });
+      if (!e2) libUpsert({ id: m.id, remote: true }); } catch (e) {}
+  }
+}
+$('#libSel').addEventListener('change', e => { if (e.target.value && e.target.value !== LIB.current) libOpen(e.target.value); });
+$('#libDel').addEventListener('click', () => {
+  const b = $('#libDel');
+  if (!LIB.current) return;
+  if (!LIB.delArm) { LIB.delArm = setTimeout(() => { LIB.delArm = 0; b.textContent = 'Supprimer'; b.classList.remove('danger'); }, 4000); b.textContent = 'Confirmer ?'; b.classList.add('danger'); return; }
+  clearTimeout(LIB.delArm); LIB.delArm = 0; b.textContent = 'Supprimer'; b.classList.remove('danger');
+  libDelete(LIB.current);
+});
+
 /* ---------- événements ---------- */
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
 $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; });
@@ -1249,6 +1395,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { 
 
 initInputs();
 initMap();
+libInit();
 })();
 </script>
 </body>
