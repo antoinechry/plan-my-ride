@@ -16,6 +16,8 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - `simulate(t0, opt, useWx)` : temps de passage segment par segment (plat + VAM, descente, arrêts, vent, plage horaire multi-jours) + statistiques
 - `score` : classement des heures de départ
 - Rendu : `renderSummary`, `renderMap`, `renderChart` (canvas), `renderTable`, `renderOpts`
+- `renderOpts` : deux lignes seulement, le départ choisi (« Ton départ ») et le meilleur créneau parmi les départs de 4 h à 16 h ; une seule ligne si c'est le même.
+- Feuille de route : interrupteur « Afficher les lignes » (`#rowsOn`, mémorisé dans `localStorage` `pmr-rows`) ; l'export CSV reste complet.
 - `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
 ## Calage sur l'historique (option « Caler sur mes sorties »)

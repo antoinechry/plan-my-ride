@@ -137,9 +137,17 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .bar span{display:block;height:100%;background:var(--tail)}
 .pill{display:inline-block;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;padding:1px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
 .pill.best{background:var(--tail);color:#fff}
+.pill.mine{background:var(--accent);color:var(--accent-ink)}
 @media (max-width:560px){.opt{grid-template-columns:52px minmax(0,1fr)}.opt .bar{display:none}}
 
 .table-scroll{overflow-x:auto}
+.switch{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.switch input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.switch .track{flex:none;position:relative;width:34px;height:20px;border-radius:10px;background:var(--line);transition:background .15s}
+.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.switch input:checked+.track{background:var(--accent)}
+.switch input:checked+.track::after{transform:translateX(14px)}
+.switch input:focus-visible+.track{outline:2px solid var(--accent);outline-offset:2px}
 table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
 th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.07em;font-size:11.5px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -322,7 +330,7 @@ footer a{color:inherit}
     <section class="card">
       <div class="card-head">
         <h2>Meilleure heure de départ</h2>
-        <span class="hint" id="optHint">Même jour, départs de 4 h à 16 h, mêmes réglages</span>
+        <span class="hint" id="optHint">Ton départ comparé aux départs de 4 h à 16 h le même jour · clique sur le meilleur créneau pour le choisir</span>
       </div>
       <div class="opt-list" id="optList"></div>
     </section>
@@ -330,9 +338,10 @@ footer a{color:inherit}
     <section class="card">
       <div class="card-head">
         <h2>Feuille de route</h2>
+        <label class="switch"><input type="checkbox" id="rowsOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher les lignes</label>
         <button class="btn small" id="csv" type="button">Exporter en CSV</button>
       </div>
-      <div class="table-scroll">
+      <div class="table-scroll" id="rowsWrap">
         <table>
           <thead><tr><th>Km</th><th>Passage</th><th>Alt.</th><th>Ciel</th><th>Temp. / ressentie</th><th>Vent (10 m)</th><th>Pour vous</th><th>Pluie</th></tr></thead>
           <tbody id="rows"></tbody>
@@ -901,22 +910,30 @@ function renderTable() {
 }
 
 /* créneaux */
+// Deux lignes seulement : l'heure de départ choisie et le meilleur créneau du jour (départs de 4 h à 16 h).
 function renderOpts(opts, opt) {
   const el = $('#optList');
   if (!opts.length) { el.innerHTML = '<p class="hint" style="padding:12px 14px">Disponible quand les prévisions couvrent la date choisie.</p>'; return; }
-  const valid = opts.filter(o => o.r.st.missKm < S.P.total * 0.05);
+  const okRun = r => r.st.missKm < S.P.total * 0.05;
+  const valid = opts.filter(o => okRun(o.r));
   const scores = valid.map(o => o.sc), lo = Math.min(...scores), hi = Math.max(...scores);
   const best = valid.reduce((a, b) => (a && a.sc <= b.sc ? a : b), null);
-  el.innerHTML = opts.map(o => {
-    const st = o.r.st, cov = S.P.total - st.missKm || 1, ok = valid.includes(o);
-    const q = ok ? (hi - lo < 1e-6 ? 1 : 1 - (o.sc - lo) / (hi - lo)) : 0;
-    const sel = o.time === opt.time;
-    return `<button type="button" class="opt${sel ? ' sel' : ''}" data-time="${o.time}">
-      <span class="h">${o.time.replace(':00', ' h')}</span>
-      <span class="d">${o === best ? '<span class="pill best">Meilleur créneau</span> ' : ''}Arrivée <b>${whenTxt(o.r.end, o.r.start)}</b> · pluie <b>${n1(st.rain)} mm</b> · face <b>${Math.round(st.headKm / cov * 100)} %</b> · ${ok ? `${n0(st.amin)} à ${n0(st.amax)} °C ressentis` : 'prévision incomplète'}${st.nightH > 0.2 ? ` · ${durTxt(st.nightH)} de nuit` : ''}</span>
+  const mine = opts.find(o => o.time === opt.time) || { time: opt.time, r: S.tl, sc: score(S.tl.st, S.P.total) };
+  const hLbl = t => { const [h, m] = t.split(':'); return `${+h} h${m !== '00' ? ' ' + m : ''}`; };
+  const row = (o, pills) => {
+    const st = o.r.st, cov = S.P.total - st.missKm || 1, ok = okRun(o.r);
+    const q = ok && valid.length ? (hi - lo < 1e-6 ? 1 : clamp(1 - (o.sc - lo) / (hi - lo), 0, 1)) : 0;
+    return `<button type="button" class="opt${o === mine ? ' sel' : ''}" data-time="${o.time}">
+      <span class="h">${hLbl(o.time)}</span>
+      <span class="d">${pills} Arrivée <b>${whenTxt(o.r.end, o.r.start)}</b> · pluie <b>${n1(st.rain)} mm</b> · face <b>${Math.round(st.headKm / cov * 100)} %</b> · ${ok ? `${n0(st.amin)} à ${n0(st.amax)} °C ressentis` : 'prévision incomplète'}${st.nightH > 0.2 ? ` · ${durTxt(st.nightH)} de nuit` : ''}</span>
       <span class="bar" aria-hidden="true"><span style="width:${Math.round(8 + q * 92)}%;opacity:${ok ? 1 : .3}"></span></span>
     </button>`;
-  }).join('');
+  };
+  const isBest = best && (best === mine || best.time === mine.time);
+  let html = row(mine, '<span class="pill mine">Ton départ</span>' + (isBest ? ' <span class="pill best">Meilleur créneau</span>' : ''));
+  if (best && !isBest) html += row(best, '<span class="pill best">Meilleur créneau</span>');
+  else if (isBest) html += '<p class="hint" style="padding:8px 14px 12px">Ton heure de départ est déjà le meilleur créneau de la journée.</p>';
+  el.innerHTML = html;
 }
 
 /* CSV */
@@ -1203,6 +1220,11 @@ $('#calibList').addEventListener('change', e => {
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
 $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; });
 $('#csv').addEventListener('click', exportCsv);
+// Feuille de route : on peut masquer toutes les lignes (choix mémorisé). L'export CSV reste complet.
+function applyRows() { $('#rowsWrap').hidden = !$('#rowsOn').checked; try { localStorage.setItem('pmr-rows', $('#rowsOn').checked ? '1' : '0'); } catch (e) {} }
+try { if (localStorage.getItem('pmr-rows') === '0') $('#rowsOn').checked = false; } catch (e) {}
+$('#rowsOn').addEventListener('change', applyRows);
+applyRows();
 $('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
 function applyAnim() { $('#map').classList.toggle('anim', $('#animOn').checked); try { localStorage.setItem('pmr-anim', $('#animOn').checked ? '1' : '0'); } catch (e) {} }
 try { if (localStorage.getItem('pmr-anim') === '0') $('#animOn').checked = false; } catch (e) {}
