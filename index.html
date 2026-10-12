@@ -778,7 +778,8 @@ function renderWxUse(src, logged, I) {
   if (I) lines.push(I.credits ? `Ce chargement : <b>${fmtCr(I.credits)}</b> crédits` : 'Ce chargement : 0 crédit (prévision gardée 2 h)');
   if (u) {
     const per = I ? I.points * MB_CREDITS : 0;
-    lines.push(`Forfait : <b>${fmtCr(u.remaining)}</b> crédits restants sur ${fmtCr(u.quota)}` + (per ? `, environ ${n0(Math.floor(u.remaining / per))} chargements de ce parcours` : ''));
+    lines.push(`Solde : <b>${Math.round(u.remaining).toLocaleString('fr-FR')}</b> / ${Math.round(u.quota).toLocaleString('fr-FR')} crédits` +
+      (per ? ` · environ ${n0(Math.floor(u.remaining / per))} chargements de ce parcours` : ''));
   }
   const frac = u ? clamp(u.remaining / u.quota, 0, 1) : 1;
   el.hidden = false;
