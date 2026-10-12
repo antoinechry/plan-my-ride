@@ -54,6 +54,19 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn.small{padding:5px 10px;font-size:13px}
+.modes{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.modes a{padding:8px 16px;text-decoration:none;color:var(--muted);font-weight:600;font-family:var(--f-display);font-size:16px;letter-spacing:.04em;text-transform:uppercase}
+.modes a+a{border-left:1px solid var(--line)}
+.modes a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.mode-ultra{display:flex;flex-direction:column;gap:18px}
+.day-list{display:flex;flex-direction:column}
+.dayrow{padding:12px 14px;border-top:1px solid var(--line);display:grid;gap:5px}
+.dayrow:first-child{border-top:0}
+.dayrow .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dayrow h3{font-size:19px}
+.dayrow .kpi{font-family:var(--f-mono);font-size:13px}
+.dayrow .ln{font-size:13.5px;color:var(--muted)}
+.dayrow .ln b{color:var(--ink);font-weight:600}
 
 .app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;max-width:1440px;margin-inline:auto;align-items:start}
 @media (max-width:920px){.app{grid-template-columns:minmax(0,1fr)}}
@@ -221,8 +234,12 @@ footer a{color:inherit}
 <header class="top">
   <div class="brand">
     <h1>Plan <span>My Ride</span></h1>
-    <p>Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.</p>
+    <p id="brandSub">Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.</p>
   </div>
+  <nav class="modes" aria-label="Page">
+    <a href="#" data-mode="ride">Sortie</a>
+    <a href="#ultra" data-mode="ultra">Ultra</a>
+  </nav>
   <a class="btn" href="coach.html">Coach Miguel</a>
   <label class="btn primary" for="file">Importer un GPX</label>
   <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
@@ -295,27 +312,26 @@ footer a{color:inherit}
       <label class="toggle"><input type="checkbox" id="windOn"> Ralentir face au vent, accélérer vent de dos</label>
     </div>
 
-    <hr class="sep">
-    <div class="field">
-      <label class="toggle"><input type="checkbox" id="windowOn"> <span class="label" style="color:var(--ink)">Sortie sur plusieurs jours</span></label>
-      <p class="hint">Rouler seulement dans une plage horaire ; la nuit, la progression s'arrête et reprend le lendemain.</p>
-      <div class="row2" id="windowFields">
-        <div class="field"><label class="label" for="dayStart">Reprise</label><input type="time" id="dayStart" step="900"></div>
-        <div class="field"><label class="label" for="dayEnd">Bivouac</label><input type="time" id="dayEnd" step="900"></div>
+    <div class="mode-ultra" id="ultraSettings">
+      <hr class="sep">
+      <div class="field">
+        <label class="toggle"><input type="checkbox" id="windowOn"> <span class="label" style="color:var(--ink)">Rouler sur plusieurs jours</span></label>
+        <p class="hint">Rouler seulement dans une plage horaire ; la nuit, la progression s'arrête et reprend le lendemain.</p>
+        <div class="row2" id="windowFields">
+          <div class="field"><label class="label" for="dayStart">Reprise</label><input type="time" id="dayStart" step="900"></div>
+          <div class="field"><label class="label" for="dayEnd">Bivouac</label><input type="time" id="dayEnd" step="900"></div>
+        </div>
       </div>
-    </div>
-    <hr class="sep">
-    <div class="field">
-      <label class="toggle"><input type="checkbox" id="ultraOn"> <span class="label" style="color:var(--ink)">Mode ultra</span></label>
-      <p class="hint">Commerces, restos, bars, hébergements et points d'eau le long de la trace, avec leurs horaires à ton passage.</p>
-      <div class="field" id="ultraFields" hidden>
-        <label class="label" for="poiRadius">Distance max. de la trace</label>
+      <hr class="sep">
+      <div class="field">
+        <label class="label" for="poiRadius">Ravitos : distance max. de la trace</label>
         <select id="poiRadius">
           <option value="200">200 m</option>
           <option value="500">500 m</option>
           <option value="1000">1 km</option>
           <option value="2000">2 km</option>
         </select>
+        <p class="hint">Commerces, restos, bars, hébergements et points d'eau, avec leurs horaires à ton passage.</p>
       </div>
     </div>
     <hr class="sep">
@@ -379,7 +395,12 @@ footer a{color:inherit}
       <p class="hint poi-credit">Données © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via Overpass. Horaires tels que saisis dans OpenStreetMap : à vérifier pour les lieux clés.</p>
     </section>
 
-    <section class="card">
+    <section class="card" id="dayCard" hidden>
+      <div class="card-head"><h2>Jour par jour</h2><span class="hint" id="dayHint"></span></div>
+      <div class="day-list" id="dayList"></div>
+    </section>
+
+    <section class="card" id="chartCard">
       <div class="card-head"><h2>Profil et météo au fil des kilomètres</h2></div>
       <div class="chart-wrap" id="chartWrap">
         <canvas id="chart" aria-label="Profil altimétrique avec température, pluie et vent"></canvas>
@@ -394,7 +415,7 @@ footer a{color:inherit}
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="optCard">
       <div class="card-head">
         <h2>Meilleure heure de départ</h2>
         <span class="hint" id="optHint">Ton départ comparé aux départs de 4 h à 16 h le même jour · clique sur le meilleur créneau pour le choisir</span>
@@ -402,7 +423,7 @@ footer a{color:inherit}
       <div class="opt-list" id="optList"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="roadCard">
       <div class="card-head">
         <h2>Feuille de route</h2>
         <label class="switch"><input type="checkbox" id="rowsOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher les lignes</label>
@@ -434,7 +455,7 @@ const n1 = x => (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFract
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 /* ---------- état ---------- */
-const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '' };
+const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '', mode: location.hash === '#ultra' ? 'ultra' : 'ride' };
 
 /* ---------- géométrie ---------- */
 function hav(a, b) {
@@ -555,9 +576,9 @@ function wxAt(k, tMs) {
 /* ---------- simulation ---------- */
 function readOpt() {
   return { date: $('#date').value, time: $('#time').value || '08:00', speed: +$('#speed').value, vam: +$('#vam').value,
-    pause: +$('#pause').value, windOn: $('#windOn').checked, windowOn: $('#windowOn').checked,
+    pause: +$('#pause').value, windOn: $('#windOn').checked, windowOn: S.mode === 'ultra' && $('#windowOn').checked,
     dayStart: $('#dayStart').value || '07:00', dayEnd: $('#dayEnd').value || '20:00',
-    ultraOn: $('#ultraOn').checked, poiRadius: +$('#poiRadius').value || 500 };
+    poiRadius: +$('#poiRadius').value || 500 };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -622,8 +643,8 @@ async function run() {
   const id = ++runId, opt = readOpt();
   saveOpt(opt);
   const t0 = startMs(opt);
-  const cand = [];
-  for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
+  const cand = []; // meilleure heure de départ : page Sortie seulement
+  if (S.mode === 'ride') for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
   // fenêtre de prévision nécessaire
   let endMax = simulate(t0, opt, false).end;
   for (const c of cand) endMax = Math.max(endMax, simulate(startMs(opt, c), opt, false).end);
@@ -707,7 +728,7 @@ function whenTxt(t, ref) {
 
 /* ---------- rendu ---------- */
 function renderAll(opts, opt) {
-  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois();
+  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderDays();
 }
 
 function renderSummary(opt) {
@@ -1054,19 +1075,47 @@ function handleFile(file) {
 }
 /* ---------- réglages ---------- */
 // Quand le calage est actif, on garde en mémoire les réglages manuels (pas les valeurs calées).
-function saveOpt(o) { try { localStorage.setItem('pmr-opt', JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: undefined })); } catch (e) {} }
+// Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
+const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : 'pmr-opt');
+const MODE_DEF = {
+  ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, windowOn: false, dayStart: '07:00', dayEnd: '20:00', poiRadius: 500 },
+  ultra: { time: '06:00', speed: 22, vam: 600, pause: 20, windOn: true, windowOn: true, dayStart: '06:00', dayEnd: '21:00', poiRadius: 500 }
+};
+function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
   const tm = new Date(); tm.setDate(tm.getDate() + 1);
-  let saved = {}; try { saved = JSON.parse(localStorage.getItem('pmr-opt') || '{}') || {}; } catch (e) {}
-  const def = { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, windowOn: false, dayStart: '07:00', dayEnd: '20:00', ultraOn: false, poiRadius: 500, ...saved };
-  $('#date').value = ymd(tm);
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem(optKey()) || '{}') || {}; } catch (e) {}
+  const def = { ...MODE_DEF[S.mode], ...saved };
+  $('#date').value = S.mode === 'ultra' && def.date && def.date >= ymd(new Date()) ? def.date : ymd(tm);
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn; $('#windowOn').checked = !!def.windowOn; $('#dayStart').value = def.dayStart; $('#dayEnd').value = def.dayEnd;
-  $('#ultraOn').checked = !!def.ultraOn; $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
+  $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
   try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
+  // type de sorties de référence pour le calage : « route » sur la page Sortie, « voyage » sur la page Ultra (modifiable)
+  let k = ''; try { k = localStorage.getItem('pmr-calib-kind-' + S.mode) || ''; } catch (e) {}
+  CAL.kind = k === 'route' || k === 'voyage' ? k : (S.mode === 'ultra' ? 'voyage' : 'route');
+  for (const b of document.querySelectorAll('.kind button')) b.setAttribute('aria-pressed', String(b.dataset.kind === CAL.kind));
+  $('#calibOn').checked = !!def.calibOn;
   syncOutputs();
-  if (def.calibOn) { $('#calibOn').checked = true; calibStart(true); }
+  if (def.calibOn) calibStart(true);
 }
+function applyModeUI() {
+  const ultra = S.mode === 'ultra';
+  for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
+  $('#ultraSettings').hidden = !ultra;
+  $('#optCard').hidden = ultra; $('#roadCard').hidden = ultra;
+  $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et étapes jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
+  document.title = ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride';
+}
+function switchMode(m) {
+  if (m === S.mode) return;
+  saveOpt(readOpt()); // réglages de la page qu'on quitte
+  if (CAL.on) { CAL.seq++; CAL.on = false; lockSliders(false); $('#calibBox').hidden = true; }
+  S.mode = m;
+  applyModeUI(); initInputs(); renderPois(); renderDays();
+  schedule();
+}
+window.addEventListener('hashchange', () => switchMode(location.hash === '#ultra' ? 'ultra' : 'ride'));
 function syncOutputs() {
   const c = CAL.on ? ' · calé' : '';
   $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h' + c;
@@ -1087,7 +1136,6 @@ const RIDE_TYPES = new Set(['Ride', 'GravelRide', 'EBikeRide']);
 const CAL = { on: false, manual: null, rides: [], excl: new Set(), cat: {}, kind: 'route', sb: null, seq: 0 };
 try { CAL.excl = new Set(JSON.parse(localStorage.getItem('pmr-calib-excl') || '[]')); } catch (e) {}
 try { CAL.cat = JSON.parse(localStorage.getItem('pmr-calib-cat') || '{}') || {}; } catch (e) {}
-try { if (localStorage.getItem('pmr-calib-kind') === 'voyage') CAL.kind = 'voyage'; } catch (e) {}
 const KIND = { route: 'route', voyage: 'voyage' };
 const KIND_LBL = { route: 'Route', voyage: 'Voyage' };
 const TRIP_KM = 80;      // « loin de chez toi » : départ à plus de 80 km du point de départ habituel
@@ -1277,7 +1325,7 @@ $('#calibOn').addEventListener('change', e => { if (e.target.checked) calibStart
 $('#calibDays').addEventListener('change', () => { try { localStorage.setItem('pmr-calib-days', $('#calibDays').value); } catch (e) {} if (CAL.on && CAL.rides.length) { calibRenderList(); calibApply(); } });
 document.querySelectorAll('.kind button').forEach(b => b.addEventListener('click', () => {
   CAL.kind = b.dataset.kind === KIND.voyage ? KIND.voyage : KIND.route;
-  try { localStorage.setItem('pmr-calib-kind', CAL.kind); } catch (e) {}
+  try { localStorage.setItem('pmr-calib-kind-' + S.mode, CAL.kind); } catch (e) {}
   calibRenderList(); if (CAL.on && CAL.rides.length) calibApply();
 }));
 $('#calibList').addEventListener('click', e => {
@@ -1381,7 +1429,7 @@ function attachToRoute(items) {
 const routeSig = () => `${S.P.n}:${S.P.pts[0].lat.toFixed(5)},${S.P.pts[0].lon.toFixed(5)}:${S.P.pts[S.P.n - 1].lat.toFixed(5)}:${S.P.total.toFixed(2)}`;
 
 async function poiEnsure(force) {
-  if (!S.P || !$('#ultraOn').checked) return;
+  if (!S.P || S.mode !== 'ultra') return;
   const radius = +$('#poiRadius').value || 500, key = routeSig() + '|' + radius;
   if (POI.key === key && !force) return; // déjà cherché (ou en cours) pour cette trace et ce rayon
   const seq = ++POI.seq;
@@ -1447,8 +1495,7 @@ function renderPoiStatus() {
   if (POI.error) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.style.marginLeft = '8px'; b.textContent = 'Réessayer'; b.addEventListener('click', () => poiEnsure(true)); el.append(b); }
 }
 function renderPois() {
-  const on = $('#ultraOn').checked && !!S.P;
-  $('#ultraFields').hidden = !$('#ultraOn').checked;
+  const on = S.mode === 'ultra' && !!S.P;
   $('#poiCard').hidden = !on;
   if (POI.layer) { POI.layer.remove(); POI.layer = null; }
   if (!on) return;
@@ -1514,7 +1561,6 @@ function renderPoiGaps() {
   lines.push('<span class="hint">Ouvert à ton passage : selon les horaires OpenStreetMap ; les lieux sans horaires renseignés sont comptés comme possibles.</span>');
   el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
 }
-$('#ultraOn').addEventListener('change', () => { renderPois(); saveOpt(readOpt()); });
 $('#poiRadius').addEventListener('change', () => { renderPois(); saveOpt(readOpt()); });
 $('#poiOpenOnly').addEventListener('change', () => { try { localStorage.setItem('pmr-poi-open', $('#poiOpenOnly').checked ? '1' : '0'); } catch (e) {} renderPois(); });
 $('#poiChips').addEventListener('click', e => {
@@ -1530,6 +1576,56 @@ $('#poiRows').addEventListener('click', e => {
   L.popup({ offset: [0, -4] }).setLatLng([p.lat, p.lon]).setContent(poiTip(p)).openOn(map);
   $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
+
+/* ---------- page Ultra : jour par jour ---------- */
+// Découpage selon la plage de roulage (reprise / bivouac). Pour chaque jour : distance, D+, horaires, météo si
+// disponible, hébergements autour du bivouac, dernier ravito ouvert avant le bivouac et premier ravito ouvert le lendemain.
+function cumUp() {
+  if (S.P._cumUp) return S.P._cumUp;
+  const es = S.P.es, c = new Float64Array(S.P.n);
+  for (let i = 1; i < S.P.n; i++) c[i] = c[i - 1] + Math.max(0, es[i] - es[i - 1]);
+  return (S.P._cumUp = c);
+}
+function renderDays() {
+  const card = $('#dayCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
+  card.hidden = !on; if (!on) return;
+  const P = S.P, tl = S.tl, up = cumUp();
+  const nights = tl.stops.filter(s => s.to - s.from >= 3 * 3600e3 && s.km > 0);
+  const days = []; let a = { km: 0, t: tl.start };
+  for (const n of nights) { days.push({ a, b: { km: n.km, t: n.from }, night: n }); a = { km: n.km, t: n.to }; }
+  days.push({ a, b: { km: P.total, t: tl.end }, night: null });
+  const poiFmt = p => `${POI_GROUPS[p.g].emo} ${escH(p.name || p.type)} <span class="mono">(km ${n0(p.km)}${p.off >= 100 ? ', ' + (p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km') : ''})</span>`;
+  const resup = POI.list.filter(p => POI_GROUPS[p.g].resupply && p.st);
+  const html = days.map((d, k) => {
+    const ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km), dist = d.b.km - d.a.km, dplus = up[ib] - up[ia];
+    // météo du jour à partir des points d'échantillonnage
+    let tmin = Infinity, tmax = -Infinity, rain = 0, headKm = 0, cov = 0, prev = null;
+    if (S.wx) for (let j = 0; j < S.samples.length; j++) {
+      const sm = S.samples[j]; if (sm.km < d.a.km || sm.km > d.b.km) continue;
+      const t = tl.times[sm.i], w = wxAt(j, t); if (!w) { prev = null; continue; }
+      tmin = Math.min(tmin, w.app); tmax = Math.max(tmax, w.app);
+      if (prev) { const dk = sm.km - prev.km, dh = (t - prev.t) / 3600e3; cov += dk; rain += w.pr * Math.max(0, dh); if (w.ws * Math.cos((w.wd - P.b[sm.i]) * RAD) > 5) headKm += dk; }
+      prev = { km: sm.km, t };
+    }
+    const wxLine = cov > dist * 0.5
+      ? `Météo : <b>${n0(tmin)} à ${n0(tmax)} °C</b> ressentis · pluie <b>${n1(rain)} mm</b> · vent de face <b>${Math.round(headKm / cov * 100)} %</b>`
+      : 'Météo : pas encore de prévision pour ce jour (disponible 16 jours avant).';
+    const lines = [`<div class="ln">${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)}</div>`, `<div class="ln">${wxLine}</div>`];
+    if (d.night && POI.list.length) {
+      const beds = POI.list.filter(p => p.g === 'sleep' && Math.abs(p.km - d.b.km) <= 10).sort((x, y) => Math.abs(x.km - d.b.km) - Math.abs(y.km - d.b.km)).slice(0, 4);
+      lines.push(`<div class="ln">Bivouac km ${n0(d.b.km)} : ${beds.length ? beds.map(poiFmt).join(' · ') : 'aucun hébergement référencé à moins de 10 km'}</div>`);
+      const lastOpen = resup.filter(p => p.km <= d.b.km && p.km >= d.b.km - 40 && p.st.cls === 'open').sort((x, y) => y.km - x.km)[0];
+      lines.push(`<div class="ln">Dernier ravito ouvert avant le bivouac : ${lastOpen ? poiFmt(lastOpen) + ` à ${whenTxt(lastOpen.t, d.a.t)}` : '<b>aucun dans les 40 derniers km</b>, prévois des réserves'}</div>`);
+      const firstOpen = resup.filter(p => p.km >= d.b.km && p.km <= d.b.km + 60 && p.st.cls === 'open').sort((x, y) => x.km - y.km)[0];
+      lines.push(`<div class="ln">Premier ravito ouvert le lendemain : ${firstOpen ? poiFmt(firstOpen) + ` à ${whenTxt(firstOpen.t, d.a.t)}` : '<b>aucun dans les 60 premiers km</b>'}</div>`);
+    }
+    return `<div class="dayrow"><div class="top"><h3>Jour ${k + 1} · ${dayFmt.format(new Date(d.a.t))}</h3><span class="kpi">${n0(dist)} km · D+ ${n0(dplus)} m · ${durTxt((d.b.t - d.a.t) / 3600e3)}</span></div>${lines.join('')}</div>`;
+  });
+  $('#dayList').innerHTML = html.join('');
+  $('#dayHint').textContent = $('#windowOn').checked
+    ? `Découpage selon ta plage de roulage (${$('#dayStart').value} → ${$('#dayEnd').value}). Le découpage selon ton profil de rouleur arrive bientôt.`
+    : 'Sans plage de roulage, la sortie est d\'une traite. Coche « Rouler sur plusieurs jours » pour un découpage par jour.';
+}
 
 /* ---------- mes parcours (navigateur + compte Coach Miguel) ---------- */
 // Chaque GPX chargé est gardé : dans le navigateur (IndexedDB, sans connexion) et, si tu es connecté à
@@ -1692,6 +1788,7 @@ window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dr
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => S.tl && renderChart(), 150); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (S.tl) { renderChart(); renderMap(); } });
 
+applyModeUI();
 initInputs();
 initMap();
 libInit();

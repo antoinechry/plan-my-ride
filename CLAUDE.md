@@ -20,8 +20,14 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Feuille de route : interrupteur « Afficher les lignes » (`#rowsOn`, mémorisé dans `localStorage` `pmr-rows`) ; l'export CSV reste complet.
 - `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
-## Mode ultra (lieux le long de la trace)
-- Case « Mode ultra » (`#ultraOn`, rayon `#poiRadius` 200 m → 2 km) : requête Overpass (overpass-api.de, repli overpass.kumi.systems) avec `around` sur la trace simplifiée (Douglas-Peucker, morceaux de 180 points). Catégories et étiquettes dans `POI_GROUPS` / `POI_TYPES`.
+## Deux pages : Sortie et Ultra
+- Onglets « Sortie » / « Ultra » dans l'en-tête ; la page Ultra a l'adresse `#ultra` (`S.mode`, `switchMode`, `applyModeUI`).
+- Chaque page a ses réglages (`pmr-opt` / `pmr-opt-ultra`, défauts dans `MODE_DEF`) ; la page Ultra garde aussi la date de départ. Type de sorties de référence du calage par page (`pmr-calib-kind-ride` / `-ultra`, « voyage » par défaut en Ultra).
+- Sortie : meilleure heure de départ (`#optCard`) et feuille de route (`#roadCard`). Ultra : plage de roulage multi-jours, rayon des ravitos, cartes « Jour par jour » (`renderDays`) et « Ravitaillement et hébergement » (`renderPois`). Le profil (`#chartCard`) est sur les deux.
+- `renderDays` : un jour par arrêt de nuit de `simulate` (≥ 3 h) ; distance, D+ (`cumUp`), horaires, météo des points d'échantillonnage, hébergements à ±10 km du bivouac, dernier ravito ouvert avant, premier ravito ouvert le lendemain.
+
+## Page Ultra : lieux le long de la trace
+- Rayon `#poiRadius` (200 m → 2 km) : requête Overpass (overpass-api.de, repli overpass.kumi.systems) avec `around` sur la trace simplifiée (Douglas-Peucker, morceaux de 180 points). Catégories et étiquettes dans `POI_GROUPS` / `POI_TYPES`.
 - Chaque lieu est rattaché au point de trace le plus proche (km, écart) ; l'heure de passage vient de `S.tl.times`. Horaires évalués avec opening_hours.js 3.15.0 (+ suncalc 1.9.0), chargés à la demande depuis jsDelivr.
 - Résultats mis en cache 14 jours dans IndexedDB (store `pois`, clé = signature de la trace + rayon). Les marqueurs sont dans le volet Leaflet `poiPane` (au-dessus des flèches de vent).
 - Tronçons sans ravitaillement (alimentation, restos, bars, stations) : le plus long en général, et ceux de plus de 30 km sans lieu ouvert au passage (les lieux sans horaires comptent comme possibles).
