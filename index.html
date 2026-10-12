@@ -80,6 +80,16 @@ details.calib summary{cursor:pointer;font-size:13px;font-weight:500}
 .calib-list input{accent-color:var(--accent);margin:2px 0 0;width:15px;height:15px}
 .calib-list .d{font-family:var(--f-mono);font-size:12px}
 .calib-list .m{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calib-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:start;border-top:1px solid var(--line)}
+.calib-list li label{border-top:0}
+.calib-list li.other label{opacity:.55;cursor:default}
+.calib-list .mv{border:1px solid var(--line);background:var(--panel);border-radius:4px;font-size:11.5px;padding:1px 6px;margin-top:4px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.calib-list .mv:hover{border-color:var(--accent);color:var(--ink)}
+.calib-list .grp{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted);padding:8px 0 2px;display:block;border-top:1px solid var(--line)}
+.kind{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.kind button{border:0;background:transparent;padding:6px 8px;font-size:13.5px;cursor:pointer;color:var(--muted)}
+.kind button+button{border-left:1px solid var(--line)}
+.kind button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .range input:disabled{opacity:.55}
 
 main{display:flex;flex-direction:column;gap:20px;min-width:0}
@@ -214,7 +224,15 @@ footer a{color:inherit}
       <p class="hint" id="calibHint">Règle la vitesse sur le plat, la VAM et les arrêts d'après tes sorties enregistrées dans Coach Miguel.</p>
       <div class="calib-box" id="calibBox" hidden>
         <div class="field">
-          <label class="label" for="calibDays">Sorties prises en compte</label>
+          <span class="label" id="calibKindLbl">Type de sortie</span>
+          <div class="kind" role="group" aria-labelledby="calibKindLbl">
+            <button type="button" data-kind="route" aria-pressed="true">Vélo route</button>
+            <button type="button" data-kind="voyage" aria-pressed="false">Voyage</button>
+          </div>
+          <p class="hint">Voyage : séjours loin de chez toi où tu roulais nettement plus lentement qu'à la maison (bikepacking chargé, pistes…). Tu peux reclasser une sortie dans la liste.</p>
+        </div>
+        <div class="field">
+          <label class="label" for="calibDays">Période</label>
           <select id="calibDays">
             <option value="60">60 derniers jours</option>
             <option value="120">4 derniers mois</option>
@@ -223,7 +241,7 @@ footer a{color:inherit}
         </div>
         <details class="calib">
           <summary id="calibSum">Sorties utilisées</summary>
-          <p class="hint" style="margin-top:6px">Décoche celles qui ne ressemblent pas à la sortie prévue (bikepacking chargé, balade, sortie de groupe…).</p>
+          <p class="hint" style="margin-top:6px">Décoche une sortie pour l'ignorer (balade, sortie de groupe…), ou change sa catégorie avec le bouton à droite.</p>
           <ul class="calib-list" id="calibList"></ul>
         </details>
       </div>
@@ -963,8 +981,14 @@ const SB_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
 const RIDE_TYPES = new Set(['Ride', 'GravelRide', 'EBikeRide']);
-const CAL = { on: false, manual: null, rides: [], excl: new Set(), sb: null, seq: 0 };
+const CAL = { on: false, manual: null, rides: [], excl: new Set(), cat: {}, kind: 'route', sb: null, seq: 0 };
 try { CAL.excl = new Set(JSON.parse(localStorage.getItem('pmr-calib-excl') || '[]')); } catch (e) {}
+try { CAL.cat = JSON.parse(localStorage.getItem('pmr-calib-cat') || '{}') || {}; } catch (e) {}
+try { if (localStorage.getItem('pmr-calib-kind') === 'voyage') CAL.kind = 'voyage'; } catch (e) {}
+const KIND = { route: 'route', voyage: 'voyage' };
+const KIND_LBL = { route: 'Route', voyage: 'Voyage' };
+const TRIP_KM = 80;      // « loin de chez toi » : départ à plus de 80 km du point de départ habituel
+const TRIP_SLOW = 1.25;  // un séjour loin de chez toi est un « voyage » si tu y roulais ≥ 25 % plus lentement qu'à la maison
 const shortDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
 
 function loadScript(src) {
@@ -1003,47 +1027,115 @@ function fitRides(list, fallbackVam) {
   return { speed, vam, pause, err: errs[Math.floor(errs.length / 2)] };
 }
 
+// On lit toujours 12 mois : le « chez toi » se calcule sur l'ensemble, la période ne filtre qu'ensuite.
 async function calibFetch() {
   const sb = await sbClient();
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return { error: 'login' };
-  const since = new Date(); since.setDate(since.getDate() - +$('#calibDays').value);
+  const since = new Date(); since.setDate(since.getDate() - 366);
   const { data, error } = await sb.from('activities')
-    .select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,is_trainer,elapsed:raw->elapsed_time')
-    .gte('start_local', ymd(since)).order('start_local', { ascending: false }).limit(500);
+    .select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,is_trainer,elapsed:raw->elapsed_time,ll:raw->start_latlng,tz:raw->>timezone')
+    .gte('start_local', ymd(since)).order('start_local', { ascending: false }).limit(1500);
   if (error) return { error: error.message };
-  return {
-    rides: (data || []).filter(a => RIDE_TYPES.has(a.sport_type) && !a.is_trainer && a.distance_m >= 10000 && a.moving_time_s >= 1200)
-      .map(a => ({ key: rideKey(a), date: String(a.start_local).slice(0, 10), name: a.name || '', km: a.distance_m / 1000,
-        dplus: a.elevation_gain_m || 0, h: a.moving_time_s / 3600, moving: a.moving_time_s, elapsed: +a.elapsed || 0 }))
-  };
+  const rides = (data || []).filter(a => RIDE_TYPES.has(a.sport_type) && !a.is_trainer && a.distance_m >= 10000 && a.moving_time_s >= 1200)
+    .map(a => ({ key: rideKey(a), date: String(a.start_local).slice(0, 10), name: a.name || '', km: a.distance_m / 1000,
+      dplus: a.elevation_gain_m || 0, h: a.moving_time_s / 3600, moving: a.moving_time_s, elapsed: +a.elapsed || 0,
+      ll: Array.isArray(a.ll) && a.ll.length === 2 && Number.isFinite(+a.ll[0]) ? [+a.ll[0], +a.ll[1]] : null,
+      tz: a.tz ? String(a.tz).replace(/^\(GMT[^)]*\)\s*/, '') : '' }));
+  classifyRides(rides);
+  return { rides };
 }
 
+// Classement automatique (les reclassements manuels priment) :
+// - « chez toi » = zone de départ la plus fréquente (cases de ~10 km) ; sans coordonnées, le fuseau horaire habituel ;
+// - les sorties loin de chez toi sont regroupées en séjours (sorties à ≤ 3 jours d'écart, dans la même région) ;
+// - un séjour est « voyage » si tu y roulais nettement plus lentement que ce que prévoit le modèle calé sur tes
+//   sorties à la maison (bikepacking chargé, pistes…). Un séjour vélo de route (Alpes, Jura…) reste en « route ».
+function kmBetween(a, b) {
+  const dLa = (b[0] - a[0]) * RAD, dLo = (b[1] - a[1]) * RAD;
+  const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * RAD) * Math.cos(b[0] * RAD) * Math.sin(dLo / 2) ** 2;
+  return 12742 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+const dayGap = (a, b) => Math.abs(new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5;
+function classifyRides(rides) {
+  const cells = new Map(), tzs = new Map();
+  for (const r of rides) {
+    if (r.ll) { const k = Math.round(r.ll[0] * 10) + ':' + Math.round(r.ll[1] * 10); if (!cells.has(k)) cells.set(k, []); cells.get(k).push(r.ll); }
+    if (r.tz) tzs.set(r.tz, (tzs.get(r.tz) || 0) + 1);
+  }
+  let best = null; for (const v of cells.values()) if (!best || v.length > best.length) best = v;
+  const home = best ? [best.reduce((s, p) => s + p[0], 0) / best.length, best.reduce((s, p) => s + p[1], 0) / best.length] : null;
+  let homeTz = '', n = 0; for (const [z, c] of tzs) if (c > n) { homeTz = z; n = c; }
+  for (const r of rides) r.far = home && r.ll ? kmBetween(home, r.ll) > TRIP_KM : !!(r.tz && homeTz && r.tz !== homeTz);
+
+  const base = rides.filter(r => !r.far);
+  const ref = base.length >= 3 ? fitRides(base, 700) : null;
+  const expected = r => (r.km - 0.0039 * r.dplus) / ref.speed + r.dplus / ref.vam;
+  const far = rides.filter(r => r.far).sort((a, b) => (a.date < b.date ? -1 : 1));
+  let trip = [];
+  const flush = () => {
+    if (!trip.length) return;
+    const slow = !ref || trip.reduce((s, r) => s + r.h, 0) / trip.reduce((s, r) => s + expected(r), 0) >= TRIP_SLOW;
+    for (const r of trip) r.auto = slow ? KIND.voyage : KIND.route;
+    trip = [];
+  };
+  for (const r of far) {
+    const p = trip[trip.length - 1];
+    if (p && (dayGap(p.date, r.date) > 3 || (p.ll && r.ll && kmBetween(p.ll, r.ll) > 500))) flush();
+    trip.push(r);
+  }
+  flush();
+  for (const r of rides) { if (!r.far) r.auto = KIND.route; r.cat = CAL.cat[r.key] || r.auto; }
+}
+function calibInPeriod() {
+  const since = new Date(); since.setDate(since.getDate() - +$('#calibDays').value);
+  const from = ymd(since);
+  return CAL.rides.filter(r => r.date >= from);
+}
+
+function calibRow(r, active) {
+  const li = document.createElement('li'), lb = document.createElement('label'), cb = document.createElement('input'), tx = document.createElement('span');
+  if (!active) li.className = 'other';
+  cb.type = 'checkbox'; cb.dataset.key = r.key;
+  cb.checked = active && !CAL.excl.has(r.key); cb.disabled = !active;
+  const d = new Date(r.date + 'T12:00:00');
+  const dl = document.createElement('span'); dl.className = 'd';
+  dl.textContent = `${shortDate.format(d)} · ${n0(r.km)} km · ${n0(r.dplus)} m · ${n1(r.km / r.h)} km/h`;
+  const nm = document.createElement('span'); nm.className = 'm'; nm.textContent = r.name;
+  tx.append(dl, nm); lb.append(cb, tx);
+  const to = r.cat === KIND.route ? KIND.voyage : KIND.route;
+  const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mv'; mv.dataset.move = r.key;
+  mv.textContent = '→ ' + KIND_LBL[to]; mv.title = 'Classer cette sortie en ' + KIND_LBL[to].toLowerCase();
+  li.append(lb, mv);
+  return li;
+}
 function calibRenderList() {
   const ul = $('#calibList'); ul.textContent = '';
-  for (const r of CAL.rides) {
-    const li = document.createElement('li'), lb = document.createElement('label'), cb = document.createElement('input'), tx = document.createElement('span');
-    cb.type = 'checkbox'; cb.checked = !CAL.excl.has(r.key); cb.dataset.key = r.key;
-    const d = new Date(r.date + 'T12:00:00');
-    const dl = document.createElement('span'); dl.className = 'd';
-    dl.textContent = `${shortDate.format(d)} · ${n0(r.km)} km · ${n0(r.dplus)} m · ${n1(r.km / r.h)} km/h`;
-    const nm = document.createElement('span'); nm.className = 'm'; nm.textContent = r.name;
-    tx.append(dl, nm); lb.append(cb, tx); li.append(lb); ul.append(li);
+  const inP = calibInPeriod();
+  const mine = inP.filter(r => r.cat === CAL.kind), other = inP.filter(r => r.cat !== CAL.kind);
+  for (const r of mine) ul.append(calibRow(r, true));
+  if (other.length) {
+    const h = document.createElement('li'); const g = document.createElement('span'); g.className = 'grp';
+    g.textContent = `Classées ${KIND_LBL[other[0].cat].toLowerCase()} · non utilisées`;
+    h.style.display = 'block'; h.style.borderTop = '0'; h.append(g); ul.append(h);
+    for (const r of other) ul.append(calibRow(r, false));
   }
+  for (const b of document.querySelectorAll('.kind button')) b.setAttribute('aria-pressed', String(b.dataset.kind === CAL.kind));
 }
 
 function calibApply() {
-  const used = CAL.rides.filter(r => !CAL.excl.has(r.key));
-  $('#calibSum').textContent = `Sorties utilisées : ${used.length} sur ${CAL.rides.length}`;
+  const inP = calibInPeriod(), lbl = KIND_LBL[CAL.kind].toLowerCase();
+  const used = inP.filter(r => r.cat === CAL.kind && !CAL.excl.has(r.key)), others = inP.filter(r => r.cat !== CAL.kind).length;
+  $('#calibSum').textContent = `Sorties ${lbl} utilisées : ${used.length}` + (others ? ` · ${others} écartée${others > 1 ? 's' : ''} (${CAL.kind === KIND.route ? 'voyage' : 'route'})` : '');
   if (used.length < 3) {
     setSliders(CAL.manual);
-    $('#calibHint').textContent = 'Il faut au moins 3 sorties cochées pour caler les réglages. Tes réglages manuels restent appliqués.';
+    $('#calibHint').textContent = `Il faut au moins 3 sorties ${lbl} cochées sur la période pour caler les réglages. Tes réglages manuels restent appliqués.`;
     syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250);
     return;
   }
   const f = fitRides(used, CAL.manual.vam);
   setSliders({ speed: f.speed, vam: f.vam, pause: f.pause ?? CAL.manual.pause });
-  $('#calibHint').textContent = `Calé sur ${used.length} sortie${used.length > 1 ? 's' : ''} : ${n1(f.speed)} km/h sur le plat, VAM ${f.vam} m/h`
+  $('#calibHint').textContent = `Calé sur ${used.length} sortie${used.length > 1 ? 's' : ''} ${lbl} : ${n1(f.speed)} km/h sur le plat, VAM ${f.vam} m/h`
     + (f.pause != null ? `, arrêts +${f.pause} %` : '') + `. Écart médian avec tes temps réels : ±${Math.round(f.err * 100)} %.`;
   syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250);
 }
@@ -1078,8 +1170,21 @@ function calibStop() {
   $('#calibHint').textContent = 'Règle la vitesse sur le plat, la VAM et les arrêts d\'après tes sorties enregistrées dans Coach Miguel.';
   syncOutputs();
 }
-$('#calibOn').addEventListener('change', e => { if (e.target.checked) calibStart(false); else { calibStop(); schedule(); } });
-$('#calibDays').addEventListener('change', () => { try { localStorage.setItem('pmr-calib-days', $('#calibDays').value); } catch (e) {} if (CAL.on) calibStart(false); });
+$('#calibOn').addEventListener('change', e => { if (e.target.checked) calibStart(false); else { calibStop(); schedule(); } saveOpt(readOpt()); });
+$('#calibDays').addEventListener('change', () => { try { localStorage.setItem('pmr-calib-days', $('#calibDays').value); } catch (e) {} if (CAL.on && CAL.rides.length) { calibRenderList(); calibApply(); } });
+document.querySelectorAll('.kind button').forEach(b => b.addEventListener('click', () => {
+  CAL.kind = b.dataset.kind === KIND.voyage ? KIND.voyage : KIND.route;
+  try { localStorage.setItem('pmr-calib-kind', CAL.kind); } catch (e) {}
+  calibRenderList(); if (CAL.on && CAL.rides.length) calibApply();
+}));
+$('#calibList').addEventListener('click', e => {
+  const b = e.target.closest('button.mv'); if (!b) return;
+  const r = CAL.rides.find(x => x.key === b.dataset.move); if (!r) return;
+  r.cat = r.cat === KIND.route ? KIND.voyage : KIND.route;
+  if (r.cat === r.auto) delete CAL.cat[r.key]; else CAL.cat[r.key] = r.cat;
+  try { localStorage.setItem('pmr-calib-cat', JSON.stringify(CAL.cat)); } catch (err) {}
+  calibRenderList(); calibApply();
+});
 $('#calibList').addEventListener('change', e => {
   const k = e.target.dataset && e.target.dataset.key; if (!k) return;
   if (e.target.checked) CAL.excl.delete(k); else CAL.excl.add(k);

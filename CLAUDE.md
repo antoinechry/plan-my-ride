@@ -21,6 +21,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Lit la table `activities` du projet Supabase de Coach Miguel (même origine GitHub Pages, donc session de connexion partagée avec `coach.html`). supabase-js chargé à la demande.
 - Sorties retenues : Ride / GravelRide / EBikeRide, hors home trainer, ≥ 10 km et ≥ 20 min, sur la période choisie ; l'utilisateur peut en décocher (exclusions dans `localStorage` `pmr-calib-excl`).
 - `fitRides` : moindres carrés pondérés par la durée sur temps ≈ (D − 0,0039·D+)/v + D+/VAM (le terme 0,0039·D+ approche le gain de descente du modèle). Si la VAM sort de [300 ; 1400], elle est bornée et seule v est calée. Arrêts = médiane de (temps écoulé − temps de déplacement) / temps de déplacement.
+- Choix « Vélo route » / « Voyage » (`classifyRides`) : chez soi = zone de départ la plus fréquente ; les sorties à plus de 80 km sont regroupées en séjours (≤ 3 jours d'écart) ; un séjour est « voyage » si le temps réel dépasse de 25 % ou plus celui prévu par le modèle calé sur les sorties à la maison. Reclassements manuels dans `localStorage` `pmr-calib-cat`, choix courant dans `pmr-calib-kind`. Les 12 derniers mois sont toujours lus ; la période ne filtre qu'ensuite.
 - Quand l'option est active, les curseurs sont verrouillés et `pmr-opt` garde les réglages manuels, restaurés à la désactivation.
 
 ## Modèle de vitesse
