@@ -18,6 +18,7 @@
   --focus:#2D5288;
   --c-alt:#8A958C; --c-spd:#2D6FA8; --c-hr:#C23B4A; --c-pw:#6A4FB0; --c-cad:#A8711A;
   --c-fit:#5E9E2A; --c-fat:#3A72C9; --c-ratio:#C9701F;
+  --c-wt:#7A6A4F; --c-rhr:#C23B4A; --c-hrv:#2E7D6B; --c-sleep:#4F5FB8;
   box-sizing:border-box;
 }
 @media (prefers-color-scheme: dark){
@@ -30,6 +31,7 @@
     --focus:#86A9E0;
     --c-alt:#93A399; --c-spd:#7FB3E6; --c-hr:#F07C88; --c-pw:#AE97F0; --c-cad:#E3B45C;
     --c-fit:#A6D86E; --c-fat:#7FB0F5; --c-ratio:#F0A35A;
+    --c-wt:#CDB98F; --c-rhr:#F07C88; --c-hrv:#6DC4AE; --c-sleep:#9FA9F0;
   }
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -70,6 +72,18 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .lkeys i{font-style:normal;display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--c);margin-right:.35em}
 .iconbtn.sm{width:1.8rem;height:1.8rem;font-size:.85rem}
 .lwrap{position:relative;margin-top:6px}
+.healthcard{background:var(--surface);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.hh{margin:0;font-size:.95rem;font-weight:750}
+.hh small{font-weight:500;color:var(--muted);font-size:.78rem;margin-left:.4em}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:8px}
+.htile{background:var(--surface-2);border-radius:10px;padding:8px 10px 6px;min-width:0}
+.htile .hl{font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.htile .hv{font-size:1.25rem;font-weight:750;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px}
+.htile .hv small{font-size:.78rem;font-weight:600;color:var(--muted);margin-left:.25em}
+.htile .hs{font-size:.76rem;color:var(--muted);min-height:1.2em}
+.htile .hs .up{color:var(--run)} .htile .hs .ok{color:var(--ride)}
+.htile canvas{display:block;width:100%;height:44px;margin-top:4px}
+.htile .hempty{font-size:.8rem;color:var(--muted);padding:6px 0 4px}
 .lwrap canvas{display:block;width:100%;height:170px;cursor:pointer}
 .ltip{position:absolute;top:4px;z-index:2;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:6px 9px;font-size:.78rem;line-height:1.35;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.18)}
 .ltip b{font-weight:700}
@@ -280,6 +294,14 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
           <button class="iconbtn sm" id="ltoggle" aria-expanded="true" aria-controls="lwrap" aria-label="Replier le graphique">▴</button>
         </div>
         <div class="lwrap" id="lwrap"><canvas id="lcv" height="170"></canvas><div class="ltip" id="ltip" hidden></div></div>
+      </div>
+      <div class="healthcard" id="healthcard" hidden>
+        <div class="loadhead">
+          <h3 class="hh">Santé <small>Garmin, via intervals.icu</small></h3>
+          <div class="lkeys" id="hkeys"></div>
+          <button class="iconbtn sm" id="htoggle" aria-expanded="true" aria-controls="hgrid" aria-label="Replier la santé">▴</button>
+        </div>
+        <div class="hgrid" id="hgrid"></div>
       </div>
       <div class="paint" role="group" aria-label="Remplir mes dispos">
         <span>Remplir mes dispos :</span>
@@ -1006,6 +1028,7 @@ function buildStudyPrompt(a, raw){
     'La sortie :', ...S,
     '',
     'Son ressenti : '+(r ? ressentiTxt(r) : 'non saisi.'),
+    ...(WELL.days.length ? ['Santé autour de la sortie (montre Garmin) :', ...wellPromptLines(d)] : []),
     'Séance prévue ce jour-là : '+(plan.length ? '\n'+plan.join('\n') : 'aucune.'),
     'Forme (modèle sur la charge d\'entraînement) : '+(before ? 'la veille '+fm(before) : 'inconnue la veille')+(after ? ' ; après la sortie '+fm(after) : '')+'.',
     'FC max observées sur 12 mois : '+(Object.keys(hrMax).length ? Object.entries(hrMax).map(([cc,v]) => ({ride:'vélo',run:'course',other:'autres sports'}[cc])+' '+v+' bpm').join(', ') : 'inconnues')+'.',
@@ -1239,6 +1262,110 @@ try { if (localStorage.getItem('cm-load-open') === '0') setLoadOpen(false); } ca
 new ResizeObserver(() => { if (!$('lwrap').hidden && LOADV.weeks.length) drawLoad(); }).observe($('lwrap'));
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (LOADV.weeks.length) drawLoad(); });
 
+/* ---------- Santé (poids, FC au repos, VFC, sommeil) : données Garmin importées par intervals.icu ---------- */
+const WELL = { days: [], byDate: new Map() };
+async function loadWellness(){
+  const res = await callFn('intervals', { action: 'wellness', oldest: key(addDays(t0, -120)), newest: key(t0) });
+  if (!res.ok || !res.data || !Array.isArray(res.data.days)) return;
+  WELL.days = res.data.days.slice().sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  WELL.byDate = new Map(WELL.days.map(d => [d.date, d]));
+  renderHealth();
+}
+const wVals = (k, from, to) => WELL.days.filter(d => d[k] != null && d.date >= key(from) && d.date <= key(to)).map(d => Number(d[k]));
+const mean = a => a.length ? a.reduce((s,x) => s+x, 0)/a.length : null;
+const lastOf = k => { for (let i = WELL.days.length - 1; i >= 0; i--) if (WELL.days[i][k] != null) return WELL.days[i]; return null; };
+// Résumé : dernière valeur, moyenne 7 j, référence 30 j (les 30 jours avant la semaine), par donnée.
+function wellSummary(at){
+  const d = at || t0, out = {};
+  for (const k of ['weight', 'bodyFat', 'restingHR', 'hrv', 'sleepSecs', 'sleepScore', 'vo2max']){
+    const recent = wVals(k, addDays(d, -6), d), base = wVals(k, addDays(d, -36), addDays(d, -7));
+    let last = null; for (let i = WELL.days.length - 1; i >= 0; i--){ const x = WELL.days[i]; if (x.date <= key(d) && x[k] != null){ last = x; break; } }
+    out[k] = { last: last ? Number(last[k]) : null, lastDate: last ? last.date : null, m7: mean(recent), m30: mean(base), n7: recent.length };
+  }
+  return out;
+}
+const fmtSleep = s => { const m = Math.round(s/60); return Math.floor(m/60)+' h '+pad(m%60); };
+const shortDate = k => new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(new Date(k+'T00:00:00'));
+function healthTile(id, label, color, valueHTML, subHTML, hasData, empty){
+  return '<div class="htile" style="--c:var('+color+')"><div class="hl"><span>'+label+'</span></div>'
+    + (hasData ? '<div class="hv">'+valueHTML+'</div><div class="hs">'+subHTML+'</div><canvas id="'+id+'" height="44"></canvas>' : '<div class="hempty">'+empty+'</div>') + '</div>';
+}
+function deltaTxt(v, base, unit, betterUp, dec){
+  if (v == null || base == null) return '';
+  const dlt = v - base, f = dec ? nf1 : nf0;
+  if (Math.abs(dlt) < (dec ? 0.05 : 0.5)) return '= référence 30 j';
+  const good = betterUp == null ? null : (dlt > 0) === betterUp;
+  return '<span class="'+(good == null ? '' : good ? 'ok' : 'up')+'">'+(dlt > 0 ? '+' : '−')+f.format(Math.abs(dlt))+unit+'</span> vs 30 j ('+f.format(base)+unit+')';
+}
+function renderHealth(){
+  if (!WELL.days.length){ $('healthcard').hidden = true; return; }
+  $('healthcard').hidden = false;
+  const S = wellSummary();
+  const w = S.weight, r = S.restingHR, h = S.hrv, sl = S.sleepSecs, sc = S.sleepScore, v = S.vo2max;
+  $('hkeys').innerHTML = v.last ? '<span>VO2max <b>'+nf0.format(v.last)+'</b></span>' : '';
+  $('hgrid').innerHTML = [
+    healthTile('hc-wt', 'Poids', '--c-wt', w.last != null ? nf1.format(w.last)+'<small>kg</small>'+(S.bodyFat.last != null ? '<small>· '+nf1.format(S.bodyFat.last)+' % MG</small>' : '') : '',
+      w.last != null ? 'pesée du '+shortDate(w.lastDate)+(w.m30 != null ? ' · '+deltaTxt(w.last, w.m30, ' kg', null, true) : '') : '', w.last != null,
+      'Pas encore de pesée. Monte sur ta balance Garmin : le poids remontera ici à la prochaine synchro.'),
+    healthTile('hc-rhr', 'FC au repos', '--c-rhr', r.last != null ? nf0.format(r.last)+'<small>bpm</small>' : '',
+      (r.m7 != null ? 'moy. 7 j '+nf0.format(r.m7)+' · ' : '')+deltaTxt(r.m7, r.m30, ' bpm', false), r.last != null, 'Pas de donnée.'),
+    healthTile('hc-hrv', 'VFC (nuit)', '--c-hrv', h.last != null ? nf0.format(h.last)+'<small>ms</small>' : '',
+      (h.m7 != null ? 'moy. 7 j '+nf0.format(h.m7)+' · ' : '')+deltaTxt(h.m7, h.m30, ' ms', true), h.last != null, 'Pas de donnée.'),
+    healthTile('hc-sleep', 'Sommeil', '--c-sleep', sl.last != null ? fmtSleep(sl.last)+(sc.last != null ? '<small>score '+nf0.format(sc.last)+'</small>' : '') : '',
+      sl.m7 != null ? 'moy. 7 j '+fmtSleep(sl.m7)+(sl.m30 != null ? ' · 30 j '+fmtSleep(sl.m30) : '') : '', sl.last != null, 'Pas de donnée.')
+  ].join('');
+  drawHealth();
+}
+function drawHealth(){
+  if ($('hgrid').hidden) return;
+  const from = key(addDays(t0, -59)), days = WELL.days.filter(d => d.date >= from), n = 60;
+  const idx = k => Math.round((new Date(k+'T00:00:00') - addDays(t0, -59))/86400000);
+  const spec = [['hc-wt', 'weight', '--c-wt', 'line'], ['hc-rhr', 'restingHR', '--c-rhr', 'line'], ['hc-hrv', 'hrv', '--c-hrv', 'line'], ['hc-sleep', 'sleepSecs', '--c-sleep', 'bar']];
+  for (const [id, k, col, kind] of spec){
+    const cv = $(id); if (!cv) continue;
+    const W = cv.clientWidth, H = cv.clientHeight, dpr = window.devicePixelRatio || 1; if (!W) continue;
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+    const pts = days.filter(d => d[k] != null).map(d => [idx(d.date), Number(d[k])]); if (!pts.length) continue;
+    let lo = Math.min(...pts.map(p => p[1])), hi = Math.max(...pts.map(p => p[1]));
+    if (kind === 'bar'){ lo = 0; hi = Math.max(hi, 9*3600); }
+    const padv = (hi - lo || 1)*0.15; if (kind !== 'bar'){ lo -= padv; hi += padv; }
+    const X = i => 2 + i/(n-1)*(W - 6), Y = val => H - 3 - (val - lo)/(hi - lo)*(H - 8), c = cssVar(col);
+    // référence 30 j en pointillés
+    const ref = mean(wVals(k, addDays(t0, -36), addDays(t0, -7)));
+    if (ref != null && kind !== 'bar'){ g.strokeStyle = cssVar('--line'); g.setLineDash([3,3]); g.beginPath(); g.moveTo(0, Y(ref)); g.lineTo(W, Y(ref)); g.stroke(); g.setLineDash([]); }
+    if (kind === 'bar'){
+      const bw = Math.max(1.5, (W - 6)/n - 1.5); g.fillStyle = c; g.globalAlpha = .75;
+      for (const [i, val] of pts) g.fillRect(X(i) - bw/2, Y(val), bw, H - 3 - Y(val));
+      g.globalAlpha = 1;
+    } else {
+      g.strokeStyle = c; g.lineWidth = 1.6; g.beginPath();
+      pts.forEach(([i, val], j) => { if (j) g.lineTo(X(i), Y(val)); else g.moveTo(X(i), Y(val)); }); g.stroke();
+      const [li, lv] = pts[pts.length - 1]; g.fillStyle = c; g.beginPath(); g.arc(X(li), Y(lv), 2.6, 0, 7); g.fill();
+    }
+  }
+}
+function setHealthOpen(open){
+  $('hgrid').hidden = !open; $('htoggle').textContent = open ? '▴' : '▾'; $('htoggle').setAttribute('aria-expanded', String(open));
+  try { localStorage.setItem('cm-health-open', open ? '1' : '0'); } catch(_){}
+  if (open) drawHealth();
+}
+$('htoggle').addEventListener('click', () => setHealthOpen($('hgrid').hidden));
+try { if (localStorage.getItem('cm-health-open') === '0') setHealthOpen(false); } catch(_){}
+new ResizeObserver(() => { if (WELL.days.length) drawHealth(); }).observe($('hgrid'));
+// Lignes pour Miguel (proposition et étude) ; `at` = date de référence.
+function wellPromptLines(at){
+  if (!WELL.days.length) return [];
+  const S = wellSummary(at), out = [];
+  const nightKey = key(at || t0), night = WELL.byDate.get(nightKey);
+  if (night && night.sleepSecs != null) out.push('- Nuit précédente (relevé du '+shortDate(nightKey)+') : '+fmtSleep(night.sleepSecs)+(night.sleepScore != null ? ', score '+night.sleepScore+'/100' : '')+(night.hrv != null ? ', VFC '+night.hrv+' ms' : '')+(night.restingHR != null ? ', FC au repos '+night.restingHR+' bpm' : '')+'.');
+  const line = (lab, o, unit, dec) => o.m7 != null ? '- '+lab+' : moyenne 7 jours '+(dec ? nf1 : nf0).format(o.m7)+unit+(o.m30 != null ? ' (référence des 30 jours précédents '+(dec ? nf1 : nf0).format(o.m30)+unit+')' : '')+'.' : null;
+  for (const l of [line('FC au repos', S.restingHR, ' bpm'), line('VFC nocturne', S.hrv, ' ms'), S.sleepSecs.m7 != null ? '- Sommeil : moyenne 7 jours '+fmtSleep(S.sleepSecs.m7)+(S.sleepSecs.m30 != null ? ' (30 jours : '+fmtSleep(S.sleepSecs.m30)+')' : '')+'.' : null]) if (l) out.push(l);
+  if (S.weight.last != null) out.push('- Poids : '+nf1.format(S.weight.last)+' kg le '+shortDate(S.weight.lastDate)+(S.weight.m30 != null ? ' (moyenne des 30 jours précédents '+nf1.format(S.weight.m30)+' kg)' : '')+(S.bodyFat.last != null ? ', masse grasse '+nf1.format(S.bodyFat.last)+' %' : '')+'.');
+  if (S.vo2max.last != null) out.push('- VO2max estimée par Garmin : '+S.vo2max.last+'.');
+  return out;
+}
+
 /* ---------- Charge, forme et fatigue (pour Miguel) ---------- */
 // Charge d'une activité : charge intervals.icu, sinon effort relatif Strava, sinon estimation par heure selon le sport.
 const LOAD_PER_H = { Ride:60, GravelRide:60, MountainBikeRide:65, VirtualRide:65, EBikeRide:25, Run:70, TrailRun:70, VirtualRun:70, Hike:12, Walk:8, WeightTraining:30, Workout:35, Swim:60 };
@@ -1458,6 +1585,7 @@ function buildPrompt(k, prev){
     '',
     'État actuel (modèle forme/fatigue sur la charge d\'entraînement) : '+(now ? 'forme '+nf1.format(now.ctl)+', fatigue '+nf1.format(now.atl)+', fraîcheur '+fmtSigned(now.tsb)+', évolution de la forme sur 7 jours '+fmtSigned(now.ctl-wk.ctl)+'.' : 'pas de données.'),
     'Semaine de la séance, déjà réalisé : vélo '+nf1.format(st.rideKm)+' km (plus longue '+nf1.format(st.rideMax)+' km), course '+nf1.format(st.runKm)+' km (plus longue '+nf1.format(st.runMax)+' km).',
+    ...(WELL.days.length ? ['', 'Santé (montre Garmin) :', ...wellPromptLines(t0), 'Si la VFC sur 7 jours est nettement sous sa référence, si la FC au repos est au-dessus de sa référence de 4 bpm ou plus, ou si la dernière nuit est courte ou mauvaise, allège la séance et dis-le dans pourquoi.'] : []),
     '',
     'Alertes de surcharge actives :', alerts.length ? alerts.map(a => '- '+a.t+' : '+a.x).join('\n') : '- aucune',
     '',
@@ -1663,6 +1791,7 @@ async function showApp(user){
   }
   renderCalendar();
   icuStatus();
+  loadWellness();
 }
 
 async function init(){
