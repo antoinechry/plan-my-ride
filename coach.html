@@ -62,6 +62,17 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .monthnav .label{min-width:9.5em;text-align:center;font-weight:650}
 .iconbtn{width:2.2rem;height:2.2rem;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.05rem}
 .paint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.profbtn{display:inline-flex;align-items:center;gap:.45em}
+.profbtn .av{display:inline-grid;place-items:center;width:1.55em;height:1.55em;border-radius:50%;background:var(--ink);color:var(--bg);font-size:.76rem;font-weight:700;line-height:1}
+.authmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0 2px}
+.authmode button{border:none;background:var(--surface);padding:.35rem .9rem;font-size:.86rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.authmode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.authform{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-width:380px}
+.authform label{display:flex;flex-direction:column;gap:4px;font-size:.86rem;color:var(--muted)}
+.authform input{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.55rem .65rem;max-width:none}
+.authact{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+#authbox .hint{font-size:.82rem;margin-top:14px}
+#profdlg .msg{margin-top:6px}
 .loadcard{background:var(--surface);border-radius:12px;padding:10px 12px 6px;margin-bottom:14px}
 .loadhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 .lmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
@@ -260,18 +271,27 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       </div>
     </div>
     <div class="navlinks"><a class="btn" href="index.html">Plan My Ride</a>
-      <button class="btn" id="logout" hidden>Se déconnecter</button></div>
+      <button class="btn profbtn" id="profbtn" hidden aria-haspopup="dialog"><span class="av" id="profav">?</span>Profil</button></div>
   </header>
 
   <!-- Connexion -->
   <div id="authbox" class="card" hidden>
     <h2>Connexion</h2>
-    <p class="sub">Entre ton e-mail : tu reçois un lien de connexion, sans mot de passe.</p>
-    <form id="authform" style="margin-top:12px">
-      <input type="email" id="email" required placeholder="ton@email.fr" autocomplete="email">
-      <div style="margin-top:10px"><button class="btn primary" type="submit" id="sendlink">Recevoir le lien</button></div>
+    <div class="authmode" id="authmode" role="group" aria-label="Mode de connexion">
+      <button type="button" data-mode="pw" aria-pressed="true">Mot de passe</button><button type="button" data-mode="link" aria-pressed="false">Lien par e-mail</button>
+    </div>
+    <form id="pwform" class="authform">
+      <label>E-mail<input type="email" id="pwemail" required placeholder="ton@email.fr" autocomplete="username"></label>
+      <label>Mot de passe<input type="password" id="pwpass" required minlength="8" autocomplete="current-password"></label>
+      <div class="authact"><button class="btn primary" type="submit" id="pwgo">Se connecter</button><button class="linkbtn" type="button" id="pwforgot">Mot de passe oublié ?</button></div>
+    </form>
+    <form id="authform" class="authform" hidden>
+      <p class="sub">Tu reçois un lien de connexion par e-mail, sans mot de passe.</p>
+      <label>E-mail<input type="email" id="email" required placeholder="ton@email.fr" autocomplete="email"></label>
+      <div class="authact"><button class="btn primary" type="submit" id="sendlink">Recevoir le lien</button></div>
     </form>
     <p class="msg" id="authmsg"></p>
+    <p class="sub hint">Pas encore de mot de passe ? Connecte-toi avec le lien par e-mail, puis définis-le dans ton profil.</p>
   </div>
 
   <!-- App -->
@@ -319,9 +339,26 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       <div id="cal"></div>
     </section>
 
-    <section aria-labelledby="h-act">
-      <div class="sechead"><h2 id="h-act">Activités</h2></div>
-      <div class="card">
+  </div>
+</div>
+
+<dialog id="profdlg" aria-labelledby="proftitle">
+  <div class="dlg">
+    <div class="ahead">
+      <div class="atitle"><h3 id="proftitle">Mon profil</h3><div class="meta" id="profemail"></div></div>
+      <button class="iconbtn" id="profx" aria-label="Fermer">×</button>
+    </div>
+    <h4>Mot de passe</h4>
+    <p class="sub" id="pwstate">Définis un mot de passe pour te connecter sans attendre de lien par e-mail.</p>
+    <form id="pwset" class="authform">
+      <input type="email" id="pwuser" autocomplete="username" hidden>
+      <label>Nouveau mot de passe<input type="password" id="pwnew" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
+      <label>Confirmation<input type="password" id="pwnew2" required minlength="8" autocomplete="new-password"></label>
+      <div class="authact"><button class="btn primary" type="submit" id="pwsave">Enregistrer le mot de passe</button></div>
+    </form>
+    <p class="msg" id="pwmsg"></p>
+    <h4>intervals.icu</h4>
+      <div>
         <p class="sub" id="icustate">Source : intervals.icu</p>
         <form id="icuform" hidden style="margin-top:10px">
           <p class="sub">Dans intervals.icu : <b>Settings → Developer Settings</b>, copie ta clé API et ton identifiant athlète (ex. i123456). La clé reste côté serveur, elle n'est jamais réaffichée.</p>
@@ -337,9 +374,12 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
         </div>
         <p class="msg" id="icumsg"></p>
       </div>
-    </section>
+    <div class="dlgfoot">
+      <button class="btn" id="logout">Se déconnecter</button>
+      <button class="btn primary" id="profclose">Fermer</button>
+    </div>
   </div>
-</div>
+</dialog>
 
 <dialog id="dlg" aria-labelledby="dlgtitle">
   <div class="dlg">
@@ -1774,13 +1814,19 @@ $('icuunlink').addEventListener('click', async () => {
 });
 
 /* ---------- Auth flow ---------- */
+// Connexion par mot de passe (signInWithPassword) ou par lien e-mail (signInWithOtp). Le mot de passe se définit
+// ou se change dans le profil (updateUser) ; « Mot de passe oublié » envoie un lien de réinitialisation qui ouvre le profil.
 function showAuth(){
-  $('authbox').hidden = false; $('app').hidden = true; $('logout').hidden = true;
+  $('authbox').hidden = false; $('app').hidden = true; $('profbtn').hidden = true;
+  if ($('profdlg').open) $('profdlg').close();
   $('state').textContent = 'Connecte-toi pour accéder à ton plan.';
 }
 async function showApp(user){
   state.user = user;
-  $('authbox').hidden = true; $('app').hidden = false; $('logout').hidden = false;
+  $('authbox').hidden = true; $('app').hidden = false; $('profbtn').hidden = false;
+  $('profav').textContent = (user.email || '?').charAt(0).toUpperCase();
+  $('profemail').textContent = user.email || '';
+  $('pwuser').value = user.email || '';
   $('state').textContent = 'Connecté : '+user.email;
   try {
     await loadDispos();
@@ -1802,9 +1848,11 @@ async function init(){
   const { data } = await sb.auth.getSession();
   if (data && data.session) await showApp(data.session.user);
   else showAuth();
-  sb.auth.onAuthStateChange((_ev, session) => {
+  sb.auth.onAuthStateChange((ev, session) => {
     if (session && (!state.user || state.user.id !== session.user.id)) showApp(session.user);
     if (!session && state.user){ state.user = null; showAuth(); }
+    // Retour du lien « Mot de passe oublié » : on ouvre directement le choix du nouveau mot de passe.
+    if (ev === 'PASSWORD_RECOVERY') setTimeout(() => openProfile(true), 300);
   });
 }
 
@@ -1818,7 +1866,63 @@ $('authform').addEventListener('submit', async e => {
   if (error) setMsg($('authmsg'), 'Échec : '+error.message, true);
   else setMsg($('authmsg'), 'Lien envoyé. Ouvre l\'e-mail sur cet appareil et clique sur le lien.');
 });
-$('logout').addEventListener('click', async () => { await sb.auth.signOut(); });
+$('logout').addEventListener('click', async () => { if ($('profdlg').open) $('profdlg').close(); await sb.auth.signOut(); });
+
+// Mode de connexion : mot de passe ou lien
+$('authmode').addEventListener('click', e => {
+  const b = e.target.closest('[data-mode]'); if (!b) return;
+  const pw = b.dataset.mode === 'pw';
+  for (const x of $('authmode').querySelectorAll('[data-mode]')) x.setAttribute('aria-pressed', String(x === b));
+  if (pw && !$('pwemail').value) $('pwemail').value = $('email').value; if (!pw && !$('email').value) $('email').value = $('pwemail').value;
+  $('pwform').hidden = !pw; $('authform').hidden = pw; setMsg($('authmsg'), '');
+});
+const AUTH_ERR = m => /invalid login credentials/i.test(m) ? 'E-mail ou mot de passe incorrect. Pas encore de mot de passe ? Connecte-toi par lien, puis définis-le dans ton profil.'
+  : /email not confirmed/i.test(m) ? 'Adresse e-mail pas encore confirmée : utilise le lien reçu par e-mail.'
+  : /rate limit|too many/i.test(m) ? 'Trop de tentatives, réessaie dans quelques minutes.' : m;
+$('pwform').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('pwgo').disabled = true; setMsg($('authmsg'), 'Connexion…');
+  const { error } = await sb.auth.signInWithPassword({ email: $('pwemail').value.trim(), password: $('pwpass').value });
+  $('pwgo').disabled = false;
+  if (error) setMsg($('authmsg'), AUTH_ERR(error.message), true);
+  else { setMsg($('authmsg'), ''); $('pwpass').value = ''; }
+});
+$('pwforgot').addEventListener('click', async () => {
+  const email = $('pwemail').value.trim();
+  if (!email){ setMsg($('authmsg'), 'Entre ton e-mail, puis clique à nouveau sur « Mot de passe oublié ? ».', true); $('pwemail').focus(); return; }
+  setMsg($('authmsg'), 'Envoi du lien de réinitialisation…');
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0] });
+  if (error) setMsg($('authmsg'), 'Échec : '+AUTH_ERR(error.message), true);
+  else setMsg($('authmsg'), 'Lien envoyé. Ouvre l\'e-mail sur cet appareil : tu pourras choisir un nouveau mot de passe.');
+});
+
+// Profil : mot de passe, intervals.icu, déconnexion
+function openProfile(recovery){
+  setMsg($('pwmsg'), ''); $('pwnew').value = ''; $('pwnew2').value = '';
+  $('pwstate').textContent = recovery ? 'Choisis ton nouveau mot de passe.' : 'Définis ou change ton mot de passe pour te connecter sans attendre de lien par e-mail.';
+  if (!$('profdlg').open) $('profdlg').showModal();
+  if (recovery) $('pwnew').focus();
+}
+$('profbtn').addEventListener('click', () => openProfile(false));
+$('profclose').addEventListener('click', () => $('profdlg').close());
+$('profx').addEventListener('click', () => $('profdlg').close());
+$('profdlg').addEventListener('click', e => { if (e.target === $('profdlg')) $('profdlg').close(); });
+$('pwset').addEventListener('submit', async e => {
+  e.preventDefault();
+  const a = $('pwnew').value, b = $('pwnew2').value;
+  if (a.length < 8){ setMsg($('pwmsg'), 'Au moins 8 caractères.', true); return; }
+  if (a !== b){ setMsg($('pwmsg'), 'Les deux mots de passe ne sont pas identiques.', true); return; }
+  $('pwsave').disabled = true; setMsg($('pwmsg'), 'Enregistrement…');
+  const { error } = await sb.auth.updateUser({ password: a });
+  $('pwsave').disabled = false;
+  if (error){
+    const m = /different from the old/i.test(error.message) ? 'C\'est déjà ton mot de passe actuel.'
+      : /reauthenticat|recent/i.test(error.message) ? 'Pour des raisons de sécurité, reconnecte-toi (par lien) puis recommence.' : error.message;
+    setMsg($('pwmsg'), m, true); return;
+  }
+  $('pwnew').value = ''; $('pwnew2').value = '';
+  setMsg($('pwmsg'), 'Mot de passe enregistré. Tu peux maintenant te connecter avec ton e-mail et ce mot de passe.');
+});
 
 /* ---------- Calendar events ---------- */
 $('prev').addEventListener('click', () => { state.month = new Date(state.month.getFullYear(), state.month.getMonth()-1, 1); renderCalendar(); });
