@@ -1166,7 +1166,10 @@ function sendHTML(p, i, k){
   if (sendRuns[k+'#'+i]) return '<div class="sendbar"><span class="wait">Envoi vers intervals.icu…</span></div>';
   if (p.icu && p.icu.envoye_le){
     let when = ''; try { when = dayFmt.format(new Date(p.icu.envoye_le)); } catch(_){}
-    return '<div class="sendbar sent"><span>✓ Dans ton calendrier intervals.icu'+(when ? ' depuis le '+esc(when) : '')+(p.icu.charge ? ' · charge prévue '+p.icu.charge : '')+'. Elle arrivera sur '+dev+' via '+DEVICE_VIA[c]+' dans les jours qui précèdent.</span>'
+    // intervals.icu n'envoie aux appareils que les séances des 7 prochains jours.
+    const from = addDays(new Date(k+'T00:00:00'), -7), soon = from <= t0;
+    const arrive = soon ? 'Elle arrive sur '+dev+' via '+DEVICE_VIA[c]+' à la prochaine synchro.' : 'Elle arrivera sur '+dev+' via '+DEVICE_VIA[c]+' à partir du '+longFmt.format(from)+' (7 jours avant).';
+    return '<div class="sendbar sent"><span>✓ Dans ton calendrier intervals.icu'+(when ? ' depuis le '+esc(when) : '')+(p.icu.charge ? ' · charge prévue '+p.icu.charge : '')+'. '+arrive+'</span>'
       + '<button class="linkbtn" data-send="'+i+'">Renvoyer</button><a class="linkbtn" href="https://intervals.icu/?w='+key(startOfWeek(new Date(k+'T00:00:00')))+'" target="_blank" rel="noopener">Voir dans intervals.icu ↗</a></div>';
   }
   return '<div class="sendbar"><button class="btn" data-send="'+i+'">Envoyer sur '+dev+'</button>'+(p.icu && p.icu.err ? '<span class="err">'+esc(p.icu.err)+'</span>' : '')+'</div>';
