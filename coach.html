@@ -29,6 +29,7 @@
   }
 }
 *,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
@@ -97,6 +98,27 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
 .alist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .alist li{border-left:3px solid var(--ride);padding-left:10px;font-size:.9rem}
 .alist .meta{color:var(--muted);font-size:.82rem}
+.chip.plan{border-left-style:dotted;font-weight:500}
+.dot.plan{background:transparent;border:1.5px dashed var(--muted)}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.plist li{border-left:3px dotted var(--c);padding:2px 0 2px 10px;font-size:.9rem}
+.plist .meta{color:var(--muted);font-size:.82rem}
+.plist ol{margin:4px 0 0;padding-left:1.2em;font-size:.84rem;color:var(--muted)}
+.linkbtn{border:none;background:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.8rem;margin-left:6px}
+.askrow{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0 8px;font-size:.88rem;color:var(--muted)}
+.askrow label{display:flex;flex-direction:column;gap:3px}
+.askrow select,#askwish{font:inherit;font-size:.92rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem}
+#askwish{width:100%}
+.askact{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#askout{margin-top:10px;font-size:.9rem}
+#askout .wait{color:var(--muted)}
+#askout .err{color:var(--run)}
+.proposal{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:8px;padding:10px 12px;background:var(--surface-2)}
+.proposal b{font-size:1rem}
+.proposal .meta{color:var(--muted);font-size:.84rem}
+.proposal ol{margin:8px 0 6px;padding-left:1.2em}
+.proposal li{margin:2px 0}
+.proposal .why{margin:6px 0 0;color:var(--muted);font-size:.86rem}
 @media (max-width:640px){
   .wrap{padding:16px 10px 40px}
   .day{min-height:60px;padding:4px}
@@ -191,6 +213,37 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:8
     </div>
     <h4><label for="dlgnote">Note</label></h4>
     <textarea id="dlgnote" maxlength="300" placeholder="Ex. dispo seulement l'après-midi…"></textarea>
+    <div id="dlgplans"></div>
+    <div id="dlgask" hidden>
+      <h4>Demander une sortie à Miguel</h4>
+      <div class="seg" id="asksport">
+        <button data-sport="ride" aria-pressed="true"><b>Vélo</b></button>
+        <button data-sport="run" aria-pressed="false"><b>Course à pied</b></button>
+      </div>
+      <div class="askrow">
+        <label>Temps dispo
+          <select id="asktime">
+            <option value="auto">Selon ma dispo</option>
+            <option value="45">45 min</option>
+            <option value="60">1 h</option>
+            <option value="90">1 h 30</option>
+            <option value="120">2 h</option>
+            <option value="180">3 h</option>
+            <option value="240">4 h</option>
+            <option value="300">5 h et plus</option>
+          </select>
+        </label>
+        <label id="askwherewrap">Où
+          <select id="askwhere"><option value="out">Dehors</option><option value="ht">Home trainer</option></select>
+        </label>
+      </div>
+      <input id="askwish" type="text" maxlength="200" placeholder="Une envie ? Du dénivelé, sortie tranquille, fractionné…">
+      <div class="askact">
+        <button class="btn primary" id="askgo">Proposer une séance</button>
+        <button class="btn" id="askstop" hidden>Annuler</button>
+      </div>
+      <div id="askout" aria-live="polite"></div>
+    </div>
     <div class="dlgfoot">
       <span class="saved" id="savestate"></span>
       <button class="btn primary" id="dlgclose">Fermer</button>
@@ -222,7 +275,7 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
 const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 
 const t0 = today0();
-const state = { user: null, month: new Date(t0.getFullYear(), t0.getMonth(), 1), dispos: {}, paint: null, openKey: null, acts: [] };
+const state = { user: null, month: new Date(t0.getFullYear(), t0.getMonth(), 1), dispos: {}, seances: {}, ressentis: {}, paint: null, openKey: null, acts: [] };
 let sb = null, saveTimer = null;
 
 function setMsg(el, text, isErr){ el.textContent = text || ''; el.classList.toggle('err', !!isErr); }
@@ -250,6 +303,20 @@ function scheduleSave(){
     try { await saveDispos(); $('savestate').textContent = 'Enregistré'; }
     catch(e){ $('savestate').textContent = 'Échec de l\'enregistrement, réessaie.'; }
   }, 500);
+}
+// Séances prévues (doc « seances » : { sessions: { 'AAAA-MM-JJ': [séance, …] } }) et ressentis éventuels (doc « ressentis »).
+async function loadPlanDocs(){
+  const { data, error } = await sb.from('plan_docs').select('doc,data').in('doc', ['seances','ressentis']);
+  if (error) throw error;
+  for (const r of data || []){
+    if (r.doc === 'seances') state.seances = (r.data && r.data.sessions) || {};
+    if (r.doc === 'ressentis') state.ressentis = (r.data && r.data.activities) || {};
+  }
+}
+async function saveSeances(){
+  const body = { sessions: state.seances, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('plan_docs').upsert({ user_id: state.user.id, doc: 'seances', data: body }, { onConflict: 'user_id,doc' });
+  if (error) throw error;
 }
 async function loadActivities(){
   const { data, error } = await sb.from('activities').select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,relative_effort,training_load,is_trainer').order('start_local', {ascending:false}).limit(2000);
@@ -316,12 +383,14 @@ function renderCalendar(){
         const km = a.distance_m ? ' '+(a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
         return '<span class="chip '+sportCls(a.sport_type)+'">'+esc(sportLabel(a.sport_type))+km+'</span>';
       }).join('');
-      const dots = acts.map(a => '<i class="dot '+sportCls(a.sport_type)+'"></i>').join('');
+      const plans = state.seances[k] || [];
+      const planChips = plans.map(p => '<span class="chip plan '+sportCls(p.sport)+'">'+esc(p.titre || sportLabel(p.sport))+'</span>').join('');
+      const dots = acts.map(a => '<i class="dot '+sportCls(a.sport_type)+'"></i>').join('') + (acts.length ? '' : plans.map(() => '<i class="dot plan"></i>').join(''));
       days += '<button class="'+cls.join(' ')+'" data-k="'+k+'" aria-label="'+esc(longFmt.format(d)+(dispo.s ? ', '+DISPO_LABEL[dispo.s] : '')+(acts.length ? ', '+acts.length+' activité(s)' : ''))+'">'
         + '<span class="dnum">'+d.getDate()+j1+'</span>'
         + (dispo.s ? '<span class="dtag">'+DISPO_LABEL[dispo.s]+'</span>' : '')
         + (dispo.note ? '<span class="dnote">'+esc(dispo.note)+'</span>' : '')
-        + '<span class="chips">'+chips+'</span>'
+        + '<span class="chips">'+chips+planChips+'</span>'
         + '<span class="dots">'+dots+'</span>'
         + '</button>';
     }
@@ -345,8 +414,225 @@ function openDay(k){
   for (const b of $('dlgseg').querySelectorAll('button')) b.setAttribute('aria-pressed', String((b.dataset.s||'') === (dispo.s||'')));
   $('dlgnote').value = dispo.note || '';
   $('savestate').textContent = '';
+  renderPlans(k); setupAsk(k);
   $('dlg').showModal();
 }
+
+/* ---------- Charge, forme et fatigue (pour Miguel) ---------- */
+// Charge d'une activité : charge intervals.icu, sinon effort relatif Strava, sinon estimation par heure selon le sport.
+const LOAD_PER_H = { Ride:60, GravelRide:60, MountainBikeRide:65, VirtualRide:65, EBikeRide:25, Run:70, TrailRun:70, VirtualRun:70, Hike:12, Walk:8, WeightTraining:30, Workout:35, Swim:60 };
+const PLAN_SPORTS = { run: ['Run','TrailRun'], ride: ['Ride','VirtualRide'] };
+const nf1 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1});
+const nf0 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
+const fmtSigned = v => (v>0?'+':v<0?'−':'') + nf1.format(Math.abs(v));
+const readFmt = new Intl.DateTimeFormat('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+function actLoad(a){
+  if (a.training_load != null) return { load: a.training_load, est: false };
+  if (a.relative_effort != null) return { load: a.relative_effort, est: false };
+  return { load: Math.round((a.moving_time_s||0)/3600*(LOAD_PER_H[a.sport_type] || 40)), est: true };
+}
+const planLoad = p => Math.round((Number(p.duree_min)||0)/60*(LOAD_PER_H[p.sport] || 40));
+function computeSeries(){
+  const byDay = actsByDay(), start = addDays(t0, -180);
+  const hasFuture = Object.keys(state.seances).some(k => k > key(t0) && (state.seances[k]||[]).length);
+  const end = addDays(t0, hasFuture ? 14 : 0), out = [];
+  let ctl = 0, atl = 0;
+  for (let d = start; d <= end; d = addDays(d,1)){
+    const k = key(d), future = d > t0; let load = 0;
+    if (!future) for (const a of byDay.get(k) || []) load += actLoad(a).load;
+    else for (const p of state.seances[k] || []) load += planLoad(p);
+    ctl += (load-ctl)/42; atl += (load-atl)/7;
+    out.push({ k, date: d, load, ctl, atl, tsb: ctl-atl, future });
+  }
+  return out;
+}
+function computeAlerts(series){
+  const out = [], past = series.filter(p => !p.future), byDay = actsByDay();
+  if (past.length < 8) return out;
+  const now = past[past.length-1], ramp = now.ctl - past[past.length-8].ctl;
+  const add = (lvl, t, x) => out.push({ lvl, t, x });
+  const back = (from, to) => { const r = []; for (let i = from; i <= to; i++) for (const a of byDay.get(key(addDays(t0,-i))) || []) r.push({ a, i }); return r; };
+  const isRun = a => sportCls(a.sport_type) === 'run', km = a => (a.distance_m||0)/1000;
+  if (ramp > 8) add('alerte', 'La forme grimpe trop vite', 'Forme '+fmtSigned(ramp)+' en 7 jours.');
+  else if (ramp > 5) add('attention', 'Montée en charge rapide', 'Forme '+fmtSigned(ramp)+' en 7 jours.');
+  if (now.tsb < -30) add('alerte', 'Fatigue accumulée', 'Fraîcheur à '+fmtSigned(now.tsb)+'.');
+  const acute = back(0,6).reduce((s,x) => s + actLoad(x.a).load, 0), chronic = back(0,27).reduce((s,x) => s + actLoad(x.a).load, 0)/4;
+  if (chronic >= 50 && acute/chronic > 1.3) add(acute/chronic > 1.5 ? 'alerte' : 'attention', 'Pic de charge', 'Charge des 7 derniers jours : '+nf1.format(acute/chronic)+' fois la moyenne hebdomadaire du mois.');
+  const run7 = back(0,6).filter(x => isRun(x.a)).reduce((s,x) => s + km(x.a), 0), runPrev = back(7,27).filter(x => isRun(x.a)).reduce((s,x) => s + km(x.a), 0)/3;
+  if (runPrev >= 3 && run7/runPrev > 1.3 && run7 - runPrev > 2) add('attention', 'Volume de course en hausse rapide', nf1.format(run7)+' km de course sur 7 jours contre '+nf1.format(runPrev)+' km par semaine avant.');
+  const pain = back(0,6).map(x => state.ressentis[String(x.a.ext_id)]).filter(r => r && r.douleur && r.douleur !== 'aucune');
+  if (pain.length) add('alerte', 'Douleur ou gêne signalée', (pain[0].zone ? pain[0].zone+' ; ' : '')+'à prendre en compte.');
+  return out;
+}
+
+/* ---------- Séances prévues ---------- */
+function renderPlans(k){
+  const plans = state.seances[k] || [];
+  $('dlgplans').innerHTML = plans.length ? '<h4>Séances prévues</h4><ul class="plist">' + plans.map((p,i) => {
+    const meta = [sportLabel(p.sport), fmtHM((p.duree_min||0)*60), p.distance_km ? '≈ '+nf0.format(p.distance_km)+' km' : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
+    return '<li style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><button class="linkbtn" data-rm="'+i+'">Retirer</button><div class="meta">'+esc(meta)+'</div>'
+      + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '') + '</li>';
+  }).join('') + '</ul>' : '';
+}
+async function persistSeances(){
+  try { await saveSeances(); $('savestate').textContent = 'Enregistré'; }
+  catch(e){ $('savestate').textContent = 'Échec de l\'enregistrement de la séance, réessaie.'; }
+}
+$('dlgplans').addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]'); if (!b || !state.openKey) return;
+  const k = state.openKey, list = (state.seances[k] || []).slice(); list.splice(Number(b.dataset.rm), 1);
+  if (list.length) state.seances[k] = list; else delete state.seances[k];
+  persistSeances(); renderPlans(k); renderCalendar();
+});
+
+/* ---------- Demander une sortie (Claude, via la fonction serveur coach-propose) ---------- */
+const ask = { sport: 'ride', ctl: null, proposal: null, key: null };
+function setupAsk(k){
+  $('dlgask').hidden = k < key(t0);
+  if (ask.key !== k){ ask.key = k; ask.proposal = null; $('askout').innerHTML = ''; $('askwish').value = ''; $('asktime').value = 'auto'; }
+  syncAskSport();
+}
+function syncAskSport(){
+  for (const b of $('asksport').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.sport === ask.sport));
+  $('askwherewrap').hidden = ask.sport !== 'ride';
+}
+$('asksport').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ask.sport = b.dataset.sport; syncAskSport(); });
+function ressentiTxt(r){
+  return [r.rpe ? 'effort '+r.rpe+'/10' : '', r.forme ? 'sensations '+r.forme+'/5' : '', r.douleur && r.douleur !== 'aucune' ? r.douleur+(r.zone ? ' ('+r.zone+')' : '') : '', r.note || ''].filter(Boolean).join(', ');
+}
+function weekStats(ws){
+  const byDay = actsByDay(); let rideKm = 0, runKm = 0, rideMax = 0, runMax = 0;
+  for (let i = 0; i < 7; i++) for (const a of byDay.get(key(addDays(ws,i))) || []){
+    const c = sportCls(a.sport_type), km = (a.distance_m||0)/1000;
+    if (c === 'ride'){ rideKm += km; rideMax = Math.max(rideMax, km); }
+    if (c === 'run'){ runKm += km; runMax = Math.max(runMax, km); }
+  }
+  return { rideKm, runKm, rideMax, runMax };
+}
+function buildPrompt(k, prev){
+  const d = new Date(k+'T00:00:00'), pd = planDay(d), series = computeSeries(), alerts = computeAlerts(series);
+  const past = series.filter(p => !p.future), now = past[past.length-1], wk = past[Math.max(0, past.length-8)];
+  const byDay = actsByDay(), recent = [];
+  for (let i = 27; i >= 0; i--){
+    const dk = key(addDays(t0,-i));
+    for (const a of (byDay.get(dk) || []).slice().reverse()){
+      const L = actLoad(a), r = state.ressentis[String(a.ext_id)];
+      recent.push('- '+dk+' '+sportLabel(a.sport_type)+(a.is_trainer ? ' (intérieur)' : '')+' : '+nf1.format((a.distance_m||0)/1000)+' km, '+fmtHM(a.moving_time_s||0)+', '+nf0.format(a.elevation_gain_m||0)+' m D+, charge '+(L.est ? '≈' : '')+nf0.format(L.load)+(r ? ' ; ressenti : '+ressentiTxt(r) : ''));
+    }
+  }
+  const plans = [];
+  for (let i = -3; i <= 21; i++){ const dk = key(addDays(t0,i)); for (const p of state.seances[dk] || []) plans.push('- '+dk+' '+sportLabel(p.sport)+' : '+(p.titre||'')+(p.duree_min ? ', '+p.duree_min+' min' : '')+(p.distance_km ? ', '+p.distance_km+' km' : '')+(p.intensite ? ', '+p.intensite : '')); }
+  const disp = [];
+  for (let i = -3; i <= 7; i++){ const dk = key(addDays(d,i)), x = state.dispos[dk]; if (x && (x.s || x.note)) disp.push('- '+dk+' : '+(x.s ? DISPO_LABEL[x.s] : 'non précisé')+(x.note ? ' ('+x.note+')' : '')); }
+  const st = weekStats(startOfWeek(d)), dayDispo = state.dispos[k], t = $('asktime').value;
+  const timeTxt = t === 'auto' ? (dayDispo && dayDispo.s === 'court' ? 'créneau court, 1 h 30 maximum' : dayDispo && dayDispo.s === 'indispo' ? 'jour marqué indispo : propose une séance très courte et signale-le' : 'journée libre, sortie longue possible') : (t === '300' ? '5 h ou plus' : fmtHM(Number(t)*60));
+  const sportTxt = ask.sport === 'run' ? 'course à pied (route ou trail)' : ($('askwhere').value === 'ht' ? 'vélo sur home trainer' : 'vélo de route dehors');
+  const wish = $('askwish').value.trim();
+  return [
+    'Propose UNE séance pour le '+longFmt.format(d)+' '+d.getFullYear()+(pd >= 1 ? ' (jour '+pd+' du plan, semaine '+planWeek(d)+')' : '')+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.',
+    '',
+    'Profil et objectifs :',
+    '- Objectif principal : un trail de 30 km en 2027.',
+    '- Objectifs hebdo du plan : une sortie vélo d\'environ 100 km et une sortie course de 10 à 12 km.',
+    '- Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure.',
+    '- Matériel : vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift). FTP provisoire d\'environ 210 W, pas encore testée : exprime l\'intensité en zones de fréquence cardiaque (Z1 à Z5) et en ressenti (RPE sur 10) ; des watts seulement à titre indicatif.',
+    '- Terrain : autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
+    '- Il fait son renforcement à part : ne le programme pas.',
+    '',
+    'État actuel (modèle forme/fatigue sur la charge d\'entraînement) : '+(now ? 'forme '+nf1.format(now.ctl)+', fatigue '+nf1.format(now.atl)+', fraîcheur '+fmtSigned(now.tsb)+', évolution de la forme sur 7 jours '+fmtSigned(now.ctl-wk.ctl)+'.' : 'pas de données.'),
+    'Semaine de la séance, déjà réalisé : vélo '+nf1.format(st.rideKm)+' km (plus longue '+nf1.format(st.rideMax)+' km), course '+nf1.format(st.runKm)+' km (plus longue '+nf1.format(st.runMax)+' km).',
+    '',
+    'Alertes de surcharge actives :', alerts.length ? alerts.map(a => '- '+a.t+' : '+a.x).join('\n') : '- aucune',
+    '',
+    'Activités des 28 derniers jours :', recent.length ? recent.join('\n') : '- aucune',
+    '',
+    'Séances déjà prévues :', plans.length ? plans.join('\n') : '- aucune',
+    '',
+    'Dispos renseignées autour de cette date :', disp.length ? disp.join('\n') : '- aucune',
+    '',
+    'Demande :',
+    '- Sport : '+sportTxt,
+    '- Temps disponible : '+timeTxt,
+    '- Envie : '+(wish || 'aucune précisée'),
+    prev ? '- Il a déjà vu cette proposition et en veut une autre, différente : '+prev : null,
+    '',
+    'Règles : respecte le temps disponible. S\'il y a des alertes actives ou une douleur signalée, la séance doit les prendre en compte (plus facile, plus courte, ou vélo plutôt que course si la douleur touche la course) et le champ pourquoi le dit. Adapte l\'intensité à la fraîcheur (fatigue élevée : séance facile ou courte). Évite deux séances intenses d\'affilée en tenant compte des séances prévues et réalisées. En course, la sortie la plus longue ne dépasse pas d\'environ 10 % la plus longue des dernières semaines.',
+    '',
+    'Réponds uniquement avec un objet JSON, sans autre texte :',
+    '{"titre": "Sortie longue endurance", "sport": "Ride", "duree_min": 180, "distance_km": 75, "denivele_m": 900, "intensite": "facile", "deroule": ["Échauffement 20 min en Z1-Z2", "…"], "pourquoi": "Une ou deux phrases."}',
+    'sport vaut "Ride" (vélo dehors), "VirtualRide" (home trainer), "Run" (course route) ou "TrailRun". intensite vaut "facile", "modérée" ou "soutenue". Titre de 40 caractères maximum. distance_km et denivele_m approximatifs, null si sans objet. deroule contient 3 à 6 étapes courtes en français.'
+  ].filter(x => x !== null).join('\n');
+}
+function cleanProposal(r){
+  if (!r || typeof r !== 'object') throw new Error('proposition illisible');
+  const allowed = PLAN_SPORTS[ask.sport];
+  const sport = allowed.includes(r.sport) ? r.sport : (ask.sport === 'run' ? 'Run' : ($('askwhere').value === 'ht' ? 'VirtualRide' : 'Ride'));
+  const duree = Math.round(Number(r.duree_min));
+  if (!duree || duree < 10 || duree > 900) throw new Error('proposition illisible');
+  const num = v => (v == null || v === '' || isNaN(Number(v)) || Number(v) <= 0) ? null : Math.round(Number(v)*10)/10;
+  return { sport, titre: String(r.titre || sportLabel(sport)).slice(0,60), duree_min: duree,
+    distance_km: num(r.distance_km), denivele_m: num(r.denivele_m) == null ? null : Math.round(num(r.denivele_m)),
+    intensite: ['facile','modérée','soutenue'].includes(r.intensite) ? r.intensite : '',
+    deroule: Array.isArray(r.deroule) ? r.deroule.map(x => String(x).slice(0,200)).slice(0,8) : [],
+    pourquoi: r.pourquoi ? String(r.pourquoi).slice(0,400) : '' };
+}
+function renderProposal(){
+  const p = ask.proposal; if (!p) return;
+  const meta = [sportLabel(p.sport), fmtHM(p.duree_min*60), p.distance_km ? '≈ '+nf0.format(p.distance_km)+' km' : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
+  $('askout').innerHTML = '<div class="proposal" style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><div class="meta">'+esc(meta)+'</div>'
+    + (p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
+    + (p.pourquoi ? '<p class="why">'+esc(p.pourquoi)+'</p>' : '')
+    + '<div class="askact"><button class="btn primary" data-act="add">Ajouter au calendrier</button><button class="btn" data-act="again">Autre proposition</button></div></div>';
+}
+const COACH_ERR = {
+  no_key: 'La clé API Anthropic n\'est pas encore enregistrée côté serveur (secret ANTHROPIC_API_KEY dans Supabase).',
+  forbidden: 'Demander une sortie est réservé au propriétaire de l\'app.',
+  invalid_json: 'La proposition reçue était illisible. Réessaie.',
+  unauthorized: 'Session expirée : reconnecte-toi.'
+};
+async function requestSession(prev){
+  const k = state.openKey; if (!k) return;
+  if (ask.ctl) ask.ctl.abort();
+  const ctl = new AbortController(); ask.ctl = ctl; ask.proposal = null;
+  $('askgo').disabled = true; $('askstop').hidden = false;
+  $('askout').innerHTML = '<span class="wait">Miguel prépare ta séance…</span>';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error(COACH_ERR.unauthorized);
+    const res = await fetch(SUPABASE_URL+'/functions/v1/coach-propose', {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer '+session.access_token },
+      body: JSON.stringify({ prompt: buildPrompt(k, prev) })
+    });
+    let j = null; try { j = await res.json(); } catch(_){}
+    if (!res.ok || !j || j.error){
+      const code = j && j.error;
+      if (code === 'api') throw new Error(j.status === 401 ? 'Clé API Anthropic refusée : vérifie le secret ANTHROPIC_API_KEY.' : j.status === 429 ? 'Limite d\'usage de l\'API atteinte, réessaie plus tard.' : 'Le service Claude a répondu '+j.status+(j.detail ? ' : '+j.detail : '')+'.');
+      throw new Error(COACH_ERR[code] || 'La demande a échoué (HTTP '+res.status+'). Réessaie dans un instant.');
+    }
+    if (ask.ctl !== ctl || state.openKey !== k) return;
+    ask.proposal = cleanProposal(j.proposal);
+    renderProposal();
+  } catch(e){
+    if (ask.ctl !== ctl) return;
+    $('askout').innerHTML = e.name === 'AbortError' ? '' : '<span class="err">'+esc(e.message || 'La demande a échoué.')+'</span>';
+  } finally {
+    if (ask.ctl === ctl){ ask.ctl = null; $('askgo').disabled = false; $('askstop').hidden = true; }
+  }
+}
+$('askgo').addEventListener('click', () => requestSession(null));
+$('askstop').addEventListener('click', () => { if (ask.ctl) ask.ctl.abort(); });
+$('askout').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || !ask.proposal || !state.openKey) return;
+  const p = ask.proposal;
+  if (b.dataset.act === 'again'){ requestSession(p.titre+', '+p.duree_min+' min, '+p.intensite); return; }
+  const k = state.openKey;
+  state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', cree_le: new Date().toISOString() })]);
+  persistSeances();
+  ask.proposal = null;
+  $('askout').innerHTML = '<span class="wait">Séance ajoutée au calendrier.</span>';
+  renderPlans(k); renderCalendar();
+});
 
 /* ---------- Activities (intervals.icu) ---------- */
 // Appel direct : on lit le corps de la réponse pour afficher la vraie cause.
@@ -416,6 +702,7 @@ async function showApp(user){
   try {
     await loadDispos();
     await loadActivities();
+    try { await loadPlanDocs(); } catch(e){ /* les séances prévues sont un plus */ }
   } catch(e){
     setMsg($('authmsg'), 'Impossible de charger tes données : '+(e.message||e), true);
   }

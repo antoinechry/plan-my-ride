@@ -63,3 +63,8 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - montée : temps = distance / vitesse plat + D+ / VAM
 - descente (pente < −1 %) : vitesse × (1 + (pente − 1 %) × 6), plafonné à ×1,35
 - vent : facteur 1 − 0,012 × composante de face (km/h), borné [0,55 ; 1,35]
+
+## Coach Miguel (`coach.html`) : séances prévues et « Demander une sortie »
+- Séances prévues : doc `plan_docs` « seances » (`{ sessions: { 'AAAA-MM-JJ': [ { titre, sport, duree_min, distance_km, denivele_m, intensite, deroule[], pourquoi, source, cree_le } ] } }`), affichées en pointillés dans le calendrier, retirables dans la fenêtre du jour. Ressentis éventuels : doc « ressentis » (`activities[ext_id]`), repris dans la consigne.
+- « Demander une sortie » (jours à venir) : la page construit la consigne (`buildPrompt` : profil, forme/fatigue/fraîcheur 42 j / 7 j via `computeSeries`, alertes `computeAlerts`, activités 28 j, séances prévues, dispos, demande) et appelle la fonction edge `coach-propose` (source dans `supabase/functions/coach-propose`), qui interroge l'API Claude avec le secret `ANTHROPIC_API_KEY` (modèle `COACH_MODEL`, défaut `claude-sonnet-5-5`), réservée aux utilisateurs de `COACH_USER_IDS` (défaut : le propriétaire). Réponse JSON validée par `cleanProposal`.
+- Charge d'une activité : `training_load` (intervals.icu), sinon `relative_effort` (Strava), sinon durée × charge horaire du sport (`LOAD_PER_H`).
