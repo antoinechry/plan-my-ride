@@ -365,7 +365,7 @@ footer a{color:inherit}
           <div class="field"><label class="label" for="dayEnd">Bivouac</label><input type="time" id="dayEnd" step="900"></div>
         </div>
       </div>
-      <hr class="sep">
+      <hr class="sep" id="windowSep">
       <div class="field">
         <label class="label" for="poiRadius">Ravitos : distance max. de la trace</label>
         <select id="poiRadius">
@@ -378,7 +378,14 @@ footer a{color:inherit}
       </div>
     </div>
     <hr class="sep">
-    <p class="hint">Prévisions Open-Meteo (modèles AROME / ICON / GFS selon la zone), disponibles jusqu'à 16 jours. Le vent affiché est mesuré à 10 m.</p>
+    <div class="field">
+      <span class="label" id="wxSrcLbl">Source météo</span>
+      <div class="seg2" role="group" aria-labelledby="wxSrcLbl" id="wxSrcSeg">
+        <button type="button" data-v="mb" aria-pressed="false">meteoblue</button>
+        <button type="button" data-v="om" aria-pressed="true">Open-Meteo</button>
+      </div>
+      <p class="hint" id="wxSrcHint"></p>
+    </div>
   </aside>
 
   <main>
@@ -483,7 +490,7 @@ footer a{color:inherit}
     </div>
   </main>
 </div>
-<footer>Données météo : <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0) · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages.</footer>
+<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages.</footer>
 <div class="drop-overlay" id="dropOverlay" hidden>Déposez le fichier GPX</div>
 
 <script>
@@ -578,7 +585,8 @@ const sIdx = km => Math.round(km / S.P.total * (S.samples.length - 1));
 const VARS = ['temperature_2m','apparent_temperature','precipitation','precipitation_probability','weather_code','cloud_cover','wind_speed_10m','wind_direction_10m','wind_gusts_10m','is_day','sunshine_duration'];
 const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 
-async function fetchWeather(from, to) {
+// Open-Meteo : un seul appel pour tous les points d'échantillonnage (jusqu'à 16 jours).
+async function fetchOM(from, to) {
   const lat = S.samples.map(s => s.lat.toFixed(4)).join(',');
   const lon = S.samples.map(s => s.lon.toFixed(4)).join(',');
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${VARS.join(',')}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
@@ -594,8 +602,154 @@ async function fetchWeather(from, to) {
   });
 }
 
+// meteoblue (7 jours) : via la fonction Supabase `meteoblue` (clé côté serveur, réservée au compte Coach Miguel).
+// Paquet basic-1h (8 000 crédits par point, quelle que soit la durée : on prend toujours 7 jours). Un point tous les
+// ~MB_KM km (au plus MB_MAX) avec son altitude, gardé MB_TTL dans le navigateur ; chaque point d'échantillonnage
+// est interpolé entre les deux points voisins, température corrigée de l'altitude. Pas de rafales dans ce paquet ;
+// nébulosité et ensoleillement déduits du pictogramme horaire.
+const MB_DAYS = 7, MB_KM = 20, MB_MAX = 8, MB_TTL = 2 * 3600e3, MB_CACHE = 'pmr-mb-pts', MB_CREDITS = 8000;
+const WX_SRC = { om: 'Open-Meteo', mb: 'meteoblue' };
+const MB_PENDING = new Map();
+function wxSrc() {
+  try { const v = localStorage.getItem('pmr-wxsrc'); if (v === 'om' || v === 'mb') return v; } catch (e) {}
+  return hasSbToken() ? 'mb' : 'om';
+}
+// Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
+const MB_PICTO = [null, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 1, 1, 45, 45, 45, 3, 3, 3, 3, 61, 71, 65, 75, 95, 95, 75, 95, 80, 85, 61, 71, 67];
+const MB_CC = [null, 5, 25, 25, 25, 25, 25, 50, 50, 50, 60, 60, 60, 5, 25, 25, 100, 100, 100, 80, 80, 80, 100, 100, 100, 100, 100, 100, 100, 100, 100, 70, 70, 100, 100, 100];
+const MB_SUN = [null, 60, 55, 55, 50, 50, 50, 35, 35, 35, 25, 25, 25, 50, 45, 45, 0, 0, 0, 15, 15, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 20, 0, 0, 0];
+const mbKey = p => p.lat.toFixed(3) + ',' + p.lon.toFixed(3) + ',' + (p.asl == null ? '' : p.asl);
+function mbCacheRead() {
+  try { const c = JSON.parse(localStorage.getItem(MB_CACHE) || '{}') || {}; for (const k in c) if (!(Date.now() - c[k].at < MB_TTL)) delete c[k]; return c; } catch (e) { return {}; }
+}
+function mbCacheWrite(c) {
+  const keys = Object.keys(c).sort((a, b) => c[b].at - c[a].at);
+  for (const k of keys.slice(40)) delete c[k];
+  try { localStorage.setItem(MB_CACHE, JSON.stringify(c)); } catch (e) { try { localStorage.removeItem(MB_CACHE); } catch (_) {} }
+}
+async function fetchMB() {
+  const sb = await sbIfLogged();
+  if (!sb) throw new Error('connecte-toi à Coach Miguel pour utiliser meteoblue.');
+  const P = S.P, m = clamp(Math.ceil(P.total / MB_KM) + 1, 2, MB_MAX), pts = [];
+  for (let k = 0, i = 0; k < m; k++) {
+    const target = P.total * k / (m - 1);
+    while (i < P.n - 1 && P.d[i] < target) i++;
+    pts.push({ km: P.d[i], lat: +P.pts[i].lat.toFixed(4), lon: +P.pts[i].lon.toFixed(4), asl: P.hasEle ? Math.round(P.es[i]) : null });
+  }
+  let cache = mbCacheRead();
+  const miss = pts.filter(p => !cache[mbKey(p)]);
+  if (miss.length) {
+    // une même demande en cours (réglage modifié pendant le chargement) n'est pas refaite : chaque point coûte des crédits
+    const rk = miss.map(mbKey).join(';');
+    if (!MB_PENDING.has(rk)) MB_PENDING.set(rk, (async () => {
+      const { data: res, error } = await sb.functions.invoke('meteoblue', { body: { points: miss.map(({ lat, lon, asl }) => ({ lat, lon, asl })), days: MB_DAYS, pkg: 'basic-1h' } });
+      if (error) {
+        let d = ''; try { const j = await error.context.json(); d = j.detail || j.error || ''; } catch (e) {}
+        throw new Error(d === 'forbidden' ? 'réservé au compte Coach Miguel du propriétaire.' : (d || error.message));
+      }
+      if (!res || !res.ok || !Array.isArray(res.points) || res.points.length !== miss.length) throw new Error((res && (res.detail || res.error)) || 'réponse vide.');
+      const c = mbCacheRead(), at = Date.now();
+      miss.forEach((p, j) => { c[mbKey(p)] = { at, q: res.points[j] }; });
+      mbCacheWrite(c);
+      return c;
+    })().finally(() => MB_PENDING.delete(rk)));
+    const c = await MB_PENDING.get(rk);
+    cache = { ...cache, ...c };
+  }
+  const L = pts.map(p => mbSeries(cache[mbKey(p)].q, p));
+  if (L.some(x => !x)) throw new Error('réponse incomplète.');
+  return { wx: S.samples.map(s => mbSample(s, pts, L)), points: pts.length, fetched: miss.length,
+    at: Math.min(...pts.map(p => cache[mbKey(p)].at)) };
+}
+function mbSeries(q, p) {
+  if (!q || !Array.isArray(q.t) || q.t.length < 2) return null;
+  const n = q.t.length, f = (a, k = 1) => Float32Array.from({ length: n }, (_, i) => a && a[i] != null ? a[i] * k : NaN);
+  const pic = i => { const c = q.pic && q.pic[i]; return c >= 1 && c <= 35 ? c : 0; };
+  const code = Float32Array.from({ length: n }, (_, i) => pic(i) ? MB_PICTO[pic(i)] : NaN);
+  // nébulosité et soleil : valeurs du paquet clouds si présentes, sinon déduites du pictogramme (en secondes par heure, comme Open-Meteo)
+  const cc = q.cc ? f(q.cc) : Float32Array.from({ length: n }, (_, i) => pic(i) ? MB_CC[pic(i)] : NaN);
+  const sun = q.sun ? f(q.sun, /min/i.test(q.sunUnit || 'min') ? 60 : 1)
+    : Float32Array.from({ length: n }, (_, i) => pic(i) && q.day && q.day[i] ? MB_SUN[pic(i)] * 60 : 0);
+  return { t0: q.t[0], n, temp: f(q.temp), app: f(q.app), pr: f(q.pr), prob: f(q.prob), code, cc, ws: f(q.ws), wd: f(q.wd),
+    gust: f(q.gust), day: f(q.day), sun, asl: p.asl != null ? p.asl : (q.asl != null ? q.asl : null) };
+}
+// Série d'un point d'échantillonnage : interpolation entre les deux points meteoblue voisins (grille horaire du premier),
+// vent par composantes, ciel et jour/nuit du plus proche, température ramenée à l'altitude du point (−6,5 °C/km).
+function mbSample(s, pts, L) {
+  let j = 0; while (j < pts.length - 2 && pts[j + 1].km < s.km) j++;
+  const A = L[j], B = L[j + 1] || A, span = (pts[j + 1] || pts[j]).km - pts[j].km;
+  const f = B === A || span <= 0 ? 0 : clamp((s.km - pts[j].km) / span, 0, 1);
+  const off = Math.round((A.t0 - B.t0) / 3600), n = A.n;
+  const ele = S.P.hasEle ? S.P.es[s.i] : null;
+  const aslI = A.asl != null && B.asl != null ? A.asl + (B.asl - A.asl) * f : null;
+  const dT = ele != null && aslI != null ? -0.0065 * (ele - aslI) : 0;
+  const near = f < 0.5 ? A : B, nOff = near === A ? 0 : off;
+  const out = { t0: A.t0, n, temp: new Float32Array(n), app: new Float32Array(n), pr: new Float32Array(n), prob: new Float32Array(n), code: new Float32Array(n),
+    cc: new Float32Array(n), ws: new Float32Array(n), wd: new Float32Array(n), gust: new Float32Array(n), day: new Float32Array(n), sun: new Float32Array(n) };
+  for (let i = 0; i < n; i++) {
+    const b = i + off, hasB = b >= 0 && b < B.n;
+    const lin = k => { const a = A[k][i], c = hasB ? B[k][b] : NaN; return isFinite(c) && isFinite(a) ? a + (c - a) * f : (isFinite(a) ? a : c); };
+    out.temp[i] = lin('temp') + dT; out.app[i] = lin('app') + dT;
+    for (const k of ['pr', 'prob', 'cc', 'gust', 'sun']) out[k][i] = lin(k);
+    const ua = A.ws[i] * Math.sin(A.wd[i] * RAD), va = A.ws[i] * Math.cos(A.wd[i] * RAD);
+    const ub = hasB ? B.ws[b] * Math.sin(B.wd[b] * RAD) : ua, vb = hasB ? B.ws[b] * Math.cos(B.wd[b] * RAD) : va;
+    const u = isFinite(ub) ? ua + (ub - ua) * f : ua, v = isFinite(vb) ? va + (vb - va) * f : va;
+    out.ws[i] = Math.hypot(u, v); out.wd[i] = (Math.atan2(u, v) / RAD + 360) % 360;
+    const ni = i + nOff, ok = ni >= 0 && ni < near.n;
+    out.code[i] = ok ? near.code[ni] : A.code[i]; out.day[i] = ok ? near.day[ni] : A.day[i];
+  }
+  return out;
+}
+
+// Prévisions de la source choisie. meteoblue : 7 jours à partir d'aujourd'hui, Open-Meteo prend le relais au-delà
+// (S.wxAlt) ; en cas d'échec de meteoblue, tout passe sur Open-Meteo avec une note.
+async function getWeather(src, from, to, today) {
+  if (src === 'mb') {
+    const mbEnd = new Date(today); mbEnd.setDate(mbEnd.getDate() + MB_DAYS - 1);
+    if (!hasSbToken()) return { wx: await fetchOM(ymd(from), ymd(to)), used: 'om', fallback: 'nolog' };
+    if (from <= mbEnd) {
+      try {
+        const r = await fetchMB();
+        const alt = to > mbEnd ? await fetchOM(ymd(from), ymd(to)).catch(() => null) : null;
+        return { wx: r.wx, alt, used: alt ? 'mb+om' : 'mb', info: r };
+      } catch (err) {
+        const wx = await fetchOM(ymd(from), ymd(to));
+        return { wx, used: 'om', fallback: 'error', note: 'meteoblue indisponible (' + String(err.message || err).replace(/\.$/, '') + ') : prévisions Open-Meteo.' };
+      }
+    }
+    return { wx: await fetchOM(ymd(from), ymd(to)), used: 'om', fallback: 'horizon' };
+  }
+  return { wx: await fetchOM(ymd(from), ymd(to)), used: 'om' };
+}
+const MB_LINK = '<a href="https://www.meteoblue.com" target="_blank" rel="noopener">meteoblue</a>';
+const OM_LINK = '<a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)';
+function wxCreditTxt() {
+  return S.wxUsed === 'mb' ? 'Météo meteoblue' : S.wxUsed === 'mb+om' ? 'Météo meteoblue et Open-Meteo.com (CC BY 4.0)' : 'Météo Open-Meteo.com (CC BY 4.0)';
+}
+function renderWxSrc() {
+  const src = wxSrc(), logged = hasSbToken();
+  setSeg('#wxSrcSeg', src);
+  const used = S.wxUsed || src, I = S.wxInfo;
+  let h;
+  if (src === 'mb' && !logged) h = 'meteoblue est réservé à ton compte : connecte-toi à Coach Miguel. En attendant, prévisions Open-Meteo.';
+  else if (src === 'mb') {
+    h = 'Prévisions meteoblue (multi-modèles, calculées au point exact et à son altitude), jusqu\'à 7 jours';
+    if (used === 'mb+om') h += ' ; au-delà, Open-Meteo prend le relais';
+    if (S.wxFallback === 'horizon') h = 'meteoblue ne prévoit que 7 jours : prévisions Open-Meteo pour cette date';
+    else if (S.wxFallback === 'error') h = 'meteoblue n\'a pas répondu : prévisions Open-Meteo pour l\'instant';
+    else if (I) h += ` · ${I.points} points du parcours, prévision de ${hm.format(new Date(I.at))}` +
+      (I.fetched ? ` (${(I.fetched * MB_CREDITS).toLocaleString('fr-FR')} crédits)` : ' (gardée 2 h, sans nouveau crédit)');
+    h += '. Vent à 10 m' + (src === 'mb' && !S.wxFallback && S.wxUsed ? ', sans rafales.' : '.');
+  } else h = 'Prévisions Open-Meteo (modèles AROME / ICON / GFS selon la zone), jusqu\'à 16 jours. Vent à 10 m.';
+  $('#wxSrcHint').textContent = h;
+  $('#wxCredit').innerHTML = used === 'mb' ? MB_LINK : used === 'mb+om' ? MB_LINK + ' et ' + OM_LINK : OM_LINK;
+}
+
 function wxAt(k, tMs) {
-  const L = S.wx && S.wx[k]; if (!L) return null;
+  return wxAtL(S.wx && S.wx[k], tMs) || (S.wxAlt ? wxAtL(S.wxAlt[k], tMs) : null);
+}
+function wxAtL(L, tMs) {
+  if (!L) return null;
   const x = (tMs / 1000 - L.t0) / 3600;
   if (x < 0 || x > L.n - 1) return null;
   const i = Math.floor(x), j = Math.min(i + 1, L.n - 1), f = x - i;
@@ -671,7 +825,7 @@ function simulate(t0, opt, useWx) {
       st.sunH += w.sun * dtH; if (!w.day) st.nightH += dtH; if (w.app < 3) st.coldH += dtH;
       st.tmin = Math.min(st.tmin, w.temp); st.tmax = Math.max(st.tmax, w.temp);
       st.amin = Math.min(st.amin, w.app); st.amax = Math.max(st.amax, w.app);
-      st.gust = Math.max(st.gust, w.gust || 0); st.prob = Math.max(st.prob, w.prob || 0);
+      if (isFinite(w.gust)) { st.gust = Math.max(st.gust, w.gust); st.hasGust = true; } st.prob = Math.max(st.prob, w.prob || 0);
     } else st.missKm += dk;
     st.rideH += dtH;
     t += dtH * 3600e3;
@@ -714,24 +868,27 @@ async function run() {
   const from = new Date(t0); from.setHours(0, 0, 0, 0);
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
-  const key = S.samples.length + ':' + S.samples[0].lat + ':' + S.P.total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to);
+  const src = wxSrc();
+  const key = src + ':' + S.samples.length + ':' + S.samples[0].lat + ':' + S.P.total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to) + ':' + ymd(today);
   let note = '';
   if (from > maxDay) {
-    S.wx = null; S.wxKey = '';
+    S.wx = S.wxAlt = null; S.wxKey = ''; S.wxUsed = ''; S.wxFallback = '';
     note = `Les prévisions s'arrêtent le ${dayFmt.format(maxDay)}. Choisissez une date de départ plus proche pour avoir la météo.`;
   } else if (key !== S.wxKey) {
-    setStatus('Récupération des prévisions sur ' + S.samples.length + ' points du parcours…', 'load');
+    setStatus('Récupération des prévisions ' + WX_SRC[src] + ' le long du parcours…', 'load');
     try {
-      const wx = await fetchWeather(ymd(from), ymd(to));
+      const r = await getWeather(src, from, to, today);
       if (id !== runId) return;
-      S.wx = wx; S.wxKey = key;
+      S.wx = r.wx; S.wxAlt = r.alt || null; S.wxKey = key; S.wxUsed = r.used; S.wxInfo = r.info || null; S.wxNote = r.note || ''; S.wxFallback = r.fallback || '';
     } catch (err) {
       if (id !== runId) return;
-      S.wx = null; S.wxKey = '';
+      S.wx = S.wxAlt = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
       note = 'Météo indisponible : ' + (err.message === 'Failed to fetch' ? 'pas de connexion au service Open-Meteo.' : err.message) + ' Les horaires restent calculés.';
     }
   }
   if (id !== runId) return;
+  note = note || S.wxNote || '';
+  renderWxSrc();
   S.tl = simulate(t0, opt, true);
   if (S.wx && S.tl.st.missKm > 0.5) note = note || `La fin du parcours (${n0(S.tl.st.missKm)} km) dépasse l'horizon des prévisions.`;
   setStatus(note, note ? 'err' : '');
@@ -804,7 +961,7 @@ function renderSummary(opt) {
   if (has) {
     tiles.push(['Températures', `${n0(st.tmin)}–${n0(st.tmax)} <small>°C</small>`, `Ressenti ${n0(st.amin)} à ${n0(st.amax)} °C`]);
     tiles.push(['Pluie', `${n1(st.rain)} <small>mm</small>`, st.wetH > 0.05 ? `${durTxt(st.wetH)} sous la pluie · risque max ${n0(st.prob)} %` : `Risque max ${n0(st.prob)} %`]);
-    tiles.push(['Vent', `${pct(st.headKm)} <small>% de face</small>`, `${pct(st.tailKm)} % de dos · rafales ${n0(st.gust)} km/h`]);
+    tiles.push(['Vent', `${pct(st.headKm)} <small>% de face</small>`, `${pct(st.tailKm)} % de dos` + (st.hasGust ? ` · rafales ${n0(st.gust)} km/h` : '')]);
     tiles.push(['Soleil', `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? `${durTxt(st.nightH)} de nuit` : 'du temps en selle ensoleillé']);
   }
   $('#stats').innerHTML = tiles.map(([l, v, s]) => `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
@@ -912,7 +1069,7 @@ function renderWindArrows() {
     const delay = (-(shown.length * 0.37) % dur).toFixed(2), calm = w.ws < 5 ? ' calm' : '';
     const html = `<div class="wa"><span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${sz}" height="${sz}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg></span><b>${n0(w.ws)}</b></div>`;
     L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', iconSize: [44, sz + 16], iconAnchor: [22, sz / 2] }), keyboard: false })
-      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})<br>Rafales ${n0(w.gust)} km/h<br>Pour vous : ${relLabel(head).txt}`)
+      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
       .addTo(windLayer);
   }
 }
@@ -1040,7 +1197,7 @@ async function exportImage() {
     }
     y += keysH;
     c.font = `11.5px ${body}`; c.fillStyle = cssVar('--muted');
-    c.fillText('Plan My Ride · Météo Open-Meteo.com (CC BY 4.0) · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri' + (missing ? ' (fond partiel)' : '') + ' · Horaires estimés', pad, y + 18);
+    c.fillText('Plan My Ride · ' + wxCreditTxt() + ' · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri' + (missing ? ' (fond partiel)' : '') + ' · Horaires estimés', pad, y + 18);
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
     const fname = `${(S.name || 'sortie').replace(/[^\w\-]+/g, '_')}_${ymd(new Date(tl.start))}.png`;
     const file = new File([blob], fname, { type: 'image/png' });
@@ -1155,7 +1312,7 @@ function chartHover(ev) {
   tip.innerHTML = `<div class="label">km ${n1(km)} · ${whenTxt(t, S.tl.start)}</div>
     <div class="mono">Alt. ${n0(S.P.es[i])} m</div>` + (w ? `<div class="mono">${n0(w.temp)} °C (ressenti ${n0(w.app)})</div>
     <div class="mono">${skyLabel(w.code, w.day)} · pluie ${n1(w.pr)} mm/h (${n0(w.prob)} %)</div>
-    <div class="mono">Vent ${compass(w.wd)} ${n0(w.ws)} km/h, raf. ${n0(w.gust)}</div>
+    <div class="mono">Vent ${compass(w.wd)} ${n0(w.ws)} km/h${isFinite(w.gust) ? `, raf. ${n0(w.gust)}` : ''}</div>
     <div class="rel ${rel.cls}">${rel.txt}</div>` : '<div class="hint">Hors prévisions</div>');
   const wrapW = $('#chartWrap').clientWidth;
   tip.style.left = Math.min(wrapW - tip.offsetWidth - 6, Math.max(6, x + 14)) + 'px';
@@ -1187,7 +1344,7 @@ function renderTable() {
     const w = r.w, rel = relLabel(r.head);
     return `<tr class="${w && !w.day ? 'night' : ''}"><td class="num">${n1(r.s.km)}</td><td class="num">${whenTxt(r.t, tl.start)}</td><td class="num">${n0(r.ele)} m</td>` +
       (w ? `<td>${skyLabel(w.code, w.day)}</td><td class="num">${n0(w.temp)}° / ${n0(w.app)}°</td>
-        <td class="num">${arrowSvg((w.wd + 180) % 360, windStrength(w.ws)[1])}${compass(w.wd)} ${n0(w.ws)} <span style="color:var(--muted)">raf. ${n0(w.gust)}</span></td>
+        <td class="num">${arrowSvg((w.wd + 180) % 360, windStrength(w.ws)[1])}${compass(w.wd)} ${n0(w.ws)}${isFinite(w.gust) ? ` <span style="color:var(--muted)">raf. ${n0(w.gust)}</span>` : ''}</td>
         <td><span class="rel ${rel.cls}">${rel.txt}</span></td>
         <td class="num" style="color:${w.pr >= 0.1 ? 'var(--rain)' : 'var(--muted)'}">${n1(w.pr)} mm · ${n0(w.prob)} %</td>`
         : `<td colspan="5" style="color:var(--muted)">Hors prévisions</td>`) + '</tr>';
@@ -1230,7 +1387,7 @@ function exportCsv() {
     if (r.stop) { lines.push(`;arrêt ${new Date(r.stop.from).toLocaleString('fr-FR')} -> ${new Date(r.stop.to).toLocaleString('fr-FR')}`); continue; }
     const w = r.w;
     lines.push([r.s.km.toFixed(1), new Date(r.t).toLocaleString('fr-FR'), Math.round(r.ele), w ? skyLabel(w.code, w.day) : '', w ? w.temp.toFixed(1) : '', w ? w.app.toFixed(1) : '',
-      w ? compass(w.wd) : '', w ? Math.round(w.ws) : '', w ? Math.round(w.gust) : '', w ? Math.round(r.head) : '', w ? w.pr.toFixed(1) : '', w ? Math.round(w.prob) : ''].join(';'));
+      w ? compass(w.wd) : '', w ? Math.round(w.ws) : '', w && isFinite(w.gust) ? Math.round(w.gust) : '', w ? Math.round(r.head) : '', w ? w.pr.toFixed(1) : '', w ? Math.round(w.prob) : ''].join(';'));
   }
   const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -1298,7 +1455,7 @@ function setSeg(sel, v) { for (const b of document.querySelectorAll(sel + ' butt
 function applyModeUI() {
   const ultra = S.mode === 'ultra', prof = ultra && segVal('#splitSeg') === 'profile';
   $('#ultraSplit').hidden = !ultra; $('#profileBox').hidden = !prof;
-  $('#manualSettings').hidden = prof; $('#windowBox').hidden = prof;
+  $('#manualSettings').hidden = prof; $('#windowBox').hidden = $('#windowSep').hidden = prof;
   $('#stratHint').textContent = segVal('#stratSeg') === 'aventure'
     ? 'Tu dors chaque nuit, à heures régulières (profil Aventure de FlyUltra, calé sur Chasing the Sun).'
     : 'Tu dors quand la fatigue l\'impose, en nuits courtes (profils course de FlyUltra).';
@@ -1960,6 +2117,11 @@ for (const sel of ['#splitSeg', '#stratSeg']) $(sel).addEventListener('click', e
   const b = e.target.closest('button[data-v]'); if (!b) return;
   setSeg(sel, b.dataset.v); applyModeUI(); renderProfileCard(); schedule();
 });
+$('#wxSrcSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b || b.dataset.v === wxSrc()) return;
+  try { localStorage.setItem('pmr-wxsrc', b.dataset.v); } catch (err) {}
+  S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); schedule();
+});
 $('#terrain').addEventListener('change', () => { renderProfileCard(); schedule(); });
 for (const id of TIME_IDS) $('#' + id).addEventListener('change', () => { $('#' + id).dataset.user = '1'; fillStrategyTimes(); renderProfileCard(); schedule(); });
 $('#timesHint').addEventListener('click', e => {
@@ -2186,6 +2348,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { 
 applyModeUI();
 initInputs();
 applyModeUI();
+renderWxSrc();
 initMap();
 libInit();
 })();
