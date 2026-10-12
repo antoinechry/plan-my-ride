@@ -191,6 +191,8 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .poi-table .st-open{color:var(--tail);font-weight:600}
 .poi-table .st-closed{color:var(--head);font-weight:600}
 .poi-table .st-unk{color:var(--muted)}
+.poi-table .gm,.leaflet-popup .gm{color:var(--accent);text-decoration:none;white-space:nowrap;font-weight:600}
+.poi-table .gm:hover,.leaflet-popup .gm:hover{text-decoration:underline}
 .poi-table .oh{display:block;color:var(--muted);font-size:11.5px;font-family:var(--f-mono);overflow-wrap:anywhere}
 .poi-credit{padding:8px 14px 12px}
 .poi-credit a{color:inherit}
@@ -1981,23 +1983,30 @@ function renderPois() {
     for (const p of shown) {
       const g = POI_GROUPS[p.g], closed = p.st.cls === 'closed';
       L.circleMarker([p.lat, p.lon], { pane: 'poiPane', radius: 7, color: '#ffffff', weight: 2, fillColor: g.col, fillOpacity: closed ? 0.35 : 0.95, opacity: closed ? 0.6 : 1 })
-        .bindTooltip(poiTip(p)).addTo(POI.layer);
+        .bindTooltip(poiTip(p)).bindPopup(() => poiTip(p, true), { offset: [0, -4] }).addTo(POI.layer);
     }
   }
   if (!POI.list.length) { $('#poiRows').innerHTML = POI.loading || POI.error ? '' : '<tr><td colspan="5" class="hint">Aucun lieu trouvé dans ce rayon.</td></tr>'; return; }
   for (const p of shown) {
     const g = POI_GROUPS[p.g];
     rows.push(`<tr data-id="${p.id}"><td class="num">${n1(p.km)}</td><td class="num">${p.t ? whenTxt(p.t, tl.start) : ''}</td>
-      <td><span class="nm">${g.emo} ${escH(p.name || p.type)}</span><span class="ty">${escH(p.type)}</span></td>
+      <td><span class="nm">${g.emo} ${escH(p.name || p.type)}</span><span class="ty">${escH(p.type)} · <a class="gm" href="${gmapsUrl(p)}" target="_blank" rel="noopener" title="Vérifier les horaires et les avis sur Google Maps">Google Maps ↗</a></span></td>
       <td class="num">${p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km'}</td>
       <td><span class="st-${p.st.cls}">${escH(p.st.txt)}</span>${p.oh && p.oh !== '24/7' ? `<span class="oh">${escH(p.oh)}</span>` : ''}</td></tr>`);
   }
   $('#poiRows').innerHTML = rows.join('') || '<tr><td colspan="5" class="hint">Aucun lieu avec ces filtres.</td></tr>';
 }
+// Fiche Google Maps du lieu (simple lien, sans clé ni API : horaires à jour et avis à vérifier d'un clic).
+// Avec un nom : recherche de ce nom centrée sur le lieu ; sans nom : les coordonnées.
+function gmapsUrl(p) {
+  const ll = `${(+p.lat).toFixed(6)},${(+p.lon).toFixed(6)}`;
+  return p.name ? `https://www.google.com/maps/search/${encodeURIComponent(p.name)}/@${ll},18z`
+    : `https://www.google.com/maps/search/?api=1&query=${ll}`;
+}
 const escH = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-function poiTip(p) {
+function poiTip(p, link) {
   const g = POI_GROUPS[p.g];
-  return `${g.emo} <b>${escH(p.name || p.type)}</b><br>${escH(p.type)} · km ${n1(p.km)} · à ${p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km'} de la trace`
+  return `${g.emo} <b>${escH(p.name || p.type)}</b>` + (link ? ` · <a class="gm" href="${gmapsUrl(p)}" target="_blank" rel="noopener">Google Maps ↗</a>` : '') + `<br>${escH(p.type)} · km ${n1(p.km)} · à ${p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km'} de la trace`
     + (p.t ? `<br>Passage ${whenTxt(p.t, S.tl.start)}${p.st.txt ? ' · ' + escH(p.st.txt) : ''}` : '')
     + (p.oh ? `<br><span style="font-family:var(--f-mono);font-size:11px">${escH(p.oh)}</span>` : '');
 }
@@ -2033,10 +2042,11 @@ $('#poiChips').addEventListener('click', e => {
   renderPois();
 });
 $('#poiRows').addEventListener('click', e => {
+  if (e.target.closest('a')) return; // lien Google Maps : pas de zoom sur la carte
   const tr = e.target.closest('tr[data-id]'); if (!tr || !map) return;
   const p = POI.list.find(x => x.id === tr.dataset.id); if (!p) return;
   map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15));
-  L.popup({ offset: [0, -4] }).setLatLng([p.lat, p.lon]).setContent(poiTip(p)).openOn(map);
+  L.popup({ offset: [0, -4] }).setLatLng([p.lat, p.lon]).setContent(poiTip(p, true)).openOn(map);
   $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
