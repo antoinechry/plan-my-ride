@@ -80,6 +80,9 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .plan-table{min-width:700px}
 .plan-table td.num,.plan-table th.num{text-align:right}
 .plan-table input[type=time]{padding:3px 6px;font:inherit;font-size:13px}
+.plan-form #planDays:disabled{opacity:.7}
+#planSplitSeg{grid-template-columns:repeat(3,auto)}
+#planSplitSeg button[data-v=boost]{font-weight:600}
 .plan-table tfoot td{font-weight:600;border-top:2px solid var(--line);border-bottom:0}
 .plan-table .late{color:var(--head);font-weight:600}
 .plan-table tr.plan-wx td{padding:2px 10px 10px;background:var(--bg);white-space:normal}
@@ -481,8 +484,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
           <div class="seg2" role="group" aria-labelledby="planSplitLbl" id="planSplitSeg">
             <button type="button" data-v="km" aria-pressed="true">Même distance</button>
             <button type="button" data-v="terrain" aria-pressed="false">Adapté au terrain</button>
+            <button type="button" data-v="boost" aria-pressed="false" title="Tu choisis ton heure de fin : chaque jour tu roules jusqu'à cette heure, le nombre de jours en découle">Boost your day</button>
           </div>
         </div>
+        <div class="field" id="planEndField" hidden><label class="label" for="planEnd">Fin de journée</label><input type="time" id="planEnd" step="900"></div>
         <label class="switch plan-custom"><input type="checkbox" id="planCustomOn" role="switch"><span class="track" aria-hidden="true"></span>Heure de départ différente chaque jour</label>
       </div>
       <div id="planSpeedSlot"></div>
@@ -912,7 +917,8 @@ function readOpt() {
     poiRadius: +$('#poiRadius').value || 500,
     // page Ultra : planification journalière (nombre de jours, découpage, heures de départ des jours suivants)
     planDays: clamp(Math.round(+$('#planDays').value || 1), 1, 30), planSplit: segVal('#planSplitSeg'),
-    planCustom: $('#planCustomOn').checked, planTimes: PLAN.times.slice() };
+    planCustom: $('#planCustomOn').checked, planTimes: PLAN.times.slice(),
+    planEnd: $('#planEnd').value || '20:00', planEnds: PLAN.ends.slice() };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -924,7 +930,7 @@ function startMs(opt, time) {
    sans le vent pour que les étapes ne bougent pas avec la météo). Chaque étape commence le jour J à l'heure de départ
    (la même que le jour 1, ou celle choisie pour ce jour) ; elle finit là où la trace est coupée, sans rien inventer. */
 function planCutKms(P, opt) {
-  const n = opt.planDays || 1; if (n < 2) return [];
+  const n = opt.planDays || 1; if (n < 2 || opt.planSplit === 'boost') return [];
   if (opt.planSplit !== 'terrain') return Array.from({ length: n - 1 }, (_, k) => P.total * (k + 1) / n);
   const key = [n, opt.speed, opt.vam].join(':');
   if (P._planCut && P._planCut.key === key) return P._planCut.kms;
@@ -940,6 +946,14 @@ function planCutKms(P, opt) {
   P._planCut = { key, kms };
   return kms;
 }
+// « Boost your day » : fin de journée du jour k (heure choisie, ou celle de ce jour) ; si elle tombe avant
+// l'heure de départ de ce jour, c'est le lendemain (nuit en selle jusqu'à cette heure).
+function planDayEnd(t0, opt, k) {
+  const s = planDayStart(t0, opt, k), d = new Date(s), v = (opt.planCustom && opt.planEnds && opt.planEnds[k]) || opt.planEnd || '20:00';
+  const [hh, mm] = v.split(':').map(Number); d.setHours(hh, mm, 0, 0);
+  if (d.getTime() <= s) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
 // heure de départ du jour k (0 = jour 1) : jour J + k à l'heure choisie (par défaut celle du départ du jour 1)
 function planDayStart(t0, opt, k) {
   const d = new Date(t0), custom = opt.planCustom && opt.planTimes && opt.planTimes[k];
@@ -951,7 +965,8 @@ function planDayStart(t0, opt, k) {
 function simulate(t0, opt, useWx) {
   const P = S.P, N = P.n, times = new Float64Array(N), stops = [];
   const cuts = S.mode === 'ultra' ? planCutKms(P, opt) : [];
-  let t = t0, day = 0;
+  const boost = S.mode === 'ultra' && opt.planSplit === 'boost';
+  let t = t0, day = 0, dayEnd = boost ? planDayEnd(t0, opt, 0) : Infinity;
   times[0] = t;
   const st = { rain: 0, wetH: 0, headKm: 0, tailKm: 0, crossKm: 0, sunH: 0, rideH: 0, nightH: 0, coldH: 0, missKm: 0,
     tmin: Infinity, tmax: -Infinity, amin: Infinity, amax: -Infinity, gust: 0, prob: 0, headSum: 0 };
@@ -983,6 +998,12 @@ function simulate(t0, opt, useWx) {
       const next = planDayStart(t0, opt, day);
       stops.push({ km: P.d[i], from: t, to: Math.max(t, next), sleep: true, late: next < t });
       t = Math.max(t, next);
+    } else if (boost && t >= dayEnd && i < N - 1 && day < 29) {
+      // Boost your day : arrivé à l'heure de fin, on s'arrête là où on est, jusqu'au départ du lendemain
+      day++;
+      const next = Math.max(t, planDayStart(t0, opt, day));
+      stops.push({ km: P.d[i], from: t, to: next, sleep: true, late: next === t });
+      t = next; dayEnd = planDayEnd(t0, opt, day);
     }
     times[i] = t;
   }
@@ -1800,7 +1821,7 @@ function handleFile(file) {
 const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : 'pmr-opt');
 const MODE_DEF = {
   ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, poiRadius: 500 },
-  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [] }
+  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnd: '20:00', planEnds: [] }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
@@ -1811,7 +1832,8 @@ function initInputs() {
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn;
   $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
-  $('#planDays').value = clamp(Math.round(+def.planDays || 3), 1, 30); setSeg('#planSplitSeg', def.planSplit === 'terrain' ? 'terrain' : 'km');
+  $('#planDays').value = clamp(Math.round(+def.planDays || 3), 1, 30); setSeg('#planSplitSeg', ['terrain', 'boost'].includes(def.planSplit) ? def.planSplit : 'km');
+  $('#planEnd').value = /^\d\d:\d\d$/.test(def.planEnd || '') ? def.planEnd : '20:00'; PLAN.ends = Array.isArray(def.planEnds) ? def.planEnds.slice(0, 30) : [];
   $('#planCustomOn').checked = !!def.planCustom; PLAN.times = Array.isArray(def.planTimes) ? def.planTimes.slice(0, 30) : [];
   try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
   // type de sorties de référence pour le calage : « route » sur la page Sortie, « voyage » sur la page Ultra (modifiable)
@@ -2417,7 +2439,7 @@ function daySummaries() {
   }
   return days;
 }
-const PLAN = { times: [], days: [] }; // heures de départ choisies pour chaque jour (index 0 = jour 1, non utilisé)
+const PLAN = { times: [], ends: [], days: [] }; // heures de départ choisies pour chaque jour (index 0 = jour 1, non utilisé)
 /* Graphe météo sous chaque journée : de l'heure de départ à la fin de journée, une colonne par heure de roulage :
    ciel et sens du vent en haut, température ressentie (courbe, min et max), pluie en barres (mm/h), heures en bas. */
 const planKmAtT = t => { const T = S.tl.times; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return S.P.d[lo]; };
@@ -2541,7 +2563,8 @@ function renderPlan() {
       : custom ? `<input type="time" step="900" data-day="${k}" value="${PLAN.times[k] || defT}" aria-label="Heure de départ du jour ${k + 1}">`
       : hm.format(new Date(d.a.t));
     const isLate = d.night && d.night.late; if (isLate) late++;
-    const endTxt = whenTxt(d.b.t, d.a.t) + (isLate ? ' <span class="late" title="L\'étape finit après l\'heure de départ prévue le lendemain : pas de nuit">⚠</span>' : '');
+    const boost = opt.planSplit === 'boost';
+    const endTxt = (boost && custom && d.night ? `<input type="time" step="900" data-end="${k}" value="${PLAN.ends[k] || opt.planEnd}" aria-label="Heure de fin du jour ${k + 1}">` : whenTxt(d.b.t, d.a.t)) + (isLate ? ' <span class="late" title="L\'étape finit après l\'heure de départ prévue le lendemain : pas de nuit">⚠</span>' : '');
     return `<tr><td>Jour ${k + 1}<br><span class="hint">${dayFmt.format(new Date(d.a.t))}</span></td><td>${startCell}</td><td>${endTxt}</td>
       <td class="num">${n0(d.dist)} km<br><span class="hint">km ${n0(d.a.km)} → ${n0(d.b.km)}</span></td><td class="num">${n0(d.dplus)} m</td>
       <td class="num">${durShort(d.rideH)}</td><td class="num">${durShort(d.pauseH)}</td>
@@ -2552,18 +2575,25 @@ function renderPlan() {
   PLAN.days = days; drawPlanWx();
   const sum = f => days.reduce((s, d) => s + f(d), 0);
   $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n0(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td><td class="num">${durShort(sum(d => d.night ? (d.night.to - d.night.from) / 3600e3 : 0))}</td></tr>` : '';
-  $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? 'Étapes de même temps de pédalage.' : 'Étapes de même distance.') : 'D\'une traite.';
+  const boost = opt.planSplit === 'boost';
+  $('#planEndField').hidden = !boost; $('#planDays').disabled = boost;
+  if (boost) $('#planDays').value = days.length; // le nombre de jours découle de l'heure de fin
+  $('#planHint').textContent = boost ? `Boost your day : tu roules chaque jour jusqu'à ${opt.planEnd.replace(':', ' h ')}, soit ${days.length} jour${days.length > 1 ? 's' : ''}.`
+    : opt.planDays > 1 ? (opt.planSplit === 'terrain' ? 'Étapes de même temps de pédalage.' : 'Étapes de même distance.') : 'D\'une traite.';
   $('#planNote').innerHTML = `Fin de journée estimée avec ta vitesse sur le plat (${n1(opt.speed)} km/h), ta VAM (${opt.vam} m/h) et tes arrêts courts (+${opt.pause} %)${opt.windOn ? ', vent compris' : ''} : réglages ci-dessus.`
-    + (late ? ` <span class="late">⚠ ${late > 1 ? late + ' étapes finissent' : 'Une étape finit'} après l'heure de départ du lendemain : allonge le découpage ou avance le départ.</span>` : '');
-  $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
+    + (late ? ` <span class="late">⚠ ${late > 1 ? late + ' étapes finissent' : 'Une étape finit'} après l'heure de départ du lendemain : ${opt.planSplit === 'boost' ? 'avance l\'heure de fin ou retarde le départ' : 'allonge le découpage ou avance le départ'}.</span>` : '');
+  $('#planCustomOn').closest('label').hidden = !boost && opt.planDays < 2;
+  $('#planCustomOn').closest('label').lastChild.textContent = boost ? 'Heures de départ et de fin différentes chaque jour' : 'Heure de départ différente chaque jour';
 }
 // réglages de la planification : relancent le calcul ; date et heure du jour 1 synchronisées avec celles de gauche
 $('#planDays').addEventListener('input', () => { if (+$('#planDays').value >= 1) schedule(); });
 $('#planSplitSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; setSeg('#planSplitSeg', b.dataset.v); schedule(); });
 $('#planCustomOn').addEventListener('change', schedule);
+$('#planEnd').addEventListener('change', schedule);
 $('#planRows').addEventListener('change', e => {
-  const inp = e.target.closest('input[data-day]'); if (!inp) return;
-  PLAN.times[+inp.dataset.day] = inp.value; schedule();
+  const inp = e.target.closest('input[data-day], input[data-end]'); if (!inp) return;
+  if (inp.dataset.end != null) PLAN.ends[+inp.dataset.end] = inp.value; else PLAN.times[+inp.dataset.day] = inp.value;
+  schedule();
 });
 
 /* ---------- mes parcours (navigateur + compte Coach Miguel) ---------- */
