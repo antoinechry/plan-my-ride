@@ -2292,6 +2292,40 @@ async function poiEnsure(force) {
   renderPois();
 }
 
+/* Villes et bourgs traversés (page Ultra) : localités OpenStreetMap place=city / town à moins de 2 km de la trace,
+   cherchées une fois par parcours (portions d'environ 250 points, une requête à la fois), gardées 30 jours dans
+   IndexedDB (store `pois`, clé « places| » + signature). Affichées sous les graphes de chaque journée. */
+const PLACES = { key: '', list: [], seq: 0, ctl: null };
+const PLACE_RANK = { city: 2, town: 1 };
+async function placesEnsure() {
+  if (!S.P || S.mode !== 'ultra') return;
+  const key = 'places|' + routeSig();
+  if (PLACES.key === key) return;
+  const seq = ++PLACES.seq; if (PLACES.ctl) PLACES.ctl.abort();
+  const ctl = (PLACES.ctl = new AbortController());
+  PLACES.key = key; PLACES.list = [];
+  let cached = null;
+  try { cached = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
+  if (seq !== PLACES.seq) return;
+  if (cached && Date.now() - cached.at < 30 * 864e5) { PLACES.list = attachToRoute(cached.items).filter(p => p.off <= 2000); drawPlanWx(); return; }
+  // trace simplifiée (tolérance 400 m), portions plus longues que pour les ravitos : peu de localités, requête légère
+  const idx = routeForQuery(S.P, 0.4).flat().filter((v, k, a) => k === 0 || v !== a[k - 1]);
+  const chunks = []; for (let k = 0; k < idx.length - 1; k += 249) chunks.push(idx.slice(k, k + 250));
+  const seen = new Map(); let failed = 0;
+  for (const ch of chunks) {
+    const ll = ch.map(i => S.P.pts[i].lat.toFixed(4) + ',' + S.P.pts[i].lon.toFixed(4)).join(',');
+    try {
+      const els = await overpassFetch(`[out:json][timeout:60];\nnode(around:2400,${ll})["place"~"^(city|town)$"]["name"];\nout tags;`, ctl.signal);
+      for (const el of els) if (!seen.has(el.id)) seen.set(el.id, { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, place: el.tags.place, pop: +el.tags.population || 0 });
+    } catch (e) { if (seq !== PLACES.seq) return; failed++; }
+    if (seq !== PLACES.seq) return;
+    PLACES.list = attachToRoute([...seen.values()]).filter(p => p.off <= 2000);
+    drawPlanWx();
+  }
+  if (!failed) { const items = [...seen.values()].map(({ _sig, i, km, off, ...rest }) => rest); try { await idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), items })); } catch (e) {} }
+  else PLACES.key = ''; // nouvel essai au prochain affichage
+}
+
 // Horaires d'ouverture (bibliothèque opening_hours, chargée seulement si besoin).
 async function ohLoad() {
   if (POI.ohState) return;
@@ -2329,6 +2363,7 @@ function renderPois() {
   POI.shown = [];
   if (!on) return;
   if (!POI.key.startsWith(routeSig() + '|') || !POI.key.endsWith('|' + $('#poiRadius').value)) { poiEnsure(); }
+  placesEnsure();
   renderPoiStatus();
   const counts = {}; for (const p of POI.list) counts[p.g] = (counts[p.g] || 0) + 1;
   $('#poiChips').innerHTML = Object.entries(POI_GROUPS).map(([k, g]) =>
@@ -2465,7 +2500,7 @@ function drawDayWx(cv, cur) {
   const kmAtT = planKmAtT;
   {
     const d = PLAN.days[+cv.dataset.wx]; if (!d) return;
-    const W = Math.max(260, Math.max($('#planCard .plan-scroll').clientWidth, 700) - 24), H = 132, dpr = window.devicePixelRatio || 1;
+    const W = Math.max(260, Math.max($('#planCard .plan-scroll').clientWidth, 700) - 24), H = 150, dpr = window.devicePixelRatio || 1;
     cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
     const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
     const ink = cssVar('--ink'), muted = cssVar('--muted'), mono = cssVar('--f-mono').split(',')[0];
@@ -2474,7 +2509,7 @@ function drawDayWx(cv, cur) {
     // une valeur par demi-heure pour la courbe, une colonne par heure pour le ciel, le vent et la pluie
     const pts = []; for (let t = ta; t <= tb + 1; t += 1800e3) { const tt = Math.min(t, tb), km = kmAtT(tt), w = S.wx ? wxAt(sIdx(km), tt) : null; if (w) pts.push({ t: tt, km, w }); }
     if (!pts.length) { c.fillStyle = muted; c.font = `13px ${cssVar('--f-body') || 'system-ui'}`; c.textBaseline = 'middle'; c.fillText('Pas encore de prévision météo pour ce jour.', l, H / 2); return; }
-    const yT0 = 44, yT1 = H - 34; // zone température / pluie / relief ; en bas : heures puis km
+    const yT0 = 44, yT1 = H - 52; // zone température / pluie / relief ; en bas : heures, km, puis villes et bourgs
     const temps = pts.map(p => p.w.app);
     let tMin = Math.floor(Math.min(...temps)), tMax = Math.ceil(Math.max(...temps)); if (tMax - tMin < 6) { const m = (tMax + tMin) / 2; tMin = Math.floor(m - 3); tMax = Math.ceil(m + 3); }
     const Yt = v => yT1 - (v - tMin) / (tMax - tMin) * (yT1 - yT0);
@@ -2530,6 +2565,21 @@ function drawDayWx(cv, cur) {
       const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(km), w2 = c.measureText(txt).width / 2;
       if (x - w2 < lastR + 8 || x - w2 < l - 2) continue; lastR = x + w2; c.fillText(txt, x, yT1 + 20); }
     c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
+    // villes et bourgs traversés ce jour-là, à l'heure de passage (les plus grands d'abord, sans chevauchement)
+    if (PLACES.list.length) {
+      const inDay = attachToRoute(PLACES.list).filter(p => p.km >= d.a.km - 0.5 && p.km <= d.b.km + 0.5)
+        .sort((a, b) => (PLACE_RANK[b.place] || 0) - (PLACE_RANK[a.place] || 0) || b.pop - a.pop);
+      const placed = [], yP = yT1 + 36;
+      for (const p of inDay) {
+        const x = X(clamp(tAtKm(p.km), ta, tb)), big = p.place === 'city';
+        c.font = `${big ? 700 : 600} ${big ? 12 : 11}px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`;
+        const w2 = c.measureText(p.name).width / 2 + 6, xa = clamp(x, l + w2 - 6, l + pw - w2 + 6);
+        if (placed.some(q => xa - w2 < q[1] && xa + w2 > q[0])) continue;
+        placed.push([xa - w2, xa + w2]);
+        c.fillStyle = big ? ink : muted; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText(p.name, xa, yP);
+        c.fillStyle = cssVar('--accent'); c.beginPath(); c.arc(x, yP - 4, 2.5, 0, Math.PI * 2); c.fill();
+      }
+    }
     c.textAlign = 'left'; c.textBaseline = 'alphabetic';
     cv._geo = { ta, tb, l, pw, span };
     // curseur : trait vertical et étiquette (heure, km, altitude, température, pluie, vent)
