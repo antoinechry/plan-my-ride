@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+
 <title>Coach Miguel</title>
 <link rel="icon" href="coach-miguel-logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,6 +36,19 @@
     --c-wt:#CDB98F; --c-rhr:#F07C88; --c-hrv:#6DC4AE; --c-sleep:#9FA9F0;
   }
 }
+:root[data-theme="dark"]{
+    --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33;
+    --ride:#6DB4A2; --run:#E37C87; --other:#C9B37E;
+    --libre:#28452A; --libre-ink:#B7DDAD;
+    --court:#4A3F18; --court-ink:#F0D98E;
+    --indispo:#4E262B; --indispo-ink:#F1B7BD;
+    --focus:#86A9E0;
+    --c-alt:#93A399; --c-spd:#7FB3E6; --c-hr:#F07C88; --c-pw:#AE97F0; --c-cad:#E3B45C;
+    --c-fit:#A6D86E; --c-fat:#7FB0F5; --c-ratio:#F0A35A;
+    --c-wt:#CDB98F; --c-rhr:#F07C88; --c-hrv:#6DC4AE; --c-sleep:#9FA9F0;
+}
+:root[data-theme="dark"]{color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light}
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}

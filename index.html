@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+
 <title>Plan My Ride</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -294,6 +296,10 @@ dialog.help li span{color:var(--muted)}
 dialog.help .note{margin:14px 0 4px;padding:10px 12px;border-radius:8px;background:var(--bg,rgba(127,127,127,.08));border:1px solid var(--line);font-size:13px;color:var(--muted)}
 dialog.help .ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px 18px;flex-wrap:wrap}
 dialog.help .ft label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+.theme-seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+.theme-seg button{border:0;background:transparent;color:var(--muted);padding:6px 11px;font:600 13px/1 var(--f-body);cursor:pointer}
+.theme-seg button+button{border-left:1px solid var(--line)}
+.theme-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .helpbtn{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%;font-weight:700}
 dialog.stats{border:1px solid var(--line);border-radius:12px;padding:0;max-width:640px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);background:var(--panel);color:var(--ink)}
 dialog.stats[open]{display:flex;flex-direction:column}
@@ -331,6 +337,11 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <a href="#" data-mode="ride">Sortie</a>
     <a href="#ultra" data-mode="ultra">Ultra</a>
   </nav>
+  <div class="theme-seg" role="group" aria-label="Thème" id="themeSeg">
+    <button type="button" data-t="light" title="Thème clair" aria-label="Thème clair">☀︎</button>
+    <button type="button" data-t="auto" title="Automatique (comme l'appareil)" aria-label="Thème automatique">Auto</button>
+    <button type="button" data-t="dark" title="Thème sombre" aria-label="Thème sombre">☾</button>
+  </div>
   <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
   <a class="btn priv" href="coach.html">Coach Miguel</a>
   <label class="btn primary" for="file">Importer un GPX</label>
@@ -2862,7 +2873,17 @@ window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth =
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dropOverlay').hidden = true; handleFile(e.dataTransfer.files[0]); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.tl) { renderChart(); if (S.mode === 'ultra') drawPlanWx(); } }, 150); });
-matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (S.tl) { renderChart(); renderMap(); } });
+// thème : clair, sombre ou automatique (comme l'appareil), gardé dans le navigateur (partagé avec Coach Miguel)
+function redrawTheme() { if (S.tl) { renderChart(); renderMap(); if (S.mode === 'ultra') drawPlanWx(); } }
+function setTheme(t) {
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  try { if (t === 'auto') localStorage.removeItem('pmr-theme'); else localStorage.setItem('pmr-theme', t); } catch (e) {}
+  for (const b of document.querySelectorAll('#themeSeg button')) b.setAttribute('aria-pressed', String(b.dataset.t === t));
+  redrawTheme();
+}
+for (const b of document.querySelectorAll('#themeSeg button')) b.setAttribute('aria-pressed', String(b.dataset.t === (document.documentElement.dataset.theme || 'auto')));
+$('#themeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTheme(b.dataset.t); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (!document.documentElement.dataset.theme) redrawTheme(); });
 
 applyModeUI();
 initInputs();
