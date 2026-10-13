@@ -301,10 +301,11 @@ dialog.help .ft label{font-size:13px;color:var(--muted);display:flex;gap:6px;ali
 .theme-seg button+button{border-left:1px solid var(--line)}
 .theme-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .helpbtn{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%;font-weight:700}
-dialog.stats{border:1px solid var(--line);border-radius:12px;padding:0;max-width:640px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);background:var(--panel);color:var(--ink)}
+dialog.stats{border:1px solid var(--line);border-radius:12px;padding:0;max-width:780px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);background:var(--panel);color:var(--ink)}
 dialog.stats[open]{display:flex;flex-direction:column}
 dialog.stats::backdrop{background:rgba(0,0,0,.4)}
 dialog.stats .bd{padding:4px 20px 18px;overflow:auto;flex:1 1 auto;min-height:0;font-size:14px}
+dialog.stats .stats-scroll{overflow-x:auto}
 dialog.stats table{width:100%;min-width:0;border-collapse:collapse;font-variant-numeric:tabular-nums}
 dialog.stats thead th{white-space:normal}
 dialog.stats th,dialog.stats td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
@@ -2651,10 +2652,13 @@ async function openStats() {
     const per = [['Aujourd\'hui', day0], ['7 jours', since(6)], ['30 jours', since(29)], ['Depuis le début', new Date(0)]];
     const agg = list => ({ u: new Set(list.filter(r => r.event === 'visit').map(r => r.visitor)).size,
       v: list.filter(r => r.event === 'visit').length, g: list.filter(r => r.event === 'gpx').length,
-      gu: new Set(list.filter(r => r.event === 'gpx').map(r => r.visitor)).size });
-    let h = '<table><thead><tr><th>Période</th><th>Visiteurs</th><th>Visites</th><th>GPX</th></tr></thead><tbody>';
-    for (const [lbl, from] of per) { const a = agg(rows.filter(r => r.t >= from)); h += `<tr><td>${lbl}</td><td><b>${a.u}</b></td><td>${a.v}</td><td>${a.g}</td></tr>`; }
-    h += '</tbody></table>';
+      gu: new Set(list.filter(r => r.event === 'gpx').map(r => r.visitor)).size,
+      // visites par page (Sortie / Ultra) et par appareil (téléphone / ordinateur)
+      ride: list.filter(r => r.event === 'visit' && r.mode !== 'ultra').length, ultra: list.filter(r => r.event === 'visit' && r.mode === 'ultra').length,
+      mob: list.filter(r => r.event === 'visit' && r.device === 'mobile').length, pc: list.filter(r => r.event === 'visit' && r.device !== 'mobile').length });
+    let h = '<div class="stats-scroll"><table><thead><tr><th>Période</th><th>Visiteurs</th><th>Visites</th><th title="Visites arrivées sur la page Sortie">Sortie</th><th title="Visites arrivées sur la page Ultra">Ultra</th><th title="Visites depuis un téléphone ou une tablette">📱 Mobile</th><th title="Visites depuis un ordinateur">💻 PC</th><th>GPX</th></tr></thead><tbody>';
+    for (const [lbl, from] of per) { const a = agg(rows.filter(r => r.t >= from)); h += `<tr><td>${lbl}</td><td><b>${a.u}</b></td><td>${a.v}</td><td>${a.ride}</td><td>${a.ultra}</td><td>${a.mob}</td><td>${a.pc}</td><td>${a.g}</td></tr>`; }
+    h += '</tbody></table></div>';
     // 14 derniers jours : visiteurs uniques par jour
     const days = [];
     for (let i = 13; i >= 0; i--) { const d0 = since(i), d1 = new Date(d0.getTime() + 864e5); days.push([d0, agg(rows.filter(r => r.t >= d0 && r.t < d1))]); }
