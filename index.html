@@ -242,10 +242,21 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .empty ul b{color:var(--ink);font-weight:600}
 footer{max-width:1440px;margin:24px auto 0;font-size:12.5px;color:var(--muted)}
 footer a{color:inherit}
+/* Mode public (visiteur non connecté) : fonctions du propriétaire masquées */
+body.public .priv{display:none!important}
+body:not(.public) .pub{display:none!important}
+dialog.login{border:1px solid var(--line);border-radius:10px;padding:20px;max-width:340px;width:calc(100% - 32px);background:var(--panel);color:var(--ink)}
+dialog.login::backdrop{background:rgba(0,0,0,.35)}
+dialog.login form{display:flex;flex-direction:column;gap:10px}
+dialog.login h2{margin:0 0 4px;font-size:17px}
+dialog.login input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
+dialog.login .err{color:#c0392b;font-size:13px;margin:0}
+dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+<script>try{if(!localStorage.getItem('sb-rynbzhuxwvfvblgwnhkk-auth-token'))document.body.classList.add('public')}catch(e){document.body.classList.add('public')}</script>
 <header class="top">
   <div class="brand">
     <h1>Plan <span>My Ride</span></h1>
@@ -255,7 +266,7 @@ footer a{color:inherit}
     <a href="#" data-mode="ride">Sortie</a>
     <a href="#ultra" data-mode="ultra">Ultra</a>
   </nav>
-  <a class="btn" href="coach.html">Coach Miguel</a>
+  <a class="btn priv" href="coach.html">Coach Miguel</a>
   <label class="btn primary" for="file">Importer un GPX</label>
   <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
 </header>
@@ -329,7 +340,7 @@ footer a{color:inherit}
       <div class="range"><input type="range" id="pause" min="0" max="40" step="1"><output id="pauseOut" class="mono"></output></div>
       <p class="hint">Ravitos, photos, feux : ajouté au temps de roulage.</p>
     </div>
-    <div class="field">
+    <div class="field priv">
       <label class="toggle"><input type="checkbox" id="calibOn"> <span class="label" style="color:var(--ink)">Caler sur mes sorties</span></label>
       <p class="hint" id="calibHint">Règle la vitesse sur le plat, la VAM et les arrêts d'après tes sorties enregistrées dans Coach Miguel.</p>
       <div class="calib-box" id="calibBox" hidden>
@@ -387,12 +398,12 @@ footer a{color:inherit}
     <hr class="sep">
     <div class="field">
       <span class="label" id="wxSrcLbl">Source météo</span>
-      <div class="seg2" role="group" aria-labelledby="wxSrcLbl" id="wxSrcSeg">
+      <div class="seg2 priv" role="group" aria-labelledby="wxSrcLbl" id="wxSrcSeg">
         <button type="button" data-v="mb" aria-pressed="false">meteoblue</button>
         <button type="button" data-v="om" aria-pressed="true">Open-Meteo</button>
       </div>
       <p class="hint" id="wxSrcHint"></p>
-      <div class="wxuse" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
+      <div class="wxuse priv" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
   </aside>
 
@@ -498,7 +509,16 @@ footer a{color:inherit}
     </div>
   </main>
 </div>
-<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages.</footer>
+<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink">Accès privé</a><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
+<dialog class="login" id="loginDlg">
+  <form id="loginForm">
+    <h2>Accès privé</h2>
+    <input type="email" id="loginEmail" autocomplete="username" placeholder="E-mail" required>
+    <input type="password" id="loginPw" autocomplete="current-password" placeholder="Mot de passe" required>
+    <p class="err" id="loginErr" hidden></p>
+    <div class="acts"><button type="button" class="btn" id="loginCancel">Annuler</button><button type="submit" class="btn primary" id="loginGo">Se connecter</button></div>
+  </form>
+</dialog>
 <div class="drop-overlay" id="dropOverlay" hidden>Déposez le fichier GPX</div>
 
 <script>
@@ -620,8 +640,9 @@ const WX_SRC = { om: 'Open-Meteo', mb: 'meteoblue' };
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
+  if (!hasSbToken()) return 'om';
   try { const v = localStorage.getItem('pmr-wxsrc'); if (v === 'om' || v === 'mb') return v; } catch (e) {}
-  return hasSbToken() ? 'mb' : 'om';
+  return 'mb';
 }
 // Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
 const MB_PICTO = [null, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 1, 1, 45, 45, 45, 3, 3, 3, 3, 61, 71, 65, 75, 95, 95, 75, 95, 80, 85, 61, 71, 67];
@@ -1533,9 +1554,10 @@ function initInputs() {
   let k = ''; try { k = localStorage.getItem('pmr-calib-kind-' + S.mode) || ''; } catch (e) {}
   CAL.kind = k === 'route' || k === 'voyage' ? k : (S.mode === 'ultra' ? 'voyage' : 'route');
   for (const b of document.querySelectorAll('.kind button')) b.setAttribute('aria-pressed', String(b.dataset.kind === CAL.kind));
-  $('#calibOn').checked = !!def.calibOn;
+  const calib = !!def.calibOn && hasSbToken();
+  $('#calibOn').checked = calib;
   syncOutputs();
-  if (def.calibOn) calibStart(true);
+  if (calib) calibStart(true);
 }
 const segVal = sel => (document.querySelector(sel + ' button[aria-pressed="true"]') || document.querySelector(sel + ' button')).dataset.v;
 function setSeg(sel, v) { for (const b of document.querySelectorAll(sel + ' button')) b.setAttribute('aria-pressed', String(b.dataset.v === v)); }
@@ -2196,7 +2218,7 @@ function renderProfileCard() {
   const pr = FLY.prof, opt = readOpt(), R = flyRider(opt), grp = FLY_GROUPS.find(g => R.q <= g[1])[0];
   const L = [];
   if (!pr || pr.source !== 'history') L.push(pr && pr.source === 'login'
-    ? '<p class="hint">Connecte-toi à <a href="coach.html">Coach Miguel</a> pour caler ce profil sur tes sorties. En attendant : coureur médian du modèle.</p>'
+    ? '<p class="hint">Profil non calé sur des sorties : coureur médian du modèle.</p>'
     : '<p class="hint">Pas assez de longues sorties pour caler ton profil : coureur médian du modèle.</p>');
   L.push(`<div>Ton profil : <b>${grp}</b> d'un ultra « Standard » (environ ${Math.round(R.q * 100)} % des participants devant toi).</div>`);
   L.push(`<div>Vitesse équivalent plat : <b>${n1(R.vf)} km/h</b>${(+opt.terrain || 1) !== 1 ? ' (terrain compris)' : ''}${pr && pr.n ? `, d'après tes ${pr.n} plus longues sorties route` : ''}.</div>`);
@@ -2297,6 +2319,32 @@ function renderDays() {
 const LIB = { list: [], current: '', db: null, delArm: 0 };
 const SB_TOKEN_KEY = 'sb-rynbzhuxwvfvblgwnhkk-auth-token';
 const hasSbToken = () => { try { return !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) { return false; } };
+// Accès privé : connexion par mot de passe (compte unique), déconnexion ; la page se recharge pour changer de mode.
+$('#loginLink').addEventListener('click', e => { e.preventDefault(); $('#loginErr').hidden = true; $('#loginDlg').showModal(); $('#loginEmail').focus(); });
+$('#loginCancel').addEventListener('click', () => $('#loginDlg').close());
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#loginGo'); btn.disabled = true; $('#loginErr').hidden = true;
+  try {
+    const sb = await sbClient();
+    const { error } = await sb.auth.signInWithPassword({ email: $('#loginEmail').value.trim(), password: $('#loginPw').value });
+    if (error) throw error;
+    location.reload();
+  } catch (err) {
+    $('#loginErr').textContent = /invalid/i.test(String(err.message)) ? 'E-mail ou mot de passe incorrect.' : 'Connexion impossible : ' + (err.message || err);
+    $('#loginErr').hidden = false; btn.disabled = false;
+  }
+});
+$('#logoutLink').addEventListener('click', async e => {
+  e.preventDefault();
+  try { const sb = await sbClient(); await sb.auth.signOut(); } catch (err) {}
+  try { localStorage.removeItem(SB_TOKEN_KEY); } catch (err) {}
+  location.reload();
+});
+// Jeton présent mais session expirée (refresh impossible) : retour au mode public.
+if (hasSbToken()) sbClient().then(sb => sb.auth.getSession()).then(({ data: { session } }) => {
+  if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); }
+}).catch(() => {});
 async function sbIfLogged() {
   if (!hasSbToken()) return null;
   try { const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession(); return session ? sb : null; } catch (e) { return null; }
@@ -2367,7 +2415,7 @@ function libRender() {
   sel.value = LIB.current || '';
   $('#libDel').disabled = !LIB.current;
   const n = LIB.list.length;
-  $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte Coach Miguel : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur. Connecte-toi à Coach Miguel pour les retrouver sur tes autres appareils.');
+  $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte Coach Miguel : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur.');
 }
 async function libOpen(id) {
   const m = LIB.list.find(x => x.id === id); if (!m) return;

@@ -8,8 +8,7 @@ Importez un GPX, choisissez le jour et l'heure de départ : l'app estime l'heure
 
 - **Horaires de passage** calculés depuis la vitesse sur le plat, la VAM en montée, un bonus en descente, un pourcentage d'arrêts et, en option, l'effet du vent.
 - **Page Ultra** (onglet en haut) : découpage jour par jour selon la plage de roulage, hébergements autour du bivouac, et épiceries, boulangeries, restos, bars, stations-service, points d'eau, hébergements et magasins de vélo le long de la trace (OpenStreetMap), avec l'heure de passage, l'ouverture à ce moment-là et les plus longs tronçons sans ravitaillement.
-- **Mes parcours** : les GPX chargés sont gardés en mémoire (navigateur, et compte Coach Miguel si vous êtes connecté) ; le dernier parcours se rouvre tout seul.
-- **Calage sur vos sorties** (option) : vitesse sur le plat, VAM et arrêts ajustés d'après vos activités enregistrées dans Coach Miguel, en choisissant les sorties de référence.
+- **Mes parcours** : les GPX chargés sont gardés dans le navigateur ; le dernier parcours se rouvre tout seul.
 - **Sorties sur plusieurs jours** : plage horaire de roulage, arrêt au bivouac, reprise le lendemain.
 - **Météo le long du tracé** (Open-Meteo, jusqu'à 16 jours) : température et ressenti, pluie et probabilité, ciel, ensoleillement, nuit, vent et rafales.
 - **Vent relatif** à la direction de route : face, dos ou travers.

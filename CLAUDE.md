@@ -26,6 +26,12 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Export image (page Sortie, bouton « Exporter l'image » de la carte, `exportImage`) : PNG ×2 composé sur un canvas — titre, résumé, vue actuelle de la carte (`drawMapTo` : tuiles du fond rechargées en CORS, sinon aplat ; trace colorée selon la métrique ; flèches de vent comme à l'écran ; départ/arrivée), légende, graphique `#chart` recopié, crédits. Partage natif sur mobile (`navigator.share`), téléchargement sinon.
 - `renderWindArrows` : une flèche tous les `ARROW_GAP` (40 px) le long de la trace, seulement dans la zone visible, redessinée à chaque `moveend` ; météo du point d'échantillonnage le plus proche à l'heure de passage.
 
+## Mode public / accès privé
+- Sans session Supabase (pas de jeton `sb-rynbzhuxwvfvblgwnhkk-auth-token`), le `<body>` reçoit la classe `public` dès le chargement (petit script en tête de `<body>`). CSS : `body.public .priv` masqué, `.pub` visible seulement en public.
+- Masqué en public (`.priv`) : bouton « Coach Miguel », option « Caler sur mes sorties », choix de source météo et consommation meteoblue. `wxSrc()` renvoie toujours `om` sans jeton ; `calibOn` ignoré sans jeton. Les textes ne mentionnent plus Coach Miguel côté public.
+- Pied de page : « Accès privé » (`#loginLink` → `#loginDlg`, `signInWithPassword`, puis rechargement) ou « Se déconnecter » (`#logoutLink`). Jeton présent mais session morte → jeton effacé et rechargement.
+- `coach.html` reste entièrement derrière la connexion (données protégées par RLS ; fonctions `coach-propose` et `meteoblue` réservées au propriétaire). Compte unique : fermer les inscriptions dans Supabase (Authentication → « Allow new users to sign up »).
+
 ## Deux pages : Sortie et Ultra
 - Onglets « Sortie » / « Ultra » dans l'en-tête ; la page Ultra a l'adresse `#ultra` (`S.mode`, `switchMode`, `applyModeUI`).
 - Chaque page a ses réglages (`pmr-opt` / `pmr-opt-ultra`, défauts dans `MODE_DEF`) ; la page Ultra garde aussi la date de départ. Type de sorties de référence du calage par page (`pmr-calib-kind-ride` / `-ultra`, « voyage » par défaut en Ultra).
