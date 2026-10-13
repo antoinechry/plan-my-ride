@@ -2299,7 +2299,7 @@ const PLACES = { key: '', list: [], seq: 0, ctl: null };
 const PLACE_RANK = { city: 2, town: 1, village: 0 };
 async function placesEnsure() {
   if (!S.P || S.mode !== 'ultra') return;
-  const key = 'places2|' + routeSig(); // places2 : villes, bourgs et villages
+  const key = 'places3|' + routeSig(); // places3 : villes, bourgs et villages, avec leurs coordonnées (out body)
   if (PLACES.key === key) return;
   const seq = ++PLACES.seq; if (PLACES.ctl) PLACES.ctl.abort();
   const ctl = (PLACES.ctl = new AbortController());
@@ -2315,8 +2315,8 @@ async function placesEnsure() {
   for (const ch of chunks) {
     const ll = ch.map(i => S.P.pts[i].lat.toFixed(4) + ',' + S.P.pts[i].lon.toFixed(4)).join(',');
     try {
-      const els = await overpassFetch(`[out:json][timeout:60];\nnode(around:2400,${ll})["place"~"^(city|town|village)$"]["name"];\nout tags;`, ctl.signal);
-      for (const el of els) if (!seen.has(el.id)) seen.set(el.id, { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, place: el.tags.place, pop: +el.tags.population || 0 });
+      const els = await overpassFetch(`[out:json][timeout:60];\nnode(around:2400,${ll})["place"~"^(city|town|village)$"]["name"];\nout body;`, ctl.signal);
+      for (const el of els) if (el.lat != null && !seen.has(el.id)) seen.set(el.id, { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, place: el.tags.place, pop: +el.tags.population || 0 });
     } catch (e) { if (seq !== PLACES.seq) return; failed++; }
     if (seq !== PLACES.seq) return;
     PLACES.list = attachToRoute([...seen.values()]).filter(p => p.off <= 2000);
