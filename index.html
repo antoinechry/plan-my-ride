@@ -98,6 +98,8 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .route-card strong{font-family:var(--f-display);font-size:18px;font-weight:600;overflow-wrap:anywhere}
 .route-card .tag{align-self:flex-start;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
 hr.sep{border:0;border-top:1px solid var(--line);margin:0}
+.route-card .rev-btn{align-self:flex-start;margin-top:4px}
+.route-card .rev-btn[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
 .lib-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .btn.danger{border-color:var(--head);color:var(--head)}
 .field select{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 10px;width:100%;font-size:14px}
@@ -311,6 +313,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <span class="tag" id="routeTag">Aucune trace</span>
       <strong id="routeName">Pas encore de parcours</strong>
       <span class="hint mono" id="routeMeta">Importez un fichier .gpx pour commencer</span>
+      <button type="button" class="btn small rev-btn" id="revBtn" aria-pressed="false" title="Rouler la trace dans l'autre sens (départ et arrivée échangés)" hidden>⇄ Inverser le sens</button>
     </div>
     <div class="field" id="libBox" hidden>
       <label class="label" for="libSel">Mes parcours</label>
@@ -1557,12 +1560,23 @@ function exportCsv() {
 }
 
 /* ---------- chargement de trace ---------- */
-function loadRoute(raw, name) {
-  const P = prepare(raw);
+// Sens de roulage : `raw` est toujours la trace dans le sens du GPX ; `rev` la fait rouler à l'envers.
+// Le choix est gardé par parcours (`pmr-rev`, liste d'identifiants de parcours inversés).
+function revGet(id) { try { return !!id && (JSON.parse(localStorage.getItem('pmr-rev') || '[]') || []).includes(id); } catch (e) { return false; } }
+function revSet(id, on) {
+  if (!id) return;
+  try { const l = (JSON.parse(localStorage.getItem('pmr-rev') || '[]') || []).filter(x => x !== id); if (on) l.push(id); localStorage.setItem('pmr-rev', JSON.stringify(l.slice(-100))); } catch (e) {}
+}
+function loadRoute(raw, name, rev) {
+  const P = prepare(rev ? [...raw].reverse() : raw);
   if (P.total < 0.2) throw new Error('La trace est trop courte pour être planifiée.');
-  S.P = P; S.samples = makeSamples(P); S.wxKey = ''; S.wx = null; S.fitted = false; S.name = name;
+  S.P = P; S.samples = makeSamples(P); S.wxKey = ''; S.wx = null; S.fitted = false;
+  S.fwd = raw; S.rev = !!rev; S.baseName = name; S.name = rev ? `${name || 'Trace'} (sens inverse)` : name;
+  // Les lieux déjà trouvés pour cette trace restent valables : on les rattache à la trace dans le nouveau sens.
+  if (POI.list.length && POI.key.startsWith(routeSig() + '|')) attachToRoute(POI.list);
   $('#routeName').textContent = name || 'Trace sans nom';
-  $('#routeTag').textContent = 'Votre trace';
+  $('#routeTag').textContent = rev ? 'Sens inverse' : 'Votre trace';
+  const rb = $('#revBtn'); rb.hidden = false; rb.setAttribute('aria-pressed', String(!!rev));
   $('#empty').hidden = true; $('#results').hidden = false;
   if (map) map.invalidateSize();
   $('#routeMeta').textContent = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${n0(P.n)} points`;
@@ -1576,7 +1590,8 @@ function handleFile(file) {
       // On travaille sur la trace simplifiée (celle qui est enregistrée) : rouvrir le parcours donne exactement les mêmes calculs.
       const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts));
       loadRoute(pts, name, false);
-      libSave(pts, name);
+      libSave(pts, name); // fixe LIB.current avant sa première attente
+      revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
       track('gpx', { km: Math.round(S.P.total) });
     }
     catch (e) { setStatus(e.message, 'err'); }
@@ -1978,7 +1993,7 @@ function routeGrid(P) {
 function attachToRoute(items) {
   const P = S.P, grid = routeGrid(P);
   for (const it of items) {
-    if (it._sig === P.n) continue; // déjà rattaché à cette trace
+    if (it._sig === P) continue; // déjà rattaché à cette trace (et dans ce sens)
     const c = Math.cos(it.lat * RAD), la0 = Math.floor(it.lat * 100), lo0 = Math.floor(it.lon * 100);
     let best = Infinity, bi = -1;
     for (let r = 4; bi < 0 && r <= 64; r *= 4) { // cherche autour (±4 cases ≈ 3 à 4 km), puis plus loin si besoin
@@ -1988,11 +2003,15 @@ function attachToRoute(items) {
       }
     }
     if (bi < 0) { bi = 0; best = 1; }
-    it.i = bi; it.km = P.d[bi]; it.off = Math.round(Math.sqrt(best) * 111195); it._sig = P.n;
+    it.i = bi; it.km = P.d[bi]; it.off = Math.round(Math.sqrt(best) * 111195); it._sig = P;
   }
   return items;
 }
-const routeSig = () => `${S.P.n}:${S.P.pts[0].lat.toFixed(5)},${S.P.pts[0].lon.toFixed(5)}:${S.P.pts[S.P.n - 1].lat.toFixed(5)}:${S.P.total.toFixed(2)}`;
+// Signature calculée dans le sens du GPX : inverser le sens garde le même cache de lieux.
+const routeSig = () => {
+  const a = S.P.pts[S.rev ? S.P.n - 1 : 0], b = S.P.pts[S.rev ? 0 : S.P.n - 1];
+  return `${S.P.n}:${a.lat.toFixed(5)},${a.lon.toFixed(5)}:${b.lat.toFixed(5)}:${S.P.total.toFixed(2)}`;
+};
 
 async function poiEnsure(force) {
   if (!S.P || S.mode !== 'ultra') return;
@@ -2553,7 +2572,7 @@ async function libOpen(id) {
   }
   if (!rec) { setStatus('Ce parcours n\'est plus disponible.', 'err'); return; }
   LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {}
-  try { loadRoute(unpackPts(rec.pts), m.name); } catch (e) { setStatus(e.message, 'err'); return; }
+  try { loadRoute(unpackPts(rec.pts), m.name, revGet(id)); } catch (e) { setStatus(e.message, 'err'); return; }
   const now = new Date().toISOString(); libUpsert({ id, used_at: now }); libRender();
   try { await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: now })); } catch (e) {}
   const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ used_at: now }).eq('id', id).then(() => {});
@@ -2596,6 +2615,11 @@ $('#libDel').addEventListener('click', () => {
 /* ---------- événements ---------- */
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
 $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; });
+$('#revBtn').addEventListener('click', () => {
+  if (!S.fwd) return;
+  const rev = !S.rev;
+  try { loadRoute(S.fwd, S.baseName, rev); revSet(LIB.current, rev); } catch (e) { setStatus(e.message, 'err'); }
+});
 $('#csv').addEventListener('click', exportCsv);
 // Feuille de route : on peut masquer toutes les lignes (choix mémorisé). L'export CSV reste complet.
 function applyRows() { $('#rowsWrap').hidden = !$('#rowsOn').checked; try { localStorage.setItem('pmr-rows', $('#rowsOn').checked ? '1' : '0'); } catch (e) {} }

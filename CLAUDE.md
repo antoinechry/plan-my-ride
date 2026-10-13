@@ -60,6 +60,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 ## Mes parcours (GPX gardés en mémoire)
 - Chaque GPX chargé est enregistré (points simplifiés : un tous les ~5 m, `[lat, lon, ele]` à 5 décimales) dans IndexedDB (`pmr` : stores `meta` et `pts`) et, si l'utilisateur est connecté à Coach Miguel, dans la table Supabase `routes` (RLS par utilisateur) pour le retrouver sur ses autres appareils.
 - Identifiant = empreinte du tracé (`routeId`) : recharger le même GPX ne crée pas de doublon. Le dernier parcours ouvert (`localStorage` `pmr-last-route`) se rouvre au démarrage. Au démarrage connecté, les parcours présents seulement dans le navigateur sont envoyés au compte ; ceux du compte sont téléchargés à l'ouverture.
+- Sens de roulage : bouton « ⇄ Inverser le sens » dans la carte du parcours (`#revBtn`). `loadRoute(raw, name, rev)` garde la trace dans le sens du GPX (`S.fwd`, `S.baseName`) et la retourne si `rev` (`S.rev`, nom affiché « … (sens inverse) », étiquette « Sens inverse »). Choix gardé par parcours dans `localStorage` `pmr-rev` (liste d'identifiants, `revGet` / `revSet`), repris par `libOpen` ; un GPX importé repart dans le sens du fichier. `routeSig` est calculée dans le sens du GPX (même cache de lieux dans les deux sens) ; les lieux sont rattachés par trace (`_sig` = l'objet `S.P`), donc recalés (km, heure de passage) quand on inverse.
 - supabase-js n'est chargé au démarrage que si un jeton de session existe (`sb-rynbzhuxwvfvblgwnhkk-auth-token`).
 
 ## Ciel dans la feuille de route
