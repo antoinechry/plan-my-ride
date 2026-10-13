@@ -703,11 +703,11 @@ async function fetchOM(from, to) {
 }
 
 // meteoblue (7 jours) : via la fonction Supabase `meteoblue` (clé côté serveur, réservée au compte Coach Miguel).
-// Paquet basic-1h (8 000 crédits par point, quelle que soit la durée : on prend toujours 7 jours). Un point tous les
+// Paquets basic-1h + clouds-3h (16 000 crédits par point, quelle que soit la durée : on prend toujours 7 jours). Un point tous les
 // ~MB_KM km (au plus MB_MAX) avec son altitude, gardé MB_TTL dans le navigateur ; chaque point d'échantillonnage
-// est interpolé entre les deux points voisins, température corrigée de l'altitude. Pas de rafales dans ce paquet ;
-// nébulosité et ensoleillement déduits du pictogramme horaire.
-const MB_DAYS = 7, MB_KM = 20, MB_MAX = 8, MB_TTL = 2 * 3600e3, MB_CACHE = 'pmr-mb-pts', MB_CREDITS = 8000;
+// est interpolé entre les deux points voisins, température corrigée de l'altitude. Pas de rafales ; nébulosité et
+// ensoleillement du paquet clouds-3h (pas de 3 h ramené à l'heure par la fonction), à défaut déduits du pictogramme.
+const MB_DAYS = 7, MB_KM = 20, MB_MAX = 8, MB_TTL = 2 * 3600e3, MB_CACHE = 'pmr-mb-pts2', MB_CREDITS = 16000, MB_PKG = 'basic-1h_clouds-3h';
 const WX_SRC = { om: 'Open-Meteo', mb: 'meteoblue' };
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
@@ -744,7 +744,7 @@ async function fetchMB() {
     // une même demande en cours (réglage modifié pendant le chargement) n'est pas refaite : chaque point coûte des crédits
     const rk = miss.map(mbKey).join(';');
     if (!MB_PENDING.has(rk)) MB_PENDING.set(rk, (async () => {
-      const { data: res, error } = await sb.functions.invoke('meteoblue', { body: { points: miss.map(({ lat, lon, asl }) => ({ lat, lon, asl })), days: MB_DAYS, pkg: 'basic-1h' } });
+      const { data: res, error } = await sb.functions.invoke('meteoblue', { body: { points: miss.map(({ lat, lon, asl }) => ({ lat, lon, asl })), days: MB_DAYS, pkg: MB_PKG } });
       if (error) {
         let d = ''; try { const j = await error.context.json(); d = j.detail || j.error || ''; } catch (e) {}
         throw new Error(d === 'forbidden' ? 'réservé au compte Coach Miguel du propriétaire.' : (d || error.message));
@@ -1289,7 +1289,7 @@ function renderWindArrows() {
     const html = `<div class="wa">${arrowHtml}<b class="${showA ? '' : 'solo'}">${sky}<span class="wt">${n0(w.temp)}°</span>${showA ? `<span class="ww">${n0(w.ws)}<small>km/h</small></span>` : ''}</b></div>`;
     const icon = showA ? { iconSize: [110, sz + 18], iconAnchor: [55, sz / 2] } : { iconSize: [60, 22], iconAnchor: [30, 11] };
     L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', ...icon }), keyboard: false })
-      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>${skyLabel(w.code, w.day)} · ${n0(w.temp)} °C${w.pr >= 0.1 ? ` · pluie ${n1(w.pr)} mm/h` : ''}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
+      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>${skyLabel(w.code, w.day)}${isFinite(w.cc) ? ` (nuages ${n0(w.cc)} %)` : ''} · ${n0(w.temp)} °C${w.pr >= 0.1 ? ` · pluie ${n1(w.pr)} mm/h` : ''}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
       .addTo(windLayer);
   }
 }
@@ -1605,7 +1605,8 @@ function chartHover(ev) {
   const rel = relLabel(head);
   tip.innerHTML = `<div class="label">km ${n1(km)} · ${whenTxt(t, S.tl.start)}</div>
     <div class="mono">Alt. ${n0(S.P.es[i])} m</div>` + (w ? `<div class="mono">${n0(w.temp)} °C (ressenti ${n0(w.app)})</div>
-    <div class="mono">${skyLabel(w.code, w.day)} · pluie ${n1(w.pr)} mm/h (${n0(w.prob)} %)</div>
+    <div class="mono">${skyLabel(w.code, w.day)}${isFinite(w.cc) ? ` · nuages ${n0(w.cc)} %` : ''}</div>
+    <div class="mono">Pluie ${n1(w.pr)} mm/h (${n0(w.prob)} %)</div>
     <div class="mono">Vent ${compass(w.wd)} ${n0(w.ws)} km/h${isFinite(w.gust) ? `, raf. ${n0(w.gust)}` : ''}</div>
     <div class="rel ${rel.cls}">${rel.txt}</div>` : '<div class="hint">Hors prévisions</div>');
   const wrapW = $('#chartWrap').clientWidth;
