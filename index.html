@@ -1055,9 +1055,9 @@ function tempColor(t) {
 function rainColor(p) { return p < 0.1 ? cssVar('--cross') : mix('#9cc7ef', '#123f8c', clamp(Math.log10(p * 10) / Math.log10(80), 0, 1)); }
 // Couleurs franches (lisibles sur le vert des fonds de carte) ; 4e valeur = couleur du texte posé dessus
 const WIND_SCALE = [[0, '#0f8a76', 'Calme', '#fff'], [10, '#4f8f12', 'Faible', '#fff'], [20, '#c99200', 'Modéré', '#15202a'], [30, '#e06a00', 'Assez fort', '#fff'], [40, '#c8231a', 'Fort', '#fff'], [50, '#7d1f94', 'Très fort', '#fff']];
-// Flèche de vent : flèche vive à contour noir épais dans un rond blanc (diamètre selon la force du vent)
-const WARROW = 'M12 1 L21.5 22 L12 17 L2.5 22 Z';
-const ringSize = ws => Math.round(clamp(26 + ws * 0.25, 26, 36));
+// Flèche de vent : flèche colorée à fin contour noir dans un rond blanc de taille fixe
+const WARROW = 'M12 1.5 L20 21 L12 16 L4 21 Z';
+const ringSize = () => 30;
 function windStrength(ws) { let r = WIND_SCALE[0]; for (const w of WIND_SCALE) if (ws >= w[0]) r = w; return r; }
 function sunColor(s) { return mix(cssVar('--cross'), cssVar('--sun'), clamp(s, 0, 1)); }
 
@@ -1257,7 +1257,7 @@ function renderMap() {
 let windLayer;
 const ARROW_GAP = 40; // écart à l'écran entre deux flèches de vent, en pixels (75 auparavant)
 // Encombrement d'une pastille (ciel + température + vent) : deux pastilles ne se chevauchent pas.
-function badgeBox(showA, showS) { return [10 + (showS ? 17 : 0) + 26 + (showA ? 50 : 0), showA ? 50 : 24]; }
+function badgeBox(showA, showS) { return [10 + (showS ? 17 : 0) + 26 + (showA ? 50 : 0), showA ? 46 : 24]; }
 const badgeHit = (a, b, box) => Math.abs(a[0] - b[0]) < box[0] && Math.abs(a[1] - b[1]) < box[1];
 function renderWindArrows() {
   if (!map) return;
@@ -1280,11 +1280,11 @@ function renderWindArrows() {
     run = 0; shown.push(px);
     const head = w.ws * Math.cos((w.wd - P.b[i]) * RAD);
     const [, col, lbl] = windStrength(w.ws);
-    const sz = ringSize(w.ws), as = Math.round(sz * 0.8);
+    const sz = ringSize(w.ws), as = 22;
     // durée du cycle et amplitude du mouvement selon la vitesse du vent (petite : la flèche reste dans son rond)
     const dur = clamp(2.8 - w.ws * 0.05, 0.55, 2.8).toFixed(2), amp = clamp(0.8 + w.ws * 0.06, 0.8, 3).toFixed(1);
     const delay = (-(shown.length * 0.37) % dur).toFixed(2), calm = w.ws < 5 ? ' calm' : '';
-    const arrowHtml = showA ? `<span class="wring" style="width:${sz}px;height:${sz}px"><span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="-1.5 -1.5 27 27" width="${as}" height="${as}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="${WARROW}" fill="${col}" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/></svg></span></span>` : '';
+    const arrowHtml = showA ? `<span class="wring" style="width:${sz}px;height:${sz}px"><span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${as}" height="${as}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="${WARROW}" fill="${col}" stroke="#0b1218" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>` : '';
     const sky = showS ? skySvg(w, 15) : '';
     const html = `<div class="wa">${arrowHtml}<b class="${showA ? '' : 'solo'}">${sky}<span class="wt">${n0(w.temp)}°</span>${showA ? `<span class="ww">${n0(w.ws)}<small>km/h</small></span>` : ''}</b></div>`;
     const icon = showA ? { iconSize: [110, sz + 18], iconAnchor: [55, sz / 2] } : { iconSize: [60, 22], iconAnchor: [30, 11] };
@@ -1349,14 +1349,14 @@ async function drawMapTo(c, x0, y0, W, H) {
       if (shown.some(q => badgeHit([x, y], q, box))) continue;
       const w = wxAt(sIdx(P.d[i]), S.tl.times[i]); if (!w) continue;
       run = 0; shown.push([x, y]);
-      const sz = ringSize(w.ws), k = sz * 0.8 / 27;
+      const sz = ringSize(w.ws), k = 22 / 24;
       if (exA) {
         c.save(); c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 3; c.shadowOffsetY = 1;
         c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, sz / 2, 0, Math.PI * 2); c.fill(); c.shadowColor = 'transparent';
         c.strokeStyle = 'rgba(21,32,42,.35)'; c.lineWidth = 1.5; c.stroke();
         c.translate(x, y); c.rotate(((w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
         c.fillStyle = windStrength(w.ws)[1]; c.fill(arrow);
-        c.lineWidth = 2.2; c.strokeStyle = '#000'; c.lineJoin = 'round'; c.stroke(arrow); c.restore();
+        c.lineWidth = 1.2; c.strokeStyle = '#0b1218'; c.lineJoin = 'round'; c.stroke(arrow); c.restore();
       }
       // pastille : pictogramme du ciel + vitesse du vent (ou pictogramme seul sans les flèches)
       // pastille comme à l'écran : ciel, température, | vent km/h
