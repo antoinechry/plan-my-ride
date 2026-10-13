@@ -208,6 +208,8 @@ body.fs-lock{overflow:hidden}
 .poi-gaps:empty{display:none}
 .poi-gaps .warn{color:var(--head);font-weight:600}
 .poi-scroll{max-height:460px;overflow:auto}
+.poi-off{padding:12px 14px;margin:0}
+.poi-on b{color:var(--ink);font-weight:600}
 .poi-table{width:100%;border-collapse:collapse;font-size:13.5px}
 .poi-table th{position:sticky;top:0;background:var(--panel);text-align:left;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);z-index:1}
 .poi-table td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -521,9 +523,11 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <section class="card" id="poiCard" hidden>
       <div class="card-head">
         <h2>Ravitaillement et hébergement</h2>
+        <label class="arrows-toggle poi-on"><input type="checkbox" id="poiOn"> <b>Rechercher les lieux</b></label>
         <label class="arrows-toggle"><input type="checkbox" id="poiOpenOnly"> Seulement ouverts à mon passage</label>
         <label class="switch"><input type="checkbox" id="poiListOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher la liste</label>
       </div>
+      <p class="hint poi-off" id="poiOffHint" hidden>Coche « Rechercher les lieux » pour lister les commerces, restos, bars, stations, points d'eau et hébergements le long de la trace, avec leurs horaires à ton passage. La recherche interroge OpenStreetMap portion par portion : compte quelques minutes pour un long parcours ; le résultat est ensuite gardé 14 jours.</p>
       <div class="poi-status" id="poiStatus" hidden></div>
       <div class="poi-chips" id="poiChips" role="group" aria-label="Types de lieux affichés"></div>
       <div class="poi-gaps" id="poiGaps"></div>
@@ -2138,6 +2142,8 @@ const OH_JS = ['https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js', 'https:/
 const POI = { key: '', list: [], loading: '', error: '', seq: 0, layer: null, groups: new Set(Object.keys(POI_GROUPS)), ohState: '' };
 try { const g = JSON.parse(localStorage.getItem('pmr-poi-groups') || 'null'); if (Array.isArray(g)) POI.groups = new Set(g.filter(k => POI_GROUPS[k])); } catch (e) {}
 try { $('#poiOpenOnly').checked = localStorage.getItem('pmr-poi-open') === '1'; } catch (e) {}
+try { $('#poiOn').checked = localStorage.getItem('pmr-poi-on') === '1'; } catch (e) {}
+$('#poiOn').addEventListener('change', () => { try { localStorage.setItem('pmr-poi-on', $('#poiOn').checked ? '1' : '0'); } catch (e) {} renderPois(); });
 
 // Simplification de la trace pour la requête (Douglas-Peucker, tolérance en km), découpée en morceaux.
 function routeForQuery(P, tolKm) {
@@ -2362,8 +2368,14 @@ function renderPois() {
   if (POI.layer) { POI.layer.remove(); POI.layer = null; }
   POI.shown = [];
   if (!on) return;
-  if (!POI.key.startsWith(routeSig() + '|') || !POI.key.endsWith('|' + $('#poiRadius').value)) { poiEnsure(); }
   placesEnsure();
+  // recherche des lieux seulement quand « Rechercher les lieux » est cochée
+  const want = $('#poiOn').checked;
+  $('#poiOffHint').hidden = want;
+  for (const id of ['#poiChips', '#poiGaps', '#poiListWrap']) $(id).style.display = want ? '' : 'none';
+  $('#poiOpenOnly').closest('label').hidden = $('#poiListOn').closest('label').hidden = !want;
+  if (!want) { if (POI.ctl) POI.ctl.abort(); POI.seq++; POI.key = ''; POI.list = []; POI.loading = ''; POI.error = ''; renderPoiStatus(); return; }
+  if (!POI.key.startsWith(routeSig() + '|') || !POI.key.endsWith('|' + $('#poiRadius').value)) { poiEnsure(); }
   renderPoiStatus();
   const counts = {}; for (const p of POI.list) counts[p.g] = (counts[p.g] || 0) + 1;
   $('#poiChips').innerHTML = Object.entries(POI_GROUPS).map(([k, g]) =>
