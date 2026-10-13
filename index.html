@@ -2424,16 +2424,16 @@ function drawPlanWx() {
   const kmAtT = t => { const T = S.tl.times; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return S.P.d[lo]; };
   for (const cv of document.querySelectorAll('#planRows canvas[data-wx]')) {
     const d = PLAN.days[+cv.dataset.wx]; if (!d) continue;
-    const W = Math.max(260, Math.max($('#planCard .plan-scroll').clientWidth, 700) - 24), H = 116, dpr = window.devicePixelRatio || 1;
+    const W = Math.max(260, Math.max($('#planCard .plan-scroll').clientWidth, 700) - 24), H = 132, dpr = window.devicePixelRatio || 1;
     cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
     const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
     const ink = cssVar('--ink'), muted = cssVar('--muted'), mono = cssVar('--f-mono').split(',')[0];
-    const ta = d.a.t, tb = d.b.t, span = Math.max(1, tb - ta), l = 40, r = 40, pw = W - l - r;
+    const ta = d.a.t, tb = d.b.t, span = Math.max(1, tb - ta), l = 40, r = 52, pw = W - l - r;
     const X = t => l + (t - ta) / span * pw;
     // une valeur par demi-heure pour la courbe, une colonne par heure pour le ciel, le vent et la pluie
     const pts = []; for (let t = ta; t <= tb + 1; t += 1800e3) { const tt = Math.min(t, tb), km = kmAtT(tt), w = S.wx ? wxAt(sIdx(km), tt) : null; if (w) pts.push({ t: tt, km, w }); }
     if (!pts.length) { c.fillStyle = muted; c.font = `13px ${cssVar('--f-body') || 'system-ui'}`; c.textBaseline = 'middle'; c.fillText('Pas encore de prévision météo pour ce jour.', l, H / 2); continue; }
-    const yT0 = 44, yT1 = H - 20; // zone température / pluie
+    const yT0 = 44, yT1 = H - 34; // zone température / pluie / relief ; en bas : heures puis km
     const temps = pts.map(p => p.w.app);
     let tMin = Math.floor(Math.min(...temps)), tMax = Math.ceil(Math.max(...temps)); if (tMax - tMin < 6) { const m = (tMax + tMin) / 2; tMin = Math.floor(m - 3); tMax = Math.ceil(m + 3); }
     const Yt = v => yT1 - (v - tMin) / (tMax - tMin) * (yT1 - yT0);
@@ -2441,6 +2441,16 @@ function drawPlanWx() {
     // nuit (fond)
     c.fillStyle = cssVar('--night');
     for (let i = 0; i < pts.length - 1; i++) if (!pts[i].w.day) c.fillRect(X(pts[i].t), yT0 - 4, X(pts[i + 1].t) - X(pts[i].t) + .5, yT1 - yT0 + 4);
+    // relief de la journée (aire en fond, échelle propre, altitudes mini / maxi à droite)
+    const eAt = t => S.P.es[idxAtKm(kmAtT(t))], ep = [];
+    for (let i = 0; i <= 160; i++) { const t = ta + span * i / 160; ep.push([X(t), eAt(t)]); }
+    const eLo = Math.min(...ep.map(e => e[1])), eHi = Math.max(...ep.map(e => e[1])), eR = Math.max(100, eHi - eLo);
+    const Ye = e => yT1 - (e - eLo) / eR * (yT1 - yT0) * 0.9;
+    c.beginPath(); c.moveTo(X(ta), yT1); ep.forEach(([x, e]) => c.lineTo(x, Ye(e))); c.lineTo(X(tb), yT1); c.closePath();
+    c.fillStyle = cssVar('--elev'); c.globalAlpha = .75; c.fill(); c.globalAlpha = 1;
+    c.beginPath(); ep.forEach(([x, e], i) => i ? c.lineTo(x, Ye(e)) : c.moveTo(x, Ye(e))); c.strokeStyle = cssVar('--elev-line'); c.lineWidth = 1; c.stroke();
+    c.fillStyle = cssVar('--elev-line'); c.font = `10px ${mono}, monospace`; c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillText(n0(eHi) + ' m', l + pw + 5, Ye(eHi)); if (Ye(eLo) - Ye(eHi) > 14) c.fillText(n0(eLo) + ' m', l + pw + 5, Ye(eLo));
     // pluie par heure
     const hours = []; for (let h0 = Math.floor(ta / 3600e3) * 3600e3; h0 < tb; h0 += 3600e3) { const a = Math.max(ta, h0), b = Math.min(tb, h0 + 3600e3); if (b - a < 60e3) continue;
       const tm = (a + b) / 2, km = kmAtT(tm), w = S.wx ? wxAt(sIdx(km), tm) : null; hours.push({ a, b, tm, km, w }); }
@@ -2459,8 +2469,8 @@ function drawPlanWx() {
     c.font = `600 10px ${mono}, monospace`; c.textBaseline = 'bottom';
     for (const i of new Set([0, iMin, iMax, pts.length - 1])) { const p = pts[i], x = X(p.t), y = Yt(p.w.app);
       c.beginPath(); c.arc(x, y, 2.5, 0, Math.PI * 2); c.fill();
-      c.textAlign = i === 0 ? 'right' : i === pts.length - 1 ? 'left' : 'center';
-      c.fillText(n0(p.w.app) + '°', i === 0 ? x - 4 : i === pts.length - 1 ? x + 4 : x, i === 0 || i === pts.length - 1 ? y + 5 : y - 4); }
+      c.textAlign = i === 0 ? 'right' : i === pts.length - 1 ? 'right' : 'center';
+      c.fillText(n0(p.w.app) + '°', i === 0 ? x - 4 : i === pts.length - 1 ? x - 4 : x, i === 0 ? y + 5 : y - 4); }
     // ciel et sens du vent, une colonne par heure (on en saute si c'est trop serré)
     let last = -99;
     for (const x of hours) { if (!x.w) continue; const cx = X(x.tm); if (cx - last < 22) continue; last = cx;
@@ -2471,6 +2481,14 @@ function drawPlanWx() {
     c.fillStyle = muted; c.font = `10px ${mono}, monospace`; c.textAlign = 'center'; c.textBaseline = 'top';
     const step = pw / Math.max(1, span / 3600e3) < 34 ? 2 : 1; let lastH = -99;
     for (let h0 = Math.ceil(ta / 3600e3) * 3600e3; h0 <= tb; h0 += 3600e3) { const hr = new Date(h0).getHours(); if (hr % step) continue; const x = X(h0); if (x - lastH < 26) continue; lastH = x; c.fillText(hr + 'h', x, yT1 + 4); }
+    // découpage en km : repère au passage de chaque km rond (pas de 5 à 50 km selon la place)
+    const kmSpan = d.b.km - d.a.km, kStep = [5, 10, 20, 25, 50].find(s => pw / (kmSpan / s) >= 44) || 50;
+    const tAtKm = km => S.tl.times[idxAtKm(km)];
+    c.fillStyle = cssVar('--ink'); let lastR = -99;
+    for (let km = Math.ceil(d.a.km / kStep) * kStep; km <= d.b.km + 1e-6; km += kStep) {
+      const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(km), w2 = c.measureText(txt).width / 2;
+      if (x - w2 < lastR + 8 || x - w2 < l - 2) continue; lastR = x + w2; c.fillText(txt, x, yT1 + 20); }
+    c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
     c.textAlign = 'left'; c.textBaseline = 'alphabetic';
   }
 }
