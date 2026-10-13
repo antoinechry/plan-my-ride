@@ -1495,11 +1495,11 @@ function idxAtKm(km) { const d = S.P.d; let lo = 0, hi = S.P.n - 1; while (lo < 
 let chartGeom = null;
 function renderChart() {
   const cv = $('#chart'), wrap = $('#chartWrap');
-  const W = Math.max(280, wrap.clientWidth - 12), H = W < 600 ? 252 : 292, dpr = window.devicePixelRatio || 1;
+  const W = Math.max(280, wrap.clientWidth - 12), H = W < 600 ? 270 : 310, dpr = window.devicePixelRatio || 1;
   cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
   const P = S.P, tl = S.tl;
-  const pad = { l: 44, r: 40, t: 46, b: 30 }, band = 9, SKY = 16; // en haut : heures, puis ligne des pictogrammes du ciel
+  const pad = { l: 44, r: 40, t: 64, b: 30 }, band = 9, SKY = 16, ARW = 15; // en haut : heures, ciel, puis sens du vent
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b - band - 4;
   const X = km => pad.l + km / P.total * pw;
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line');
@@ -1566,12 +1566,12 @@ function renderChart() {
       const x = X(P.d[pi]);
       if (x - lastX > 34) {
         c.strokeStyle = muted; c.beginPath(); c.moveTo(x, pad.t - 4); c.lineTo(x, pad.t); c.stroke();
-        c.fillText(hr === 0 && hStep >= 6 ? dayFmt.format(new Date(tick)).split(' ')[0] : hr + 'h', x, pad.t - SKY - 8); lastX = x;
+        c.fillText(hr === 0 && hStep >= 6 ? dayFmt.format(new Date(tick)).split(' ')[0] : hr + 'h', x, pad.t - ARW - SKY - 9); lastX = x;
       }
     }
     tick += 3600e3;
   }
-  // ciel tous les quarts d'heure (au moins 19 px entre deux pictogrammes : sinon on en saute)
+  // ciel et sens du vent tous les quarts d'heure (au moins 19 px entre deux pictogrammes : sinon on en saute)
   if (S.wx) {
     let q = Math.ceil(tl.start / 900e3) * 900e3, qi = 0, lastQ = -99;
     for (; q <= tl.end; q += 900e3) {
@@ -1579,7 +1579,12 @@ function renderChart() {
       const x = X(P.d[qi]);
       if (x - lastQ < 19) continue;
       const w = wxAt(sIdx(P.d[qi]), q); if (!w) continue;
-      drawSky(c, w, x - SKY / 2, pad.t - SKY - 3, SKY); lastQ = x;
+      drawSky(c, w, x - SKY / 2, pad.t - ARW - SKY - 5, SKY); lastQ = x;
+      // flèche du vent dessous : sens où va le vent, couleur selon la force
+      const k = ARW / 24, ay = pad.t - ARW / 2 - 3;
+      c.save(); c.translate(x, ay); c.rotate(((w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
+      const ap = new Path2D(WARROW); c.fillStyle = windStrength(w.ws)[1]; c.fill(ap);
+      c.lineWidth = 1.3; c.strokeStyle = '#0b1218'; c.lineJoin = 'round'; c.stroke(ap); c.restore();
     }
   }
   chartGeom = { X, pad, pw, ph, bins, nb, Ye, W, H };
