@@ -2493,6 +2493,33 @@ function daySummaries() {
 const PLAN = { times: [], ends: [], days: [] }; // heures de départ choisies pour chaque jour (index 0 = jour 1, non utilisé)
 /* Graphe météo sous chaque journée : de l'heure de départ à la fin de journée, une colonne par heure de roulage :
    ciel et sens du vent en haut, température ressentie (courbe, min et max), pluie en barres (mm/h), heures en bas. */
+// Lever et coucher du soleil (algorithme de SunCalc / NOAA, soleil à −0,833°), en ms, pour le jour local de `ms`.
+function sunRiseSet(ms, lat, lon) {
+  const R = Math.PI / 180, dayMs = 864e5, J1970 = 2440588, J2000 = 2451545, J0 = 0.0009, e = R * 23.4397;
+  const noon = new Date(ms); noon.setHours(12, 0, 0, 0);
+  const d = noon.getTime() / dayMs - 0.5 + J1970 - J2000, lw = -lon * R, phi = lat * R;
+  const n = Math.round(d - J0 - lw / (2 * Math.PI)), ds = J0 + lw / (2 * Math.PI) + n;
+  const M = R * (357.5291 + 0.98560028 * ds), C = R * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  const L = M + C + R * 102.9372 + Math.PI, dec = Math.asin(Math.sin(e) * Math.sin(L));
+  const transit = a => J2000 + a + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const cosw = (Math.sin(-0.833 * R) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+  if (cosw < -1 || cosw > 1) return null; // jour ou nuit polaire
+  const Jnoon = transit(ds), Jset = transit(J0 + (Math.acos(cosw) + lw) / (2 * Math.PI) + n), Jrise = Jnoon - (Jset - Jnoon);
+  const toMs = j => (j + 0.5 - J1970) * dayMs;
+  return { rise: toMs(Jrise), set: toMs(Jset) };
+}
+// Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
+function drawSunEvent(c, x, y, s, dir) {
+  c.save(); c.translate(x, y); c.lineCap = 'round';
+  c.strokeStyle = '#e3a00f'; c.lineWidth = 1.4;
+  for (const a of [-150, -120, -90, -60, -30]) { const r = a * Math.PI / 180; c.beginPath(); c.moveTo(Math.cos(r) * s * .62, Math.sin(r) * s * .62); c.lineTo(Math.cos(r) * s * .88, Math.sin(r) * s * .88); c.stroke(); }
+  c.beginPath(); c.arc(0, 0, s * .42, Math.PI, 0); c.closePath(); c.fillStyle = '#f7bd2f'; c.fill(); c.strokeStyle = '#b97b0c'; c.lineWidth = 1.1; c.stroke();
+  c.strokeStyle = cssVar('--muted'); c.lineWidth = 1.5; c.beginPath(); c.moveTo(-s, 0); c.lineTo(s, 0); c.stroke();
+  const ay = -s * 1.08, up = dir > 0; c.strokeStyle = up ? '#e06a00' : '#3b6fc4'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(0, ay + (up ? 3.5 : -3.5)); c.lineTo(0, ay - (up ? 3.5 : -3.5));
+  c.moveTo(-2.8, ay - (up ? 0.8 : -0.8)); c.lineTo(0, ay - (up ? 3.5 : -3.5)); c.lineTo(2.8, ay - (up ? 0.8 : -0.8)); c.stroke();
+  c.restore();
+}
 const planKmAtT = t => { const T = S.tl.times; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return S.P.d[lo]; };
 function drawPlanWx() { for (const cv of document.querySelectorAll('#planRows canvas[data-wx]')) drawDayWx(cv); }
 // cur : instant survolé (curseur), ou rien
@@ -2565,6 +2592,20 @@ function drawDayWx(cv, cur) {
       const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(km), w2 = c.measureText(txt).width / 2;
       if (x - w2 < lastR + 8 || x - w2 < l - 2) continue; lastR = x + w2; c.fillText(txt, x, yT1 + 20); }
     c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
+    // lever et coucher du soleil pendant la journée, calculés là où l'on se trouve à ce moment-là
+    const posAt = t => S.P.pts[idxAtKm(kmAtT(clamp(t, ta, tb)))];
+    for (let dd = new Date(ta); dd.getTime() <= tb + 864e5; dd.setDate(dd.getDate() + 1)) {
+      let p = posAt(dd.getTime() + 12 * 3600e3), st = sunRiseSet(dd.getTime(), p.lat, p.lon); if (!st) continue;
+      for (const [key, dir] of [['rise', 1], ['set', -1]]) {
+        let te = st[key]; const p2 = posAt(te), st2 = sunRiseSet(dd.getTime(), p2.lat, p2.lon); if (st2) te = st2[key]; // affiné à la position du moment
+        if (te < ta || te > tb) continue;
+        const x = X(te), y = yT0 + 9, txt = (dir > 0 ? '↑ ' : '↓ ') + hm.format(new Date(te));
+        drawSunEvent(c, x, y, 9, dir);
+        c.font = `600 10.5px ${mono}, monospace`; c.fillStyle = dir > 0 ? '#c05800' : '#3b6fc4'; c.textBaseline = 'middle';
+        const tw = c.measureText(txt).width, right = x + 13 + tw < l + pw;
+        c.textAlign = right ? 'left' : 'right'; c.fillText(txt, right ? x + 12 : x - 12, y - 4);
+      }
+    }
     // villes et bourgs traversés ce jour-là, à l'heure de passage (les plus grands d'abord, sans chevauchement)
     if (PLACES.list.length) {
       const inDay = attachToRoute(PLACES.list).filter(p => p.km >= d.a.km - 0.5 && p.km <= d.b.km + 0.5 && (p.place !== 'village' || p.off <= 1200))
