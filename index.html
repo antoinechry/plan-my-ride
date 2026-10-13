@@ -505,11 +505,12 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <div class="card-head">
         <h2>Ravitaillement et hébergement</h2>
         <label class="arrows-toggle"><input type="checkbox" id="poiOpenOnly"> Seulement ouverts à mon passage</label>
+        <label class="switch"><input type="checkbox" id="poiListOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher la liste</label>
       </div>
       <div class="poi-status" id="poiStatus" hidden></div>
       <div class="poi-chips" id="poiChips" role="group" aria-label="Types de lieux affichés"></div>
       <div class="poi-gaps" id="poiGaps"></div>
-      <div class="poi-scroll">
+      <div class="poi-scroll" id="poiListWrap">
         <table class="poi-table">
           <thead><tr><th>Km</th><th>Passage</th><th>Lieu</th><th>Écart</th><th>À ton passage</th></tr></thead>
           <tbody id="poiRows"></tbody>
@@ -2821,6 +2822,10 @@ $('#csv').addEventListener('click', exportCsv);
 function applyRows() { $('#rowsWrap').hidden = !$('#rowsOn').checked; try { localStorage.setItem('pmr-rows', $('#rowsOn').checked ? '1' : '0'); } catch (e) {} }
 try { if (localStorage.getItem('pmr-rows') === '0') $('#rowsOn').checked = false; } catch (e) {}
 $('#rowsOn').addEventListener('change', applyRows);
+// liste des lieux de la page Ultra : repliable (les catégories et les marqueurs de la carte restent), choix mémorisé
+function applyPoiList() { $('#poiListWrap').hidden = !$('#poiListOn').checked; try { localStorage.setItem('pmr-poi-list', $('#poiListOn').checked ? '1' : '0'); } catch (e) {} }
+try { if (localStorage.getItem('pmr-poi-list') === '0') $('#poiListOn').checked = false; } catch (e) {}
+$('#poiListOn').addEventListener('change', applyPoiList); applyPoiList();
 applyRows();
 $('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
 $('#skyOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
