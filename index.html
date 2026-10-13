@@ -224,7 +224,10 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 @keyframes wdrift{0%{transform:translateY(var(--a,3px));opacity:.6}55%{transform:translateY(calc(var(--a,3px) * -1));opacity:1}100%{transform:translateY(var(--a,3px));opacity:.6}}
 @keyframes wbreath{0%,100%{opacity:.55}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.anim .wa .wmove{animation:none}}
-.wa b{font:600 10.5px/1 var(--f-mono);color:#15202a;background:rgba(255,255,255,.92);border-radius:7px;padding:2px 4px;box-shadow:0 0 0 1px rgba(0,0,0,.15);white-space:nowrap}
+.wa b{display:inline-flex;align-items:center;gap:2px;font:600 10.5px/1 var(--f-mono);color:#15202a;background:rgba(255,255,255,.92);border-radius:7px;padding:2px 4px;box-shadow:0 0 0 1px rgba(0,0,0,.15);white-space:nowrap}
+.wa b:empty{display:none}
+.wa b.solo{padding:2px 3px;border-radius:9px}
+.wa svg.wsky{filter:none;flex:none}
 .legend .wscale{display:inline-flex;align-items:center;gap:0;border-radius:4px;overflow:hidden;vertical-align:middle;margin-left:6px}
 .legend .wscale span{font:600 10.5px/1 var(--f-mono);color:#15202a;padding:3px 6px}
 .legend .wrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%}
@@ -473,6 +476,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         <h2>Carte météo du parcours</h2>
         <button class="btn small" id="exportImg" type="button" title="Image PNG de la carte (vue actuelle) avec le vent, et du profil météo">Exporter l'image</button>
         <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
+        <label class="arrows-toggle"><input type="checkbox" id="skyOn" checked> Ciel</label>
         <label class="arrows-toggle"><input type="checkbox" id="animOn" checked> Animation</label>
         <div class="seg" role="group" aria-label="Colorer la trace selon">
           <button type="button" data-metric="wind" aria-pressed="true">Vent ressenti</button>
@@ -1054,6 +1058,46 @@ function skyLabel(code, day) {
   if (code <= 86) return 'Averses de neige';
   return 'Orage';
 }
+/* Pictogramme du ciel à côté des flèches de vent : soleil / lune / éclaircies / couvert / brouillard / pluie / neige / orage.
+   Chaque pictogramme = traits dans une boîte 24×24, dessinés en SVG à l'écran et en Path2D pour l'export image. */
+const SKY_P = {
+  sun: ['M7 12a5 5 0 1 0 10 0a5 5 0 1 0-10 0', '#f7bd2f', '#b97b0c', 1.2],
+  rays: ['M12 1.6v2.6M12 19.8v2.6M1.6 12h2.6M19.8 12h2.6M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8', 'none', '#e3a00f', 2],
+  moon: ['M14.5 2.8a9.2 9.2 0 1 0 6.7 14A7.3 7.3 0 0 1 14.5 2.8z', '#eef0f7', '#6f7a99', 1.3],
+  sunS: ['M5.2 8.2a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0', '#f7bd2f', '#b97b0c', 1.1],
+  raysS: ['M9 1.4v1.6M2.4 8.2h1.6M4.3 3.5l1.1 1.1M13.7 3.5l-1.1 1.1', 'none', '#e3a00f', 1.6],
+  moonS: ['M10.5 2.2a6.2 6.2 0 1 0 4.6 9.6A4.9 4.9 0 0 1 10.5 2.2z', '#eef0f7', '#6f7a99', 1.1],
+  cloudS: ['M8.8 21h9.4a3.7 3.7 0 0 0 .5-7.35A5.1 5.1 0 0 0 9.1 12.4a4.3 4.3 0 0 0-.3 8.6z', '#ffffff', '#5d6b7a', 1.3],
+  cloud: ['M6.6 19.2h11a4.2 4.2 0 0 0 .6-8.35A5.8 5.8 0 0 0 7 9.6a4.8 4.8 0 0 0-.4 9.6z', '#d9dfe6', '#55626f', 1.3],
+  cloudH: ['M6.6 14.6h11a4.2 4.2 0 0 0 .6-8.35A5.8 5.8 0 0 0 7 5a4.8 4.8 0 0 0-.4 9.6z', '#c3cbd4', '#4c5966', 1.3],
+  drops: ['M8.4 17.2l-1.2 3.8M12.6 17.2l-1.2 3.8M16.8 17.2l-1.2 3.8', 'none', '#1f6fd1', 2.1],
+  flakes: ['M8 18.6h.01M12 21h.01M16 18.6h.01', 'none', '#4b86cf', 3.2],
+  bolt: ['M13 14.2l-3.6 5h3.1l-1.6 4 4.6-5.6h-3.1l1.8-3.4z', '#f7bd2f', '#8d6200', 1],
+  fog: ['M4 8.5h16M2.5 12.5h19M4 16.5h16', 'none', '#6d7a88', 2.2]
+};
+function skyKind(w) {
+  const c = w && w.code;
+  if (c == null || !isFinite(c)) return null;
+  if (c >= 95) return ['cloudH', 'bolt'];
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ['cloudH', 'flakes'];
+  if (c >= 51) return ['cloudH', 'drops'];
+  if (c >= 45) return ['fog'];
+  if (c === 3) return ['cloud'];
+  if (c === 2) return w.day ? ['raysS', 'sunS', 'cloudS'] : ['moonS', 'cloudS'];
+  return w.day ? ['rays', 'sun'] : ['moon'];
+}
+function skySvg(w, sz) {
+  const k = skyKind(w); if (!k) return '';
+  return `<svg class="wsky" viewBox="0 0 24 24" width="${sz}" height="${sz}" aria-hidden="true">${k.map(n => { const [d, f, s, lw] = SKY_P[n];
+    return `<path d="${d}" fill="${f}" stroke="${s}" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round"/>`; }).join('')}</svg>`;
+}
+function drawSky(c, w, x, y, sz) { // (x, y) = coin haut gauche
+  const k = skyKind(w); if (!k) return;
+  c.save(); c.translate(x, y); c.scale(sz / 24, sz / 24); c.lineCap = c.lineJoin = 'round';
+  for (const n of k) { const [d, f, s, lw] = SKY_P[n], p = new Path2D(d);
+    if (f !== 'none') { c.fillStyle = f; c.fill(p); } c.strokeStyle = s; c.lineWidth = lw; c.stroke(p); }
+  c.restore();
+}
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
 const compass = deg => COMPASS[Math.round(deg / 22.5) % 16];
 const arrowSvg = (deg, color) => `<svg class="arrow" viewBox="0 0 24 24" style="transform:rotate(${deg}deg)"><path d="M12 2 L19 20 L12 15.5 L5 20 Z" fill="${color}"/></svg>`;
@@ -1172,7 +1216,8 @@ function renderWindArrows() {
   if (!map) return;
   if (windLayer) windLayer.remove();
   windLayer = L.layerGroup().addTo(map);
-  if (!S.wx || !S.tl || !$('#arrowsOn').checked) return;
+  const showA = $('#arrowsOn').checked, showS = $('#skyOn').checked;
+  if (!S.wx || !S.tl || (!showA && !showS)) return;
   // Une flèche tous les ~40 px le long de la trace, quel que soit le zoom, et seulement dans la zone visible.
   // Entre deux points météo, la flèche prend le point le plus proche à l'heure de passage à cet endroit.
   const P = S.P, view = map.getBounds().pad(0.2), shown = [];
@@ -1192,9 +1237,12 @@ function renderWindArrows() {
     // durée du cycle et amplitude du mouvement selon la vitesse du vent
     const dur = clamp(2.8 - w.ws * 0.05, 0.55, 2.8).toFixed(2), amp = clamp(1.5 + w.ws * 0.16, 1.5, 9).toFixed(1);
     const delay = (-(shown.length * 0.37) % dur).toFixed(2), calm = w.ws < 5 ? ' calm' : '';
-    const html = `<div class="wa"><span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${sz}" height="${sz}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg></span><b>${n0(w.ws)}</b></div>`;
-    L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', iconSize: [44, sz + 16], iconAnchor: [22, sz / 2] }), keyboard: false })
-      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
+    const arrowHtml = showA ? `<span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${sz}" height="${sz}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="M12 1.5 L20 21 L12 16 L4 21 Z" fill="${col}" stroke="#15202a" stroke-width="1.1" stroke-linejoin="round"/></svg></span>` : '';
+    const sky = showS ? skySvg(w, showA ? 15 : 20) : '';
+    const html = `<div class="wa">${arrowHtml}<b class="${showA ? '' : 'solo'}">${sky}${showA ? n0(w.ws) : ''}</b></div>`;
+    const icon = showA ? { iconSize: [60, sz + 18], iconAnchor: [30, sz / 2] } : { iconSize: [30, 26], iconAnchor: [15, 13] };
+    L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', ...icon }), keyboard: false })
+      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>${skyLabel(w.code, w.day)} · ${n0(w.temp)} °C${w.pr >= 0.1 ? ` · pluie ${n1(w.pr)} mm/h` : ''}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
       .addTo(windLayer);
   }
 }
@@ -1205,7 +1253,8 @@ function renderLegend() {
   else if (S.metric === 'temp') el.innerHTML = `<span>Température ressentie</span><span>−5 °C <i class="ramp" style="background:linear-gradient(90deg,${TEMP_STOPS.map(s => s[1]).join(',')})"></i> 33 °C</span>`;
   else if (S.metric === 'rain') el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Sec</span><span>0,1 mm/h <i class="ramp" style="background:linear-gradient(90deg,#9cc7ef,#123f8c)"></i> 8 mm/h</span>`;
   else el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Couvert</span><span><i style="background:${cssVar('--sun')}"></i>Plein soleil</span><span><i style="background:#3a4552"></i>Nuit</span>`;
-  if ($('#arrowsOn').checked) el.innerHTML += `<div class="wrow"><span>Flèches : sens où va le vent, chiffre en km/h</span><span>Force<span class="wscale">${WIND_SCALE.map((w, i) => `<span style="background:${w[1]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? w[0] + '+' : w[0] + '–' + WIND_SCALE[i + 1][0]}</span>`).join('')}</span></span></div>`;
+  if ($('#arrowsOn').checked) el.innerHTML += `<div class="wrow"><span>Flèches : sens où va le vent, chiffre en km/h${$('#skyOn').checked ? ' · pictogramme : ciel à l\'heure de passage' : ''}</span><span>Force<span class="wscale">${WIND_SCALE.map((w, i) => `<span style="background:${w[1]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? w[0] + '+' : w[0] + '–' + WIND_SCALE[i + 1][0]}</span>`).join('')}</span></span></div>`;
+  else if ($('#skyOn').checked) el.innerHTML += `<div class="wrow"><span>Pictogrammes : ciel à l'heure de passage (soleil, lune la nuit, nuages, pluie)</span></div>`;
 }
 /* ---------- export image (page Sortie) : carte avec la trace et le vent + profil météo ---------- */
 // L'image reprend la vue actuelle de la carte : zoomer / cadrer avant d'exporter. Les tuiles du fond sont rechargées
@@ -1241,7 +1290,8 @@ async function drawMapTo(c, x0, y0, W, H) {
     c.strokeStyle = metricColor(sv); c.lineWidth = 5; c.stroke();
   }
   // flèches de vent (même placement qu'à l'écran)
-  if (S.wx && $('#arrowsOn').checked) {
+  const exA = $('#arrowsOn').checked, exS = $('#skyOn').checked;
+  if (S.wx && (exA || exS)) {
     const arrow = new Path2D('M12 1.5 L20 21 L12 16 L4 21 Z'), shown = [];
     let run = ARROW_GAP / 2, prev = null;
     for (let i = 0; i < P.n; i++) {
@@ -1253,15 +1303,21 @@ async function drawMapTo(c, x0, y0, W, H) {
       const w = wxAt(sIdx(P.d[i]), S.tl.times[i]); if (!w) continue;
       run = 0; shown.push([x, y]);
       const sz = Math.round(clamp(16 + w.ws * 0.35, 16, 30)), k = sz / 24;
-      c.save(); c.translate(x, y); c.rotate(((w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
-      c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 2; c.shadowOffsetY = 1;
-      c.fillStyle = windStrength(w.ws)[1]; c.fill(arrow); c.shadowColor = 'transparent';
-      c.lineWidth = 1.1; c.strokeStyle = '#15202a'; c.lineJoin = 'round'; c.stroke(arrow); c.restore();
-      const lbl = n0(w.ws); c.font = `600 10.5px ${cssVar('--f-mono').split(',')[0]}, monospace`;
-      const tw = c.measureText(lbl).width, by = y + sz / 2 + 2;
-      c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.roundRect(x - tw / 2 - 4, by, tw + 8, 15, 7); c.fill();
+      if (exA) {
+        c.save(); c.translate(x, y); c.rotate(((w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
+        c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 2; c.shadowOffsetY = 1;
+        c.fillStyle = windStrength(w.ws)[1]; c.fill(arrow); c.shadowColor = 'transparent';
+        c.lineWidth = 1.1; c.strokeStyle = '#15202a'; c.lineJoin = 'round'; c.stroke(arrow); c.restore();
+      }
+      // pastille : pictogramme du ciel + vitesse du vent (ou pictogramme seul sans les flèches)
+      const lbl = exA ? n0(w.ws) : '', is = exS && skyKind(w) ? (exA ? 15 : 20) : 0;
+      c.font = `600 10.5px ${cssVar('--f-mono').split(',')[0]}, monospace`;
+      const tw = lbl ? c.measureText(lbl).width : 0, gap = is && lbl ? 2 : 0, bw = is + gap + tw + 8, bh = Math.max(15, is + 2);
+      const by = exA ? y + sz / 2 + 2 : y - bh / 2, bx = x - bw / 2;
+      c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.roundRect(bx, by, bw, bh, 7); c.fill();
       c.strokeStyle = 'rgba(0,0,0,.15)'; c.lineWidth = 1; c.stroke();
-      c.fillStyle = '#15202a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(lbl, x, by + 7.5); c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+      if (is) drawSky(c, w, bx + 4, by + (bh - is) / 2, is);
+      if (lbl) { c.fillStyle = '#15202a'; c.textBaseline = 'middle'; c.fillText(lbl, bx + 4 + is + gap, by + bh / 2); c.textBaseline = 'alphabetic'; }
     }
   }
   // lieux le long de la trace (page Ultra), comme les marqueurs de la carte
@@ -2627,6 +2683,7 @@ try { if (localStorage.getItem('pmr-rows') === '0') $('#rowsOn').checked = false
 $('#rowsOn').addEventListener('change', applyRows);
 applyRows();
 $('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
+$('#skyOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
 function applyAnim() { $('#map').classList.toggle('anim', $('#animOn').checked); try { localStorage.setItem('pmr-anim', $('#animOn').checked ? '1' : '0'); } catch (e) {} }
 try { if (localStorage.getItem('pmr-anim') === '0') $('#animOn').checked = false; } catch (e) {}
 $('#animOn').addEventListener('change', applyAnim);
