@@ -533,7 +533,9 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         <span><i style="background:var(--elev-line)"></i>Altitude</span>
         <span><i style="background:var(--warm)"></i>Température ressentie</span>
         <span><i style="background:var(--rain)"></i>Pluie (mm/h)</span>
-        <span><i style="background:linear-gradient(90deg,var(--head),var(--cross),var(--tail))"></i>Bande vent : face / travers / dos</span>
+        <span><i style="background:var(--head)"></i>Vent de face (barre vers le haut, km/h)</span>
+        <span><i style="background:var(--tail)"></i>Vent de dos (barre vers le bas)</span>
+        <span><i style="background:var(--cross)"></i>Travers ou &lt; 4 km/h</span>
         <span id="ccKey"><i style="background:linear-gradient(90deg,rgba(96,108,121,.1),rgba(96,108,121,.75))"></i>Nuages : strate grise en haut (plus foncée = plus couvert)</span>
         <span><i style="background:var(--night);border:1px solid var(--line)"></i>Nuit</span>
       </div>
@@ -1045,6 +1047,7 @@ function setStatus(msg, kind) {
 
 /* ---------- couleurs ---------- */
 function hexToRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+const WP_CHART = 70; // hauteur du panneau vent du profil (= WP)
 const CC_OVER = '#8d98a4'; // nuages du profil (légende)
 // Nuages du profil : une strate grise en haut du graphique, d'autant plus foncée que le ciel est couvert
 // (transparente par ciel dégagé), fondue vers le bas. Dessinée à part puis posée, pour le fondu.
@@ -1476,7 +1479,7 @@ async function exportImage() {
     c.drawImage(cv, pad, y, MW, CH); y += CH;
     // légende du graphique
     c.font = `12.5px ${body}`; lx = pad; const ky = y + 18;
-    for (const [col, txt] of [[cssVar('--elev-line'), 'Altitude'], [cssVar('--warm'), 'Température ressentie'], [cssVar('--rain'), 'Pluie (mm/h)'], [cssVar('--head'), 'Bande vent : face / travers / dos'], ...(S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))) ? [[CC_OVER, 'Nuages : strate grise en haut']] : []), [cssVar('--elev'), 'Nuit']]) {
+    for (const [col, txt] of [[cssVar('--elev-line'), 'Altitude'], [cssVar('--warm'), 'Température ressentie'], [cssVar('--rain'), 'Pluie (mm/h)'], [cssVar('--head'), 'Vent de face (barre vers le haut)'], [cssVar('--tail'), 'Vent de dos (vers le bas)'], [cssVar('--cross'), 'Travers ou faible'], ...(S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))) ? [[CC_OVER, 'Nuages : strate grise en haut']] : []), [cssVar('--elev'), 'Nuit']]) {
       c.fillStyle = col; c.fillRect(lx, ky - 5, 14, 3); lx += 20; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ky); lx += c.measureText(txt).width + 16;
     }
     y += keysH;
@@ -1511,14 +1514,15 @@ function idxAtKm(km) { const d = S.P.d; let lo = 0, hi = S.P.n - 1; while (lo < 
 let chartGeom = null;
 function renderChart() {
   const cv = $('#chart'), wrap = $('#chartWrap');
-  const W = Math.max(280, wrap.clientWidth - 12), H = W < 600 ? 270 : 310, dpr = window.devicePixelRatio || 1;
+  const W = Math.max(280, wrap.clientWidth - 12), H = W < 600 ? 338 : 378, dpr = window.devicePixelRatio || 1;
   cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
   const P = S.P, tl = S.tl;
-  const pad = { l: 44, r: 40, t: 64, b: 30 }, band = 9, SKY = 16, ARW = 15; // en haut : heures, ciel, puis sens du vent
+  const pad = { l: 44, r: 40, t: 64, b: 30 }, band = 0, SKY = 16, ARW = 15, WP = 70, WG = 18; // en haut : heures, ciel, puis sens du vent
   // couverture nuageuse dessinée en nuages en haut du graphique (seulement si la source la donne)
   const hasCc = !!S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))), cband = 0, cgap = 0;
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b - band - 4 - cband - cgap;
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b - WP - WG - cband - cgap;
+  const wy0 = pad.t + ph + WG, wyz = wy0 + WP / 2; // panneau vent sous le profil : haut, ligne zéro
   const X = km => pad.l + km / P.total * pw;
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line');
   const font = n => `${n}px ${cssVar('--f-mono').split(',')[0]}, monospace`;
@@ -1582,13 +1586,36 @@ function renderChart() {
       for (let t = Math.ceil(tMin / tStep) * tStep; t <= tMax; t += tStep) c.fillText(t + '°', pad.l + pw + 5, Yt(t));
     }
     // bande vent
-    for (let b = 0; b < nb; b++) { if (!bins[b].w) continue; c.fillStyle = windColor(bins[b].head); c.fillRect(X(bins[b].km), pad.t + ph + 4, X(bins[b + 1].km) - X(bins[b].km) + .5, band); }
+    // vent ressenti par heure de roulage : barre vers le haut = de face, vers le bas = de dos (moyenne sur l'heure)
+    const wbars = [];
+    for (let h0 = Math.floor(tl.start / 3600e3) * 3600e3; h0 < tl.end; h0 += 3600e3) {
+      const ta = Math.max(tl.start, h0), tb = Math.min(tl.end, h0 + 3600e3), ka = kmAtT(ta), kb = kmAtT(tb);
+      if (kb - ka <= 0) continue;
+      let s = 0, n = 0;
+      for (let j = 0; j < 6; j++) { const t = ta + (tb - ta) * (j + .5) / 6, km = kmAtT(t), w = wxAt(sIdx(km), t);
+        if (w) { s += w.ws * Math.cos((w.wd - P.b[idxAtKm(km)]) * RAD); n++; } }
+      if (n) wbars.push({ x: X(ka), x2: X(kb), v: s / n });
+    }
+    c.strokeStyle = line; c.lineWidth = 1; c.beginPath(); c.moveTo(pad.l, wyz); c.lineTo(pad.l + pw, wyz); c.stroke();
+    c.font = font(9.5); c.fillStyle = muted; c.textAlign = 'right'; c.textBaseline = 'middle';
+    c.fillText('face ↑', pad.l - 4, wy0 + 6); c.fillText('0', pad.l - 4, wyz); c.fillText('dos ↓', pad.l - 4, wy0 + WP - 6);
+    c.textAlign = 'left'; c.textBaseline = 'bottom'; c.fillText('Vent ressenti par heure (km/h) : ↑ de face · ↓ de dos · gris = travers ou faible', pad.l, wy0 - 1);
+    if (wbars.length) {
+      const vMax = Math.max(20, ...wbars.map(b => Math.abs(b.v))), sc = (WP / 2 - 11) / vMax;
+      c.textAlign = 'center'; c.font = font(9);
+      for (const b of wbars) {
+        const bw = Math.max(2, b.x2 - b.x - 1.5), bx = b.x + .75, hh = Math.max(1.5, Math.abs(b.v) * sc);
+        const col = Math.abs(b.v) < 4 ? cssVar('--cross') : b.v > 0 ? cssVar('--head') : cssVar('--tail');
+        c.fillStyle = col; c.fillRect(bx, b.v > 0 ? wyz - hh : wyz, bw, hh);
+        if (bw >= 16 && Math.abs(b.v) >= 6) { c.textBaseline = b.v > 0 ? 'bottom' : 'top'; c.fillText(n0(Math.abs(b.v)), bx + bw / 2, b.v > 0 ? wyz - hh - 1 : wyz + hh + 1); }
+      }
+    }
 
   }
   // axe km
   c.fillStyle = muted; c.textAlign = 'center'; c.textBaseline = 'top';
   const kStep = niceStep(P.total / Math.max(3, Math.floor(pw / 80)));
-  for (let k = 0; k <= P.total + 1e-6; k += kStep) { const x = X(k); c.fillText(n0(k) + (k === 0 ? ' km' : ''), x, pad.t + ph + band + cband + cgap + 8); }
+  for (let k = 0; k <= P.total + 1e-6; k += kStep) { const x = X(k); c.fillText(n0(k) + (k === 0 ? ' km' : ''), x, wy0 + WP + 6); }
   // heures en haut
   const span = (tl.end - tl.start) / 3600e3;
   const hStep = [1, 2, 3, 4, 6, 12, 24].find(s => span / s <= pw / 46) || 24;
@@ -1624,7 +1651,7 @@ function renderChart() {
     }
   }
   const ck = $('#ccKey'); if (ck) ck.hidden = !hasCc;
-  chartGeom = { X, pad, pw, ph, bins, nb, Ye, W, H };
+  chartGeom = { wy0, X, pad, pw, ph, bins, nb, Ye, W, H };
 }
 function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw || 1)), f = raw / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; }
 
@@ -1637,7 +1664,7 @@ function chartHover(ev) {
   const w = S.wx ? wxAt(sIdx(km), t) : null, head = w ? w.ws * Math.cos((w.wd - S.P.b[i]) * RAD) : 0;
   renderChart();
   const c = $('#chart').getContext('2d');
-  c.strokeStyle = cssVar('--ink'); c.lineWidth = 1; c.beginPath(); c.moveTo(x, pad.t); c.lineTo(x, pad.t + chartGeom.ph + 13); c.stroke();
+  c.strokeStyle = cssVar('--ink'); c.lineWidth = 1; c.beginPath(); c.moveTo(x, pad.t); c.lineTo(x, chartGeom.wy0 + WP_CHART); c.stroke();
   const tip = $('#tip'); tip.hidden = false;
   const rel = relLabel(head);
   tip.innerHTML = `<div class="label">km ${n1(km)} · ${whenTxt(t, S.tl.start)}</div>
