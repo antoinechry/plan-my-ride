@@ -534,7 +534,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         <span><i style="background:var(--warm)"></i>Température ressentie</span>
         <span><i style="background:var(--rain)"></i>Pluie (mm/h)</span>
         <span><i style="background:linear-gradient(90deg,var(--head),var(--cross),var(--tail))"></i>Bande vent : face / travers / dos</span>
-        <span id="ccKey"><i style="background:#f4f6f8;box-shadow:0 0 0 1.5px #8d98a4"></i>Nuages (plus épais = plus couvert)</span>
+        <span id="ccKey"><i style="background:linear-gradient(90deg,rgba(96,108,121,.1),rgba(96,108,121,.75))"></i>Nuages : strate grise en haut (plus foncée = plus couvert)</span>
         <span><i style="background:var(--night);border:1px solid var(--line)"></i>Nuit</span>
       </div>
     </section>
@@ -1046,30 +1046,19 @@ function setStatus(msg, kind) {
 /* ---------- couleurs ---------- */
 function hexToRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
 const CC_OVER = '#8d98a4'; // nuages du profil (légende)
-// Nuages du profil : rangée de « bouffées » (cercles) tous les ~9 px, rayon selon la couverture, fusionnées en nuages
-// (une suite de bouffées = un nuage, contour commun) ; plus le ciel est couvert, plus le nuage est gros et gris. Rien sous 8 %.
+// Nuages du profil : une strate grise en haut du graphique, d'autant plus foncée que le ciel est couvert
+// (transparente par ciel dégagé), fondue vers le bas. Dessinée à part puis posée, pour le fondu.
 function drawCloudCeiling(c, bins, X, x0, y0, pw, ph) {
-  const step = 9, maxR = Math.min(18, ph * 0.11), groups = [];
-  const ccAt = x => { const km = (x - x0) / pw * bins[bins.length - 1].km; let lo = 0, hi = bins.length - 1;
-    while (lo < hi) { const m = (lo + hi) >> 1; if (bins[m].km < km) lo = m + 1; else hi = m; } const w = bins[lo].w; return w && isFinite(w.cc) ? w.cc : NaN; };
-  let cur = null;
-  for (let k = 0, x = x0 + step / 2; x < x0 + pw; x += step, k++) {
-    const cc = ccAt(x);
-    if (!(cc >= 8)) { cur = null; continue; }
-    if (!cur) groups.push(cur = []);
-    const f = clamp(cc / 100, 0, 1), wob = ((k * 37) % 7) / 7; // petite variation régulière des bouffées
-    const r = maxR * (0.4 + 0.6 * f) * (0.8 + 0.4 * wob);
-    cur.push({ x, y: y0 + r * 0.55 + (k % 2) * r * 0.25, r, f });
-  }
-  if (!groups.length) return;
-  c.save(); c.beginPath(); c.rect(x0, y0, pw, ph); c.clip();
-  for (const g of groups) {
-    const mf = g.reduce((s, p) => s + p.f, 0) / g.length;
-    c.beginPath(); for (const p of g) { c.moveTo(p.x + p.r, p.y); c.arc(p.x, p.y, p.r, 0, Math.PI * 2); }
-    c.lineWidth = 2; c.strokeStyle = mix('#9aa6b2', '#5f6b77', mf); c.stroke();
-    c.fillStyle = mix('#ffffff', '#b9c2cb', mf); c.fill();
-  }
-  c.restore();
+  const sh = Math.round(Math.max(14, ph * 0.16));
+  const off = document.createElement('canvas'); off.width = Math.ceil(pw); off.height = Math.ceil(sh);
+  const o = off.getContext('2d');
+  for (let b = 0; b < bins.length - 1; b++) { const w = bins[b].w; if (!w || !isFinite(w.cc)) continue;
+    o.fillStyle = `rgba(96,108,121,${(0.75 * clamp(w.cc / 100, 0, 1)).toFixed(3)})`;
+    const xa = Math.round(X(bins[b].km) - x0), xb = Math.round(X(bins[b + 1].km) - x0); // bords entiers : pas de raies
+    if (xb > xa) o.fillRect(xa, 0, xb - xa, sh); }
+  const g = o.createLinearGradient(0, 0, 0, sh); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.55, 'rgba(0,0,0,.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  o.globalCompositeOperation = 'destination-in'; o.fillStyle = g; o.fillRect(0, 0, pw, sh);
+  c.drawImage(off, x0, y0, pw, sh);
 }
 function mix(a, b, f) { const A = hexToRgb(a), B = hexToRgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * f)).join(',')})`; }
 function windColor(head) { const c = cssVar('--cross'); return head >= 0 ? mix(c, cssVar('--head'), clamp((head - 3) / 22, 0, 1)) : mix(c, cssVar('--tail'), clamp((-head - 3) / 22, 0, 1)); }
@@ -1487,7 +1476,7 @@ async function exportImage() {
     c.drawImage(cv, pad, y, MW, CH); y += CH;
     // légende du graphique
     c.font = `12.5px ${body}`; lx = pad; const ky = y + 18;
-    for (const [col, txt] of [[cssVar('--elev-line'), 'Altitude'], [cssVar('--warm'), 'Température ressentie'], [cssVar('--rain'), 'Pluie (mm/h)'], [cssVar('--head'), 'Bande vent : face / travers / dos'], ...(S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))) ? [[CC_OVER, 'Nuages (plus épais = plus couvert)']] : []), [cssVar('--elev'), 'Nuit']]) {
+    for (const [col, txt] of [[cssVar('--elev-line'), 'Altitude'], [cssVar('--warm'), 'Température ressentie'], [cssVar('--rain'), 'Pluie (mm/h)'], [cssVar('--head'), 'Bande vent : face / travers / dos'], ...(S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))) ? [[CC_OVER, 'Nuages : strate grise en haut']] : []), [cssVar('--elev'), 'Nuit']]) {
       c.fillStyle = col; c.fillRect(lx, ky - 5, 14, 3); lx += 20; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ky); lx += c.measureText(txt).width + 16;
     }
     y += keysH;
