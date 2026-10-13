@@ -72,9 +72,13 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .plan-form #planDays{width:90px}
 .plan-form .plan-custom{align-self:center}
 #planStartSlot #startRow{display:flex;gap:14px;margin:0}
-#planSpeedSlot #manualSettings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 22px;padding:0 14px 14px}
-#planSpeedSlot #manualSettings > .priv{grid-column:1 / -1}
-@media (max-width:760px){#planSpeedSlot #manualSettings{grid-template-columns:1fr}}
+#planSpeedSlot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 22px;padding:0 14px 14px}
+#planSpeedSlot #manualSettings{display:contents}
+#planSpeedSlot #manualSettings > .priv{grid-column:1 / -1;order:2}
+#planSpeedSlot #windField{order:1}
+#planSpeedSlot output{white-space:nowrap}
+@media (max-width:900px){#planSpeedSlot{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){#planSpeedSlot{grid-template-columns:1fr}}
 .plan-note{padding:0 14px;margin:0 0 10px}
 .plan-scroll{overflow-x:auto}
 .plan-table{min-width:700px}
@@ -400,10 +404,11 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </div>
     </div>
     <div id="manualHome" hidden></div>
-    <div class="field">
+    <div class="field" id="windField">
       <label class="label" for="windOn">Effet du vent</label>
       <label class="toggle"><input type="checkbox" id="windOn"> Ralentir face au vent, accélérer vent de dos</label>
     </div>
+    <div id="windHome" hidden></div>
 
     <div class="mode-ultra" id="ultraSettings">
       <hr class="sep">
@@ -1848,8 +1853,8 @@ function applyModeUI() {
   const ultra = S.mode === 'ultra';
   // page Ultra : départ (date, heure) et vitesse / VAM / arrêts / calage dans la carte « Planification journalière » ;
   // page Sortie : dans la barre latérale. Les éléments sont déplacés (mêmes identifiants, mêmes écouteurs).
-  if (ultra) { $('#planStartSlot').append($('#startRow')); $('#planSpeedSlot').append($('#manualSettings')); }
-  else { $('#startHome').before($('#startRow')); $('#manualHome').before($('#manualSettings')); }
+  if (ultra) { $('#planStartSlot').append($('#startRow')); $('#planSpeedSlot').append($('#manualSettings'), $('#windField')); }
+  else { $('#startHome').before($('#startRow')); $('#manualHome').before($('#manualSettings')); $('#windHome').before($('#windField')); }
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
   $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
