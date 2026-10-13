@@ -2296,10 +2296,10 @@ async function poiEnsure(force) {
    cherchées une fois par parcours (portions d'environ 250 points, une requête à la fois), gardées 30 jours dans
    IndexedDB (store `pois`, clé « places| » + signature). Affichées sous les graphes de chaque journée. */
 const PLACES = { key: '', list: [], seq: 0, ctl: null };
-const PLACE_RANK = { city: 2, town: 1 };
+const PLACE_RANK = { city: 2, town: 1, village: 0 };
 async function placesEnsure() {
   if (!S.P || S.mode !== 'ultra') return;
-  const key = 'places|' + routeSig();
+  const key = 'places2|' + routeSig(); // places2 : villes, bourgs et villages
   if (PLACES.key === key) return;
   const seq = ++PLACES.seq; if (PLACES.ctl) PLACES.ctl.abort();
   const ctl = (PLACES.ctl = new AbortController());
@@ -2315,7 +2315,7 @@ async function placesEnsure() {
   for (const ch of chunks) {
     const ll = ch.map(i => S.P.pts[i].lat.toFixed(4) + ',' + S.P.pts[i].lon.toFixed(4)).join(',');
     try {
-      const els = await overpassFetch(`[out:json][timeout:60];\nnode(around:2400,${ll})["place"~"^(city|town)$"]["name"];\nout tags;`, ctl.signal);
+      const els = await overpassFetch(`[out:json][timeout:60];\nnode(around:2400,${ll})["place"~"^(city|town|village)$"]["name"];\nout tags;`, ctl.signal);
       for (const el of els) if (!seen.has(el.id)) seen.set(el.id, { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, place: el.tags.place, pop: +el.tags.population || 0 });
     } catch (e) { if (seq !== PLACES.seq) return; failed++; }
     if (seq !== PLACES.seq) return;
@@ -2567,17 +2567,19 @@ function drawDayWx(cv, cur) {
     c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
     // villes et bourgs traversés ce jour-là, à l'heure de passage (les plus grands d'abord, sans chevauchement)
     if (PLACES.list.length) {
-      const inDay = attachToRoute(PLACES.list).filter(p => p.km >= d.a.km - 0.5 && p.km <= d.b.km + 0.5)
+      const inDay = attachToRoute(PLACES.list).filter(p => p.km >= d.a.km - 0.5 && p.km <= d.b.km + 0.5 && (p.place !== 'village' || p.off <= 1200))
         .sort((a, b) => (PLACE_RANK[b.place] || 0) - (PLACE_RANK[a.place] || 0) || b.pop - a.pop);
       const placed = [], yP = yT1 + 36;
       for (const p of inDay) {
-        const x = X(clamp(tAtKm(p.km), ta, tb)), big = p.place === 'city';
-        c.font = `${big ? 700 : 600} ${big ? 12 : 11}px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`;
+        const x = X(clamp(tAtKm(p.km), ta, tb)), big = p.place === 'city', vil = p.place === 'village';
+        c.font = `${big ? 700 : vil ? 400 : 600} ${big ? 12 : vil ? 10 : 11}px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`;
         const w2 = c.measureText(p.name).width / 2 + 6, xa = clamp(x, l + w2 - 6, l + pw - w2 + 6);
         if (placed.some(q => xa - w2 < q[1] && xa + w2 > q[0])) continue;
         placed.push([xa - w2, xa + w2]);
-        c.fillStyle = big ? ink : muted; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText(p.name, xa, yP);
-        c.fillStyle = cssVar('--accent'); c.beginPath(); c.arc(x, yP - 4, 2.5, 0, Math.PI * 2); c.fill();
+        c.globalAlpha = vil ? .8 : 1;
+        c.fillStyle = big ? ink : muted; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText(p.name, xa, yP + (vil ? 1 : 0));
+        c.fillStyle = vil ? muted : cssVar('--accent'); c.beginPath(); c.arc(x, yP - 4, vil ? 1.8 : 2.5, 0, Math.PI * 2); c.fill();
+        c.globalAlpha = 1;
       }
     }
     c.textAlign = 'left'; c.textBaseline = 'alphabetic';
