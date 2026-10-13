@@ -71,6 +71,10 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .plan-form .field{min-width:0}
 .plan-form #planDays{width:90px}
 .plan-form .plan-custom{align-self:center}
+#planStartSlot #startRow{display:flex;gap:14px;margin:0}
+#planSpeedSlot #manualSettings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 22px;padding:0 14px 14px}
+#planSpeedSlot #manualSettings > .priv{grid-column:1 / -1}
+@media (max-width:760px){#planSpeedSlot #manualSettings{grid-template-columns:1fr}}
 .plan-note{padding:0 14px;margin:0 0 10px}
 .plan-scroll{overflow-x:auto}
 .plan-table{min-width:640px}
@@ -341,10 +345,11 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <p class="hint" id="libHint"></p>
     </div>
 
-    <div class="row2">
+    <div class="row2" id="startRow">
       <div class="field"><label class="label" for="date">Départ</label><input type="date" id="date"></div>
       <div class="field"><label class="label" for="time">Heure</label><input type="time" id="time" step="900"></div>
     </div>
+    <div id="startHome" hidden></div>
 
     <div class="mode-ultra" id="manualSettings">
     <div class="field">
@@ -389,6 +394,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       </div>
     </div>
     </div>
+    <div id="manualHome" hidden></div>
     <div class="field">
       <label class="label" for="windOn">Effet du vent</label>
       <label class="toggle"><input type="checkbox" id="windOn"> Ralentir face au vent, accélérer vent de dos</label>
@@ -466,8 +472,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <div class="card-head"><h2>Planification journalière</h2><span class="hint" id="planHint"></span></div>
       <div class="plan-form">
         <div class="field"><label class="label" for="planDays">Nombre de jours</label><input type="number" id="planDays" min="1" max="30" step="1" inputmode="numeric"></div>
-        <div class="field"><label class="label" for="planDate">Départ le</label><input type="date" id="planDate"></div>
-        <div class="field"><label class="label" for="planTime">à</label><input type="time" id="planTime" step="900"></div>
+        <div id="planStartSlot"></div>
         <div class="field">
           <span class="label" id="planSplitLbl">Découpage</span>
           <div class="seg2" role="group" aria-labelledby="planSplitLbl" id="planSplitSeg">
@@ -477,6 +482,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         </div>
         <label class="switch plan-custom"><input type="checkbox" id="planCustomOn" role="switch"><span class="track" aria-hidden="true"></span>Heure de départ différente chaque jour</label>
       </div>
+      <div id="planSpeedSlot"></div>
       <p class="hint plan-note" id="planNote"></p>
       <div class="plan-scroll">
         <table class="plan-table">
@@ -1804,7 +1810,6 @@ function initInputs() {
   $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
   $('#planDays').value = clamp(Math.round(+def.planDays || 3), 1, 30); setSeg('#planSplitSeg', def.planSplit === 'terrain' ? 'terrain' : 'km');
   $('#planCustomOn').checked = !!def.planCustom; PLAN.times = Array.isArray(def.planTimes) ? def.planTimes.slice(0, 30) : [];
-  $('#planDate').value = $('#date').value; $('#planTime').value = $('#time').value;
   try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
   // type de sorties de référence pour le calage : « route » sur la page Sortie, « voyage » sur la page Ultra (modifiable)
   let k = ''; try { k = localStorage.getItem('pmr-calib-kind-' + S.mode) || ''; } catch (e) {}
@@ -1819,6 +1824,10 @@ const segVal = sel => (document.querySelector(sel + ' button[aria-pressed="true"
 function setSeg(sel, v) { for (const b of document.querySelectorAll(sel + ' button')) b.setAttribute('aria-pressed', String(b.dataset.v === v)); }
 function applyModeUI() {
   const ultra = S.mode === 'ultra';
+  // page Ultra : départ (date, heure) et vitesse / VAM / arrêts / calage dans la carte « Planification journalière » ;
+  // page Sortie : dans la barre latérale. Les éléments sont déplacés (mêmes identifiants, mêmes écouteurs).
+  if (ultra) { $('#planStartSlot').append($('#startRow')); $('#planSpeedSlot').append($('#manualSettings')); }
+  else { $('#startHome').before($('#startRow')); $('#manualHome').before($('#manualSettings')); }
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
   $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
@@ -2426,7 +2435,7 @@ function renderPlan() {
   const sum = f => days.reduce((s, d) => s + f(d), 0);
   $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n0(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td></tr>` : '';
   $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? 'Étapes de même temps de pédalage.' : 'Étapes de même distance.') : 'D\'une traite.';
-  $('#planNote').innerHTML = `Fin de journée estimée avec ta vitesse sur le plat (${n1(opt.speed)} km/h), ta VAM (${opt.vam} m/h) et tes arrêts courts (+${opt.pause} %)${opt.windOn ? ', vent compris' : ''} : réglages à gauche.`
+  $('#planNote').innerHTML = `Fin de journée estimée avec ta vitesse sur le plat (${n1(opt.speed)} km/h), ta VAM (${opt.vam} m/h) et tes arrêts courts (+${opt.pause} %)${opt.windOn ? ', vent compris' : ''} : réglages ci-dessus.`
     + (late ? ` <span class="late">⚠ ${late > 1 ? late + ' étapes finissent' : 'Une étape finit'} après l'heure de départ du lendemain : allonge le découpage ou avance le départ.</span>` : '');
   $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
 }
@@ -2434,9 +2443,6 @@ function renderPlan() {
 $('#planDays').addEventListener('input', () => { if (+$('#planDays').value >= 1) schedule(); });
 $('#planSplitSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; setSeg('#planSplitSeg', b.dataset.v); schedule(); });
 $('#planCustomOn').addEventListener('change', schedule);
-$('#planDate').addEventListener('change', () => { $('#date').value = $('#planDate').value; schedule(); });
-$('#planTime').addEventListener('change', () => { $('#time').value = $('#planTime').value; schedule(); });
-for (const id of ['date', 'time']) $('#' + id).addEventListener('change', () => { $('#plan' + id[0].toUpperCase() + id.slice(1)).value = $('#' + id).value; });
 $('#planRows').addEventListener('change', e => {
   const inp = e.target.closest('input[data-day]'); if (!inp) return;
   PLAN.times[+inp.dataset.day] = inp.value; schedule();
