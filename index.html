@@ -1547,10 +1547,25 @@ function renderChart() {
   for (let e = Math.ceil(eMin / eStep) * eStep; e <= eMax; e += eStep) { const y = Ye(e); c.beginPath(); c.moveTo(pad.l, y); c.lineTo(pad.l + pw, y); c.globalAlpha = .6; c.stroke(); c.globalAlpha = 1; c.fillText(e + ' m', pad.l - 5, y); }
   // pluie
   if (S.wx) {
-    const pMax = Math.max(2, ...bins.map(b => b.w ? b.w.pr : 0));
-    c.fillStyle = cssVar('--rain'); c.globalAlpha = .75;
-    for (let b = 0; b < nb; b++) { const w = bins[b].w; if (!w || w.pr < 0.05) continue; const h = w.pr / pMax * ph * .45; c.fillRect(X(bins[b].km), pad.t + ph - h, Math.max(1, X(bins[b + 1].km) - X(bins[b].km)), h); }
-    c.globalAlpha = 1;
+    // pluie : une barre par heure de roulage (pas des prévisions : 1 h), du km atteint au début de l'heure à celui de la fin,
+    // hauteur selon les mm/h ; valeur écrite au-dessus quand la barre est assez large
+    const kmAtT = t => { const T = tl.times; let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return P.d[lo]; };
+    const rbars = [];
+    for (let h0 = Math.floor(tl.start / 3600e3) * 3600e3; h0 < tl.end; h0 += 3600e3) {
+      const ta = Math.max(tl.start, h0), tb = Math.min(tl.end, h0 + 3600e3), ka = kmAtT(ta), kb = kmAtT(tb);
+      if (kb - ka <= 0) continue;
+      const w = wxAt(sIdx((ka + kb) / 2), (ta + tb) / 2);
+      if (w && w.pr >= 0.05) rbars.push({ x: X(ka), x2: X(kb), pr: w.pr });
+    }
+    if (rbars.length) {
+      const pMax = Math.max(2, ...rbars.map(r => r.pr)), rc = cssVar('--rain');
+      c.font = font(9.5); c.textAlign = 'center'; c.textBaseline = 'bottom';
+      for (const r of rbars) {
+        const bw = Math.max(2, r.x2 - r.x - 1.5), hh = Math.max(2, r.pr / pMax * ph * .45), bx = r.x + 0.75, by = pad.t + ph - hh;
+        c.globalAlpha = .8; c.fillStyle = rc; c.fillRect(bx, by, bw, hh); c.globalAlpha = 1;
+        if (bw >= 20 && r.pr >= 0.1) { c.fillStyle = rc; c.fillText(n1(r.pr), bx + bw / 2, by - 2); }
+      }
+    }
     // nuages : plafond de nuages accroché en haut du graphique, d'autant plus épais et gris que le ciel est couvert
     if (hasCc) drawCloudCeiling(c, bins, X, pad.l, pad.t, pw, ph);
     // température (axe droite)
