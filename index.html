@@ -67,14 +67,17 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .profile-card b{font-weight:600}
 .profile-card .hint a{color:inherit}
 .linkbtn{border:0;background:none;padding:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline}
-.day-list{display:flex;flex-direction:column}
-.dayrow{padding:12px 14px;border-top:1px solid var(--line);display:grid;gap:5px}
-.dayrow:first-child{border-top:0}
-.dayrow .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.dayrow h3{font-size:19px}
-.dayrow .kpi{font-family:var(--f-mono);font-size:13px}
-.dayrow .ln{font-size:13.5px;color:var(--muted)}
-.dayrow .ln b{color:var(--ink);font-weight:600}
+.plan-form{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-end;padding:14px}
+.plan-form .field{min-width:0}
+.plan-form #planDays{width:90px}
+.plan-form .plan-custom{align-self:center}
+.plan-note{padding:0 14px;margin:0 0 10px}
+.plan-scroll{overflow-x:auto}
+.plan-table{min-width:640px}
+.plan-table td.num,.plan-table th.num{text-align:right}
+.plan-table input[type=time]{padding:3px 6px;font:inherit;font-size:13px}
+.plan-table tfoot td{font-weight:600;border-top:2px solid var(--line);border-bottom:0}
+.plan-table .late{color:var(--head);font-weight:600}
 
 .app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;max-width:1440px;margin-inline:auto;align-items:start}
 @media (max-width:920px){.app{grid-template-columns:minmax(0,1fr)}}
@@ -343,39 +346,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <div class="field"><label class="label" for="time">Heure</label><input type="time" id="time" step="900"></div>
     </div>
 
-    <div class="mode-ultra" id="ultraSplit" hidden>
-      <div class="field">
-        <span class="label" id="splitLbl">Découpage des jours</span>
-        <div class="seg2" role="group" aria-labelledby="splitLbl" id="splitSeg">
-          <button type="button" data-v="profile" aria-pressed="true">Mon profil</button>
-          <button type="button" data-v="window" aria-pressed="false">Plage horaire</button>
-        </div>
-      </div>
-      <div class="mode-ultra" id="profileBox">
-        <div class="field">
-          <span class="label" id="stratLbl">Stratégie</span>
-          <div class="seg2" role="group" aria-labelledby="stratLbl" id="stratSeg">
-            <button type="button" data-v="course" aria-pressed="true">Course</button>
-            <button type="button" data-v="aventure" aria-pressed="false">Aventure</button>
-          </div>
-          <p class="hint" id="stratHint"></p>
-        </div>
-        <div class="row2" id="advTimes">
-          <div class="field"><label class="label" for="advStart">Départ le matin</label><input type="time" id="advStart" step="900"></div>
-          <div class="field"><label class="label" for="advEnd">Arrêt le soir</label><input type="time" id="advEnd" step="900"></div>
-        </div>
-        <div class="row2" id="courseTimes">
-          <div class="field"><label class="label" for="sleepStart">Coucher</label><input type="time" id="sleepStart" step="900"></div>
-          <div class="field"><label class="label" for="sleepEnd">Réveil</label><input type="time" id="sleepEnd" step="900"></div>
-        </div>
-        <p class="hint" id="timesHint"></p>
-        <div class="field">
-          <label class="label" for="terrain">Terrain</label>
-          <select id="terrain"><option value="1">Route</option><option value="0.9">Mixte</option><option value="0.8">Gravel</option></select>
-        </div>
-        <div class="profile-card" id="profileCard"></div>
-      </div>
-    </div>
     <div class="mode-ultra" id="manualSettings">
     <div class="field">
       <label class="label" for="speed">Vitesse sur le plat</label>
@@ -426,15 +396,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 
     <div class="mode-ultra" id="ultraSettings">
       <hr class="sep">
-      <div class="field" id="windowBox">
-        <label class="toggle"><input type="checkbox" id="windowOn"> <span class="label" style="color:var(--ink)">Rouler sur plusieurs jours</span></label>
-        <p class="hint">Rouler seulement dans une plage horaire ; la nuit, la progression s'arrête et reprend le lendemain.</p>
-        <div class="row2" id="windowFields">
-          <div class="field"><label class="label" for="dayStart">Reprise</label><input type="time" id="dayStart" step="900"></div>
-          <div class="field"><label class="label" for="dayEnd">Bivouac</label><input type="time" id="dayEnd" step="900"></div>
-        </div>
-      </div>
-      <hr class="sep" id="windowSep">
       <div class="field">
         <label class="label" for="poiRadius">Ravitos : distance max. de la trace</label>
         <select id="poiRadius">
@@ -501,6 +462,31 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <div class="legend" id="legend"></div>
     </section>
 
+    <section class="card" id="planCard" hidden>
+      <div class="card-head"><h2>Planification journalière</h2><span class="hint" id="planHint"></span></div>
+      <div class="plan-form">
+        <div class="field"><label class="label" for="planDays">Nombre de jours</label><input type="number" id="planDays" min="1" max="30" step="1" inputmode="numeric"></div>
+        <div class="field"><label class="label" for="planDate">Départ le</label><input type="date" id="planDate"></div>
+        <div class="field"><label class="label" for="planTime">à</label><input type="time" id="planTime" step="900"></div>
+        <div class="field">
+          <span class="label" id="planSplitLbl">Découpage</span>
+          <div class="seg2" role="group" aria-labelledby="planSplitLbl" id="planSplitSeg">
+            <button type="button" data-v="km" aria-pressed="true">Même distance</button>
+            <button type="button" data-v="terrain" aria-pressed="false">Adapté au terrain</button>
+          </div>
+        </div>
+        <label class="switch plan-custom"><input type="checkbox" id="planCustomOn" role="switch"><span class="track" aria-hidden="true"></span>Heure de départ différente chaque jour</label>
+      </div>
+      <p class="hint plan-note" id="planNote"></p>
+      <div class="plan-scroll">
+        <table class="plan-table">
+          <thead><tr><th>Jour</th><th>Départ</th><th>Fin estimée</th><th class="num">Km</th><th class="num">D+</th><th class="num">Pédalage</th><th class="num">Pauses</th></tr></thead>
+          <tbody id="planRows"></tbody>
+          <tfoot id="planFoot"></tfoot>
+        </table>
+      </div>
+    </section>
+
     <section class="card" id="poiCard" hidden>
       <div class="card-head">
         <h2>Ravitaillement et hébergement</h2>
@@ -517,11 +503,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         </table>
       </div>
       <p class="hint poi-credit">Données © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via Overpass. Horaires tels que saisis dans OpenStreetMap : à vérifier pour les lieux clés.</p>
-    </section>
-
-    <section class="card" id="dayCard" hidden>
-      <div class="card-head"><h2>Jour par jour</h2><span class="hint" id="dayHint"></span></div>
-      <div class="day-list" id="dayList"></div>
     </section>
 
     <section class="card" id="chartCard">
@@ -576,7 +557,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <li><i>2</i><div><b>Choisissez le départ et votre allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts. Cochez « Effet du vent » pour que le vent ralentisse ou accélère la sortie.</span></div></li>
       <li><i>3</i><div><b>Lisez la météo le long du parcours</b><span>Carte colorée (vent, température, pluie, soleil) avec flèches de vent, profil interactif, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
       <li><i>4</i><div><b>Gardez la feuille de route</b><span>Horaires et météo point par point, en CSV, et « Exporter l'image » pour partager carte, vent et profil.</span></div></li>
-      <li><i>5</i><div><b>Plusieurs jours ? Page Ultra</b><span>Onglet « Ultra » : découpage jour par jour (stratégie Course ou Aventure), bivouacs, et épiceries, boulangeries, restos, points d'eau, hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
+      <li><i>5</i><div><b>Plusieurs jours ? Page Ultra</b><span>Onglet « Ultra » : planification en N jours (même distance ou adaptée au terrain, fin de journée estimée), et épiceries, boulangeries, restos, points d'eau, hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
     </ol>
     <p class="note">Météo Open-Meteo, jusqu'à 16 jours : plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
@@ -918,34 +899,50 @@ function wxAtL(L, tMs) {
 /* ---------- simulation ---------- */
 function readOpt() {
   return { date: $('#date').value, time: $('#time').value || '08:00', speed: +$('#speed').value, vam: +$('#vam').value,
-    pause: +$('#pause').value, windOn: $('#windOn').checked, windowOn: S.mode === 'ultra' && $('#windowOn').checked,
-    dayStart: $('#dayStart').value || '07:00', dayEnd: $('#dayEnd').value || '20:00',
+    pause: +$('#pause').value, windOn: $('#windOn').checked,
     poiRadius: +$('#poiRadius').value || 500,
-    split: segVal('#splitSeg'), strat: segVal('#stratSeg'), terrain: +$('#terrain').value || 1,
-    advStart: timeOverride('advStart'), advEnd: timeOverride('advEnd'), sleepStart: timeOverride('sleepStart'), sleepEnd: timeOverride('sleepEnd') };
+    // page Ultra : planification journalière (nombre de jours, découpage, heures de départ des jours suivants)
+    planDays: clamp(Math.round(+$('#planDays').value || 1), 1, 30), planSplit: segVal('#planSplitSeg'),
+    planCustom: $('#planCustomOn').checked, planTimes: PLAN.times.slice() };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
   const [h, mi] = (time || opt.time).split(':').map(Number);
   return new Date(y, m - 1, d, h, mi, 0, 0).getTime();
 }
-function windowAdjust(t, opt, stops, km) {
-  const dt = new Date(t);
-  const [sh, sm] = opt.dayStart.split(':').map(Number), [eh, em] = opt.dayEnd.split(':').map(Number);
-  const s = new Date(dt); s.setHours(sh, sm, 0, 0);
-  const e = new Date(dt); e.setHours(eh, em, 0, 0);
-  if (t > e.getTime()) { const ns = new Date(s); ns.setDate(ns.getDate() + 1); stops.push({ km, from: t, to: ns.getTime() }); return ns.getTime(); }
-  if (t < s.getTime()) { stops.push({ km, from: t, to: s.getTime() }); return s.getTime(); }
-  return t;
+/* Planification journalière (page Ultra) : la trace est coupée en N étapes, soit à distance égale, soit
+   « adapté au terrain » (même temps de pédalage chaque jour, d'après la vitesse sur le plat, la VAM et la descente,
+   sans le vent pour que les étapes ne bougent pas avec la météo). Chaque étape commence le jour J à l'heure de départ
+   (la même que le jour 1, ou celle choisie pour ce jour) ; elle finit là où la trace est coupée, sans rien inventer. */
+function planCutKms(P, opt) {
+  const n = opt.planDays || 1; if (n < 2) return [];
+  if (opt.planSplit !== 'terrain') return Array.from({ length: n - 1 }, (_, k) => P.total * (k + 1) / n);
+  const key = [n, opt.speed, opt.vam].join(':');
+  if (P._planCut && P._planCut.key === key) return P._planCut.kms;
+  const cum = new Float64Array(P.n);
+  for (let i = 1; i < P.n; i++) {
+    const dk = P.d[i] - P.d[i - 1]; if (dk <= 0) { cum[i] = cum[i - 1]; continue; }
+    const dh = P.es[i] - P.es[i - 1], grade = dh / (dk * 1000);
+    const v = grade < -0.01 ? opt.speed * Math.min(1.35, 1 + (-grade - 0.01) * 6) : opt.speed;
+    cum[i] = cum[i - 1] + dk / v + (grade > 0.005 ? dh / opt.vam : 0);
+  }
+  const kms = []; let i = 0;
+  for (let k = 1; k < n; k++) { const target = cum[P.n - 1] * k / n; while (i < P.n - 1 && cum[i] < target) i++; kms.push(P.d[i]); }
+  P._planCut = { key, kms };
+  return kms;
+}
+// heure de départ du jour k (0 = jour 1) : jour J + k à l'heure choisie (par défaut celle du départ du jour 1)
+function planDayStart(t0, opt, k) {
+  const d = new Date(t0), custom = opt.planCustom && opt.planTimes && opt.planTimes[k];
+  const [hh, mm] = custom ? custom.split(':').map(Number) : [d.getHours(), d.getMinutes()];
+  d.setDate(d.getDate() + k); d.setHours(hh, mm, 0, 0);
+  return d.getTime();
 }
 
 function simulate(t0, opt, useWx) {
   const P = S.P, N = P.n, times = new Float64Array(N), stops = [];
-  // Page Ultra, découpage « Mon profil » : coût de pente, fatigue, arrêts et sommeil du modèle FlyUltra (opt.fly)
-  const F = opt.fly, FC = F ? flyPrep(P) : null;
-  const dsc = F && F.strat === 'course' ? clamp(FC.rem[0] / (F.vf * 0.9) * (1 + F.rate) / 60, 0.6, 1) : 1;
-  let t = t0, awakeH = 0;
-  if (!F && opt.windowOn && useWx !== 'dry-nowin') t = windowAdjust(t, opt, stops, 0);
+  const cuts = S.mode === 'ultra' ? planCutKms(P, opt) : [];
+  let t = t0, day = 0;
   times[0] = t;
   const st = { rain: 0, wetH: 0, headKm: 0, tailKm: 0, crossKm: 0, sunH: 0, rideH: 0, nightH: 0, coldH: 0, missKm: 0,
     tmin: Infinity, tmax: -Infinity, amin: Infinity, amax: -Infinity, gust: 0, prob: 0, headSum: 0 };
@@ -959,9 +956,7 @@ function simulate(t0, opt, useWx) {
     let head = 0;
     if (w) head = w.ws * Math.cos((w.wd - P.b[i]) * RAD);
     const f = (w && opt.windOn) ? clamp(1 - 0.012 * head, 0.55, 1.35) : 1;
-    let dtH;
-    if (F) dtH = FC.cost[i] / (F.vf * F.fat((t - t0) / 3600e3) * f) * (1 + F.rate);
-    else { dtH = dk / (v * f) + (grade > 0.005 ? dh / opt.vam : 0); dtH *= 1 + opt.pause / 100; }
+    let dtH = dk / (v * f) + (grade > 0.005 ? dh / opt.vam : 0); dtH *= 1 + opt.pause / 100;
     if (w) {
       st.rain += w.pr * dtH; if (w.pr >= 0.2) st.wetH += dtH;
       if (head > 5) st.headKm += dk; else if (head < -5) st.tailKm += dk; else st.crossKm += dk;
@@ -973,17 +968,13 @@ function simulate(t0, opt, useWx) {
     } else st.missKm += dk;
     st.rideH += dtH;
     t += dtH * 3600e3;
-    if (F) {
-      awakeH += dtH;
-      if (i < N - 1) {
-        const tt = (t - t0) / 3600e3, dt = new Date(t), clock = dt.getHours() + dt.getMinutes() / 60;
-        const remH = FC.rem[i] / (F.vf * F.fat(tt)) * (1 + F.rate);
-        let sleepH = 0;
-        if (F.strat === 'aventure') { if ((clock >= F.bed || clock < Math.min(F.wake, 4)) && remH > F.push) sleepH = ((F.wake - clock) % 24 + 24) % 24; }
-        else if (((clock - F.ws + 24) % 24) < 4.5 && awakeH >= F.A && remH > F.push) sleepH = F.wakeAt != null ? ((F.wakeAt - clock) % 24 + 24) % 24 : F.D * dsc;
-        if (sleepH > 0) { stops.push({ km: P.d[i], from: t, to: t + sleepH * 3600e3, sleep: true }); t += sleepH * 3600e3; awakeH = 0; }
-      }
-    } else if (opt.windowOn && useWx !== 'dry-nowin') t = windowAdjust(t, opt, stops, P.d[i]);
+    // fin d'étape : nuit jusqu'au départ du jour suivant (sans repos si l'étape finit après ce départ)
+    if (day < cuts.length && P.d[i] >= cuts[day] && i < N - 1) {
+      day++;
+      const next = planDayStart(t0, opt, day);
+      stops.push({ km: P.d[i], from: t, to: Math.max(t, next), sleep: true, late: next < t });
+      t = Math.max(t, next);
+    }
     times[i] = t;
   }
   return { times, stops, st, start: times[0], end: t };
@@ -1000,7 +991,6 @@ async function run() {
   if (!S.P) return;
   const id = ++runId, opt = readOpt();
   saveOpt(opt);
-  if (S.mode === 'ultra' && opt.split === 'profile') { opt.fly = flyRider(opt); flyProfileLoad(); }
   const t0 = startMs(opt);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const maxDay = new Date(today); maxDay.setDate(maxDay.getDate() + 15);
@@ -1151,7 +1141,7 @@ function whenTxt(t, ref) {
 
 /* ---------- rendu ---------- */
 function renderAll(opts, opt) {
-  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderDays();
+  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderPlan();
 }
 
 function renderSummary(opt) {
@@ -1440,7 +1430,7 @@ async function exportImage() {
     const days = ultra ? daySummaries() : [];
     const dayLines = days.map((d, k) => ({
       head: `Jour ${k + 1} · ${dayFmt.format(new Date(d.a.t))}`,
-      main: `${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)} · ${n0(d.dist)} km · D+ ${n0(d.dplus)} m`,
+      main: `${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)} · ${n0(d.dist)} km · D+ ${n0(d.dplus)} m · pédalage ${durShort(d.rideH)} · pauses ${durShort(d.pauseH)}`,
       sub: (d.wx ? `${n0(d.wx.tmin)} à ${n0(d.wx.tmax)} °C ressentis · pluie ${n1(d.wx.rain)} mm · vent de face ${d.wx.head} %` : 'Pas encore de prévision météo pour ce jour')
         + (d.night ? ` · nuit au km ${n0(d.b.km)}, ${hm.format(new Date(d.night.from))} → ${hm.format(new Date(d.night.to))}` : ''),
     }));
@@ -1485,7 +1475,7 @@ async function exportImage() {
     }
     y += keysH;
     if (daysH) {
-      y += 16; c.fillStyle = cssVar('--ink'); c.font = `700 18px ${disp}`; c.fillText('Jour par jour', pad, y + 18); y += 28;
+      y += 16; c.fillStyle = cssVar('--ink'); c.font = `700 18px ${disp}`; c.fillText('Planification journalière', pad, y + 18); y += 28;
       for (const l of dayLines) {
         c.font = `700 14.5px ${body}`; c.fillStyle = cssVar('--ink'); c.fillText(l.head, pad, y + 15);
         const hw = c.measureText(l.head).width + 12;
@@ -1800,8 +1790,8 @@ function handleFile(file) {
 // Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
 const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : 'pmr-opt');
 const MODE_DEF = {
-  ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, windowOn: false, dayStart: '07:00', dayEnd: '20:00', poiRadius: 500 },
-  ultra: { time: '06:00', speed: 22, vam: 600, pause: 20, windOn: true, windowOn: true, dayStart: '06:00', dayEnd: '21:00', poiRadius: 500, split: 'profile', strat: 'course', terrain: 1 }
+  ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, poiRadius: 500 },
+  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [] }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
@@ -1810,11 +1800,11 @@ function initInputs() {
   const def = { ...MODE_DEF[S.mode], ...saved };
   $('#date').value = S.mode === 'ultra' && def.date && def.date >= ymd(new Date()) ? def.date : ymd(tm);
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
-  $('#windOn').checked = !!def.windOn; $('#windowOn').checked = !!def.windowOn; $('#dayStart').value = def.dayStart; $('#dayEnd').value = def.dayEnd;
+  $('#windOn').checked = !!def.windOn;
   $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
-  setSeg('#splitSeg', def.split === 'window' ? 'window' : 'profile'); setSeg('#stratSeg', def.strat === 'aventure' ? 'aventure' : 'course');
-  $('#terrain').value = String([1, 0.9, 0.8].includes(+def.terrain) ? +def.terrain : 1);
-  for (const id of TIME_IDS) { const el = $('#' + id); el.dataset.user = def[id] ? '1' : ''; if (def[id]) el.value = def[id]; }
+  $('#planDays').value = clamp(Math.round(+def.planDays || 3), 1, 30); setSeg('#planSplitSeg', def.planSplit === 'terrain' ? 'terrain' : 'km');
+  $('#planCustomOn').checked = !!def.planCustom; PLAN.times = Array.isArray(def.planTimes) ? def.planTimes.slice(0, 30) : [];
+  $('#planDate').value = $('#date').value; $('#planTime').value = $('#time').value;
   try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
   // type de sorties de référence pour le calage : « route » sur la page Sortie, « voyage » sur la page Ultra (modifiable)
   let k = ''; try { k = localStorage.getItem('pmr-calib-kind-' + S.mode) || ''; } catch (e) {}
@@ -1828,16 +1818,10 @@ function initInputs() {
 const segVal = sel => (document.querySelector(sel + ' button[aria-pressed="true"]') || document.querySelector(sel + ' button')).dataset.v;
 function setSeg(sel, v) { for (const b of document.querySelectorAll(sel + ' button')) b.setAttribute('aria-pressed', String(b.dataset.v === v)); }
 function applyModeUI() {
-  const ultra = S.mode === 'ultra', prof = ultra && segVal('#splitSeg') === 'profile';
-  $('#ultraSplit').hidden = !ultra; $('#profileBox').hidden = !prof;
-  $('#manualSettings').hidden = prof; $('#windowBox').hidden = $('#windowSep').hidden = prof;
-  $('#stratHint').textContent = segVal('#stratSeg') === 'aventure'
-    ? 'Tu dors chaque nuit, à heures régulières (profil Aventure de FlyUltra, calé sur Chasing the Sun).'
-    : 'Tu dors quand la fatigue l\'impose, en nuits courtes (profils course de FlyUltra).';
-  if (prof) { flyProfileLoad(); renderProfileCard(); }
+  const ultra = S.mode === 'ultra';
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
-  $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et étapes jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
+  $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
   document.title = ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride';
 }
 function switchMode(m) {
@@ -1845,7 +1829,7 @@ function switchMode(m) {
   saveOpt(readOpt()); // réglages de la page qu'on quitte
   if (CAL.on) { CAL.seq++; CAL.on = false; lockSliders(false); $('#calibBox').hidden = true; }
   S.mode = m;
-  applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderDays();
+  applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
   schedule();
 }
 window.addEventListener('hashchange', () => switchMode(location.hash === '#ultra' ? 'ultra' : 'ride'));
@@ -1854,8 +1838,6 @@ function syncOutputs() {
   $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h' + c;
   $('#vamOut').textContent = $('#vam').value + ' m/h' + c;
   $('#pauseOut').textContent = '+' + $('#pause').value + ' %' + c;
-  $('#windowFields').style.opacity = $('#windowOn').checked ? 1 : .45;
-  $('#dayStart').disabled = $('#dayEnd').disabled = !$('#windowOn').checked;
 }
 let deb;
 function schedule() { syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250); }
@@ -2383,144 +2365,14 @@ $('#poiRows').addEventListener('click', e => {
   $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
-/* ---------- page Ultra : profil de rouleur (modèle FlyUltra) ---------- */
-// FlyUltra (simulateur d'arrivées d'ultra, calé sur 21 courses / ~3 000 traces) appliqué à un seul coureur :
-// - vitesse « équivalent plat » vf tirée des longues sorties route de l'historique, avec le coût de pente FlyUltra
-//   (montée ×(1+18·pente), descente ×max(0,7 ; 1−9·pente)) ; à défaut, coureur médian du profil Standard ;
-// - position p dans un peloton Standard (vf = 27·(1 − 0,30·0,95·p)) → groupe, arrêts courts et sommeil du modèle ;
-// - stratégie Course (sommeil quand la fatigue l'impose) ou Aventure (chaque nuit, heures tirées des voyages).
-const FLY = { prof: null, loading: false };
-const FLY_GROUPS = [['Tête de course', 0.10], ['Poursuivants', 0.25], ['Peloton', 0.50], ['Suite de peloton', 0.80], ['Queue de peloton', 1.01]];
-const flyCost = (km, dplusM) => { const h = dplusM / 1000; return km + 18 * h - Math.min(9 * h, 0.15 * km); };
-function flyPrep(P) {
-  if (P._fly) return P._fly;
-  const n = P.n, g = new Float32Array(n), cost = new Float64Array(n), rem = new Float64Array(n);
-  let j0 = 0, j1 = 0;
-  for (let i = 0; i < n; i++) { // pente lissée sur ±250 m, bornée à ±15 %
-    while (P.d[j0] < P.d[i] - 0.25) j0++;
-    if (j1 < i) j1 = i;
-    while (j1 < n - 1 && P.d[j1 + 1] <= P.d[i] + 0.25) j1++;
-    const span = P.d[j1] - P.d[j0];
-    g[i] = span > 0.05 ? clamp((P.es[j1] - P.es[j0]) / (span * 1000), -0.15, 0.15) : 0;
-  }
-  for (let i = 1; i < n; i++) { const dk = P.d[i] - P.d[i - 1], gg = g[i]; cost[i] = dk * (gg >= 0 ? 1 + 18 * gg : Math.max(0.7, 1 - 9 * -gg)); }
-  for (let i = n - 2; i >= 0; i--) rem[i] = rem[i + 1] + cost[i + 1];
-  return (P._fly = { g, cost, rem });
-}
-async function flyProfileLoad(force) {
-  if ((FLY.prof || FLY.loading) && !force) return;
-  FLY.loading = true; renderProfileCard();
-  let res; try { res = await calibFetch(); } catch (e) { res = { error: 'réseau' }; }
-  FLY.loading = false;
-  FLY.prof = flyProfileFrom(res.rides || [], res.error);
-  renderProfileCard();
-  if (S.mode === 'ultra' && segVal('#splitSeg') === 'profile') schedule();
-}
-function flyProfileFrom(rides, error) {
-  const med = a => { const x = [...a].sort((u, v) => u - v); return x.length ? x[Math.floor(x.length / 2)] : null; };
-  let long = rides.filter(r => r.cat === 'route' && (r.h >= 3 || r.km >= 80));
-  if (long.length < 3) long = rides.filter(r => r.cat === 'route' && r.h >= 1.5);
-  let vf = null, rateHist = null;
-  if (long.length >= 3) {
-    vf = long.reduce((s, r) => s + flyCost(r.km, r.dplus), 0) / long.reduce((s, r) => s + r.h, 0);
-    rateHist = med(long.filter(r => r.elapsed > r.moving).map(r => (r.elapsed - r.moving) / r.moving));
-  }
-  // journées enchaînées (au moins 2 jours de suite à 50 km ou plus) : rythme de voyage
-  const byDay = new Map();
-  for (const r of rides) {
-    const d = byDay.get(r.date) || { date: r.date, km: 0, h: 0, el: 0, s: 99, e: 0 };
-    const elH = (r.elapsed || r.moving) / 3600;
-    d.km += r.km; d.h += r.h; d.el += elH;
-    if (r.startH != null) { d.s = Math.min(d.s, r.startH); d.e = Math.max(d.e, r.startH + elH); }
-    byDay.set(r.date, d);
-  }
-  const days = [...byDay.values()].filter(d => d.km >= 50).sort((a, b) => (a.date < b.date ? -1 : 1));
-  const seqs = []; let seq = [];
-  for (const d of days) { const p = seq[seq.length - 1]; if (p && dayGap(p.date, d.date) <= 1.01) seq.push(d); else { if (seq.length >= 2) seqs.push(seq); seq = [d]; } }
-  if (seq.length >= 2) seqs.push(seq);
-  const multi = seqs.flat();
-  // heure de départ : hors 1er jour (souvent après le trajet) ; heure d'arrêt : hors dernier jour (souvent écourté)
-  const starts = seqs.flatMap(q => q.slice(1)).filter(d => d.s < 99).map(d => d.s);
-  const ends = seqs.flatMap(q => q.slice(0, -1)).filter(d => d.e > 0).map(d => d.e);
-  const trip = multi.length ? { days: multi.length, trips: seqs.length, km: med(multi.map(d => d.km)), rideH: med(multi.map(d => d.h)),
-    start: med(starts), end: med(ends), rate: med(multi.map(d => (d.el > d.h ? (d.el - d.h) / d.h : 0))) } : null;
-  return { n: long.length, vf, rateHist, trip, source: vf ? 'history' : (error === 'login' ? 'login' : error ? 'error' : 'none') };
-}
-function flyRider(opt) {
-  const pr = FLY.prof, terr = +opt.terrain || 1;
-  const vf0 = pr && pr.vf ? pr.vf : 27 * (1 - 0.3 * 0.95 * 0.5);
-  const p = clamp((1 - vf0 / 27) / (0.3 * 0.95), 0, 1), q = p * p, vf = vf0 * terr;
-  const hOf = v => { const [h, m] = String(v).split(':').map(Number); return h + (m || 0) / 60; };
-  if (opt.strat === 'aventure') {
-    const tr = pr && pr.trip;
-    const wake = opt.advStart ? hOf(opt.advStart) : (tr && tr.start != null ? clamp(tr.start, 5, 10) : 7.6);
-    const bed = opt.advEnd ? hOf(opt.advEnd) : (tr && tr.end != null ? clamp(tr.end, 16, 22.5) : 18.9);
-    return { strat: 'aventure', vf, p, q, rate: tr && tr.rate != null ? clamp(tr.rate, 0.1, 0.8) : 0.425, wake, bed, push: 4.63,
-      fixed: !!(opt.advStart || opt.advEnd), fat: tt => (tt < 24 ? 1 : 0.949) };
-  }
-  // Course : sommeil du modèle (durée D réduite sur les formats courts) ou horaires choisis (coucher → réveil)
-  let dsc = 1;
-  if (S.P) { const FC = flyPrep(S.P), r0 = 0.01 + 0.23 * 0.95 * p; dsc = clamp(FC.rem[0] / (vf * 0.9) * (1 + r0) / 60, 0.6, 1); }
-  const D = Math.min(12, 3.5 + 3.5 * 0.95 * p), fixed = !!(opt.sleepStart || opt.sleepEnd);
-  const ws = opt.sleepStart ? hOf(opt.sleepStart) : 22;
-  const wakeAt = fixed ? (opt.sleepEnd ? hOf(opt.sleepEnd) : (ws + D * dsc) % 24) : null;
-  return { strat: 'course', vf, p, q, rate: 0.01 + 0.23 * 0.95 * p, D, dsc, A: fixed ? Math.min(8, 12.5 + 6 * (1 - p)) : 12.5 + 6 * (1 - p), ws, wakeAt, fixed,
-    push: q < 0.25 ? 6 : 3, fat: tt => (tt < 6 ? 1 : tt < 36 ? 0.9 : 0.85) };
-}
-// Horaires de la stratégie : pré-remplis avec les valeurs du profil tant que l'utilisateur ne les a pas changés.
-const TIME_IDS = ['advStart', 'advEnd', 'sleepStart', 'sleepEnd'];
-const toHHMM = h => { const m = Math.round(((h % 24) + 24) % 24 * 4) * 15; return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
-function timeOverride(id) { const el = $('#' + id); return el && el.dataset.user === '1' && el.value ? el.value : ''; }
-function fillStrategyTimes() {
-  const opt = { ...readOpt(), advStart: '', advEnd: '', sleepStart: '', sleepEnd: '' };
-  const av = flyRider({ ...opt, strat: 'aventure' }), co = flyRider({ ...opt, strat: 'course' });
-  const auto = { advStart: toHHMM(av.wake), advEnd: toHHMM(av.bed), sleepStart: toHHMM(co.ws), sleepEnd: toHHMM(co.ws + co.D * co.dsc) };
-  for (const id of TIME_IDS) { const el = $('#' + id); if (el.dataset.user !== '1') el.value = auto[id]; }
-  const adv = segVal('#stratSeg') === 'aventure', any = TIME_IDS.some(id => $('#' + id).dataset.user === '1');
-  $('#advTimes').hidden = !adv; $('#courseTimes').hidden = adv;
-  $('#timesHint').innerHTML = (adv ? 'Tu roules de l\'heure de départ à l\'heure d\'arrêt, chaque jour.' : 'Tu dors entre ces heures, quand la fatigue l\'impose (pas la 1re nuit si tu es parti tard).')
-    + (any ? ' <button type="button" class="linkbtn" id="timesReset">Reprendre les valeurs de mon profil</button>' : ' Valeurs tirées de ton profil, modifiables.');
-}
-const hhmm = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60) % 24} h ${String(m % 60).padStart(2, '0')}`; };
-function renderProfileCard() {
-  const el = $('#profileCard'); if (!el) return;
-  if (FLY.loading) { el.innerHTML = '<p class="hint">Analyse de tes sorties…</p>'; return; }
-  const pr = FLY.prof, opt = readOpt(), R = flyRider(opt), grp = FLY_GROUPS.find(g => R.q <= g[1])[0];
-  const L = [];
-  if (!pr || pr.source !== 'history') L.push(pr && pr.source === 'login'
-    ? '<p class="hint">Profil non calé sur des sorties : coureur médian du modèle.</p>'
-    : '<p class="hint">Pas assez de longues sorties pour caler ton profil : coureur médian du modèle.</p>');
-  L.push(`<div>Ton profil : <b>${grp}</b> d'un ultra « Standard » (environ ${Math.round(R.q * 100)} % des participants devant toi).</div>`);
-  L.push(`<div>Vitesse équivalent plat : <b>${n1(R.vf)} km/h</b>${(+opt.terrain || 1) !== 1 ? ' (terrain compris)' : ''}${pr && pr.n ? `, d'après tes ${pr.n} plus longues sorties route` : ''}.</div>`);
-  L.push(`<div>Arrêts courts : <b>${n0(R.rate * 60)} min</b> par heure roulée.</div>`);
-  if (R.strat === 'course') L.push(R.fixed
-    ? `<div>Sommeil : de <b>${hhmm(R.ws)}</b> à <b>${hhmm(R.wakeAt)}</b> (tes horaires), après au moins ${n0(R.A)} h d'éveil ; pas d'arrêt s'il reste moins de ${R.push} h de vélo.</div>`
-    : `<div>Sommeil : <b>${durTxt(R.D * R.dsc)}</b> par nuit${R.dsc < 1 ? ' (nuit raccourcie : course courte)' : ''}, à partir de 22 h, après au moins ${n0(R.A)} h d'éveil ; pas d'arrêt s'il reste moins de ${R.push} h de vélo.</div>`);
-  else L.push(`<div>Journées : départ vers <b>${hhmm(R.wake)}</b>, arrêt vers <b>${hhmm(R.bed)}</b>${R.fixed ? ' (tes horaires)' : ''}${!R.fixed && pr && pr.trip ? `, comme sur tes sorties de plusieurs jours (${pr.trip.trips} séjours, ${pr.trip.days} jours, ${n0(pr.trip.km)} km par jour en médiane)` : ''}.</div>`);
-  L.push('<p class="hint">Modèle FlyUltra (calé sur 21 courses, environ 3 000 traces) appliqué à ton historique.</p>');
-  el.innerHTML = L.join('');
-  fillStrategyTimes();
-}
-for (const sel of ['#splitSeg', '#stratSeg']) $(sel).addEventListener('click', e => {
-  const b = e.target.closest('button[data-v]'); if (!b) return;
-  setSeg(sel, b.dataset.v); applyModeUI(); renderProfileCard(); schedule();
-});
+const durShort = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
 $('#wxSrcSeg').addEventListener('click', e => {
   const b = e.target.closest('button[data-v]'); if (!b || b.dataset.v === wxSrc()) return;
   try { localStorage.setItem('pmr-wxsrc', b.dataset.v); } catch (err) {}
   S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); schedule();
 });
-$('#terrain').addEventListener('change', () => { renderProfileCard(); schedule(); });
-for (const id of TIME_IDS) $('#' + id).addEventListener('change', () => { $('#' + id).dataset.user = '1'; fillStrategyTimes(); renderProfileCard(); schedule(); });
-$('#timesHint').addEventListener('click', e => {
-  if (!e.target.closest('#timesReset')) return;
-  for (const id of TIME_IDS) $('#' + id).dataset.user = '';
-  fillStrategyTimes(); renderProfileCard(); schedule();
-});
 
-/* ---------- page Ultra : jour par jour ---------- */
-// Découpage selon la plage de roulage (reprise / bivouac). Pour chaque jour : distance, D+, horaires, météo si
-// disponible, hébergements autour du bivouac, dernier ravito ouvert avant le bivouac et premier ravito ouvert le lendemain.
+/* ---------- page Ultra : planification journalière ---------- */
 function cumUp() {
   if (S.P._cumUp) return S.P._cumUp;
   const es = S.P.es, c = new Float64Array(S.P.n);
@@ -2537,6 +2389,9 @@ function daySummaries() {
   for (const d of days) {
     const ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km);
     d.dist = d.b.km - d.a.km; d.dplus = up[ib] - up[ia];
+    // temps de la journée : pédalage et arrêts courts (réglage « Arrêts courts », en % du pédalage)
+    const elapsedH = (d.b.t - d.a.t) / 3600e3, k = 1 + (+$('#pause').value || 0) / 100;
+    d.rideH = elapsedH / k; d.pauseH = elapsedH - d.rideH;
     // météo du jour à partir des points d'échantillonnage
     let tmin = Infinity, tmax = -Infinity, rain = 0, headKm = 0, cov = 0, prev = null;
     if (S.wx) for (let j = 0; j < S.samples.length; j++) {
@@ -2550,37 +2405,42 @@ function daySummaries() {
   }
   return days;
 }
-function renderDays() {
-  const card = $('#dayCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
+const PLAN = { times: [] }; // heures de départ choisies pour chaque jour (index 0 = jour 1, non utilisé)
+function renderPlan() {
+  const card = $('#planCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
   card.hidden = !on; if (!on) return;
-  if (segVal('#splitSeg') === 'profile' && !FLY.loading) fillStrategyTimes(); // valeurs du profil recalculées pour cette trace
-  const tl = S.tl, days = daySummaries();
-  const poiFmt = p => `${POI_GROUPS[p.g].emo} ${escH(p.name || p.type)} <span class="mono">(km ${n0(p.km)}${p.off >= 100 ? ', ' + (p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km') : ''})</span>`;
-  const resup = POI.list.filter(p => POI_GROUPS[p.g].resupply && p.st);
-  const html = days.map((d, k) => {
-    const dist = d.dist, dplus = d.dplus;
-    const wxLine = d.wx
-      ? `Météo : <b>${n0(d.wx.tmin)} à ${n0(d.wx.tmax)} °C</b> ressentis · pluie <b>${n1(d.wx.rain)} mm</b> · vent de face <b>${d.wx.head} %</b>`
-      : 'Météo : pas encore de prévision pour ce jour (disponible 16 jours avant).';
-    const lines = [`<div class="ln">${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)} · km ${n0(d.a.km)} → ${n0(d.b.km)}</div>`, `<div class="ln">${wxLine}</div>`];
-    if (d.night) lines.push(`<div class="ln">Nuit au km ${n0(d.b.km)} : <b>${hm.format(new Date(d.night.from))} → ${hm.format(new Date(d.night.to))}</b> (${durTxt((d.night.to - d.night.from) / 3600e3)})</div>`);
-    if (d.night && POI.list.length) {
-      const beds = POI.list.filter(p => p.g === 'sleep' && Math.abs(p.km - d.b.km) <= 10).sort((x, y) => Math.abs(x.km - d.b.km) - Math.abs(y.km - d.b.km)).slice(0, 4);
-      lines.push(`<div class="ln">Pour dormir : ${beds.length ? beds.map(poiFmt).join(' · ') : 'aucun hébergement référencé à moins de 10 km'}</div>`);
-      const lastOpen = resup.filter(p => p.km <= d.b.km && p.km >= d.b.km - 40 && p.st.cls === 'open').sort((x, y) => y.km - x.km)[0];
-      lines.push(`<div class="ln">Dernier ravito ouvert avant le bivouac : ${lastOpen ? poiFmt(lastOpen) + ` à ${whenTxt(lastOpen.t, d.a.t)}` : '<b>aucun dans les 40 derniers km</b>, prévois des réserves'}</div>`);
-      const firstOpen = resup.filter(p => p.km >= d.b.km && p.km <= d.b.km + 60 && p.st.cls === 'open').sort((x, y) => x.km - y.km)[0];
-      lines.push(`<div class="ln">Premier ravito ouvert le lendemain : ${firstOpen ? poiFmt(firstOpen) + ` à ${whenTxt(firstOpen.t, d.a.t)}` : '<b>aucun dans les 60 premiers km</b>'}</div>`);
-    }
-    return `<div class="dayrow"><div class="top"><h3>Jour ${k + 1} · ${dayFmt.format(new Date(d.a.t))}</h3><span class="kpi">${n0(dist)} km · D+ ${n0(dplus)} m · ${durTxt((d.b.t - d.a.t) / 3600e3)}</span></div>${lines.join('')}</div>`;
+  const opt = readOpt(), days = daySummaries(), custom = opt.planCustom;
+  const t0 = S.tl.start, defT = $('#time').value || '07:00';
+  let late = 0;
+  const rows = days.map((d, k) => {
+    const startCell = k === 0 ? `<b>${hm.format(new Date(d.a.t))}</b>`
+      : custom ? `<input type="time" step="900" data-day="${k}" value="${PLAN.times[k] || defT}" aria-label="Heure de départ du jour ${k + 1}">`
+      : hm.format(new Date(d.a.t));
+    const isLate = d.night && d.night.late; if (isLate) late++;
+    const endTxt = whenTxt(d.b.t, d.a.t) + (isLate ? ' <span class="late" title="L\'étape finit après l\'heure de départ prévue le lendemain : pas de nuit">⚠</span>' : '');
+    return `<tr><td>Jour ${k + 1}<br><span class="hint">${dayFmt.format(new Date(d.a.t))}</span></td><td>${startCell}</td><td>${endTxt}</td>
+      <td class="num">${n0(d.dist)} km<br><span class="hint">km ${n0(d.a.km)} → ${n0(d.b.km)}</span></td><td class="num">${n0(d.dplus)} m</td>
+      <td class="num">${durShort(d.rideH)}</td><td class="num">${durShort(d.pauseH)}</td></tr>`;
   });
-  $('#dayList').innerHTML = html.join('');
-  $('#dayHint').textContent = segVal('#splitSeg') === 'profile'
-    ? `Découpage selon ton profil de rouleur (modèle FlyUltra, stratégie ${segVal('#stratSeg') === 'aventure' ? 'Aventure' : 'Course'}).`
-    : $('#windowOn').checked
-    ? `Découpage selon ta plage de roulage (${$('#dayStart').value} → ${$('#dayEnd').value}). Choisis « Mon profil » pour un découpage selon ton profil de rouleur.`
-    : 'Sans plage de roulage, la sortie est d\'une traite. Coche « Rouler sur plusieurs jours » pour un découpage par jour.';
+  $('#planRows').innerHTML = rows.join('');
+  const sum = f => days.reduce((s, d) => s + f(d), 0);
+  $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n0(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td></tr>` : '';
+  $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? 'Étapes de même temps de pédalage.' : 'Étapes de même distance.') : 'D\'une traite.';
+  $('#planNote').innerHTML = `Fin de journée estimée avec ta vitesse sur le plat (${n1(opt.speed)} km/h), ta VAM (${opt.vam} m/h) et tes arrêts courts (+${opt.pause} %)${opt.windOn ? ', vent compris' : ''} : réglages à gauche.`
+    + (late ? ` <span class="late">⚠ ${late > 1 ? late + ' étapes finissent' : 'Une étape finit'} après l'heure de départ du lendemain : allonge le découpage ou avance le départ.</span>` : '');
+  $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
 }
+// réglages de la planification : relancent le calcul ; date et heure du jour 1 synchronisées avec celles de gauche
+$('#planDays').addEventListener('input', () => { if (+$('#planDays').value >= 1) schedule(); });
+$('#planSplitSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; setSeg('#planSplitSeg', b.dataset.v); schedule(); });
+$('#planCustomOn').addEventListener('change', schedule);
+$('#planDate').addEventListener('change', () => { $('#date').value = $('#planDate').value; schedule(); });
+$('#planTime').addEventListener('change', () => { $('#time').value = $('#planTime').value; schedule(); });
+for (const id of ['date', 'time']) $('#' + id).addEventListener('change', () => { $('#plan' + id[0].toUpperCase() + id.slice(1)).value = $('#' + id).value; });
+$('#planRows').addEventListener('change', e => {
+  const inp = e.target.closest('input[data-day]'); if (!inp) return;
+  PLAN.times[+inp.dataset.day] = inp.value; schedule();
+});
 
 /* ---------- mes parcours (navigateur + compte Coach Miguel) ---------- */
 // Chaque GPX chargé est gardé : dans le navigateur (IndexedDB, sans connexion) et, si tu es connecté à
