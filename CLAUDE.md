@@ -30,6 +30,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Sans session Supabase (pas de jeton `sb-rynbzhuxwvfvblgwnhkk-auth-token`), le `<body>` reçoit la classe `public` dès le chargement (petit script en tête de `<body>`). CSS : `body.public .priv` masqué, `.pub` visible seulement en public.
 - Masqué en public (`.priv`) : bouton « Coach Miguel », option « Caler sur mes sorties », choix de source météo et consommation meteoblue. `wxSrc()` renvoie toujours `om` sans jeton ; `calibOn` ignoré sans jeton. Les textes ne mentionnent plus Coach Miguel côté public.
 - Pied de page : « Accès privé » (`#loginLink` → `#loginDlg`, `signInWithPassword`, puis rechargement) ou « Se déconnecter » (`#logoutLink`). Jeton présent mais session morte → jeton effacé et rechargement.
+- Mode d'emploi : bouton « ? » de l'en-tête (`#helpBtn`) → dialogue `#helpDlg` (5 étapes + note sur la fiabilité). Ouvert tout seul au chargement en mode public tant que « Ne plus afficher au démarrage » (`localStorage` `pmr-help-seen`) n'est pas coché.
 - `coach.html` reste entièrement derrière la connexion (données protégées par RLS ; fonctions `coach-propose` et `meteoblue` réservées au propriétaire). Compte unique : fermer les inscriptions dans Supabase (Authentication → « Allow new users to sign up »).
 
 ## Deux pages : Sortie et Ultra

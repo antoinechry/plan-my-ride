@@ -246,6 +246,23 @@ footer a{color:inherit}
 body.public .priv{display:none!important}
 body:not(.public) .pub{display:none!important}
 dialog.login{border:1px solid var(--line);border-radius:10px;padding:20px;max-width:340px;width:calc(100% - 32px);background:var(--panel);color:var(--ink)}
+dialog.help{border:1px solid var(--line);border-radius:12px;padding:0;max-width:600px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);background:var(--panel);color:var(--ink)}
+dialog.help[open]{display:flex;flex-direction:column}
+dialog.help::backdrop{background:rgba(0,0,0,.4)}
+dialog.help .hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 6px}
+dialog.help h2{margin:0;font-size:19px}
+dialog.help .x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px}
+dialog.help .bd{padding:4px 20px 8px;overflow:auto;flex:1 1 auto;min-height:0;font-size:14.5px;line-height:1.5}
+dialog.help .bd>p{margin:0 0 12px;color:var(--muted)}
+dialog.help ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+dialog.help li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px}
+dialog.help li>i{font-style:normal;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center}
+dialog.help li b{display:block;margin-bottom:2px}
+dialog.help li span{color:var(--muted)}
+dialog.help .note{margin:14px 0 4px;padding:10px 12px;border-radius:8px;background:var(--bg,rgba(127,127,127,.08));border:1px solid var(--line);font-size:13px;color:var(--muted)}
+dialog.help .ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px 18px;flex-wrap:wrap}
+dialog.help .ft label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+.helpbtn{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%;font-weight:700}
 dialog.login::backdrop{background:rgba(0,0,0,.35)}
 dialog.login form{display:flex;flex-direction:column;gap:10px}
 dialog.login h2{margin:0 0 4px;font-size:17px}
@@ -266,6 +283,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <a href="#" data-mode="ride">Sortie</a>
     <a href="#ultra" data-mode="ultra">Ultra</a>
   </nav>
+  <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
   <a class="btn priv" href="coach.html">Coach Miguel</a>
   <label class="btn primary" for="file">Importer un GPX</label>
   <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
@@ -510,6 +528,21 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   </main>
 </div>
 <footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink">Accès privé</a><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
+<dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
+  <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
+  <div class="bd">
+    <p>Plan My Ride estime votre heure de passage à chaque point d'un parcours et vous donne la météo prévue à cet endroit, à ce moment-là.</p>
+    <ol>
+      <li><i>1</i><div><b>Importez une trace GPX</b><span>Bouton « Importer un GPX » ou glisser-déposer. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Vos parcours restent dans votre navigateur et se retrouvent dans « Mes parcours ».</span></div></li>
+      <li><i>2</i><div><b>Choisissez le départ et votre allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts. Cochez « Effet du vent » pour que le vent ralentisse ou accélère la sortie.</span></div></li>
+      <li><i>3</i><div><b>Lisez la météo le long du parcours</b><span>Carte colorée (vent, température, pluie, soleil) avec flèches de vent, profil interactif, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
+      <li><i>4</i><div><b>Gardez la feuille de route</b><span>Horaires et météo point par point, en CSV, et « Exporter l'image » pour partager carte, vent et profil.</span></div></li>
+      <li><i>5</i><div><b>Plusieurs jours ? Page Ultra</b><span>Onglet « Ultra » : découpage jour par jour (stratégie Course ou Aventure), bivouacs, et épiceries, boulangeries, restos, points d'eau, hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
+    </ol>
+    <p class="note">Météo Open-Meteo, jusqu'à 16 jours : plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
+  </div>
+  <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
+</dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
     <h2>Accès privé</h2>
@@ -2319,6 +2352,16 @@ function renderDays() {
 const LIB = { list: [], current: '', db: null, delArm: 0 };
 const SB_TOKEN_KEY = 'sb-rynbzhuxwvfvblgwnhkk-auth-token';
 const hasSbToken = () => { try { return !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) { return false; } };
+// Mode d'emploi : bouton « ? » ; ouvert tout seul à l'arrivée d'un visiteur (mode public) tant qu'il n'a pas coché « Ne plus afficher ».
+const HELP_KEY = 'pmr-help-seen';
+function openHelp() { try { $('#helpNoMore').checked = !!localStorage.getItem(HELP_KEY); } catch (e) {} $('#helpDlg').showModal(); }
+function closeHelp() { try { if ($('#helpNoMore').checked) localStorage.setItem(HELP_KEY, '1'); else localStorage.removeItem(HELP_KEY); } catch (e) {} $('#helpDlg').close(); }
+$('#helpBtn').addEventListener('click', openHelp);
+$('#helpX').addEventListener('click', closeHelp);
+$('#helpOk').addEventListener('click', closeHelp);
+$('#helpDlg').addEventListener('cancel', e => { e.preventDefault(); closeHelp(); });
+$('#helpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) closeHelp(); });
+try { if (document.body.classList.contains('public') && !localStorage.getItem(HELP_KEY)) setTimeout(openHelp, 400); } catch (e) {}
 // Accès privé : connexion par mot de passe (compte unique), déconnexion ; la page se recharge pour changer de mode.
 $('#loginLink').addEventListener('click', e => { e.preventDefault(); $('#loginErr').hidden = true; $('#loginDlg').showModal(); $('#loginEmail').focus(); });
 $('#loginCancel').addEventListener('click', () => $('#loginDlg').close());
