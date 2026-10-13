@@ -83,7 +83,7 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .plan-table tfoot td{font-weight:600;border-top:2px solid var(--line);border-bottom:0}
 .plan-table .late{color:var(--head);font-weight:600}
 .plan-table tr.plan-wx td{padding:2px 10px 10px;background:var(--bg);white-space:normal}
-.plan-table tr.plan-wx canvas{display:block}
+.plan-table tr.plan-wx canvas{display:block;cursor:crosshair;touch-action:pan-y}
 .plan-table tbody tr:not(.plan-wx) td{border-bottom:0}
 
 .app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;max-width:1440px;margin-inline:auto;align-items:start}
@@ -2420,10 +2420,13 @@ function daySummaries() {
 const PLAN = { times: [], days: [] }; // heures de départ choisies pour chaque jour (index 0 = jour 1, non utilisé)
 /* Graphe météo sous chaque journée : de l'heure de départ à la fin de journée, une colonne par heure de roulage :
    ciel et sens du vent en haut, température ressentie (courbe, min et max), pluie en barres (mm/h), heures en bas. */
-function drawPlanWx() {
-  const kmAtT = t => { const T = S.tl.times; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return S.P.d[lo]; };
-  for (const cv of document.querySelectorAll('#planRows canvas[data-wx]')) {
-    const d = PLAN.days[+cv.dataset.wx]; if (!d) continue;
+const planKmAtT = t => { const T = S.tl.times; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return S.P.d[lo]; };
+function drawPlanWx() { for (const cv of document.querySelectorAll('#planRows canvas[data-wx]')) drawDayWx(cv); }
+// cur : instant survolé (curseur), ou rien
+function drawDayWx(cv, cur) {
+  const kmAtT = planKmAtT;
+  {
+    const d = PLAN.days[+cv.dataset.wx]; if (!d) return;
     const W = Math.max(260, Math.max($('#planCard .plan-scroll').clientWidth, 700) - 24), H = 132, dpr = window.devicePixelRatio || 1;
     cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
     const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
@@ -2432,7 +2435,7 @@ function drawPlanWx() {
     const X = t => l + (t - ta) / span * pw;
     // une valeur par demi-heure pour la courbe, une colonne par heure pour le ciel, le vent et la pluie
     const pts = []; for (let t = ta; t <= tb + 1; t += 1800e3) { const tt = Math.min(t, tb), km = kmAtT(tt), w = S.wx ? wxAt(sIdx(km), tt) : null; if (w) pts.push({ t: tt, km, w }); }
-    if (!pts.length) { c.fillStyle = muted; c.font = `13px ${cssVar('--f-body') || 'system-ui'}`; c.textBaseline = 'middle'; c.fillText('Pas encore de prévision météo pour ce jour.', l, H / 2); continue; }
+    if (!pts.length) { c.fillStyle = muted; c.font = `13px ${cssVar('--f-body') || 'system-ui'}`; c.textBaseline = 'middle'; c.fillText('Pas encore de prévision météo pour ce jour.', l, H / 2); return; }
     const yT0 = 44, yT1 = H - 34; // zone température / pluie / relief ; en bas : heures puis km
     const temps = pts.map(p => p.w.app);
     let tMin = Math.floor(Math.min(...temps)), tMax = Math.ceil(Math.max(...temps)); if (tMax - tMin < 6) { const m = (tMax + tMin) / 2; tMin = Math.floor(m - 3); tMax = Math.ceil(m + 3); }
@@ -2490,8 +2493,43 @@ function drawPlanWx() {
       if (x - w2 < lastR + 8 || x - w2 < l - 2) continue; lastR = x + w2; c.fillText(txt, x, yT1 + 20); }
     c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
     c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    cv._geo = { ta, tb, l, pw, span };
+    // curseur : trait vertical et étiquette (heure, km, altitude, température, pluie, vent)
+    if (cur != null) {
+      const x = X(cur), km = kmAtT(cur), i = idxAtKm(km), w = S.wx ? wxAt(sIdx(km), cur) : null;
+      c.strokeStyle = ink; c.lineWidth = 1; c.beginPath(); c.moveTo(x + .5, 0); c.lineTo(x + .5, yT1 + 14); c.stroke();
+      c.fillStyle = cssVar('--accent'); c.beginPath(); c.arc(x, Ye(S.P.es[i]), 4, 0, Math.PI * 2); c.fill();
+      const lines = [`${hm.format(new Date(cur))} · km ${n1(km)} · ${n0(S.P.es[i])} m`];
+      if (w) lines.push(`${skyLabel(w.code, w.day)} · ${n0(w.app)}° ressentis${w.pr >= 0.1 ? ` · ${n1(w.pr)} mm/h` : ''}`, `Vent ${compass(w.wd)} ${n0(w.ws)} km/h · ${relLabel(w.ws * Math.cos((w.wd - S.P.b[i]) * RAD)).txt}`);
+      c.font = `600 11px ${mono}, monospace`;
+      const bw = Math.max(...lines.map(s => c.measureText(s).width)) + 14, bh = lines.length * 15 + 8;
+      const bx = x + 10 + bw > W ? x - 10 - bw : x + 10, by = 40;
+      c.fillStyle = cssVar('--panel'); c.globalAlpha = .95; c.beginPath(); c.roundRect(bx, by, bw, bh, 6); c.fill(); c.globalAlpha = 1;
+      c.strokeStyle = cssVar('--line'); c.stroke();
+      c.fillStyle = ink; c.textAlign = 'left'; c.textBaseline = 'top';
+      lines.forEach((s, j) => c.fillText(s, bx + 7, by + 5 + j * 15));
+      c.textBaseline = 'alphabetic';
+    }
   }
 }
+// survol (souris ou doigt) d'un graphe du jour : curseur sur le graphe et point sur la carte
+function planWxHover(e) {
+  const cv = e.target.closest('canvas[data-wx]'); if (!cv || !cv._geo || !S.tl) { if (PLAN.hoverCv) planWxLeave(); return; }
+  const g = cv._geo, r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+  const t = g.ta + clamp((x - g.l) / g.pw, 0, 1) * g.span;
+  drawDayWx(cv, t);
+  if (PLAN.hoverCv && PLAN.hoverCv !== cv) drawDayWx(PLAN.hoverCv);
+  PLAN.hoverCv = cv;
+  if (map && hoverMarker) { const p = S.P.pts[idxAtKm(planKmAtT(t))]; hoverMarker.setLatLng([p.lat, p.lon]); if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map); }
+}
+function planWxLeave() {
+  if (PLAN.hoverCv) drawDayWx(PLAN.hoverCv); PLAN.hoverCv = null;
+  if (map && hoverMarker && map.hasLayer(hoverMarker)) hoverMarker.remove();
+}
+$('#planRows').addEventListener('pointermove', planWxHover);
+$('#planRows').addEventListener('pointerdown', planWxHover);
+$('#planRows').addEventListener('pointerleave', planWxLeave);
+$('#planRows').addEventListener('pointercancel', planWxLeave);
 function renderPlan() {
   const card = $('#planCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
   card.hidden = !on; if (!on) return;
