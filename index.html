@@ -306,6 +306,8 @@ dialog.stats[open]{display:flex;flex-direction:column}
 dialog.stats::backdrop{background:rgba(0,0,0,.4)}
 dialog.stats .bd{padding:4px 20px 18px;overflow:auto;flex:1 1 auto;min-height:0;font-size:14px}
 dialog.stats .stats-scroll{overflow-x:auto}
+dialog.stats .stats-geo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:560px){dialog.stats .stats-geo{grid-template-columns:1fr}}
 dialog.stats table{width:100%;min-width:0;border-collapse:collapse;font-variant-numeric:tabular-nums}
 dialog.stats thead th{white-space:normal}
 dialog.stats th,dialog.stats td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
@@ -2615,7 +2617,8 @@ const LIB = { list: [], current: '', db: null, delArm: 0 };
 const SB_TOKEN_KEY = 'sb-rynbzhuxwvfvblgwnhkk-auth-token';
 const hasSbToken = () => { try { return !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) { return false; } };
 // Mesure d'audience de la version publique (table Supabase `pmr_visits`, ajout seul pour les visiteurs, lecture
-// réservée au propriétaire). Identifiant aléatoire gardé dans le navigateur, ni IP ni cookie ; rien n'est envoyé
+// réservée au propriétaire). Identifiant aléatoire gardé dans le navigateur, sans cookie ; la fonction pmr-track ajoute une
+// localisation approximative (pays, région, département, ville) tirée de l'IP, qui n'est pas enregistrée ; rien n'est envoyé
 // quand on est connecté ni en local. Une visite par onglet ouvert (sessionStorage), un évènement par GPX importé.
 const VIS_KEY = 'pmr-visitor';
 function visitorId() {
@@ -2628,13 +2631,15 @@ function visitorId() {
 }
 function track(event, extra) {
   if (hasSbToken() || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+  const row = { visitor: visitorId(), event, mode: S.mode === 'ultra' ? 'ultra' : 'ride',
+    device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) };
+  const hdr = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+  // fonction pmr-track : ajoute pays / région / département / ville déduits de l'IP (jamais stockée) ;
+  // si elle ne répond pas, enregistrement direct sans localisation
+  const direct = () => fetch(SB_URL + '/rest/v1/pmr_visits', { method: 'POST', keepalive: true, headers: { ...hdr, Prefer: 'return=minimal' }, body: JSON.stringify(row) }).catch(() => {});
   try {
-    fetch(SB_URL + '/rest/v1/pmr_visits', {
-      method: 'POST', keepalive: true,
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ visitor: visitorId(), event, mode: S.mode === 'ultra' ? 'ultra' : 'ride',
-        device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) }),
-    }).catch(() => {});
+    fetch(SB_URL + '/functions/v1/pmr-track', { method: 'POST', keepalive: true, headers: hdr, body: JSON.stringify(row) })
+      .then(r => { if (!r.ok) direct(); }).catch(direct);
   } catch (e) {}
 }
 try { if (!sessionStorage.getItem('pmr-visit')) { sessionStorage.setItem('pmr-visit', '1'); setTimeout(() => track('visit'), 800); } } catch (e) {}
@@ -2644,7 +2649,7 @@ async function openStats() {
   const body = $('#statsBody'); body.innerHTML = '<p class="hint">Chargement…</p>'; $('#statsDlg').showModal();
   try {
     const sb = await sbIfLogged(); if (!sb) throw new Error('connexion expirée, reconnecte-toi');
-    const { data, error } = await sb.from('pmr_visits').select('at,visitor,event,device,mode,km').order('at', { ascending: false }).limit(5000);
+    const { data, error } = await sb.from('pmr_visits').select('at,visitor,event,device,mode,km,country,region,dept,city').order('at', { ascending: false }).limit(5000);
     if (error) throw error;
     const rows = (data || []).map(r => ({ ...r, t: new Date(r.at) }));
     const now = new Date(), day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -2671,6 +2676,23 @@ async function openStats() {
     h += '<h3>Détails</h3><p style="margin:0">'
       + (vis.length ? `${Math.round(mob / vis.length * 100)} % des visites sur téléphone · ${Math.round(ult / vis.length * 100)} % arrivées sur la page Ultra` : 'Aucune visite pour l\'instant.')
       + (kms.length ? ` · parcours importés : ${kms[Math.floor(kms.length / 2)]} km en médiane (de ${kms[0]} à ${kms[kms.length - 1]} km)` : '') + '.</p>';
+    // provenance (déduite de l'adresse IP à la connexion, approximative ; l'IP n'est pas gardée)
+    const vrows = rows.filter(r => r.event === 'visit'), located = vrows.filter(r => r.country);
+    const top = (list, key, label) => {
+      const m = new Map();
+      for (const r of list) { const k = key(r); if (!k) continue; const e = m.get(k) || { label: label(r), u: new Set(), v: 0 }; e.u.add(r.visitor); e.v++; m.set(k, e); }
+      return [...m.values()].sort((a, b) => b.u.size - a.u.size || b.v - a.v).slice(0, 12);
+    };
+    const FR_NAME = c => c === 'FR' ? '' : ` (${c})`;
+    const depts = top(located, r => r.country === 'FR' ? (r.dept || r.region) : r.country, r => r.country === 'FR' ? (r.dept ? `${r.dept}${r.region ? ' · ' + r.region : ''}` : (r.region || 'France')) : (r.country === 'CH' ? 'Suisse' : r.country === 'BE' ? 'Belgique' : r.country === 'DE' ? 'Allemagne' : r.country));
+    const cities = top(located, r => r.city ? r.city + '|' + r.country : null, r => r.city + FR_NAME(r.country));
+    h += '<h3>Provenance des visites</h3>';
+    if (!located.length) h += '<p class="hint" style="margin:0">Pas encore de visite localisée (la localisation est enregistrée depuis le 13/10/2026).</p>';
+    else {
+      const tbl = (list, head) => `<table><thead><tr><th>${head}</th><th>Visiteurs</th><th>Visites</th></tr></thead><tbody>${list.map(e => `<tr><td>${escH(e.label)}</td><td><b>${e.u.size}</b></td><td>${e.v}</td></tr>`).join('')}</tbody></table>`;
+      h += `<div class="stats-geo"><div>${tbl(depts, 'Département / pays')}</div><div>${tbl(cities, 'Ville')}</div></div>`;
+      h += `<p class="hint">${located.length} visite${located.length > 1 ? 's' : ''} localisée${located.length > 1 ? 's' : ''} sur ${vrows.length}. Localisation approximative, déduite de l'adresse IP (souvent la ville de l'opérateur sur mobile) ; l'adresse IP n'est pas enregistrée.</p>`;
+    }
     h += '<p class="hint">Visiteur = un navigateur (téléphone ou ordinateur). Visite = une ouverture de la page. Tes propres passages, connecté, ne sont pas comptés.</p>';
     body.innerHTML = h;
   } catch (err) { body.innerHTML = `<p class="hint">Impossible de lire les statistiques : ${String(err.message || err)}</p>`; }
