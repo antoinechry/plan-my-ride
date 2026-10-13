@@ -144,6 +144,14 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 #map{height:440px;background:var(--bg)}
 @media (max-width:600px){#map{height:320px}}
+/* plein écran de la carte */
+#mapCard.map-fs{position:fixed;inset:0;z-index:1500;margin:0;border-radius:0;display:flex;flex-direction:column;background:var(--panel);padding-bottom:env(safe-area-inset-bottom)}
+#mapCard.map-fs #map{flex:1;height:auto;min-height:0}
+#mapCard.map-fs .card-head{padding-top:max(12px,env(safe-area-inset-top))}
+#mapCard.map-fs .legend{max-height:30vh;overflow:auto}
+#mapCard:fullscreen{width:100%;height:100%}
+body.fs-lock{overflow:hidden}
+.fs-btn{display:flex!important;align-items:center;justify-content:center;color:#15202a}
 .legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}
 .legend i{display:inline-block;width:18px;height:5px;border-radius:3px;vertical-align:middle;margin-right:6px}
 .legend .ramp{width:120px;height:6px}
@@ -472,9 +480,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </section>
     <div class="stats" id="stats"></div>
 
-    <section class="card">
+    <section class="card" id="mapCard">
       <div class="card-head">
         <h2>Carte météo du parcours</h2>
+        <button class="btn small" id="fsBtn" type="button" title="Afficher la carte en plein écran">Plein écran</button>
         <button class="btn small" id="exportImg" type="button" title="Image PNG de la carte (vue actuelle) avec le vent, et du profil météo">Exporter l'image</button>
         <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
         <label class="arrows-toggle"><input type="checkbox" id="skyOn" checked> Ciel</label>
@@ -1151,6 +1160,26 @@ function renderSummary(opt) {
 
 /* carte */
 let map, routeLayer, hoverMarker;
+/* Plein écran de la carte : toute la carte « Carte météo » (filtres, carte, légende) occupe l'écran.
+   La classe .map-fs suffit (iPhone : pas d'API plein écran sur un élément) ; on demande en plus le vrai plein écran
+   quand le navigateur le permet, pour masquer ses barres. Échap ou le bouton pour sortir. */
+const FS_ICON_IN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const FS_ICON_OUT = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function setMapFs(on) {
+  const card = $('#mapCard');
+  if (card.classList.contains('map-fs') === on) return;
+  card.classList.toggle('map-fs', on); document.body.classList.toggle('fs-lock', on);
+  $('#fsBtn').textContent = on ? 'Quitter le plein écran' : 'Plein écran';
+  const a = document.querySelector('.fs-btn');
+  if (a) { a.innerHTML = on ? FS_ICON_OUT : FS_ICON_IN; a.title = on ? 'Quitter le plein écran (Échap)' : 'Plein écran'; }
+  if (on) { const rq = card.requestFullscreen || card.webkitRequestFullscreen; if (rq) try { const r = rq.call(card); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  else if (fsEl()) { const ex = document.exitFullscreen || document.webkitExitFullscreen; try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  if (map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 60);
+}
+const toggleMapFs = () => setMapFs(!$('#mapCard').classList.contains('map-fs'));
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { if (!fsEl()) setMapFs(false); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#mapCard').classList.contains('map-fs') && !document.querySelector('dialog[open]')) setMapFs(false); });
 function initMap() {
   if (typeof L === 'undefined') { $('#map').innerHTML = '<p class="hint" style="padding:16px">La carte n\'a pas pu se charger (connexion requise).</p>'; return; }
   map = L.map('map', { zoomControl: true, attributionControl: true });
@@ -1172,6 +1201,14 @@ function initMap() {
   map.createPane('poiPane').style.zIndex = 620; // lieux du mode ultra au-dessus des flèches de vent
   map.on('moveend', () => renderWindArrows());
   map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base2', e.name); } catch (err) {} });
+  // bouton plein écran sous le zoom
+  const Fs = L.Control.extend({ options: { position: 'topleft' }, onAdd() {
+    const d = L.DomUtil.create('div', 'leaflet-bar'), a = L.DomUtil.create('a', 'fs-btn', d);
+    a.href = '#'; a.setAttribute('role', 'button'); a.title = 'Plein écran'; a.setAttribute('aria-label', 'Plein écran');
+    a.innerHTML = FS_ICON_IN; L.DomEvent.disableClickPropagation(d);
+    L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); toggleMapFs(); });
+    return d; } });
+  map.addControl(new Fs());
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
 }
 function sampleValue(k) {
@@ -2698,6 +2735,7 @@ $('#rowsOn').addEventListener('change', applyRows);
 applyRows();
 $('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
 $('#skyOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
+$('#fsBtn').addEventListener('click', toggleMapFs);
 function applyAnim() { $('#map').classList.toggle('anim', $('#animOn').checked); try { localStorage.setItem('pmr-anim', $('#animOn').checked ? '1' : '0'); } catch (e) {} }
 try { if (localStorage.getItem('pmr-anim') === '0') $('#animOn').checked = false; } catch (e) {}
 $('#animOn').addEventListener('change', applyAnim);
