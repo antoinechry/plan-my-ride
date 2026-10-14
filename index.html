@@ -6,6 +6,7 @@
 <script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 
 <title>Plan My Ride</title>
+<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -147,6 +148,24 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 
 .verdict{font-family:var(--f-display);font-size:24px;font-weight:500;line-height:1.25;max-width:60ch}
 .verdict b{font-weight:700}
+.test-band{background:#fff3c4;color:#5a4300;border-bottom:1px solid #e9d27a;padding:8px 16px;font-size:14px;text-align:center}
+.test-band a{color:#1f4f8f;margin-left:6px}
+.lib-search{position:relative;min-width:0}
+.lib-acts{display:flex;gap:14px;margin-top:4px}
+.lib-acts .linkbtn.danger{color:var(--head);font-weight:600}
+.lib-acts .linkbtn:disabled{opacity:.4;cursor:default}
+.lib-search input{width:100%}
+.lib-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:1200;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);margin:0;padding:4px;list-style:none;max-height:340px;overflow:auto}
+.lib-list li{padding:7px 9px;border-radius:6px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.lib-list li[aria-selected="true"]{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.lib-list li b{font-weight:600}
+.lib-list li mark{background:none;color:inherit;text-decoration:underline;text-decoration-thickness:2px;text-decoration-color:var(--accent)}
+.lib-list li .m{font:12px/1.3 var(--f-mono);color:var(--muted)}
+.lib-list li.cur{box-shadow:inset 3px 0 0 var(--accent)}
+.lib-list li.empty{cursor:default;color:var(--muted)}
+.lib-list li.imp{color:var(--accent);border-top:1px solid var(--line);border-radius:0 0 6px 6px;margin-top:2px}
+.lib-rename{display:flex;gap:6px;margin-top:6px}
+.lib-rename input{flex:1;min-width:0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .stat{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .stat .v{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -329,10 +348,15 @@ dialog.login input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px 
 dialog.login .err{color:#c0392b;font-size:13px;margin:0}
 dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.stat.wind{flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
+.stat.wind canvas{flex:none}
+.stat.wind .wtxt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stat.wind .wtxt .s{white-space:nowrap}
 </style>
 </head>
 <body>
 <script>try{if(!localStorage.getItem('sb-rynbzhuxwvfvblgwnhkk-auth-token'))document.body.classList.add('public')}catch(e){document.body.classList.add('public')}</script>
+<div class="test-band" id="testBand" hidden>🧪 <b>Version test</b> : nouveautés en essai avant la mise en ligne. Mêmes parcours et réglages que la version normale. <a href="./">Revenir à la version normale</a></div>
 <header class="top">
   <div class="brand">
     <h1>Plan <span>My Ride</span></h1>
@@ -362,10 +386,19 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <button type="button" class="btn small rev-btn" id="revBtn" aria-pressed="false" title="Rouler la trace dans l'autre sens (départ et arrivée échangés)" hidden>⇄ Inverser le sens</button>
     </div>
     <div class="field" id="libBox" hidden>
-      <label class="label" for="libSel">Mes parcours</label>
-      <div class="lib-row">
-        <select id="libSel"></select>
-        <button type="button" class="btn small" id="libDel" title="Supprimer ce parcours de la liste">Supprimer</button>
+      <label class="label" for="libQ">Mes parcours</label>
+      <div class="lib-search">
+        <input type="search" id="libQ" placeholder="Rechercher un parcours…" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="libList">
+        <ul class="lib-list" id="libList" role="listbox" hidden></ul>
+      </div>
+      <div class="lib-acts">
+        <button type="button" class="linkbtn" id="libRen" title="Renommer ce parcours">Renommer</button>
+        <button type="button" class="linkbtn" id="libDel" title="Supprimer ce parcours de la liste">Supprimer</button>
+      </div>
+      <div class="lib-rename" id="libRenRow" hidden>
+        <input type="text" id="libNewName" maxlength="80" aria-label="Nouveau nom du parcours">
+        <button type="button" class="btn small primary" id="libRenOk">Enregistrer</button>
+        <button type="button" class="btn small" id="libRenX">Annuler</button>
       </div>
       <p class="hint" id="libHint"></p>
     </div>
@@ -615,6 +648,9 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 
 <script>
 (() => {
+// Page de test (test.html) : même code que index.html ; bandeau, titre, pas de mesure d'audience.
+const IS_TEST = /\/test\.html$/.test(location.pathname);
+if (IS_TEST) { document.getElementById('testBand').hidden = false; document.title = '🧪 ' + document.title; }
 'use strict';
 const $ = s => document.querySelector(s);
 const RAD = Math.PI / 180;
@@ -1216,7 +1252,12 @@ function renderSummary(opt) {
     tiles.push(['Vent', `${pct(st.headKm)} <small>% de face</small>`, `${pct(st.tailKm)} % de dos` + (st.hasGust ? ` · rafales ${n0(st.gust)} km/h` : '')]);
     tiles.push(['Soleil', `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? `${durTxt(st.nightH)} de nuit` : 'du temps en selle ensoleillé']);
   }
-  $('#stats').innerHTML = tiles.map(([l, v, s]) => `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
+  const rs = has ? windRoseStats(tl.start, tl.end) : null; // rose du vent ressenti dans la tuile Vent
+  $('#stats').innerHTML = tiles.map(([l, v, s]) => l === 'Vent' && rs
+    ? `<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(rs.tail * 100)} %</b> de dos</span><span class="s">${rs.calm > 0.02 ? `${Math.round(rs.calm * 100)} % calme` : ''}${st.hasGust ? `${rs.calm > 0.02 ? ' · ' : ''}rafales ${n0(st.gust)} km/h` : ''}</span></div></div>`
+    : `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
+  S.rose = rs; if (rs) roseCanvas($('#roseAll'), rs, 172, 96);
+
 
   let txt;
   const dep = `Départ ${dayFmt.format(new Date(tl.start))} à ${hm.format(new Date(tl.start))}`;
@@ -1883,7 +1924,7 @@ function applyModeUI() {
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('#ultraSettings').hidden = !ultra;
   $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
-  document.title = ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride';
+  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride');
 }
 function switchMode(m) {
   if (m === S.mode) return;
@@ -2555,6 +2596,71 @@ function sunRiseSet(ms, lat, lon) {
   const toMs = j => (j + 0.5 - J1970) * dayMs;
   return { rise: toMs(Jrise), set: toMs(Jset) };
 }
+/* Vent relatif au cycliste. relDeg = d'où vient le vent par rapport au sens de marche (0 = de face, 90 = de la
+   droite, 180 = de dos). windRoseStats / drawWindRose : rose sur une période (8 secteurs, longueur = part du temps,
+   couleur = force, calme < 4 km/h à part). */
+const relDeg = (w, i) => ((w.wd - S.P.b[i]) % 360 + 360) % 360;
+function windRoseStats(ta, tb) {
+  const P = S.P, tl = S.tl, sec = Array.from({ length: 8 }, () => new Float64Array(WIND_SCALE.length)); let calm = 0, tot = 0;
+  if (!S.wx) return null;
+  const step = Math.max(1, Math.floor(P.n / 1500));
+  for (let i = step; i < P.n; i += step) {
+    const t1 = tl.times[i], t0 = tl.times[i - step]; if (t1 <= ta || t0 >= tb) continue;
+    const dt = Math.min(t1, tb) - Math.max(t0, ta); if (dt <= 0 || dt > 2 * 3600e3) continue; // pas les nuits
+    const w = wxAt(sIdx(P.d[i]), t1); if (!w) continue;
+    tot += dt; if (w.ws < 4) { calm += dt; continue; }
+    const k = Math.round(relDeg(w, i) / 45) % 8, f = WIND_SCALE.findLastIndex ? WIND_SCALE.findLastIndex(s => w.ws >= s[0]) : WIND_SCALE.reduce((a, s, j) => w.ws >= s[0] ? j : a, 0);
+    sec[k][f] += dt;
+  }
+  if (!tot) return null;
+  const share = ks => ks.reduce((s, k) => s + sec[k].reduce((a, b) => a + b, 0), 0) / tot;
+  return { sec, tot, calm: calm / tot, face: share([0, 1, 7]), cross: share([2, 6]), tail: share([3, 4, 5]) };
+}
+// Rose en anneau autour d'un cycliste vu de profil : avant à droite, arrière à gauche (secteur k = vent venant
+// de k × 45° par rapport au sens de marche, 0 = de face ; 90 = de la droite du cycliste, donc vers le bas).
+// Cycliste route (page Sortie) ou bikepacking avec sacoches (page Ultra).
+function drawRider(c, cx, cy, s, ultra) {
+  const INK = cssVar('--ink'), L = pts => { c.beginPath(); c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.stroke(); },
+    W = (x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); };
+  c.save(); c.translate(cx, cy); c.scale(s, s); c.strokeStyle = INK; c.fillStyle = INK; c.lineCap = c.lineJoin = 'round';
+  c.lineWidth = 1.5; W(-8, 5, 5.2); W(8, 5, 5.2);
+  c.lineWidth = 1.4; L([[-8, 5], [-2.5, -2], [5.5, -2], [8, 5]]); L([[-2.5, -2], [0, 5], [5.5, -2]]);
+  if (!ultra) {
+    L([[5.5, -2], [6.3, -4], [8.3, -3.6], [8, -1.6]]);
+    c.lineWidth = 2.6; L([[-3, -4.5], [5, -6]]); c.lineWidth = 1.8; L([[5, -6], [7.6, -2.4]]);
+    c.lineWidth = 2.3; L([[-3, -4.5], [1.8, -0.5], [0, 5]]); c.lineWidth = 1.8; L([[-3, -4.5], [-1.5, 1.5], [1.5, 3.5]]);
+    c.beginPath(); c.ellipse(7, -8, 2.3, 1.9, -.3, 0, Math.PI * 2); c.fill();
+  } else {
+    L([[5.5, -2], [6, -4.5], [7.5, -4.5]]);
+    c.fillStyle = '#a0763a';
+    c.beginPath(); c.moveTo(-3, -3); c.lineTo(-10.5, -4.5); c.lineTo(-10, -1.5); c.lineTo(-3, -1.8); c.fill();
+    c.beginPath(); c.moveTo(-1.5, -1.4); c.lineTo(4.8, -1.4); c.lineTo(0.2, 3.6); c.closePath(); c.fill();
+    c.beginPath(); c.ellipse(8.4, -4, 1.6, 2.4, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = INK;
+    c.lineWidth = 2.4; L([[-3, -4], [3.5, -8]]); c.lineWidth = 1.8; L([[3.5, -8], [7, -4.6]]); c.lineWidth = 2.2; L([[-3, -4], [1.5, 0], [0, 5]]);
+    c.beginPath(); c.arc(4.6, -10.6, 2.1, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+function drawWindRose(c, cx, cy, R, rs, labels) {
+  const r0 = R * 0.6;
+  c.save(); c.fillStyle = cssVar('--line'); c.globalAlpha = .45; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.arc(cx, cy, r0, 0, Math.PI * 2, true); c.fill('evenodd'); c.globalAlpha = 1;
+  if (rs) {
+    const tots = rs.sec.map(a => a.reduce((x, y) => x + y, 0)), mx = Math.max(...tots, 1e-9);
+    rs.sec.forEach((cls, k) => {
+      const a0 = (k * 45 - 21) * RAD, a1 = (k * 45 + 21) * RAD; let r = r0;
+      cls.forEach((v, f) => { if (!v) return; const r1 = r + v / mx * (R - r0); c.beginPath(); c.arc(cx, cy, r1, a0, a1); c.arc(cx, cy, r, a1, a0, true); c.closePath(); c.fillStyle = WIND_SCALE[f][1]; c.fill(); r = r1; });
+    });
+  }
+  drawRider(c, cx, cy + 1.5, r0 / 15.5, S.mode === 'ultra');
+  if (labels) { c.fillStyle = cssVar('--muted'); c.font = `600 9px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textBaseline = 'middle';
+    c.textAlign = 'left'; c.fillText('avant', cx + R + 4, cy); c.textAlign = 'right'; c.fillText('arrière', cx - R - 4, cy); }
+  c.restore();
+}
+function roseCanvas(cv, rs, w, hh) {
+  const dpr = window.devicePixelRatio || 1; cv.width = w * dpr; cv.height = hh * dpr; cv.style.width = w + 'px'; cv.style.height = hh + 'px';
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, hh);
+  drawWindRose(c, w / 2, hh / 2, hh / 2 - 2, rs, true);
+}
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
 function drawSunEvent(c, x, y, s, dir) {
   c.save(); c.translate(x, y); c.lineCap = 'round';
@@ -2775,7 +2881,7 @@ function visitorId() {
   return v;
 }
 function track(event, extra) {
-  if (hasSbToken() || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+  if (IS_TEST || hasSbToken() || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
   const row = { visitor: visitorId(), event, mode: S.mode === 'ultra' ? 'ultra' : 'ride',
     device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) };
   const hdr = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
@@ -2938,18 +3044,59 @@ function libUpsert(m) {
   if (i < 0) LIB.list.push({ local: false, remote: false, ...m }); else LIB.list[i] = { ...LIB.list[i], ...m };
   LIB.list.sort((a, b) => (a.used_at < b.used_at ? 1 : -1));
 }
+/* Recherche de parcours : champ avec suggestions (nom, km, D+, dernière ouverture), filtrage sans accents
+   au fur et à mesure, clavier (↑ ↓ Entrée Échap). Le champ affiche le parcours ouvert quand on n'y tape pas. */
+const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const agoTxt = iso => { if (!iso) return ''; const d = Math.floor((Date.now() - new Date(iso)) / 864e5);
+  return d <= 0 ? 'ouvert aujourd\'hui' : d === 1 ? 'ouvert hier' : d < 30 ? `il y a ${d} jours` : `il y a ${Math.round(d / 30)} mois`; };
+const LIBQ = { act: 0, items: [] };
+function libQShow() { const c = LIB.list.find(x => x.id === LIB.current); if (document.activeElement !== $('#libQ')) $('#libQ').value = c ? c.name : ''; }
+function libSuggest() {
+  const inp = $('#libQ'), ul = $('#libList'), q = fold(inp.value).trim(), cur = LIB.list.find(x => x.id === LIB.current);
+  const words = (q && !(cur && q === fold(cur.name))) ? q.split(/\s+/) : [];
+  LIBQ.items = LIB.list.filter(r => { const hay = fold(`${r.name} ${n0(r.km || 0)} km`); return words.every(w => hay.includes(w)); });
+  const mark = name => { let out = escH(name); for (const w of words) { const i = fold(name).indexOf(w); if (i >= 0) { out = escH(name.slice(0, i)) + '<mark>' + escH(name.slice(i, i + w.length)) + '</mark>' + escH(name.slice(i + w.length)); break; } } return out; };
+  LIBQ.act = clamp(LIBQ.act, 0, Math.max(0, LIBQ.items.length - 1));
+  ul.innerHTML = (LIBQ.items.length ? LIBQ.items.map((r, k) => `<li role="option" id="libo${k}" data-id="${r.id}" aria-selected="${k === LIBQ.act}" class="${r.id === LIB.current ? 'cur' : ''}"><b>${mark(r.name)}</b><span class="m">${n0(r.km || 0)} km · D+ ${n0(r.dplus || 0)} m${r.used_at ? ' · ' + agoTxt(r.used_at) : ''}</span></li>`).join('')
+    : `<li class="empty">Aucun parcours ne correspond à « ${escH(inp.value)} ».</li>`) + '<li class="imp" data-imp="1">＋ Importer un GPX…</li>';
+  ul.hidden = false; inp.setAttribute('aria-expanded', 'true'); inp.setAttribute('aria-activedescendant', LIBQ.items.length ? 'libo' + LIBQ.act : '');
+  const a = ul.querySelector('[aria-selected="true"]'); if (a) a.scrollIntoView({ block: 'nearest' });
+}
+function libClose() { $('#libList').hidden = true; $('#libQ').setAttribute('aria-expanded', 'false'); libQShow(); }
+function libPick(li) {
+  if (!li) return;
+  if (li.dataset.imp) { libClose(); $('#libQ').blur(); $('#file').click(); return; }
+  const id = li.dataset.id; libClose(); $('#libQ').blur();
+  if (id && id !== LIB.current) libOpen(id);
+}
+$('#libQ').addEventListener('focus', () => { LIBQ.act = Math.max(0, LIB.list.findIndex(x => x.id === LIB.current)); $('#libQ').select(); libSuggest(); });
+$('#libQ').addEventListener('input', () => { LIBQ.act = 0; libSuggest(); });
+$('#libQ').addEventListener('blur', () => setTimeout(libClose, 150));
+$('#libQ').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); LIBQ.act = clamp(LIBQ.act + (e.key === 'ArrowDown' ? 1 : -1), 0, Math.max(0, LIBQ.items.length - 1)); libSuggest(); }
+  else if (e.key === 'Enter') { e.preventDefault(); libPick($('#libList').querySelector('[aria-selected="true"]')); }
+  else if (e.key === 'Escape') { libClose(); $('#libQ').blur(); }
+});
+$('#libList').addEventListener('mousedown', e => { e.preventDefault(); libPick(e.target.closest('li[data-id], li[data-imp]')); });
+// renommer le parcours ouvert (navigateur + compte)
+$('#libRen').addEventListener('click', () => { const c = LIB.list.find(x => x.id === LIB.current); if (!c) return; $('#libRenRow').hidden = false; $('#libNewName').value = c.name; $('#libNewName').focus(); $('#libNewName').select(); });
+$('#libRenX').addEventListener('click', () => { $('#libRenRow').hidden = true; });
+async function libRename() {
+  const id = LIB.current, name = $('#libNewName').value.trim(), m = LIB.list.find(x => x.id === id);
+  $('#libRenRow').hidden = true; if (!m || !name || name === m.name) return;
+  libUpsert({ id, name });
+  try { const meta = await idbRun('meta', 'readonly', st => st.get(id)); if (meta) await idbRun('meta', 'readwrite', st => st.put({ ...meta, name })); } catch (e) {}
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ name }).eq('id', id).then(() => {});
+  S.baseName = name; S.name = S.rev ? `${name} (sens inverse)` : name; $('#routeName').textContent = name;
+  libRender();
+}
+$('#libRenOk').addEventListener('click', libRename);
+$('#libNewName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); libRename(); } else if (e.key === 'Escape') $('#libRenRow').hidden = true; });
 function libRender() {
-  const box = $('#libBox'), sel = $('#libSel');
+  const box = $('#libBox');
   box.hidden = !LIB.list.length;
-  sel.textContent = '';
-  if (!LIB.current) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Choisir un parcours enregistré…'; sel.append(o); }
-  for (const r of LIB.list) {
-    const o = document.createElement('option'); o.value = r.id;
-    o.textContent = `${r.name} · ${n0(r.km || 0)} km · D+ ${n0(r.dplus || 0)} m`;
-    sel.append(o);
-  }
-  sel.value = LIB.current || '';
-  $('#libDel').disabled = !LIB.current;
+  libQShow(); if (!$('#libList').hidden) libSuggest();
+  $('#libDel').disabled = $('#libRen').disabled = !LIB.current;
   const n = LIB.list.length;
   $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte Coach Miguel : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur.');
 }
@@ -2995,7 +3142,6 @@ async function libInit() {
       if (!e2) libUpsert({ id: m.id, remote: true }); } catch (e) {}
   }
 }
-$('#libSel').addEventListener('change', e => { if (e.target.value && e.target.value !== LIB.current) libOpen(e.target.value); });
 $('#libDel').addEventListener('click', () => {
   const b = $('#libDel');
   if (!LIB.current) return;
@@ -3045,7 +3191,7 @@ window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dropOverlay').hidden = true; handleFile(e.dataTransfer.files[0]); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.tl) { renderChart(); if (S.mode === 'ultra') drawPlanWx(); } }, 150); });
 // thème : clair, sombre ou automatique (comme l'appareil), gardé dans le navigateur (partagé avec Coach Miguel)
-function redrawTheme() { if (S.tl) { renderChart(); renderMap(); if (S.mode === 'ultra') drawPlanWx(); } }
+function redrawTheme() { if (S.tl) { const rc = $('#roseAll'); if (rc && S.rose) roseCanvas(rc, S.rose, 172, 96); renderChart(); renderMap(); if (S.mode === 'ultra') drawPlanWx(); } }
 function setTheme(t) {
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { if (t === 'auto') localStorage.removeItem('pmr-theme'); else localStorage.setItem('pmr-theme', t); } catch (e) {}
