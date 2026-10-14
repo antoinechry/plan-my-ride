@@ -348,12 +348,10 @@ dialog.login input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px 
 dialog.login .err{color:#c0392b;font-size:13px;margin:0}
 dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-.rose-box{display:flex;align-items:center;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-.rose-box canvas{flex:none}
-.rose-box .wtxt{display:flex;flex-direction:column;gap:2px;min-width:0}
-.rose-box .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
-.rose-box .rose-key{color:var(--muted);font-size:.75rem}
-.map-fs .rose-box{display:none}
+.stat.wind{flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
+.stat.wind canvas{flex:none}
+.stat.wind .wtxt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stat.wind .wtxt .s{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -527,10 +525,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       </div>
       <div id="map"></div>
       <div class="legend" id="legend"></div>
-      <div class="rose-box" id="roseBox" hidden title="Rose du vent ressenti : le cycliste regarde vers le haut ; longueur = part du temps où le vent vient de ce côté, couleur = force">
-        <canvas id="roseAll"></canvas>
-        <div class="wtxt" id="roseTxt"></div>
-      </div>
     </section>
 
     <section class="card" id="planCard" hidden>
@@ -1258,14 +1252,12 @@ function renderSummary(opt) {
     tiles.push(['Vent', `${pct(st.headKm)} <small>% de face</small>`, `${pct(st.tailKm)} % de dos` + (st.hasGust ? ` · rafales ${n0(st.gust)} km/h` : '')]);
     tiles.push(['Soleil', `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? `${durTxt(st.nightH)} de nuit` : 'du temps en selle ensoleillé']);
   }
-  $('#stats').innerHTML = tiles.map(([l, v, s]) => `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
-  // rose du vent ressenti sur tout le parcours, sous la carte
-  const rs = has ? windRoseStats(tl.start, tl.end) : null;
-  $('#roseBox').hidden = !rs;
-  if (rs) {
-    $('#roseTxt').innerHTML = `<span class="label">Vent ressenti sur le parcours</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> du temps de face ou 3/4 face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers · <b>${Math.round(rs.tail * 100)} %</b> de dos ou 3/4 dos</span>${rs.calm > 0.02 ? `<span class="s">${Math.round(rs.calm * 100)} % calme (moins de 4 km/h)</span>` : ''}<span class="s rose-key">En haut = de face, longueur = part du temps, couleur = force</span>`;
-    roseCanvas($('#roseAll'), rs, 96, true);
-  }
+  const rs = has ? windRoseStats(tl.start, tl.end) : null; // rose du vent ressenti dans la tuile Vent
+  $('#stats').innerHTML = tiles.map(([l, v, s]) => l === 'Vent' && rs
+    ? `<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(rs.tail * 100)} %</b> de dos</span><span class="s">${rs.calm > 0.02 ? `${Math.round(rs.calm * 100)} % calme` : ''}${st.hasGust ? `${rs.calm > 0.02 ? ' · ' : ''}rafales ${n0(st.gust)} km/h` : ''}</span></div></div>`
+    : `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
+  S.rose = rs; if (rs) roseCanvas($('#roseAll'), rs, 172, 96);
+
 
   let txt;
   const dep = `Départ ${dayFmt.format(new Date(tl.start))} à ${hm.format(new Date(tl.start))}`;
@@ -2624,25 +2616,50 @@ function windRoseStats(ta, tb) {
   const share = ks => ks.reduce((s, k) => s + sec[k].reduce((a, b) => a + b, 0), 0) / tot;
   return { sec, tot, calm: calm / tot, face: share([0, 1, 7]), cross: share([2, 6]), tail: share([3, 4, 5]) };
 }
+// Rose en anneau autour d'un cycliste vu de profil : avant à droite, arrière à gauche (secteur k = vent venant
+// de k × 45° par rapport au sens de marche, 0 = de face ; 90 = de la droite du cycliste, donc vers le bas).
+// Cycliste route (page Sortie) ou bikepacking avec sacoches (page Ultra).
+function drawRider(c, cx, cy, s, ultra) {
+  const INK = cssVar('--ink'), L = pts => { c.beginPath(); c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.stroke(); },
+    W = (x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); };
+  c.save(); c.translate(cx, cy); c.scale(s, s); c.strokeStyle = INK; c.fillStyle = INK; c.lineCap = c.lineJoin = 'round';
+  c.lineWidth = 1.5; W(-8, 5, 5.2); W(8, 5, 5.2);
+  c.lineWidth = 1.4; L([[-8, 5], [-2.5, -2], [5.5, -2], [8, 5]]); L([[-2.5, -2], [0, 5], [5.5, -2]]);
+  if (!ultra) {
+    L([[5.5, -2], [6.3, -4], [8.3, -3.6], [8, -1.6]]);
+    c.lineWidth = 2.6; L([[-3, -4.5], [5, -6]]); c.lineWidth = 1.8; L([[5, -6], [7.6, -2.4]]);
+    c.lineWidth = 2.3; L([[-3, -4.5], [1.8, -0.5], [0, 5]]); c.lineWidth = 1.8; L([[-3, -4.5], [-1.5, 1.5], [1.5, 3.5]]);
+    c.beginPath(); c.ellipse(7, -8, 2.3, 1.9, -.3, 0, Math.PI * 2); c.fill();
+  } else {
+    L([[5.5, -2], [6, -4.5], [7.5, -4.5]]);
+    c.fillStyle = '#a0763a';
+    c.beginPath(); c.moveTo(-3, -3); c.lineTo(-10.5, -4.5); c.lineTo(-10, -1.5); c.lineTo(-3, -1.8); c.fill();
+    c.beginPath(); c.moveTo(-1.5, -1.4); c.lineTo(4.8, -1.4); c.lineTo(0.2, 3.6); c.closePath(); c.fill();
+    c.beginPath(); c.ellipse(8.4, -4, 1.6, 2.4, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = INK;
+    c.lineWidth = 2.4; L([[-3, -4], [3.5, -8]]); c.lineWidth = 1.8; L([[3.5, -8], [7, -4.6]]); c.lineWidth = 2.2; L([[-3, -4], [1.5, 0], [0, 5]]);
+    c.beginPath(); c.arc(4.6, -10.6, 2.1, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
 function drawWindRose(c, cx, cy, R, rs, labels) {
-  c.save(); c.strokeStyle = cssVar('--line'); c.lineWidth = 1;
-  for (const f of [.5, 1]) { c.beginPath(); c.arc(cx, cy, R * f, 0, Math.PI * 2); c.stroke(); }
+  const r0 = R * 0.6;
+  c.save(); c.fillStyle = cssVar('--line'); c.globalAlpha = .45; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.arc(cx, cy, r0, 0, Math.PI * 2, true); c.fill('evenodd'); c.globalAlpha = 1;
   if (rs) {
     const tots = rs.sec.map(a => a.reduce((x, y) => x + y, 0)), mx = Math.max(...tots, 1e-9);
     rs.sec.forEach((cls, k) => {
-      const a0 = (k * 45 - 90 - 19) * RAD, a1 = (k * 45 - 90 + 19) * RAD; let r0 = R * 0.16;
-      cls.forEach((v, f) => { if (!v) return; const r1 = r0 + v / mx * R * 0.84; c.beginPath(); c.arc(cx, cy, r1, a0, a1); c.arc(cx, cy, r0, a1, a0, true); c.closePath(); c.fillStyle = WIND_SCALE[f][1]; c.fill(); r0 = r1; });
+      const a0 = (k * 45 - 21) * RAD, a1 = (k * 45 + 21) * RAD; let r = r0;
+      cls.forEach((v, f) => { if (!v) return; const r1 = r + v / mx * (R - r0); c.beginPath(); c.arc(cx, cy, r1, a0, a1); c.arc(cx, cy, r, a1, a0, true); c.closePath(); c.fillStyle = WIND_SCALE[f][1]; c.fill(); r = r1; });
     });
   }
-  c.fillStyle = cssVar('--ink'); const s = Math.max(4, R * 0.16); c.beginPath(); c.moveTo(cx, cy - s); c.lineTo(cx + s * .7, cy + s * .8); c.lineTo(cx, cy + s * .45); c.lineTo(cx - s * .7, cy + s * .8); c.closePath(); c.fill();
-  if (labels) { c.fillStyle = cssVar('--muted'); c.font = `600 9px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText('face', cx, cy - R - 7); c.fillText('dos', cx, cy + R + 7); }
+  drawRider(c, cx, cy + 1.5, r0 / 15.5, S.mode === 'ultra');
+  if (labels) { c.fillStyle = cssVar('--muted'); c.font = `600 9px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textBaseline = 'middle';
+    c.textAlign = 'left'; c.fillText('avant', cx + R + 4, cy); c.textAlign = 'right'; c.fillText('arrière', cx - R - 4, cy); }
   c.restore();
 }
-function roseCanvas(cv, rs, size, labels) {
-  const dpr = window.devicePixelRatio || 1; cv.width = size * dpr; cv.height = size * dpr; cv.style.width = cv.style.height = size + 'px';
-  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, size, size);
-  drawWindRose(c, size / 2, size / 2, size / 2 - (labels ? 14 : 2), rs, labels);
+function roseCanvas(cv, rs, w, hh) {
+  const dpr = window.devicePixelRatio || 1; cv.width = w * dpr; cv.height = hh * dpr; cv.style.width = w + 'px'; cv.style.height = hh + 'px';
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, hh);
+  drawWindRose(c, w / 2, hh / 2, hh / 2 - 2, rs, true);
 }
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
 function drawSunEvent(c, x, y, s, dir) {
@@ -3174,7 +3191,7 @@ window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dropOverlay').hidden = true; handleFile(e.dataTransfer.files[0]); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.tl) { renderChart(); if (S.mode === 'ultra') drawPlanWx(); } }, 150); });
 // thème : clair, sombre ou automatique (comme l'appareil), gardé dans le navigateur (partagé avec Coach Miguel)
-function redrawTheme() { if (S.tl) { renderChart(); renderMap(); if (S.mode === 'ultra') drawPlanWx(); } }
+function redrawTheme() { if (S.tl) { const rc = $('#roseAll'); if (rc && S.rose) roseCanvas(rc, S.rose, 172, 96); renderChart(); renderMap(); if (S.mode === 'ultra') drawPlanWx(); } }
 function setTheme(t) {
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { if (t === 'auto') localStorage.removeItem('pmr-theme'); else localStorage.setItem('pmr-theme', t); } catch (e) {}
