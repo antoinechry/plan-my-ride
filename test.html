@@ -3426,17 +3426,26 @@ function drawDayWx(cv, cur) {
     c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
     // lever et coucher du soleil pendant la journée, calculés là où l'on se trouve à ce moment-là
     const posAt = t => S.P.pts[idxAtKm(kmAtT(clamp(t, ta, tb)))];
+    const sunNear = []; let sunIn = false;
+    const sunDraw = (x, te, dir, word) => {
+      const y = yT0 + 9, txt = (dir > 0 ? '↑ ' : '↓ ') + word + hm.format(new Date(te));
+      drawSunEvent(c, x, y, 9, dir);
+      c.font = `600 10.5px ${mono}, monospace`; c.fillStyle = dir > 0 ? '#c05800' : '#3b6fc4'; c.textBaseline = 'middle';
+      const tw = c.measureText(txt).width, right = x + 13 + tw < l + pw;
+      c.textAlign = right ? 'left' : 'right'; c.fillText(txt, right ? x + 12 : x - 12, y - 4);
+    };
     for (let dd = new Date(ta); dd.getTime() <= tb + 864e5; dd.setDate(dd.getDate() + 1)) {
       let p = posAt(dd.getTime() + 12 * 3600e3), st = sunRiseSet(dd.getTime(), p.lat, p.lon); if (!st) continue;
       for (const [key, dir] of [['rise', 1], ['set', -1]]) {
         let te = st[key]; const p2 = posAt(te), st2 = sunRiseSet(dd.getTime(), p2.lat, p2.lon); if (st2) te = st2[key]; // affiné à la position du moment
-        if (te < ta || te > tb) continue;
-        const x = X(te), y = yT0 + 9, txt = (dir > 0 ? '↑ ' : '↓ ') + hm.format(new Date(te));
-        drawSunEvent(c, x, y, 9, dir);
-        c.font = `600 10.5px ${mono}, monospace`; c.fillStyle = dir > 0 ? '#c05800' : '#3b6fc4'; c.textBaseline = 'middle';
-        const tw = c.measureText(txt).width, right = x + 13 + tw < l + pw;
-        c.textAlign = right ? 'left' : 'right'; c.fillText(txt, right ? x + 12 : x - 12, y - 4);
+        if (te < ta || te > tb) { sunNear.push([te, dir]); continue; }
+        sunDraw(X(te), te, dir, ''); sunIn = true;
       }
+    }
+    // Vélotaf : pas de lever ni de coucher pendant le trajet → le plus proche (4 h au plus), au bord du graphe
+    if (!sunIn && isLap && S.laps && S.laps.taf) {
+      const near = sunNear.map(([te, dir]) => [te, dir, te < ta ? ta - te : te - tb]).filter(e => e[2] <= 4 * 3600e3).sort((a, b) => a[2] - b[2])[0];
+      if (near) sunDraw(near[0] < ta ? l + 10 : l + pw - 10, near[0], near[1], near[1] > 0 ? 'lever ' : 'coucher ');
     }
     // villes et bourgs traversés ce jour-là, à l'heure de passage (les plus grands d'abord, sans chevauchement)
     if (PLACES.list.length && !isLap) {
