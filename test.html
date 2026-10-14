@@ -697,7 +697,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </section>
 
     <section class="card" id="tafDuo" hidden>
-      <div class="card-head"><h2>Aller et retour</h2><span class="hint" id="duoHint"></span></div>
+      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><span class="hint" id="duoHint"></span><label class="arrows-toggle"><input type="checkbox" id="flowOn2"> Vent animé</label></div>
       <div class="duo">
         <div class="duo-col"><div class="duo-head" id="duoHead0"></div><div class="duo-map" id="duoMap0"></div><canvas data-wx="0" aria-label="Météo de l'aller"></canvas></div>
         <div class="duo-col"><div class="duo-head" id="duoHead1"></div><div class="duo-map" id="duoMap1"></div><canvas data-wx="1" aria-label="Météo du retour"></canvas></div>
@@ -1747,9 +1747,7 @@ function initMap() {
   map.createPane('poiPane').style.zIndex = 620; // lieux du mode ultra au-dessus des flèches de vent
   map.on('moveend', () => renderWindArrows());
   // vent animé : un canvas dans son propre volet, sous la trace et les flèches
-  map.createPane('flowPane').style.zIndex = 350; map.getPane('flowPane').classList.add('leaflet-flow-pane');
-  map.on('movestart zoomstart', flowHide);
-  map.on('moveend resize', () => { if (flowAllowed()) flowUpdate(false); });
+  // vent animé : moteur créé au premier rendu (flowUpdate), canvas dans son propre volet sous la trace
   map.on('baselayerchange', e => { try { localStorage.setItem('pmr-base2', e.name); } catch (err) {} });
   // bouton plein écran sous le zoom
   const Fs = L.Control.extend({ options: { position: 'topleft' }, onAdd() {
@@ -1856,117 +1854,145 @@ function drawArrowsOn(m, rg, kOff) {
   }
   return layer;
 }
-/* ---------- vent animé (pages Sortie et Ultra) ----------
-   Particules qui suivent le vent à l'heure choisie avec le curseur sous la carte (par quarts d'heure, du départ − 2 h
-   à l'arrivée + 2 h), couleur = force (WIND_SCALE). Vent Open-Meteo sur une grille de 9 × 9 points couvrant la vue
-   (élargie de 35 %), toutes les heures, redemandée quand on sort de la zone ou qu'on zoome beaucoup ; interpolé dans
-   le temps et dans l'espace sur un champ de cases de 10 px. Un point montre où l'on est à cette heure-là. */
-const FLOW = { on: false, grid: null, loading: 0, t: null, start: null, a: 0, parts: [], raf: 0, cv: null, field: null, cell: 10, rider: null, vis: true, err: '' };
+/* ---------- vent animé (pages Sortie et Ultra, et les deux cartes du Vélotaf) ----------
+   Particules qui suivent le vent, couleur = force (WIND_SCALE). Vent Open-Meteo sur une grille de 9 × 9 points couvrant
+   la vue (élargie de 35 %), toutes les heures ; grilles gardées et partagées entre les cartes (FLOW_GRIDS), redemandées
+   quand la vue sort de la grille, qu'on zoome beaucoup ou que les dates changent. Champ interpolé dans le temps et dans
+   l'espace sur des cases de 10 px. Un moteur par carte (`flowEngine`) : carte principale (heure du curseur sous la
+   carte, point du cycliste à cette heure) et cartes Aller / Retour du Vélotaf (heure du milieu du trajet). */
+const FLOW = { on: false, t: null, start: null, a: 0, rider: null, status: '', main: null };
 try { FLOW.on = localStorage.getItem('pmr-flow') !== '0'; } catch (e) {}
-$('#flowOn').checked = FLOW.on;
+$('#flowOn').checked = FLOW.on; $('#flowOn2').checked = FLOW.on;
 const flowAllowed = () => !!map && !!S.tl && S.mode !== 'taf' && FLOW.on;
 function flowSpan() {
   const a = Math.floor((S.tl.start - 2 * 3600e3) / 900e3) * 900e3;
   return [a, Math.min(Math.ceil((S.tl.end + 2 * 3600e3) / 900e3) * 900e3, a + 15 * 864e5)];
 }
-function flowHide() { if (FLOW.cv) FLOW.cv.style.opacity = 0; FLOW.parts = []; }
-function flowStop() { cancelAnimationFrame(FLOW.raf); FLOW.raf = 0; }
+const FLOW_GRIDS = [], FLOW_PENDING = new Map();
+// grille de vent couvrant la vue vb pour les jours d0 … d1 (déjà chargée, en cours de chargement, ou demandée)
+async function flowGrid(vb, d0, d1) {
+  const ok = g => g.d0 <= d0 && g.d1 >= d1 && g.bounds.contains(vb) && (g.lat1 - g.lat0) < (vb.getNorth() - vb.getSouth()) * 4;
+  const hit = FLOW_GRIDS.find(ok); if (hit) return hit;
+  for (const [g, pr] of FLOW_PENDING) if (ok(g)) return pr;
+  const pad = vb.pad(0.35), N = 9, lat0 = pad.getSouth(), lat1 = pad.getNorth(), lon0 = pad.getWest(), lon1 = pad.getEast(), la = [], lo = [];
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { la.push((lat0 + (lat1 - lat0) * i / (N - 1)).toFixed(3)); lo.push((lon0 + (lon1 - lon0) * j / (N - 1)).toFixed(3)); }
+  const meta = { N, lat0, lat1, lon0, lon1, d0, d1, bounds: L.latLngBounds([lat0, lon0], [lat1, lon1]) };
+  const pr = (async () => {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${la.join(',')}&longitude=${lo.join(',')}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${d0}&end_date=${d1}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined });
+    const js = await res.json(), arr = Array.isArray(js) ? js : [js];
+    if (!res.ok || arr.length !== N * N || arr.some(x => !x || !x.hourly)) throw new Error('réponse incomplète');
+    const t0 = arr[0].hourly.time[0], n = arr[0].hourly.time.length, u = new Float32Array(N * N * n), v = new Float32Array(N * N * n);
+    arr.forEach((L0, k) => { const ws = L0.hourly.wind_speed_10m, wd = L0.hourly.wind_direction_10m;
+      for (let h = 0; h < n; h++) { const s = ws[h] || 0, d = (wd[h] || 0) * RAD; u[k * n + h] = -s * Math.sin(d); v[k * n + h] = -s * Math.cos(d); } }); // vers où va le vent
+    const g = { ...meta, n, t0, u, v }; FLOW_GRIDS.unshift(g); FLOW_GRIDS.length = Math.min(FLOW_GRIDS.length, 6);
+    return g;
+  })();
+  FLOW_PENDING.set(meta, pr);
+  try { return await pr; } finally { FLOW_PENDING.delete(meta); }
+}
+// o = { map(), time(), span(), allowed(), status(txt) }
+function flowEngine(o) {
+  const E = { cv: null, field: null, parts: [], raf: 0, frames: 0, vis: true, grid: null, seq: 0, cell: 10 }, m = o.map();
+  if (!m.getPane('flowPane')) { m.createPane('flowPane').style.zIndex = 350; m.getPane('flowPane').classList.add('leaflet-flow-pane'); }
+  E.hide = () => { if (E.cv) E.cv.style.opacity = 0; E.parts = []; };
+  E.stop = () => { cancelAnimationFrame(E.raf); E.raf = 0; };
+  E.off = () => { E.stop(); E.hide(); };
+  E.load = async () => {
+    if (!o.allowed()) { E.off(); return; }
+    const [a, b] = o.span(), today = new Date(); today.setHours(0, 0, 0, 0);
+    const lastDay = new Date(today); lastDay.setDate(lastDay.getDate() + 15);
+    const d0 = ymd(new Date(Math.max(a, today.getTime() - 60 * 864e5))), d1 = ymd(new Date(Math.min(b, lastDay.getTime())));
+    if (d0 > d1) { o.status('pas de prévision à cette date'); E.off(); return; }
+    const seq = ++E.seq, vb = m.getBounds();
+    const quick = FLOW_GRIDS.find(g => g.d0 <= d0 && g.d1 >= d1 && g.bounds.contains(vb) && (g.lat1 - g.lat0) < (vb.getNorth() - vb.getSouth()) * 4);
+    if (!quick) o.status('chargement du vent…');
+    try { const g = await flowGrid(vb, d0, d1); if (seq !== E.seq) return; E.grid = g; o.status(''); E.build(); }
+    catch (e) { if (seq === E.seq) { o.status('vent animé indisponible'); E.off(); } }
+  };
+  // champ de vent à l'écran pour l'heure choisie (cases de 10 px), puis particules
+  E.build = () => {
+    const g = E.grid; if (!g || !o.allowed()) return;
+    const size = m.getSize(); if (!size.x || !size.y) return;
+    const cs = E.cell, cols = Math.ceil(size.x / cs) + 1, rows = Math.ceil(size.y / cs) + 1;
+    const x = clamp((o.time() / 1000 - g.t0) / 3600, 0, g.n - 1.001), h0 = Math.floor(x), fh = x - h0;
+    const at = (arr, k) => arr[k * g.n + h0] * (1 - fh) + arr[k * g.n + h0 + 1] * fh;
+    const U = new Float32Array(cols * rows), V = new Float32Array(cols * rows), N = g.N;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const ll = m.containerPointToLatLng([c * cs, r * cs]);
+      const fi = clamp((ll.lat - g.lat0) / (g.lat1 - g.lat0) * (N - 1), 0, N - 1.001), fj = clamp((ll.lng - g.lon0) / (g.lon1 - g.lon0) * (N - 1), 0, N - 1.001);
+      const i0 = Math.floor(fi), j0 = Math.floor(fj), di = fi - i0, dj = fj - j0, k00 = i0 * N + j0, k01 = k00 + 1, k10 = k00 + N, k11 = k10 + 1;
+      const bil = arr => (at(arr, k00) * (1 - dj) + at(arr, k01) * dj) * (1 - di) + (at(arr, k10) * (1 - dj) + at(arr, k11) * dj) * di;
+      U[r * cols + c] = bil(g.u); V[r * cols + c] = bil(g.v);
+    }
+    E.field = { cols, rows, U, V, w: size.x, h: size.y };
+    if (!E.cv) E.cv = L.DomUtil.create('canvas', 'flow-cv', m.getPane('flowPane'));
+    const cv = E.cv, dpr = window.devicePixelRatio || 1;
+    cv.width = size.x * dpr; cv.height = size.y * dpr; cv.style.width = size.x + 'px'; cv.style.height = size.y + 'px';
+    L.DomUtil.setPosition(cv, m.containerPointToLayerPoint([0, 0]));
+    cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0); cv.style.opacity = 1;
+    E.parts = Array.from({ length: clamp(Math.round(size.x * size.y / 600), 200, 2600) }, () => E.spawn({}));
+    E.stop(); E.frames = 0; E.raf = requestAnimationFrame(E.frame);
+  };
+  E.spawn = p => { const f = E.field; p.x = Math.random() * f.w; p.y = Math.random() * f.h; p.age = Math.floor(Math.random() * 80); p.max = 50 + Math.floor(Math.random() * 60); return p; };
+  E.frame = () => {
+    const f = E.field, cv = E.cv; if (!f || !cv || !o.allowed()) { E.raf = 0; return; }
+    const c = cv.getContext('2d'), still = !$('#animOn').checked || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.hidden || !E.vis) { E.raf = requestAnimationFrame(E.frame); return; }
+    // traînées : on efface doucement l'image précédente
+    c.globalCompositeOperation = 'destination-in'; c.fillStyle = 'rgba(0,0,0,0.92)'; c.fillRect(0, 0, f.w, f.h);
+    c.globalCompositeOperation = 'source-over'; c.lineWidth = 1.4; c.lineCap = 'round';
+    const K = 0.055, paths = WIND_SCALE.map(() => new Path2D());
+    for (const p of E.parts) {
+      const ci = Math.min(f.cols - 1, Math.max(0, Math.round(p.x / E.cell))), ri = Math.min(f.rows - 1, Math.max(0, Math.round(p.y / E.cell))), k = ri * f.cols + ci;
+      const u = f.U[k], v = f.V[k], s = Math.hypot(u, v), nx = p.x + u * K, ny = p.y - v * K;
+      if (++p.age > p.max || nx < 0 || ny < 0 || nx > f.w || ny > f.h || s < 0.5) { E.spawn(p); p.age = 0; continue; }
+      let b = 0; for (let j = 0; j < WIND_SCALE.length; j++) if (s >= WIND_SCALE[j][0]) b = j;
+      paths[b].moveTo(p.x, p.y); paths[b].lineTo(nx, ny); p.x = nx; p.y = ny;
+    }
+    c.globalAlpha = .9; paths.forEach((pa, j) => { c.strokeStyle = WIND_SCALE[j][1]; c.stroke(pa); }); c.globalAlpha = 1;
+    // « Animation » décochée (ou mouvements réduits) : on laisse les traînées se former puis on fige
+    if (still && ++E.frames > 70) { E.raf = 0; return; }
+    E.raf = requestAnimationFrame(E.frame);
+  };
+  E.wake = () => { if (o.allowed() && E.field && !E.raf) { E.frames = 0; E.raf = requestAnimationFrame(E.frame); } };
+  m.on('movestart zoomstart', E.hide);
+  m.on('moveend resize', () => { if (o.allowed()) E.load(); });
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => { E.vis = es[0].isIntersecting; }).observe(m.getContainer());
+  return E;
+}
+function flowHide() { if (FLOW.main) FLOW.main.hide(); }
 // heure choisie : libellé, position du cycliste sur la trace
 function flowLabel() {
   const t = FLOW.t, tl = S.tl, P = S.P;
   $('#flowLbl').textContent = whenTxt(t, tl.start);
   let i = 0; { const T = tl.times; let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } i = lo; }
-  $('#flowPos').textContent = FLOW.err ? '· ' + FLOW.err : FLOW.loading ? '· chargement du vent…' : t < tl.start ? '· avant le départ' : t > tl.end ? '· après l\'arrivée' : `· tu es au km ${n0(P.d[i])}`;
+  $('#flowPos').textContent = FLOW.status ? '· ' + FLOW.status : t < tl.start ? '· avant le départ' : t > tl.end ? '· après l\'arrivée' : `· tu es au km ${n0(P.d[i])}`;
   const p = P.pts[t <= tl.start ? 0 : t >= tl.end ? P.n - 1 : i];
   if (!FLOW.rider) FLOW.rider = L.circleMarker([p.lat, p.lon], { radius: 7, color: '#fff', weight: 3, fillColor: '#111', fillOpacity: 1, pane: 'markerPane' }).bindTooltip('Toi à l\'heure choisie');
   FLOW.rider.setLatLng([p.lat, p.lon]); if (!map.hasLayer(FLOW.rider)) FLOW.rider.addTo(map);
 }
 function flowUpdate(newRun) {
-  if (!flowAllowed()) { $('#flowBar').hidden = true; flowStop(); flowHide(); if (FLOW.rider && map && map.hasLayer(FLOW.rider)) FLOW.rider.remove(); return; }
+  if (map && !FLOW.main) FLOW.main = flowEngine({ map: () => map, time: () => FLOW.t, span: flowSpan, allowed: flowAllowed, status: s => { FLOW.status = s; if (S.tl && flowAllowed()) flowLabel(); } });
+  if (!flowAllowed()) { $('#flowBar').hidden = true; if (FLOW.main) FLOW.main.off(); if (FLOW.rider && map && map.hasLayer(FLOW.rider)) FLOW.rider.remove(); return; }
   $('#flowBar').hidden = false;
   const [a, b] = flowSpan(), r = $('#flowT');
   if (newRun && FLOW.start !== S.tl.start) { FLOW.start = S.tl.start; FLOW.t = Math.round(S.tl.start / 900e3) * 900e3; }
   if (FLOW.t == null) FLOW.t = Math.round(S.tl.start / 900e3) * 900e3;
   FLOW.t = clamp(FLOW.t, a, b); FLOW.a = a;
   r.max = Math.round((b - a) / 900e3); r.value = Math.round((FLOW.t - a) / 900e3);
-  flowLabel(); flowLoad();
+  flowLabel(); FLOW.main.load();
 }
-// grille de vent couvrant la vue (Open-Meteo, un seul appel pour les 81 points)
-async function flowLoad() {
-  const vb = map.getBounds(), g = FLOW.grid, [a, b] = flowSpan();
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const lastDay = new Date(today); lastDay.setDate(lastDay.getDate() + 15);
-  const d0 = ymd(new Date(Math.max(a, today.getTime() - 60 * 864e5))), d1 = ymd(new Date(Math.min(b, lastDay.getTime())));
-  const fine = g && (g.lat1 - g.lat0) < (vb.getNorth() - vb.getSouth()) * 4;
-  if (g && g.d0 <= d0 && g.d1 >= d1 && g.bounds.contains(vb) && fine) { flowField(); return; }
-  if (d0 > d1) { FLOW.err = 'pas de prévision à cette date'; flowLabel(); return; }
-  const pad = vb.pad(0.35), N = 9, lat0 = pad.getSouth(), lat1 = pad.getNorth(), lon0 = pad.getWest(), lon1 = pad.getEast(), la = [], lo = [];
-  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { la.push((lat0 + (lat1 - lat0) * i / (N - 1)).toFixed(3)); lo.push((lon0 + (lon1 - lon0) * j / (N - 1)).toFixed(3)); }
-  const seq = ++FLOW.loading; FLOW.err = ''; flowLabel();
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${la.join(',')}&longitude=${lo.join(',')}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${d0}&end_date=${d1}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined });
-    const js = await res.json(); if (seq !== FLOW.loading) return;
-    const arr = Array.isArray(js) ? js : [js];
-    if (!res.ok || arr.length !== N * N || arr.some(x => !x || !x.hourly)) throw new Error('réponse incomplète');
-    const t0 = arr[0].hourly.time[0], n = arr[0].hourly.time.length, u = new Float32Array(N * N * n), v = new Float32Array(N * N * n);
-    arr.forEach((L0, k) => { const ws = L0.hourly.wind_speed_10m, wd = L0.hourly.wind_direction_10m;
-      for (let h = 0; h < n; h++) { const s = ws[h] || 0, d = (wd[h] || 0) * RAD; u[k * n + h] = -s * Math.sin(d); v[k * n + h] = -s * Math.cos(d); } }); // vers où va le vent
-    FLOW.grid = { N, n, t0, u, v, lat0, lat1, lon0, lon1, d0, d1, bounds: L.latLngBounds([lat0, lon0], [lat1, lon1]) };
-    FLOW.loading = 0; flowLabel(); flowField();
-  } catch (e) { if (seq !== FLOW.loading) return; FLOW.loading = 0; FLOW.err = 'vent animé indisponible'; flowLabel(); }
+function flowSetOn(on) {
+  FLOW.on = on; $('#flowOn').checked = on; $('#flowOn2').checked = on;
+  try { localStorage.setItem('pmr-flow', on ? '1' : '0'); } catch (e) {}
+  flowUpdate(false); duoFlows();
 }
-// champ de vent à l'écran pour l'heure choisie (cases de 10 px)
-function flowField() {
-  const g = FLOW.grid; if (!g || !flowAllowed()) return;
-  const size = map.getSize(), cs = FLOW.cell, cols = Math.ceil(size.x / cs) + 1, rows = Math.ceil(size.y / cs) + 1;
-  const x = clamp((FLOW.t / 1000 - g.t0) / 3600, 0, g.n - 1.001), h0 = Math.floor(x), fh = x - h0;
-  const at = (arr, k) => arr[k * g.n + h0] * (1 - fh) + arr[k * g.n + h0 + 1] * fh;
-  const U = new Float32Array(cols * rows), V = new Float32Array(cols * rows), N = g.N;
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const ll = map.containerPointToLatLng([c * cs, r * cs]);
-    const fi = clamp((ll.lat - g.lat0) / (g.lat1 - g.lat0) * (N - 1), 0, N - 1.001), fj = clamp((ll.lng - g.lon0) / (g.lon1 - g.lon0) * (N - 1), 0, N - 1.001);
-    const i0 = Math.floor(fi), j0 = Math.floor(fj), di = fi - i0, dj = fj - j0, k00 = i0 * N + j0, k01 = k00 + 1, k10 = k00 + N, k11 = k10 + 1;
-    const bil = arr => (at(arr, k00) * (1 - dj) + at(arr, k01) * dj) * (1 - di) + (at(arr, k10) * (1 - dj) + at(arr, k11) * dj) * di;
-    U[r * cols + c] = bil(g.u); V[r * cols + c] = bil(g.v);
-  }
-  FLOW.field = { cols, rows, U, V, w: size.x, h: size.y };
-  if (!FLOW.cv) { FLOW.cv = L.DomUtil.create('canvas', 'flow-cv', map.getPane('flowPane')); }
-  const cv = FLOW.cv, dpr = window.devicePixelRatio || 1;
-  cv.width = size.x * dpr; cv.height = size.y * dpr; cv.style.width = size.x + 'px'; cv.style.height = size.y + 'px';
-  L.DomUtil.setPosition(cv, map.containerPointToLayerPoint([0, 0]));
-  cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0); cv.style.opacity = 1;
-  const nP = clamp(Math.round(size.x * size.y / 600), 250, 2600);
-  FLOW.parts = Array.from({ length: nP }, () => flowSpawn({}));
-  flowStop(); FLOW.frames = 0; FLOW.raf = requestAnimationFrame(flowFrame);
-}
-function flowSpawn(p) { const f = FLOW.field; p.x = Math.random() * f.w; p.y = Math.random() * f.h; p.age = Math.floor(Math.random() * 80); p.max = 50 + Math.floor(Math.random() * 60); return p; }
-function flowFrame() {
-  const f = FLOW.field, cv = FLOW.cv; if (!f || !cv || !flowAllowed()) return;
-  const c = cv.getContext('2d'), still = !$('#animOn').checked || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (document.hidden || !FLOW.vis) { FLOW.raf = requestAnimationFrame(flowFrame); return; }
-  // traînées : on efface doucement l'image précédente
-  c.globalCompositeOperation = 'destination-in'; c.fillStyle = 'rgba(0,0,0,0.92)'; c.fillRect(0, 0, f.w, f.h);
-  c.globalCompositeOperation = 'source-over'; c.lineWidth = 1.4; c.lineCap = 'round';
-  const K = 0.055, paths = WIND_SCALE.map(() => new Path2D());
-  for (const p of FLOW.parts) {
-    const ci = Math.min(f.cols - 1, Math.max(0, Math.round(p.x / FLOW.cell))), ri = Math.min(f.rows - 1, Math.max(0, Math.round(p.y / FLOW.cell))), k = ri * f.cols + ci;
-    const u = f.U[k], v = f.V[k], s = Math.hypot(u, v);
-    const nx = p.x + u * K, ny = p.y - v * K;
-    if (++p.age > p.max || nx < 0 || ny < 0 || nx > f.w || ny > f.h || s < 0.5) { flowSpawn(p); p.age = 0; continue; }
-    let b = 0; for (let j = 0; j < WIND_SCALE.length; j++) if (s >= WIND_SCALE[j][0]) b = j;
-    paths[b].moveTo(p.x, p.y); paths[b].lineTo(nx, ny); p.x = nx; p.y = ny;
-  }
-  c.globalAlpha = .9; paths.forEach((pa, j) => { c.strokeStyle = WIND_SCALE[j][1]; c.stroke(pa); }); c.globalAlpha = 1;
-  // « Animation » décochée (ou mouvements réduits) : on laisse les traînées se former puis on fige
-  if (still && ++FLOW.frames > 70) { FLOW.raf = 0; return; }
-  FLOW.raf = requestAnimationFrame(flowFrame);
-}
-$('#flowT').addEventListener('input', () => { FLOW.t = FLOW.a + (+$('#flowT').value) * 900e3; flowLabel(); flowLoad(); });
+$('#flowT').addEventListener('input', () => { FLOW.t = FLOW.a + (+$('#flowT').value) * 900e3; flowLabel(); if (FLOW.main) FLOW.main.load(); });
 $('#flowDep').addEventListener('click', () => { FLOW.t = Math.round(S.tl.start / 900e3) * 900e3; flowUpdate(false); });
-$('#flowOn').addEventListener('change', () => { FLOW.on = $('#flowOn').checked; try { localStorage.setItem('pmr-flow', FLOW.on ? '1' : '0'); } catch (e) {} flowUpdate(false); });
-$('#animOn').addEventListener('change', () => { if (flowAllowed() && FLOW.field && !FLOW.raf) { FLOW.frames = 0; FLOW.raf = requestAnimationFrame(flowFrame); } });
-if ('IntersectionObserver' in window) new IntersectionObserver(es => { FLOW.vis = es[0].isIntersecting; }).observe($('#map'));
+$('#flowOn').addEventListener('change', () => flowSetOn($('#flowOn').checked));
+$('#flowOn2').addEventListener('change', () => flowSetOn($('#flowOn2').checked));
+$('#animOn').addEventListener('change', () => { if (FLOW.main) FLOW.main.wake(); for (const f of DUO.flows) if (f) f.wake(); });
 function renderLegend() {
   const el = $('#legend');
   if (!S.wx) { el.innerHTML = '<span>Trace sans données météo.</span>'; return; }
@@ -2525,7 +2551,7 @@ function applyModeUI() {
   $('label[for="speed"]').textContent = taf ? 'Vitesse moyenne' : 'Vitesse sur le plat';
   $('#tripSeg').hidden = !taf; $('#optCard').hidden = taf; $('#flowOnLbl').hidden = taf;
   // Vélotaf : deux colonnes au lieu de la carte unique, pas de feuille de route
-  $('#mapCard').hidden = taf; $('#roadCard').hidden = taf; if (!taf) $('#tafDuo').hidden = true;
+  $('#mapCard').hidden = taf; $('#roadCard').hidden = taf; if (!taf) { $('#tafDuo').hidden = true; for (const f of DUO.flows) if (f) f.off(); }
   if (!taf && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   $('label[for="date"]').textContent = taf ? 'Premier jour' : 'Départ'; $('label[for="time"]').textContent = taf ? 'Départ de l\'aller' : 'Heure';
   if (!taf) { $('#weekCard').hidden = true; }
@@ -3627,7 +3653,7 @@ $('#weekRows').addEventListener('click', e => {
   try { sessionStorage.setItem('pmr-ride-date', a.dataset.ride); } catch (err) {}
   location.hash = '';
 });
-$('#weekRows').addEventListener('click', e => { const tr = e.target.closest('tr[data-date]'); if (!tr) return; TAF.sel = tr.dataset.date; schedule(); });
+$('#weekRows').addEventListener('click', e => { const tr = e.target.closest('tr[data-date]'); if (!tr) return; TAF.sel = tr.dataset.date; TAF.scrollTo = true; schedule(); });
 $('#tripSeg').addEventListener('click', e => {
   const b = e.target.closest('button[data-trip]'); if (!b) return;
   S.trip = +b.dataset.trip; for (const x of document.querySelectorAll('#tripSeg button')) x.setAttribute('aria-pressed', String(x === b));
@@ -3636,7 +3662,15 @@ $('#tripSeg').addEventListener('click', e => {
 
 /* Vélotaf : deux colonnes Aller / Retour, chacune avec sa carte Leaflet (indépendantes : pas de zoom lié), sa trace
    colorée selon la métrique, ses flèches de vent à l'heure de passage et son graphe (drawDayWx). */
-const DUO = { maps: [], routes: [], winds: [], hov: [], fit: ['', ''] };
+const DUO = { maps: [], routes: [], winds: [], hov: [], fit: ['', ''], flows: [] };
+// heure du vent animé d'un trajet : le milieu du trajet, au quart d'heure
+const duoT = k => { const d = LAPS.days[k]; return d ? Math.round((d.a.t + d.b.t) / 2 / 900e3) * 900e3 : Date.now(); };
+function duoFlows() {
+  for (let k = 0; k < 2; k++) { const m = DUO.maps[k]; if (!m) continue;
+    if (!DUO.flows[k]) DUO.flows[k] = flowEngine({ map: () => DUO.maps[k], time: () => duoT(k), span: () => [duoT(k) - 3600e3, duoT(k) + 3600e3],
+      allowed: () => FLOW.on && S.mode === 'taf' && !!(S.laps && S.laps.taf) && !$('#tafDuo').hidden, status: () => {} });
+    DUO.flows[k].load(); }
+}
 function duoRange(k) { return k ? [S.laps.start[1], S.P.n - 1] : [0, S.laps.start[1] - 1]; }
 function renderDuo(laps, opt) {
   const card = $('#tafDuo'); card.hidden = false;
@@ -3645,10 +3679,13 @@ function renderDuo(laps, opt) {
   laps.forEach((d, k) => {
     $('#duoHead' + k).innerHTML = `<div class="ttl"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span><span class="hint">${n1(d.dist)} km · ${durShort(d.h)} · D+ ${n0(d.dplus)} m</span></div>
       <div class="wk">${vdot(vs[k])}<div class="t">${d.wx ? `<b>${n0(d.wx.tmin)} à ${n0(d.wx.tmax)}° ressentis · ${d.wx.rain >= 0.1 ? 'pluie ' + n1(d.wx.rain) + ' mm' : 'sec'}</b>` : ''}<span class="vtxt l${Math.max(0, vs[k].lvl)}">${vs[k].txt}</span></div></div>
-      <div class="sub">${k ? `Départ du travail à ${hm.format(new Date(d.a.t))}` : (arrT ? `Pour être au travail à ${arrT}${opt.tafMargin ? ` (${opt.tafMargin} min de marge)` : ''}` : `Arrivée au travail à ${hm.format(new Date(d.b.t))}`)}${!k && d.pause != null ? (d.late ? ' · ⚠ arrivée après l\'heure du retour' : ` · ${durShort(d.pause)} au travail`) : ''}</div>`;
+      <div class="sub">${FLOW.on ? `Vent animé à ${hm.format(new Date(duoT(k)))} · ` : ''}${k ? `Départ du travail à ${hm.format(new Date(d.a.t))}` : (arrT ? `Pour être au travail à ${arrT}${opt.tafMargin ? ` (${opt.tafMargin} min de marge)` : ''}` : `Arrivée au travail à ${hm.format(new Date(d.b.t))}`)}${!k && d.pause != null ? (d.late ? ' · ⚠ arrivée après l\'heure du retour' : ` · ${durShort(d.pause)} au travail`) : ''}</div>`;
   });
   if (typeof L === 'undefined') return;
-  requestAnimationFrame(() => { for (let k = 0; k < 2; k++) duoMap(k); drawPlanWx(); });
+  requestAnimationFrame(() => { for (let k = 0; k < 2; k++) duoMap(k); drawPlanWx(); duoFlows();
+    if (TAF.scrollTo) { TAF.scrollTo = false; $('#stats').scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+  const fmtL = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  $('#duoTitle').textContent = 'Aller et retour · ' + fmtL.format(new Date(laps[0].a.t));
 }
 function duoMap(k) {
   let m = DUO.maps[k];
