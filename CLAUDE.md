@@ -11,7 +11,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 ## Page de test (`test.html`, depuis le 14/10/2026)
 - Les nouveautés se font d'abord dans `test.html` (https://antoinechry.github.io/plan-my-ride/test.html), copie de `index.html` : même code, même origine (mêmes parcours, réglages et caches du navigateur, même compte). `IS_TEST` (chemin en `test.html`) : bandeau jaune `#testBand` « Version test » avec lien vers la version normale, titre préfixé 🧪, `noindex`, pas de mesure d'audience (`track` ne fait rien).
 - Mise en ligne quand l'utilisateur valide : `cp test.html index.html` (le même fichier se comporte en version normale sous `index.html`). Toute correction faite directement dans `index.html` doit être reportée dans `test.html`, et inversement, tant que les deux diffèrent.
-- En essai dans `test.html` au 14/10/2026 : recherche de parcours avec suggestions + renommer (`#libQ`, `#libList`, `libSuggest`, `libPick`, `libRename`, remplace la liste déroulante `#libSel`). Rose du vent et boussoles essayées puis abandonnées (l'utilisateur préfère les flèches).
+- En essai dans `test.html` au 14/10/2026 : recherche de parcours avec suggestions + renommer (`#libQ`, `#libList`, `libSuggest`, `libPick`, `libRename`, remplace la liste déroulante `#libSel`) ; rose du vent ressenti sous la carte (`#roseBox` dans `#mapCard`, `windRoseStats` / `drawWindRose` / `roseCanvas`, remplie par `renderSummary` : part face / travers / dos / calme ; masquée en plein écran). Boussoles horaires et mini-roses par jour essayées puis abandonnées : les graphiques gardent les flèches.
 
 ## Architecture du script (dans `index.html`)
 - `parseGPX` → `prepare` (distances cumulées, altitude lissée, D+/D− avec seuil 3 m, cap sur ~150 m)

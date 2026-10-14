@@ -348,6 +348,12 @@ dialog.login input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px 
 dialog.login .err{color:#c0392b;font-size:13px;margin:0}
 dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.rose-box{display:flex;align-items:center;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.rose-box canvas{flex:none}
+.rose-box .wtxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rose-box .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+.rose-box .rose-key{color:var(--muted);font-size:.75rem}
+.map-fs .rose-box{display:none}
 </style>
 </head>
 <body>
@@ -521,6 +527,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       </div>
       <div id="map"></div>
       <div class="legend" id="legend"></div>
+      <div class="rose-box" id="roseBox" hidden title="Rose du vent ressenti : le cycliste regarde vers le haut ; longueur = part du temps où le vent vient de ce côté, couleur = force">
+        <canvas id="roseAll"></canvas>
+        <div class="wtxt" id="roseTxt"></div>
+      </div>
     </section>
 
     <section class="card" id="planCard" hidden>
@@ -1249,6 +1259,13 @@ function renderSummary(opt) {
     tiles.push(['Soleil', `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? `${durTxt(st.nightH)} de nuit` : 'du temps en selle ensoleillé']);
   }
   $('#stats').innerHTML = tiles.map(([l, v, s]) => `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
+  // rose du vent ressenti sur tout le parcours, sous la carte
+  const rs = has ? windRoseStats(tl.start, tl.end) : null;
+  $('#roseBox').hidden = !rs;
+  if (rs) {
+    $('#roseTxt').innerHTML = `<span class="label">Vent ressenti sur le parcours</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> du temps de face ou 3/4 face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers · <b>${Math.round(rs.tail * 100)} %</b> de dos ou 3/4 dos</span>${rs.calm > 0.02 ? `<span class="s">${Math.round(rs.calm * 100)} % calme (moins de 4 km/h)</span>` : ''}<span class="s rose-key">En haut = de face, longueur = part du temps, couleur = force</span>`;
+    roseCanvas($('#roseAll'), rs, 96, true);
+  }
 
   let txt;
   const dep = `Départ ${dayFmt.format(new Date(tl.start))} à ${hm.format(new Date(tl.start))}`;
@@ -2586,6 +2603,46 @@ function sunRiseSet(ms, lat, lon) {
   const Jnoon = transit(ds), Jset = transit(J0 + (Math.acos(cosw) + lw) / (2 * Math.PI) + n), Jrise = Jnoon - (Jset - Jnoon);
   const toMs = j => (j + 0.5 - J1970) * dayMs;
   return { rise: toMs(Jrise), set: toMs(Jset) };
+}
+/* Vent relatif au cycliste. relDeg = d'où vient le vent par rapport au sens de marche (0 = de face, 90 = de la
+   droite, 180 = de dos). windRoseStats / drawWindRose : rose sur une période (8 secteurs, longueur = part du temps,
+   couleur = force, calme < 4 km/h à part). */
+const relDeg = (w, i) => ((w.wd - S.P.b[i]) % 360 + 360) % 360;
+function windRoseStats(ta, tb) {
+  const P = S.P, tl = S.tl, sec = Array.from({ length: 8 }, () => new Float64Array(WIND_SCALE.length)); let calm = 0, tot = 0;
+  if (!S.wx) return null;
+  const step = Math.max(1, Math.floor(P.n / 1500));
+  for (let i = step; i < P.n; i += step) {
+    const t1 = tl.times[i], t0 = tl.times[i - step]; if (t1 <= ta || t0 >= tb) continue;
+    const dt = Math.min(t1, tb) - Math.max(t0, ta); if (dt <= 0 || dt > 2 * 3600e3) continue; // pas les nuits
+    const w = wxAt(sIdx(P.d[i]), t1); if (!w) continue;
+    tot += dt; if (w.ws < 4) { calm += dt; continue; }
+    const k = Math.round(relDeg(w, i) / 45) % 8, f = WIND_SCALE.findLastIndex ? WIND_SCALE.findLastIndex(s => w.ws >= s[0]) : WIND_SCALE.reduce((a, s, j) => w.ws >= s[0] ? j : a, 0);
+    sec[k][f] += dt;
+  }
+  if (!tot) return null;
+  const share = ks => ks.reduce((s, k) => s + sec[k].reduce((a, b) => a + b, 0), 0) / tot;
+  return { sec, tot, calm: calm / tot, face: share([0, 1, 7]), cross: share([2, 6]), tail: share([3, 4, 5]) };
+}
+function drawWindRose(c, cx, cy, R, rs, labels) {
+  c.save(); c.strokeStyle = cssVar('--line'); c.lineWidth = 1;
+  for (const f of [.5, 1]) { c.beginPath(); c.arc(cx, cy, R * f, 0, Math.PI * 2); c.stroke(); }
+  if (rs) {
+    const tots = rs.sec.map(a => a.reduce((x, y) => x + y, 0)), mx = Math.max(...tots, 1e-9);
+    rs.sec.forEach((cls, k) => {
+      const a0 = (k * 45 - 90 - 19) * RAD, a1 = (k * 45 - 90 + 19) * RAD; let r0 = R * 0.16;
+      cls.forEach((v, f) => { if (!v) return; const r1 = r0 + v / mx * R * 0.84; c.beginPath(); c.arc(cx, cy, r1, a0, a1); c.arc(cx, cy, r0, a1, a0, true); c.closePath(); c.fillStyle = WIND_SCALE[f][1]; c.fill(); r0 = r1; });
+    });
+  }
+  c.fillStyle = cssVar('--ink'); const s = Math.max(4, R * 0.16); c.beginPath(); c.moveTo(cx, cy - s); c.lineTo(cx + s * .7, cy + s * .8); c.lineTo(cx, cy + s * .45); c.lineTo(cx - s * .7, cy + s * .8); c.closePath(); c.fill();
+  if (labels) { c.fillStyle = cssVar('--muted'); c.font = `600 9px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('face', cx, cy - R - 7); c.fillText('dos', cx, cy + R + 7); }
+  c.restore();
+}
+function roseCanvas(cv, rs, size, labels) {
+  const dpr = window.devicePixelRatio || 1; cv.width = size * dpr; cv.height = size * dpr; cv.style.width = cv.style.height = size + 'px';
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, size, size);
+  drawWindRose(c, size / 2, size / 2, size / 2 - (labels ? 14 : 2), rs, labels);
 }
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
 function drawSunEvent(c, x, y, s, dir) {
