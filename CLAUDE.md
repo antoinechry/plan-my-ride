@@ -8,10 +8,8 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Interface en français.
 - Leaflet 1.9.4 via cdnjs. Fonds sans clé uniquement (CARTO exige désormais une clé) : OSM standard (seulement servi en http(s), il exige un Referer), CyclOSM, OpenTopoMap, Esri Topo/Satellite. En `file://`, le fond par défaut est Esri Topo.
 
-## Page de test (`test.html`, depuis le 14/10/2026)
-- Les nouveautés se font d'abord dans `test.html` (https://antoinechry.github.io/plan-my-ride/test.html), copie de `index.html` : même code, même origine (mêmes parcours, réglages et caches du navigateur, même compte). `IS_TEST` (chemin en `test.html`) : bandeau jaune `#testBand` « Version test » avec lien vers la version normale, titre préfixé 🧪, `noindex`, pas de mesure d'audience (`track` ne fait rien).
-- Mise en ligne quand l'utilisateur valide : `cp test.html index.html` (le même fichier se comporte en version normale sous `index.html`). Toute correction faite directement dans `index.html` doit être reportée dans `test.html`, et inversement, tant que les deux diffèrent.
-- En essai dans `test.html` : rien pour l'instant (dernière mise en ligne le 14/10/2026 : recherche de parcours et rose du vent).
+## Page de test (`test.html`)
+- Supprimée le 14/10/2026 à la demande de l'utilisateur, après la mise en ligne de la recherche de parcours et de la rose du vent. Le code reconnaît encore une page de test (`IS_TEST`, chemin en `test.html` : bandeau jaune `#testBand` « Version test », titre préfixé 🧪, `noindex`, pas de mesure d'audience) : pour en refaire une, `cp index.html test.html`, puis `cp test.html index.html` à la mise en ligne.
 
 ## Architecture du script (dans `index.html`)
 - `parseGPX` → `prepare` (distances cumulées, altitude lissée, D+/D− avec seuil 3 m, cap sur ~150 m)
