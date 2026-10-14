@@ -710,7 +710,10 @@ async function fetchOM(from, to) {
   const lat = S.samples.map(s => s.lat.toFixed(4)).join(',');
   const lon = S.samples.map(s => s.lon.toFixed(4)).join(',');
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${VARS.join(',')}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
-  const res = await fetch(url);
+  // 40 s au plus : si Open-Meteo ne répond pas, les horaires sont quand même calculés (sans météo)
+  let res;
+  try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined }); }
+  catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? 'Open-Meteo ne répond pas pour l\'instant (réessaie dans quelques minutes).' : 'pas de connexion au service Open-Meteo.'); }
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.error) throw new Error(json.reason || `Le service météo a répondu ${res.status}.`);
   const arr = Array.isArray(json) ? json : [json];
@@ -1041,6 +1044,7 @@ async function run() {
   if (!S.P) return;
   const id = ++runId, opt = readOpt();
   saveOpt(opt);
+  if (S.mode === 'ultra') placesEnsure(); // villes des graphes du jour : sans attendre la météo
   const t0 = startMs(opt);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const maxDay = new Date(today); maxDay.setDate(maxDay.getDate() + 15);
