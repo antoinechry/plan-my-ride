@@ -714,9 +714,11 @@ async function fetchOM(from, to) {
   let res;
   try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined }); }
   catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? 'Open-Meteo ne répond pas pour l\'instant (réessaie dans quelques minutes).' : 'pas de connexion au service Open-Meteo.'); }
-  const json = await res.json().catch(() => ({}));
+  const json = await res.json().catch(e => ({ _cut: e }));
+  if (json._cut) throw new Error('Open-Meteo ne répond pas pour l\'instant (réponse coupée, réessaie dans quelques minutes).');
   if (!res.ok || json.error) throw new Error(json.reason || `Le service météo a répondu ${res.status}.`);
   const arr = Array.isArray(json) ? json : [json];
+  if (arr.some(L => !L || !L.hourly || !Array.isArray(L.hourly.time))) throw new Error('réponse incomplète d\'Open-Meteo (réessaie dans quelques minutes).');
   return arr.map(L => {
     const h = L.hourly, f = k => Float32Array.from(h[k].map(v => v == null ? NaN : v));
     return { t0: h.time[0], n: h.time.length, temp: f('temperature_2m'), app: f('apparent_temperature'), pr: f('precipitation'),
@@ -1072,7 +1074,8 @@ async function run() {
     } catch (err) {
       if (id !== runId) return;
       S.wx = S.wxAlt = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
-      note = 'Météo indisponible : ' + (err.message === 'Failed to fetch' ? 'pas de connexion au service Open-Meteo.' : err.message) + ' Les horaires restent calculés.';
+      note = 'Météo indisponible : ' + (err.message === 'Failed to fetch' ? 'pas de connexion au service Open-Meteo.' : err.message) + ' Les horaires restent calculés.'
+        + (hasSbToken() && src === 'om' ? ' Tu peux aussi passer la source météo sur meteoblue.' : '');
     }
   }
   if (id !== runId) return;
