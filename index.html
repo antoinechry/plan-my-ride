@@ -2582,9 +2582,10 @@ function drawDayWx(cv, cur) {
     const X = t => l + (t - ta) / span * pw;
     // une valeur par demi-heure pour la courbe, une colonne par heure pour le ciel, le vent et la pluie
     const pts = []; for (let t = ta; t <= tb + 1; t += 1800e3) { const tt = Math.min(t, tb), km = kmAtT(tt), w = S.wx ? wxAt(sIdx(km), tt) : null; if (w) pts.push({ t: tt, km, w }); }
-    if (!pts.length) { c.fillStyle = muted; c.font = `13px ${cssVar('--f-body') || 'system-ui'}`; c.textBaseline = 'middle'; c.fillText('Pas encore de prévision météo pour ce jour.', l, H / 2); return; }
+    // sans météo pour ce jour : relief, heures, km, soleil et villes quand même, avec un petit mot en haut
+    const noWx = !pts.length;
     const yT0 = 44, yT1 = H - 52; // zone température / pluie / relief ; en bas : heures, km, puis villes et bourgs
-    const temps = pts.map(p => p.w.app);
+    const temps = noWx ? [0] : pts.map(p => p.w.app);
     let tMin = Math.floor(Math.min(...temps)), tMax = Math.ceil(Math.max(...temps)); if (tMax - tMin < 6) { const m = (tMax + tMin) / 2; tMin = Math.floor(m - 3); tMax = Math.ceil(m + 3); }
     const Yt = v => yT1 - (v - tMin) / (tMax - tMin) * (yT1 - yT0);
     c.strokeStyle = cssVar('--line'); c.lineWidth = 1; c.beginPath(); c.moveTo(l, yT1 + .5); c.lineTo(l + pw, yT1 + .5); c.stroke();
@@ -2610,7 +2611,10 @@ function drawDayWx(cv, cur) {
       const xa = X(x.a) + .75, bw = Math.max(2, X(x.b) - X(x.a) - 1.5), hh = Math.max(2, x.w.pr / pMax * (yT1 - yT0) * .6);
       c.globalAlpha = .8; c.fillStyle = rc; c.fillRect(xa, yT1 - hh, bw, hh); c.globalAlpha = 1;
       if (bw >= 22 && x.w.pr >= 0.1) { c.fillStyle = rc; c.textBaseline = 'bottom'; c.fillText(n1(x.w.pr), xa + bw / 2, yT1 - hh - 1); } }
+    if (noWx) { c.fillStyle = muted; c.font = `12px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textAlign = 'left'; c.textBaseline = 'top';
+      c.fillText(S.wx ? 'Pas encore de prévision météo pour ce jour (disponible 16 jours avant).' : 'Météo indisponible pour l\'instant.', l, 8); }
     // température ressentie
+    if (!noWx) {
     c.beginPath(); pts.forEach((p, i) => { const x = X(p.t), y = Yt(p.w.app); i ? c.lineTo(x, y) : c.moveTo(x, y); });
     c.strokeStyle = cssVar('--warm'); c.lineWidth = 2; c.stroke();
     c.fillStyle = cssVar('--warm'); c.textAlign = 'right'; c.textBaseline = 'middle';
@@ -2621,6 +2625,7 @@ function drawDayWx(cv, cur) {
       c.beginPath(); c.arc(x, y, 2.5, 0, Math.PI * 2); c.fill();
       c.textAlign = i === 0 ? 'right' : i === pts.length - 1 ? 'right' : 'center';
       c.fillText(n0(p.w.app) + '°', i === 0 ? x - 4 : i === pts.length - 1 ? x - 4 : x, i === 0 ? y + 5 : y - 4); }
+    }
     // ciel et sens du vent, une colonne par heure (on en saute si c'est trop serré)
     let last = -99;
     for (const x of hours) { if (!x.w) continue; const cx = X(x.tm); if (cx - last < 22) continue; last = cx;
