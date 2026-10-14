@@ -420,6 +420,17 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .duo-col canvas{display:block;cursor:crosshair;touch-action:pan-y;background:var(--bg);border-radius:8px}
 .duo-key{padding:0 14px 12px;margin:6px 0 0}
 @media (max-width:820px){.duo{grid-template-columns:1fr}.duo-map{height:300px}}
+#stats.duo-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:none;border:0;border-radius:0;overflow:visible}
+#stats.duo-stats .sd{min-width:0;display:flex;flex-direction:column;gap:6px}
+#stats.duo-stats .sd-ttl{display:flex;align-items:baseline;gap:10px;padding:0 2px}
+#stats.duo-stats .sd-ttl b{font-size:17px}
+#stats.duo-stats .sd-ttl span{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+#stats.duo-stats .stats{grid-template-columns:1fr 1fr 1.5fr;grid-auto-flow:row dense}
+#stats.duo-stats .stat.wind{grid-column:3;grid-row:1 / span 2}
+@media (min-width:1281px){#stats.duo-stats .stat.wind{flex-direction:column;justify-content:center;gap:4px}#stats.duo-stats .stat.wind .wtxt{align-items:center;text-align:center}}
+@media (max-width:1280px){#stats.duo-stats .stats{grid-template-columns:1fr 1fr}#stats.duo-stats .stat.wind{grid-column:1 / -1;grid-row:auto}}
+#stats.duo-stats .stat .v{font-size:23px}
+@media (max-width:820px){#stats.duo-stats{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1648,9 +1659,25 @@ function renderSummary(opt) {
   }
   const rs = has ? windRoseStats(tl.start, tl.end) : null; // rose du vent ressenti dans la tuile Vent
   $('#stats').innerHTML = tiles.map(([l, v, s]) => l === 'Vent' && rs
-    ? `<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(rs.tail * 100)} %</b> de dos</span><span class="s">${rs.calm > 0.02 ? `${Math.round(rs.calm * 100)} % calme` : ''}${st.hasGust ? `${rs.calm > 0.02 ? ' · ' : ''}rafales ${n0(st.gust)} km/h` : ''}</span></div></div>`
+    ? `<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(rs.tail * 100)} %</b> de dos</span>${rs.calm > 0.02 ? `<span class="s">${Math.round(rs.calm * 100)} % calme</span>` : ''}${st.hasGust ? `<span class="s">rafales ${n0(st.gust)} km/h</span>` : ''}</div></div>`
     : `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
   S.rose = rs; if (rs) roseCanvas($('#roseAll'), rs, 172, 96);
+  // Vélotaf : résumé coupé en deux (Aller | Retour), une rose par trajet
+  $('#stats').classList.toggle('duo-stats', !!tafSum); S.roses = null;
+  if (tafSum) {
+    const tile = (l, v, s) => `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
+    S.roses = tafSum.map(d => has ? windRoseStats(d.a.t, d.b.t) : null); S.rose = null;
+    $('#stats').innerHTML = tafSum.map((d, k) => {
+      const w = d.wx, r = S.roses[k], T = [
+        tile('Distance', `${n1(d.dist)} <small>km</small>`, `${durShort(d.h)} · D+ ${n0(d.dplus)} m`),
+        tile(k ? 'Arrivée maison' : 'Arrivée travail', hm.format(new Date(d.b.t)), `départ ${hm.format(new Date(d.a.t))}`)];
+      if (w) T.push(tile('Températures', `${n0(w.tAmin)}${Math.round(w.tAmax) !== Math.round(w.tAmin) ? '–' + n0(w.tAmax) : ''} <small>°C</small>`, `Ressenti ${n0(w.tmin)} à ${n0(w.tmax)} °C`),
+        tile('Pluie', `${n1(w.rain)} <small>mm</small>`, (w.prob != null && isFinite(w.prob) ? `Risque max ${n0(w.prob)} % · ` : '') + (w.dark > 0.5 ? 'de nuit' : `soleil ${n0(w.sun * 100)} %`)));
+      if (r) T.push(`<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="rose${k}"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(r.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(r.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(r.tail * 100)} %</b> de dos</span>${r.calm > 0.02 ? `<span class="s">${Math.round(r.calm * 100)} % calme</span>` : ''}${w && w.gust > 0 ? `<span class="s">rafales ${n0(w.gust)} km/h</span>` : ''}</div></div>`);
+      return `<div class="sd"><div class="sd-ttl"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span></div><div class="stats">${T.join('')}</div></div>`;
+    }).join('');
+    S.roses.forEach((r, k) => { if (r) roseCanvas($('#rose' + k), r, 150, 84); });
+  }
 
 
   let txt;
@@ -3663,14 +3690,15 @@ function lapSummaries(tl = S.tl) {
     const s0 = stops[k - 1], s1 = stops[k];
     const a = { km: s0 ? s0.km : 0, t: s0 ? s0.to : tl.start }, b = { km: s1 ? s1.km : P.total, t: s1 ? s1.from : tl.end };
     const d = { a, b, pause: s1 ? (s1.to - s1.from) / 3600e3 : null, late: !!(s1 && s1.late), dist: b.km - a.km, dplus: up[idxAtKm(b.km)] - up[idxAtKm(a.km)], h: (b.t - a.t) / 3600e3 };
-    let tmin = Infinity, tmax = -Infinity, rain = 0, head = 0, tot = 0, hsum = 0, prob = 0, dark = 0, mid = null;
+    let tmin = Infinity, tmax = -Infinity, rain = 0, head = 0, tot = 0, hsum = 0, prob = 0, dark = 0, mid = null, tAmin = Infinity, tAmax = -Infinity, sun = 0, gust = 0;
     if (S.wx) for (let t = a.t; t < b.t; t += 300e3) {
       const dt = Math.min(300e3, b.t - t), tm = t + dt / 2, km = kmAtT(tm), i = idxAtKm(km), w = wxAt(sIdx(km), tm); if (!w) continue;
       const hh = dt / 3600e3, hd = w.ws * Math.cos((w.wd - P.b[i]) * RAD); tot += hh; tmin = Math.min(tmin, w.app); tmax = Math.max(tmax, w.app); rain += w.pr * hh;
       if (hd > 5) head += hh; hsum += hd * hh; prob = Math.max(prob, w.prob || 0); if (!w.day) dark += hh;
+      tAmin = Math.min(tAmin, w.temp); tAmax = Math.max(tAmax, w.temp); if (w.day) sun += (w.sun || 0) * hh; if (isFinite(w.gust)) gust = Math.max(gust, w.gust);
       if (!mid || Math.abs(tm - (a.t + b.t) / 2) < Math.abs(mid.t - (a.t + b.t) / 2)) mid = { t: tm, w };
     }
-    d.wx = tot > d.h * 0.5 ? { tmin, tmax, rain, head: head / tot, headAvg: hsum / tot, prob, dark: dark / tot } : null;
+    d.wx = tot > d.h * 0.5 ? { tmin, tmax, rain, head: head / tot, headAvg: hsum / tot, prob, dark: dark / tot, tAmin, tAmax, sun: sun / tot, gust } : null;
     d.wxMid = mid && mid.w;
     out.push(d);
   }
@@ -4054,7 +4082,8 @@ window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dropOverlay').hidden = true; handleFile(e.dataTransfer.files[0]); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.tl) { renderChart(); drawPlanWx(); } }, 150); });
 // thème : clair, sombre ou automatique (comme l'appareil), gardé dans le navigateur (partagé avec Coach Miguel)
-function redrawTheme() { if (S.tl) { const rc = $('#roseAll'); if (rc && S.rose) roseCanvas(rc, S.rose, 172, 96); renderChart(); renderMap(); drawPlanWx(); } }
+function redrawTheme() { if (S.tl) { const rc = $('#roseAll'); if (rc && S.rose) roseCanvas(rc, S.rose, 172, 96);
+  if (S.roses) S.roses.forEach((r, k) => { const c = $('#rose' + k); if (c && r) roseCanvas(c, r, 150, 84); }); renderChart(); renderMap(); drawPlanWx(); } }
 function setTheme(t) {
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { if (t === 'auto') localStorage.removeItem('pmr-theme'); else localStorage.setItem('pmr-theme', t); } catch (e) {}
