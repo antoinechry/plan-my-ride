@@ -364,6 +364,8 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .week-table th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:8px 12px;border-bottom:1px solid var(--line)}
 .week-table td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
 .week-table tbody tr{cursor:pointer}
+.wk-h{display:block;font-size:11px;font-weight:600;color:var(--muted);font-family:var(--f-mono);margin-bottom:2px}
+@media (max-width:640px){.wk-h{display:none}}
 .week-table tbody tr:hover td{background:var(--bg)}
 .week-table tbody tr.sel td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .week-table tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
@@ -386,6 +388,11 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .vdot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--line)}
 .vdot.l0{background:#2f9e44}.vdot.l1{background:#e8a200}.vdot.l2{background:#d6382e}.vdot.lx{background:var(--line)}
 .vtxt{font-weight:600}.vtxt.l0{color:#2f9e44}.vtxt.l1{color:#b97b00}.vtxt.l2{color:#d6382e}
+.taf-perday{margin:2px 0 8px}
+.taf-days{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;margin-bottom:12px;font-size:13px}
+.taf-days input{min-width:0;width:100%}
+.taf-days .label{margin:0}
+.taf-days .hint{grid-column:1 / -1;margin:0}
 </style>
 </head>
 <body>
@@ -503,6 +510,16 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </div>
     <div class="taf-box" id="tafField" hidden>
       <div class="field"><label class="label" for="tafBack">Départ du retour</label><input type="time" id="tafBack" step="300"></div>
+      <label class="toggle taf-perday"><input type="checkbox" id="tafPerDay"> Heures différentes selon le jour</label>
+      <div class="taf-days" id="tafDays" hidden>
+        <span></span><span class="label">Aller</span><span class="label">Retour</span>
+        <span>Lundi</span><input type="time" step="300" data-go="1" aria-label="Départ de l'aller le lundi"><input type="time" step="300" data-back="1" aria-label="Départ du retour le lundi">
+        <span>Mardi</span><input type="time" step="300" data-go="2" aria-label="Départ de l'aller le mardi"><input type="time" step="300" data-back="2" aria-label="Départ du retour le mardi">
+        <span>Mercredi</span><input type="time" step="300" data-go="3" aria-label="Départ de l'aller le mercredi"><input type="time" step="300" data-back="3" aria-label="Départ du retour le mercredi">
+        <span>Jeudi</span><input type="time" step="300" data-go="4" aria-label="Départ de l'aller le jeudi"><input type="time" step="300" data-back="4" aria-label="Départ du retour le jeudi">
+        <span>Vendredi</span><input type="time" step="300" data-go="5" aria-label="Départ de l'aller le vendredi"><input type="time" step="300" data-back="5" aria-label="Départ du retour le vendredi">
+        <p class="hint">Le week-end : les heures du lundi.</p>
+      </div>
       <div class="field">
         <label class="label" for="tafRet">Trace du retour</label>
         <select id="tafRet"></select>
@@ -625,7 +642,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </section>
 
     <section class="card" id="weekCard" hidden>
-      <div class="card-head"><h2>La semaine</h2><span class="hint">Les 5 prochains jours ouvrés, aux mêmes heures. Clique sur un jour pour le détail.</span></div>
+      <div class="card-head"><h2>La semaine</h2><span class="hint" id="weekHint"></span></div>
       <div class="week-scroll">
         <table class="week-table">
           <thead><tr><th>Jour</th><th>Aller <span class="hint" id="weekGoH"></span></th><th>Retour <span class="hint" id="weekBackH"></span></th></tr></thead>
@@ -1262,7 +1279,9 @@ function readOpt() {
     // page Sortie : nombre de tours de la boucle et pause entre deux tours (minutes)
     laps: clamp(Math.round(+$('#laps').value || 1), 1, 50), lapPause: clamp(Math.round(+$('#lapPause').value || 0), 0, 240),
     // page Vélotaf : heure de départ du retour et trace du retour ('' = l'aller à l'envers)
-    tafBack: $('#tafBack').value || '17:30', tafRet: TAF.ret };
+    tafBack: $('#tafBack').value || '17:30', tafRet: TAF.ret,
+    // heures différentes selon le jour de la semaine (1 = lundi … 5 = vendredi) : { go, back }
+    tafPerDay: $('#tafPerDay').checked, tafDays: JSON.parse(JSON.stringify(TAF.days)) };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -1369,8 +1388,9 @@ function score(st, total) {
 let runId = 0;
 async function run() {
   if (!S.P) return;
-  const id = ++runId, opt = readOpt();
-  saveOpt(opt);
+  const id = ++runId, opt0 = readOpt();
+  saveOpt(opt0);
+  const opt = S.mode === 'taf' ? tafOpt(opt0, opt0.date) : opt0; // Vélotaf : heures du jour choisi
   // Vélotaf : trace du retour à charger (un autre parcours enregistré)
   if (S.mode === 'taf' && TAF.ret && TAF.id !== TAF.ret) {
     const P = await tafLoad(TAF.ret); if (id !== runId) return;
@@ -1390,7 +1410,7 @@ async function run() {
   // fenêtre de prévision nécessaire
   let endMax = simulate(t0, opt, false).end;
   for (const c of cand) endMax = Math.max(endMax, simulate(startMs(opt, c), opt, false).end);
-  for (const d of week) { const o = { ...opt, date: ymd(d) }; endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
+  for (const d of week) { const o = tafOpt({ ...opt0, date: ymd(d) }, ymd(d)); endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
   const src = wxSrc();
@@ -1421,7 +1441,7 @@ async function run() {
   setStatus(note, note ? 'err' : '');
   const opts = S.wx ? cand.map(c => { const r = simulate(startMs(opt, c), opt, true); return { time: c, r, sc: score(r.st, S.P.total) }; }) : [];
   // Vélotaf : aller et retour de chaque jour ouvré de la semaine, aux mêmes heures
-  TAF.week = week.map(d => { const o = { ...opt, date: ymd(d) }, r = simulate(startMs(o), o, !!S.wx); return { date: ymd(d), trips: S.laps && S.laps.taf ? lapSummaries(r) : [] }; });
+  TAF.week = week.map(d => { const o = tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), r = simulate(startMs(o), o, !!S.wx); return { date: ymd(d), go: o.time, back: o.tafBack, trips: S.laps && S.laps.taf ? lapSummaries(r) : [] }; });
   renderAll(opts, opt);
 }
 
@@ -2244,6 +2264,9 @@ function initInputs() {
     $('#date').value = ymd(d);
   }
   $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; tafRenderSel();
+  $('#tafPerDay').checked = !!def.tafPerDay; TAF.days = def.tafDays && typeof def.tafDays === 'object' ? def.tafDays : {};
+  for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
+  tafPerDayUI();
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn;
   $('#laps').value = clamp(Math.round(+def.laps || 1), 1, 50);
@@ -2276,6 +2299,7 @@ function applyModeUI() {
   $('#tripSeg').hidden = !taf; $('#optCard').hidden = taf;
   $('label[for="date"]').textContent = taf ? 'Jour' : 'Départ'; $('label[for="time"]').textContent = taf ? 'Départ de l\'aller' : 'Heure';
   if (!taf) { $('#weekCard').hidden = true; }
+  tafPerDayUI();
   $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : taf ? 'Vélotaf : la météo de ton trajet aller et retour, et la semaine d\'un coup d\'œil.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
   document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Plan My Ride · Ultra' : taf ? 'Plan My Ride · Vélotaf' : 'Plan My Ride');
 }
@@ -3213,7 +3237,28 @@ function renderPlan() {
 /* La trace calculée = l'aller (trace chargée) puis le retour (même trace à l'envers, ou un autre parcours choisi :
    TAF.ret = identifiant, TAF.P = trace préparée). Entre les deux, un arrêt « journée au travail » jusqu'à l'heure de
    départ du retour. On réutilise le découpage du mode tours (S.laps avec taf: true, deux « tours » : Aller, Retour). */
-const TAF = { ret: '', id: '', P: null, week: [] };
+const TAF = { ret: '', id: '', P: null, week: [], days: {} };
+// Réglages d'un jour donné : heures de ce jour de la semaine si « Heures différentes selon le jour » (week-end : lundi)
+function tafOpt(o, date) {
+  if (!o.tafPerDay) return o;
+  let wd = new Date(date + 'T12:00').getDay(); if (wd === 0 || wd === 6) wd = 1;
+  const e = (o.tafDays || {})[wd] || {};
+  return { ...o, time: e.go || o.time, tafBack: e.back || o.tafBack };
+}
+function tafPerDayUI() {
+  const on = S.mode === 'taf' && $('#tafPerDay').checked;
+  $('#tafDays').hidden = !on; $('#time').closest('.field').hidden = on; $('#tafBack').closest('.field').hidden = on;
+}
+$('#tafPerDay').addEventListener('change', () => {
+  // première activation : chaque jour reprend les heures actuelles
+  for (let d = 1; d <= 5; d++) { const e = TAF.days[d] = TAF.days[d] || {}; if (!e.go) e.go = $('#time').value; if (!e.back) e.back = $('#tafBack').value; }
+  tafPerDayUI(); schedule();
+});
+$('#tafDays').addEventListener('change', e => {
+  const inp = e.target.closest('input[data-go], input[data-back]'); if (!inp || !inp.value) return;
+  const d = inp.dataset.go || inp.dataset.back, k = inp.dataset.go ? 'go' : 'back';
+  (TAF.days[d] = TAF.days[d] || {})[k] = inp.value; schedule();
+});
 function applyTaf(opt) {
   const B = S.lapBase, R = TAF.ret && TAF.id === TAF.ret ? TAF.P : null;
   const sig = 'taf:' + (R ? TAF.ret : 'rev') + ':' + B.total;
@@ -3294,14 +3339,15 @@ function renderWeek() {
   const on = S.mode === 'taf' && !!S.laps && S.laps.taf && !!S.tl;
   $('#weekCard').hidden = !on; if (!on) return;
   const opt = readOpt(), sel = opt.date;
-  $('#weekGoH').textContent = opt.time; $('#weekBackH').textContent = opt.tafBack;
+  $('#weekHint').textContent = `Les 5 prochains jours ouvrés, ${opt.tafPerDay ? 'avec les heures de chaque jour' : 'aux mêmes heures'}. Clique sur un jour pour le détail.`;
+  $('#weekGoH').textContent = opt.tafPerDay ? '' : opt.time; $('#weekBackH').textContent = opt.tafPerDay ? '' : opt.tafBack;
   const fmtD = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
   const cell = d => {
     if (!d || !d.wx) return `<div class="wk">${vdot({ lvl: -1 })}<div class="t"><span>pas encore de prévision</span></div></div>`;
     const v = tripVerdict(d.wx), w = d.wxMid;
     return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${n0(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + n0(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? n1(d.wx.rain) + ' mm' : 'sec'} · ${d.wx.headAvg >= 4 ? 'face ' + n0(d.wx.headAvg) : d.wx.headAvg <= -4 ? 'dos ' + n0(-d.wx.headAvg) : 'vent faible'}${Math.abs(d.wx.headAvg) >= 4 ? ' km/h' : ''}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
   };
-  $('#weekRows').innerHTML = TAF.week.map(x => `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${opt.time}">${cell(x.trips[0])}</td><td data-l="Retour ${opt.tafBack}">${cell(x.trips[1])}</td></tr>`).join('');
+  $('#weekRows').innerHTML = TAF.week.map(x => `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${x.go}">${opt.tafPerDay ? `<span class="wk-h">${x.go}</span>` : ''}${cell(x.trips[0])}</td><td data-l="Retour ${x.back}">${opt.tafPerDay ? `<span class="wk-h">${x.back}</span>` : ''}${cell(x.trips[1])}</td></tr>`).join('');
 }
 $('#weekRows').addEventListener('click', e => { const tr = e.target.closest('tr[data-date]'); if (!tr) return; $('#date').value = tr.dataset.date; schedule(); });
 $('#tripSeg').addEventListener('click', e => {
@@ -3349,7 +3395,7 @@ function renderLaps() {
       <tr class="plan-wx"><td colspan="8"><canvas data-wx="${k}" aria-label="Météo du trajet ${S.laps.names[k].toLowerCase()}"></canvas></td></tr>`).join('');
     LAPS.days = laps; drawPlanWx();
     $('#lapFoot').innerHTML = '';
-    $('#lapCardHint').textContent = `Retour à ${opt.tafBack}, ${TAF.ret ? 'par un autre parcours' : 'même trace dans l\'autre sens'}.`;
+    $('#lapCardHint').textContent = `Retour à ${tafOpt(opt, opt.date).tafBack}, ${TAF.ret ? 'par un autre parcours' : 'même trace dans l\'autre sens'}.`;
     return;
   }
   $('#lapRows').innerHTML = laps.map((d, k) => `<tr><td><b>Tour ${k + 1}</b></td><td>${whenTxt(d.a.t, t0)}</td><td>${whenTxt(d.b.t, t0)}</td>
