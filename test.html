@@ -368,6 +368,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .week-table tbody tr.wkend td{background:color-mix(in srgb,var(--sun) 9%,transparent)}
 .week-table td.wkend-msg{font-size:14px}
 .week-table td.wkend-msg a{font-weight:600;color:var(--accent)}
+.week-table td.wkend-msg .wkend-2{display:inline-block;margin-top:4px;font-size:13px;color:var(--muted)}
 .wk-h{display:block;font-size:11px;font-weight:600;color:var(--muted);font-family:var(--f-mono);margin-bottom:2px}
 @media (max-width:640px){.wk-h{display:none}}
 .week-table tbody tr:hover td{background:var(--bg)}
@@ -3423,7 +3424,8 @@ function renderWeek() {
   }
   $('#weekRows').innerHTML = rows.map(x => x.wkend
     ? `<tr class="wkend"><td><b>${x.wkend.length > 1 ? 'Week-end' : fmtD.format(new Date(x.wkend[0].date + 'T12:00'))}</b>${x.wkend.length > 1 ? `<br><span class="hint">${x.wkend.map(w => fmtW.format(new Date(w.date + 'T12:00'))).join(' et ')}</span>` : ''}</td>
-      <td colspan="2" class="wkend-msg">Une sortie entre ami·es ? Planifie-la avec nous → <a href="#" data-ride="${x.wkend[0].date}">onglet Sortie</a></td></tr>`
+      <td colspan="2" class="wkend-msg">Une sortie entre ami·es ? Planifie-la avec nous → <a href="#" data-ride="${x.wkend[0].date}">onglet Sortie</a>
+      <br><span class="wkend-2">Bientôt les vacances ? Une envie d'ultra ? Trouve ton ultra sur <a href="https://ultraride.eu" target="_blank" rel="noopener">ultraride.eu</a> et planifie-le ici → <a href="#ultra">onglet Ultra</a></span></td></tr>`
     : `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${x.arr ? 'départ ' + x.go : x.go}">${opt.tafPerDay || x.arr ? `<span class="wk-h">${x.arr ? `départ ${x.go} → ${x.arr}` : x.go}</span>` : ''}${cell(x.trips[0])}</td><td data-l="Retour ${x.back}">${opt.tafPerDay ? `<span class="wk-h">${x.back}</span>` : ''}${cell(x.trips[1])}</td></tr>`).join('');
 }
 // lien du week-end : page Sortie, au jour du week-end (lu par initInputs)
