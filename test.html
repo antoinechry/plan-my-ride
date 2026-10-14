@@ -1824,6 +1824,7 @@ function renderWindArrows() {
   windLayer = drawArrowsOn(map, S.P ? tripRange() : null, 0);
 }
 // flèches de vent sur la carte m, pour les points rg = [i0, i1] (km affichés depuis kOff) ; renvoie le calque
+const TAF_FEW_KM = 30; // Vélotaf : en dessous, pastilles météo au départ, au milieu et à l'arrivée seulement
 function drawArrowsOn(m, rg, kOff, noArrows) {
   const layer = L.layerGroup().addTo(m), map = m, windLayer = layer;
   const showA = !noArrows && $('#arrowsOn').checked, showS = noArrows || $('#skyOn').checked;
@@ -1832,12 +1833,22 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
   // Entre deux points météo, la flèche prend le point le plus proche à l'heure de passage à cet endroit.
   const P = S.P, view = map.getBounds().pad(0.2), shown = [], box = badgeBox(showA, showS);
   let run = ARROW_GAP / 2, prev = null;
+  // Vélotaf : trajet de moins de TAF_FEW_KM km → trois pastilles seulement (départ, milieu, arrivée), quel que soit le zoom
+  let few = null;
+  if (noArrows && P.d[rg[1]] - P.d[rg[0]] < TAF_FEW_KM) {
+    const dMid = (P.d[rg[0]] + P.d[rg[1]]) / 2; let mid = rg[0];
+    while (mid < rg[1] && P.d[mid] < dMid) mid++;
+    few = new Set([rg[0], mid, rg[1]]);
+  }
   for (let i = rg[0]; i <= rg[1]; i++) {
     const p = P.pts[i], px = map.latLngToLayerPoint([p.lat, p.lon]);
-    if (prev) run += px.distanceTo(prev);
-    prev = px;
-    if (run < ARROW_GAP || !view.contains([p.lat, p.lon])) continue;
-    if (shown.some(q => badgeHit([px.x, px.y], [q.x, q.y], box))) continue; // pastilles qui se chevaucheraient
+    if (few) { if (!few.has(i)) continue; }
+    else {
+      if (prev) run += px.distanceTo(prev);
+      prev = px;
+      if (run < ARROW_GAP || !view.contains([p.lat, p.lon])) continue;
+      if (shown.some(q => badgeHit([px.x, px.y], [q.x, q.y], box))) continue; // pastilles qui se chevaucheraient
+    }
     const t = S.tl.times[i], w = wxAt(sIdx(P.d[i]), t);
     if (!w) continue;
     run = 0; shown.push(px);
