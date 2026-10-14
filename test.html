@@ -150,9 +150,6 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .verdict b{font-weight:700}
 .test-band{background:#fff3c4;color:#5a4300;border-bottom:1px solid #e9d27a;padding:8px 16px;font-size:14px;text-align:center}
 .test-band a{color:#1f4f8f;margin-left:6px}
-.stat.wind{flex-direction:row;align-items:center;gap:12px;grid-column:span 2}
-.stat.wind canvas{flex:none}
-.stat.wind .wtxt{display:flex;flex-direction:column;gap:2px;min-width:0}
 .lib-search{position:relative;min-width:0}
 .lib-acts{display:flex;gap:14px;margin-top:4px}
 .lib-acts .linkbtn.danger{color:var(--head);font-weight:600}
@@ -169,7 +166,6 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .lib-list li.imp{color:var(--accent);border-top:1px solid var(--line);border-radius:0 0 6px 6px;margin-top:2px}
 .lib-rename{display:flex;gap:6px;margin-top:6px}
 .lib-rename input{flex:1;min-width:0}
-.plan-rose{display:block;margin-top:4px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .stat{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .stat .v{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -586,7 +582,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         <span><i style="background:var(--head)"></i>Vent de face (barre vers le haut, km/h)</span>
         <span><i style="background:var(--tail)"></i>Vent de dos (barre vers le bas)</span>
         <span><i style="background:var(--cross)"></i>Travers ou &lt; 4 km/h</span>
-        <span><i style="background:conic-gradient(from -30deg,#c8231a 0 60deg,transparent 60deg);border-radius:50%;box-shadow:0 0 0 1px var(--muted);width:12px;height:12px"></i>Boussoles : côté d'où vient le vent (en haut = de face), couleur = force</span>
         <span id="ccKey"><i style="background:linear-gradient(90deg,rgba(96,108,121,.1),rgba(96,108,121,.75))"></i>Nuages : strate grise en haut (plus foncée = plus couvert)</span>
         <span><i style="background:var(--night);border:1px solid var(--line)"></i>Nuit</span>
       </div>
@@ -1253,11 +1248,7 @@ function renderSummary(opt) {
     tiles.push(['Vent', `${pct(st.headKm)} <small>% de face</small>`, `${pct(st.tailKm)} % de dos` + (st.hasGust ? ` · rafales ${n0(st.gust)} km/h` : '')]);
     tiles.push(['Soleil', `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? `${durTxt(st.nightH)} de nuit` : 'du temps en selle ensoleillé']);
   }
-  const rs = has ? windRoseStats(tl.start, tl.end) : null;
-  $('#stats').innerHTML = tiles.map(([l, v, s]) => l === 'Vent' && rs
-    ? `<div class="stat wind" title="Rose du vent ressenti : le cycliste regarde vers le haut ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> face ou 3/4 face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> travers · <b>${Math.round(rs.tail * 100)} %</b> dos ou 3/4 dos</span><span class="s">${rs.calm > 0.02 ? `${Math.round(rs.calm * 100)} % calme` : ''}${st.hasGust ? `${rs.calm > 0.02 ? ' · ' : ''}rafales ${n0(st.gust)} km/h` : ''}</span></div></div>`
-    : `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
-  if (rs) roseCanvas($('#roseAll'), rs, 84, true);
+  $('#stats').innerHTML = tiles.map(([l, v, s]) => `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
 
   let txt;
   const dep = `Départ ${dayFmt.format(new Date(tl.start))} à ${hm.format(new Date(tl.start))}`;
@@ -1733,7 +1724,10 @@ function renderChart() {
       const w = wxAt(sIdx(P.d[qi]), q); if (!w) continue;
       drawSky(c, w, x - SKY / 2, pad.t - ARW - SKY - 5, SKY); lastQ = x;
       // flèche du vent dessous : sens où va le vent, couleur selon la force
-      windDial(c, x, pad.t - ARW / 2 - 3, ARW / 2, relDeg(w, qi), w.ws); // vent relatif : en haut = de face
+      const k = ARW / 24, ay = pad.t - ARW / 2 - 3;
+      c.save(); c.translate(x, ay); c.rotate(((w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
+      const ap = new Path2D(WARROW); c.fillStyle = windStrength(w.ws)[1]; c.fill(ap);
+      c.lineWidth = 1.3; c.strokeStyle = '#0b1218'; c.lineJoin = 'round'; c.stroke(ap); c.restore();
     }
   }
   const ck = $('#ccKey'); if (ck) ck.hidden = !hasCc;
@@ -2593,56 +2587,6 @@ function sunRiseSet(ms, lat, lon) {
   const toMs = j => (j + 0.5 - J1970) * dayMs;
   return { rise: toMs(Jrise), set: toMs(Jset) };
 }
-/* Vent relatif au cycliste. relDeg = d'où vient le vent par rapport au sens de marche (0 = de face, 90 = de la
-   droite, 180 = de dos). windDial : petite boussole d'une heure (quartier coloré du côté d'où vient le vent,
-   couleur = force) ; windRoseStats / drawWindRose : rose sur une période (8 secteurs, longueur = part du temps,
-   couleur = force, calme < 4 km/h à part). */
-const relDeg = (w, i) => ((w.wd - S.P.b[i]) % 360 + 360) % 360;
-function windDial(c, cx, cy, R, rel, ws) {
-  c.save(); c.lineWidth = 1; c.strokeStyle = cssVar('--muted'); c.globalAlpha = .55; c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.stroke(); c.globalAlpha = 1;
-  if (ws >= 4) {
-    const a = (rel - 90) * RAD; c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, R, a - 0.5, a + 0.5); c.closePath();
-    c.fillStyle = windStrength(ws)[1]; c.fill(); c.lineWidth = .8; c.strokeStyle = '#0b1218'; c.stroke();
-  }
-  c.fillStyle = cssVar('--ink'); const s = R * 0.42; c.beginPath(); c.moveTo(cx, cy - s); c.lineTo(cx + s * .7, cy + s * .8); c.lineTo(cx, cy + s * .45); c.lineTo(cx - s * .7, cy + s * .8); c.closePath(); c.fill();
-  c.restore();
-}
-function windRoseStats(ta, tb) {
-  const P = S.P, tl = S.tl, sec = Array.from({ length: 8 }, () => new Float64Array(WIND_SCALE.length)); let calm = 0, tot = 0;
-  if (!S.wx) return null;
-  const step = Math.max(1, Math.floor(P.n / 1500));
-  for (let i = step; i < P.n; i += step) {
-    const t1 = tl.times[i], t0 = tl.times[i - step]; if (t1 <= ta || t0 >= tb) continue;
-    const dt = Math.min(t1, tb) - Math.max(t0, ta); if (dt <= 0 || dt > 2 * 3600e3) continue; // pas les nuits
-    const w = wxAt(sIdx(P.d[i]), t1); if (!w) continue;
-    tot += dt; if (w.ws < 4) { calm += dt; continue; }
-    const k = Math.round(relDeg(w, i) / 45) % 8, f = WIND_SCALE.findLastIndex ? WIND_SCALE.findLastIndex(s => w.ws >= s[0]) : WIND_SCALE.reduce((a, s, j) => w.ws >= s[0] ? j : a, 0);
-    sec[k][f] += dt;
-  }
-  if (!tot) return null;
-  const share = ks => ks.reduce((s, k) => s + sec[k].reduce((a, b) => a + b, 0), 0) / tot;
-  return { sec, tot, calm: calm / tot, face: share([0, 1, 7]), cross: share([2, 6]), tail: share([3, 4, 5]) };
-}
-function drawWindRose(c, cx, cy, R, rs, labels) {
-  c.save(); c.strokeStyle = cssVar('--line'); c.lineWidth = 1;
-  for (const f of [.5, 1]) { c.beginPath(); c.arc(cx, cy, R * f, 0, Math.PI * 2); c.stroke(); }
-  if (rs) {
-    const tots = rs.sec.map(a => a.reduce((x, y) => x + y, 0)), mx = Math.max(...tots, 1e-9);
-    rs.sec.forEach((cls, k) => {
-      const a0 = (k * 45 - 90 - 19) * RAD, a1 = (k * 45 - 90 + 19) * RAD; let r0 = R * 0.16;
-      cls.forEach((v, f) => { if (!v) return; const r1 = r0 + v / mx * R * 0.84; c.beginPath(); c.arc(cx, cy, r1, a0, a1); c.arc(cx, cy, r0, a1, a0, true); c.closePath(); c.fillStyle = WIND_SCALE[f][1]; c.fill(); r0 = r1; });
-    });
-  }
-  c.fillStyle = cssVar('--ink'); const s = Math.max(4, R * 0.16); c.beginPath(); c.moveTo(cx, cy - s); c.lineTo(cx + s * .7, cy + s * .8); c.lineTo(cx, cy + s * .45); c.lineTo(cx - s * .7, cy + s * .8); c.closePath(); c.fill();
-  if (labels) { c.fillStyle = cssVar('--muted'); c.font = `600 9px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText('face', cx, cy - R - 7); c.fillText('dos', cx, cy + R + 7); }
-  c.restore();
-}
-function roseCanvas(cv, rs, size, labels) {
-  const dpr = window.devicePixelRatio || 1; cv.width = size * dpr; cv.height = size * dpr; cv.style.width = cv.style.height = size + 'px';
-  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, size, size);
-  drawWindRose(c, size / 2, size / 2, size / 2 - (labels ? 14 : 2), rs, labels);
-}
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
 function drawSunEvent(c, x, y, s, dir) {
   c.save(); c.translate(x, y); c.lineCap = 'round';
@@ -2718,7 +2662,8 @@ function drawDayWx(cv, cur) {
     let last = -99;
     for (const x of hours) { if (!x.w) continue; const cx = X(x.tm); if (cx - last < 22) continue; last = cx;
       drawSky(c, x.w, cx - 8, 2, 16);
-      windDial(c, cx, 30, 8, relDeg(x.w, idxAtKm(x.km)), x.w.ws); }
+      const k = 13 / 24; c.save(); c.translate(cx, 29); c.rotate(((x.w.wd + 180) % 360) * RAD); c.scale(k, k); c.translate(-12, -12);
+      const ap = new Path2D(WARROW); c.fillStyle = windStrength(x.w.ws)[1]; c.fill(ap); c.lineWidth = 1.4; c.strokeStyle = '#0b1218'; c.lineJoin = 'round'; c.stroke(ap); c.restore(); }
     // heures en bas
     c.fillStyle = muted; c.font = `10px ${mono}, monospace`; c.textAlign = 'center'; c.textBaseline = 'top';
     const step = pw / Math.max(1, span / 3600e3) < 34 ? 2 : 1; let lastH = -99;
@@ -2813,7 +2758,7 @@ function renderPlan() {
     const isLate = d.night && d.night.late; if (isLate) late++;
     // fin : modifiable (sauf le dernier jour) ; sans heure choisie, l'heure calculée au km de coupe
     const endTxt = (custom && d.night ? `<input type="time" step="900" data-end="${k}" value="${PLAN.ends[k] || hm.format(new Date(d.b.t))}" class="${PLAN.ends[k] ? 'set' : ''}" aria-label="Heure de fin du jour ${k + 1}">` : whenTxt(d.b.t, d.a.t)) + (isLate ? ' <span class="late" title="L\'étape finit après l\'heure de départ prévue le lendemain : pas de nuit">⚠</span>' : '');
-    return `<tr><td>Jour ${k + 1}<br><span class="hint">${dayFmt.format(new Date(d.a.t))}</span><canvas class="plan-rose" data-rose="${k}" title="Vent ressenti du jour : en haut = de face, longueur = part du temps, couleur = force"></canvas></td><td>${startCell}</td><td>${endTxt}</td>
+    return `<tr><td>Jour ${k + 1}<br><span class="hint">${dayFmt.format(new Date(d.a.t))}</span></td><td>${startCell}</td><td>${endTxt}</td>
       <td class="num">${n0(d.dist)} km<br><span class="hint">km ${n0(d.a.km)} → ${n0(d.b.km)}</span></td><td class="num">${n0(d.dplus)} m</td>
       <td class="num">${durShort(d.rideH)}</td><td class="num">${durShort(d.pauseH)}</td>
       <td class="num">${d.night ? (d.night.to > d.night.from ? durShort((d.night.to - d.night.from) / 3600e3) + `<br><span class="hint">→ ${hm.format(new Date(d.night.to))}</span>` : '0 h 00') : '<span class="hint">arrivée</span>'}</td></tr>
@@ -2821,7 +2766,6 @@ function renderPlan() {
   });
   $('#planRows').innerHTML = rows.join('');
   PLAN.days = days; drawPlanWx();
-  for (const cv of document.querySelectorAll('#planRows canvas[data-rose]')) { const d = days[+cv.dataset.rose]; roseCanvas(cv, d ? windRoseStats(d.a.t, d.b.t) : null, 46, false); }
   const sum = f => days.reduce((s, d) => s + f(d), 0);
   $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n0(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td><td class="num">${durShort(sum(d => d.night ? (d.night.to - d.night.from) / 3600e3 : 0))}</td></tr>` : '';
   $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? 'Étapes de même temps de pédalage.' : 'Étapes de même distance.') : 'D\'une traite.';
