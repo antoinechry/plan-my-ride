@@ -86,6 +86,9 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Choix du parcours : champ de recherche avec suggestions (`#libQ`, liste `#libList`, `libSuggest` / `libPick` ; nom, km, D+, dernière ouverture ; filtrage sans accents, clavier ↑ ↓ Entrée Échap ; « ＋ Importer un GPX… » en bas) et liens « Renommer » / « Supprimer » (`#libRen`, `#libDel`, `libRename` : navigateur + compte). Depuis le 14/10/2026, remplace la liste déroulante `#libSel`.
 - supabase-js n'est chargé au démarrage que si un jeton de session existe (`sb-rynbzhuxwvfvblgwnhkk-auth-token`).
 
+## Lune
+- Depuis le 14/10/2026 (page de test) : dans chaque partie de nuit des graphes (profil de la page Sortie `renderChart`, graphes du jour Ultra et des trajets Vélotaf `drawDayWx`), une lune avec sa phase et le pourcentage éclairé (« 95 % » si la place le permet). `moonPhase(ms)` (nouvelle lune de référence 6/1/2000 18:14 UTC, mois synodique), `moonLit`, `drawMoon` (partie éclairée à droite quand elle croît, hémisphère nord), `drawMoons(c, segs, y, mono)` ; segments de nuit `moonSegs` construits avec le fond de nuit. Pas de couleur de nuit modifiée (essai montré puis écarté).
+
 ## Ciel dans la feuille de route
 - `wxAt` prend le code météo de la même heure que la pluie (l'heure qui se termine) ; un code pluie / bruine / neige / averses avec moins de 0,1 mm sur l'heure est remplacé par la couverture nuageuse.
 

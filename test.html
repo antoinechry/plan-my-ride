@@ -2253,7 +2253,12 @@ function renderChart() {
   }
   // nuit
   c.fillStyle = cssVar('--night');
-  for (let b = 0; b < nb; b++) if (bins[b].w && !bins[b].w.day) c.fillRect(X(bins[b].km), pad.t, X(bins[b + 1].km) - X(bins[b].km) + .5, ph);
+  const moonSegs = [];
+  for (let b = 0; b < nb; b++) if (bins[b].w && !bins[b].w.day) {
+    c.fillRect(X(bins[b].km), pad.t, X(bins[b + 1].km) - X(bins[b].km) + .5, ph);
+    const g = moonSegs[moonSegs.length - 1];
+    if (g && g.b === b - 1) { g.x1 = X(bins[b + 1].km); g.b = b; } else moonSegs.push({ x0: X(bins[b].km), x1: X(bins[b + 1].km), t: bins[b].t, b });
+  }
   // altitude
   const eMin = P.hasEle ? Math.floor((P.emin - 20) / 50) * 50 : 0, eMax = P.hasEle ? Math.ceil((P.emax + 20) / 50) * 50 : 100;
   const Ye = e => pad.t + ph - (e - eMin) / (eMax - eMin || 1) * ph;
@@ -2376,6 +2381,7 @@ function renderChart() {
     }
   }
   const ck = $('#ccKey'); if (ck) ck.hidden = !hasCc;
+  drawMoons(c, moonSegs, pad.t + 14, cssVar('--f-mono').split(',')[0]); // lune et sa phase dans les parties de nuit
   chartGeom = { wy0, X, pad, pw, ph, bins, nb, Ye, W, H };
 }
 function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw || 1)), f = raw / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; }
@@ -3335,6 +3341,28 @@ function roseCanvas(cv, rs, w, hh) {
   drawWindRose(c, w / 2, hh / 2, hh / 2 - 2, rs, true);
 }
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
+/* Lune : phase (0 = nouvelle, 0,5 = pleine) d'après une nouvelle lune de référence et le mois synodique,
+   pictogramme avec la partie éclairée (côté droit quand elle croît, vu de l'hémisphère nord) et pourcentage éclairé.
+   Dessinée dans les parties de nuit des graphes (profil de la page Sortie, graphes du jour en Ultra et en Vélotaf). */
+const moonPhase = ms => { const SYN = 29.530588853, d = (ms - Date.UTC(2000, 0, 6, 18, 14)) / 864e5; return ((d % SYN) + SYN) % SYN / SYN; };
+const moonLit = p => (1 - Math.cos(2 * Math.PI * p)) / 2;
+function drawMoon(c, x, y, r, p) {
+  const k = Math.cos(2 * Math.PI * p), wax = p < 0.5;
+  c.save(); c.translate(x, y); if (!wax) c.scale(-1, 1);
+  c.beginPath(); c.arc(0, 0, r, 0, 2 * Math.PI); c.fillStyle = '#3a4560'; c.fill();
+  c.beginPath(); c.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false); c.ellipse(0, 0, Math.max(0.01, r * Math.abs(k)), r, 0, Math.PI / 2, -Math.PI / 2, k > 0);
+  c.closePath(); c.fillStyle = '#f1ead2'; c.fill();
+  c.beginPath(); c.arc(0, 0, r, 0, 2 * Math.PI); c.strokeStyle = '#c9c2a8'; c.lineWidth = .8; c.stroke();
+  c.restore();
+}
+// segs : parties de nuit [{ x0, x1, t }] → une lune au début de chacune (assez large), avec « 95 % » quand il y a la place
+function drawMoons(c, segs, y, mono) {
+  for (const g of segs) {
+    if (g.x1 - g.x0 < 26) continue;
+    const p = moonPhase(g.t), x = g.x0 + 12; drawMoon(c, x, y, 7, p);
+    if (g.x1 - g.x0 >= 70) { c.font = `600 10.5px ${mono}, monospace`; c.fillStyle = '#9fb0d6'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(`${Math.round(moonLit(p) * 100)} %`, x + 11, y); }
+  }
+}
 function drawSunEvent(c, x, y, s, dir) {
   c.save(); c.translate(x, y); c.lineCap = 'round';
   c.strokeStyle = '#e3a00f'; c.lineWidth = 1.4;
@@ -3370,7 +3398,12 @@ function drawDayWx(cv, cur) {
     c.strokeStyle = cssVar('--line'); c.lineWidth = 1; c.beginPath(); c.moveTo(l, yT1 + .5); c.lineTo(l + pw, yT1 + .5); c.stroke();
     // nuit (fond)
     c.fillStyle = cssVar('--night');
-    for (let i = 0; i < pts.length - 1; i++) if (!pts[i].w.day) c.fillRect(X(pts[i].t), yT0 - 4, X(pts[i + 1].t) - X(pts[i].t) + .5, yT1 - yT0 + 4);
+    const moonSegs = [];
+    for (let i = 0; i < pts.length - 1; i++) if (!pts[i].w.day) {
+      c.fillRect(X(pts[i].t), yT0 - 4, X(pts[i + 1].t) - X(pts[i].t) + .5, yT1 - yT0 + 4);
+      const g = moonSegs[moonSegs.length - 1];
+      if (g && g.i === i - 1) { g.x1 = X(pts[i + 1].t); g.i = i; } else moonSegs.push({ x0: X(pts[i].t), x1: X(pts[i + 1].t), t: pts[i].t, i });
+    }
     // relief de la journée (aire en fond, échelle propre, altitudes mini / maxi à droite)
     const eAt = t => S.P.es[idxAtKm(kmAtT(t))], ep = [];
     for (let i = 0; i <= 160; i++) { const t = ta + span * i / 160; ep.push([X(t), eAt(t)]); }
@@ -3447,6 +3480,7 @@ function drawDayWx(cv, cur) {
       const near = sunNear.map(([te, dir]) => [te, dir, te < ta ? ta - te : te - tb]).filter(e => e[2] <= 4 * 3600e3).sort((a, b) => a[2] - b[2])[0];
       if (near) sunDraw(near[0] < ta ? l + 10 : l + pw - 10, near[0], near[1], near[1] > 0 ? 'lever ' : 'coucher ');
     }
+    drawMoons(c, moonSegs, yT0 + 10, mono); // lune et sa phase dans les parties de nuit
     // villes et bourgs traversés ce jour-là, à l'heure de passage (les plus grands d'abord, sans chevauchement)
     if (PLACES.list.length && !isLap) {
       const inDay = attachToRoute(PLACES.list).filter(p => p.km >= d.a.km - 0.5 && p.km <= d.b.km + 0.5 && (p.place !== 'village' || p.off <= 1200))
