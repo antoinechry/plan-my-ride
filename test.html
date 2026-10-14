@@ -321,6 +321,8 @@ dialog.help li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px}
 dialog.help li>i{font-style:normal;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center}
 dialog.help li b{display:block;margin-bottom:2px}
 dialog.help li span{color:var(--muted)}
+dialog.help .help-tabs{grid-template-columns:repeat(3,1fr);margin:0 0 14px}
+dialog.help ol[hidden]{display:none}
 dialog.help .note{margin:14px 0 4px;padding:10px 12px;border-radius:8px;background:var(--bg,rgba(127,127,127,.08));border:1px solid var(--line);font-size:13px;color:var(--muted)}
 dialog.help .ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px 18px;flex-wrap:wrap}
 dialog.help .ft label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
@@ -786,13 +788,27 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 <dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
   <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
   <div class="bd">
-    <p>Plan My Ride estime votre heure de passage à chaque point d'un parcours et vous donne la météo prévue à cet endroit, à ce moment-là.</p>
-    <ol>
-      <li><i>1</i><div><b>Importez une trace GPX</b><span>Bouton « Importer un GPX » ou glisser-déposer. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Vos parcours restent dans votre navigateur et se retrouvent dans « Mes parcours ».</span></div></li>
-      <li><i>2</i><div><b>Choisissez le départ et votre allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts. Cochez « Effet du vent » pour que le vent ralentisse ou accélère la sortie.</span></div></li>
-      <li><i>3</i><div><b>Lisez la météo le long du parcours</b><span>Carte colorée (vent, température, pluie, soleil) avec flèches de vent, profil interactif, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
+    <p>Plan My Ride estime votre heure de passage à chaque point d'un parcours et vous donne la météo prévue à cet endroit, à ce moment-là. Trois pages, selon votre envie :</p>
+    <div class="seg2 help-tabs" role="tablist" aria-label="Pages">
+      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Vélotaf</button>
+    </div>
+    <ol data-h="ride">
+      <li><i>1</i><div><b>Importez une trace GPX</b><span>Bouton « Importer un GPX » en haut à gauche ou glisser-déposer. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Vos parcours restent dans votre navigateur et se retrouvent dans « Mes parcours ». « ⇄ Inverser le sens » pour rouler la trace à l'envers.</span></div></li>
+      <li><i>2</i><div><b>Choisissez le départ et votre allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts. Cochez « Effet du vent » pour que le vent ralentisse ou accélère la sortie. Une boucle ? Indiquez le nombre de tours.</span></div></li>
+      <li><i>3</i><div><b>Lisez la météo le long du parcours</b><span>Carte colorée (vent, température, pluie, soleil) avec flèches de vent et vent animé, profil interactif, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
       <li><i>4</i><div><b>Gardez la feuille de route</b><span>Horaires et météo point par point, en CSV, et « Exporter l'image » pour partager carte, vent et profil.</span></div></li>
-      <li><i>5</i><div><b>Plusieurs jours ? Page Ultra</b><span>Onglet « Ultra » : planification en N jours (même distance ou adaptée au terrain, fin de journée estimée), et épiceries, boulangeries, restos, points d'eau, hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
+    </ol>
+    <ol data-h="ultra" hidden>
+      <li><i>1</i><div><b>Importez la trace de votre ultra ou de votre voyage</b><span>Même import que pour une sortie ; la trace peut faire des centaines de kilomètres.</span></div></li>
+      <li><i>2</i><div><b>Planifiez jour par jour</b><span>Nombre de jours, date et heure de départ, découpage « Même distance » ou « Adapté au terrain » (même temps de pédalage chaque jour). Vous pouvez fixer une heure de départ et de fin différente chaque jour.</span></div></li>
+      <li><i>3</i><div><b>Voyez chaque journée</b><span>Départ, fin estimée, km, D+, pédalage, pauses et nuit, avec sous chaque jour la météo heure par heure, le relief, le lever et le coucher du soleil et les villes traversées.</span></div></li>
+      <li><i>4</i><div><b>Trouvez vos ravitos</b><span>Épiceries, boulangeries, restos, points d'eau et hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
+    </ol>
+    <ol data-h="taf" hidden>
+      <li><i>1</i><div><b>Importez votre trajet maison → travail</b><span>Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours (« Trace du retour »).</span></div></li>
+      <li><i>2</i><div><b>Réglez vos horaires</b><span>Heure de départ, ou heure d'arrivée au travail avec une marge : on vous donne alors l'heure de départ conseillée. Heure du retour, et des horaires différents selon le jour si besoin. Vitesse moyenne seulement.</span></div></li>
+      <li><i>3</i><div><b>Aller et retour en un coup d'œil</b><span>Pour chaque trajet : carte, pastille verte, orange ou rouge (pluie, vent de face, froid, nuit), températures et vent ressenti.</span></div></li>
+      <li><i>4</i><div><b>Anticipez deux semaines</b><span>Les jours ouvrés des deux prochaines semaines aux mêmes horaires ; cliquez un jour pour le voir en détail. L'heure de départ est une estimation : prévoyez une marge selon la circulation et la météo.</span></div></li>
     </ol>
     <p class="note">Météo au choix (« Source météo ») : AROME de Météo-France par défaut, très fin sur la France (4 jours), MET Norway (9 jours) ou Open-Meteo (16 jours) ; au-delà, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
@@ -3898,7 +3914,13 @@ $('#statsX').addEventListener('click', () => $('#statsDlg').close());
 
 // Mode d'emploi : bouton « ? » ; ouvert tout seul à l'arrivée d'un visiteur (mode public) tant qu'il n'a pas coché « Ne plus afficher ».
 const HELP_KEY = 'pmr-help-seen';
-function openHelp() { try { $('#helpNoMore').checked = !!localStorage.getItem(HELP_KEY); } catch (e) {} $('#helpDlg').showModal(); }
+// Mode d'emploi : un onglet par page (Sortie, Ultra, Vélotaf), ouvert sur la page en cours
+function helpTab(m) {
+  document.querySelectorAll('#helpDlg .help-tabs button').forEach(b => { const on = b.dataset.h === m; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-selected', String(on)); });
+  document.querySelectorAll('#helpDlg ol[data-h]').forEach(o => { o.hidden = o.dataset.h !== m; });
+}
+document.querySelectorAll('#helpDlg .help-tabs button').forEach(b => b.addEventListener('click', () => helpTab(b.dataset.h)));
+function openHelp() { try { $('#helpNoMore').checked = !!localStorage.getItem(HELP_KEY); } catch (e) {} helpTab(S.mode === 'ultra' || S.mode === 'taf' ? S.mode : 'ride'); $('#helpDlg').showModal(); }
 function closeHelp() { try { if ($('#helpNoMore').checked) localStorage.setItem(HELP_KEY, '1'); else localStorage.removeItem(HELP_KEY); } catch (e) {} $('#helpDlg').close(); }
 $('#helpBtn').addEventListener('click', openHelp);
 $('#helpX').addEventListener('click', closeHelp);
