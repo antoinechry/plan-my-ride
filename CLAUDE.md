@@ -8,6 +8,11 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Interface en français.
 - Leaflet 1.9.4 via cdnjs. Fonds sans clé uniquement (CARTO exige désormais une clé) : OSM standard (seulement servi en http(s), il exige un Referer), CyclOSM, OpenTopoMap, Esri Topo/Satellite. En `file://`, le fond par défaut est Esri Topo.
 
+## Page de test (`test.html`, depuis le 14/10/2026)
+- Les nouveautés se font d'abord dans `test.html` (https://antoinechry.github.io/plan-my-ride/test.html), copie de `index.html` : même code, même origine (mêmes parcours, réglages et caches du navigateur, même compte). `IS_TEST` (chemin en `test.html`) : bandeau jaune `#testBand` « Version test » avec lien vers la version normale, titre préfixé 🧪, `noindex`, pas de mesure d'audience (`track` ne fait rien).
+- Mise en ligne quand l'utilisateur valide : `cp test.html index.html` (le même fichier se comporte en version normale sous `index.html`). Toute correction faite directement dans `index.html` doit être reportée dans `test.html`, et inversement, tant que les deux diffèrent.
+- En essai dans `test.html` au 14/10/2026 : recherche de parcours avec suggestions + renommer (`#libQ`, `#libList`, `libSuggest`, `libPick`, `libRename`, remplace la liste déroulante `#libSel`) ; vent relatif au cycliste : boussoles horaires `windDial` (profil et graphes du jour, remplacent les flèches de vent), rose du parcours `windRoseStats` / `drawWindRose` / `roseCanvas` dans la tuile « Vent ressenti » du résumé et mini-rose par jour dans la planification (`canvas[data-rose]`).
+
 ## Architecture du script (dans `index.html`)
 - `parseGPX` → `prepare` (distances cumulées, altitude lissée, D+/D− avec seuil 3 m, cap sur ~150 m)
 - `makeSamples` : jusqu'à ~60 points d'échantillonnage pour la météo
