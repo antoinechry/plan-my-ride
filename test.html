@@ -409,6 +409,17 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .flow-lbl b{font-family:var(--f-mono)}
 .map-fs .flow-bar{background:var(--panel)}
 .leaflet-flow-pane canvas{pointer-events:none}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:12px 14px 4px}
+.duo-col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.duo-head{display:flex;flex-direction:column;gap:3px}
+.duo-head .ttl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.duo-head .ttl b{font-size:18px}
+.duo-head .ttl span{font-family:var(--f-mono);font-size:14px}
+.duo-head .sub{font-size:13px;color:var(--muted)}
+.duo-map{height:340px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.duo-col canvas{display:block;cursor:crosshair;touch-action:pan-y;background:var(--bg);border-radius:8px}
+.duo-key{padding:0 14px 12px;margin:6px 0 0}
+@media (max-width:820px){.duo{grid-template-columns:1fr}.duo-map{height:300px}}
 </style>
 </head>
 <body>
@@ -672,6 +683,15 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
           <tfoot id="lapFoot"></tfoot>
         </table>
       </div>
+    </section>
+
+    <section class="card" id="tafDuo" hidden>
+      <div class="card-head"><h2>Aller et retour</h2><span class="hint" id="duoHint"></span></div>
+      <div class="duo">
+        <div class="duo-col"><div class="duo-head" id="duoHead0"></div><div class="duo-map" id="duoMap0"></div><canvas data-wx="0" aria-label="Météo de l'aller"></canvas></div>
+        <div class="duo-col"><div class="duo-head" id="duoHead1"></div><div class="duo-map" id="duoMap1"></div><canvas data-wx="1" aria-label="Météo du retour"></canvas></div>
+      </div>
+      <p class="hint duo-key">Trace colorée selon le vent ressenti (rouge = de face, vert = de dos) · flèches : sens et force du vent à ton heure de passage, ciel et température.</p>
     </section>
 
     <section class="card" id="weekCard" hidden>
@@ -1673,19 +1693,25 @@ function setMapFs(on) {
 const toggleMapFs = () => setMapFs(!$('#mapCard').classList.contains('map-fs'));
 ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { if (!fsEl()) setMapFs(false); }));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#mapCard').classList.contains('map-fs') && !document.querySelector('dialog[open]')) setMapFs(false); });
-function initMap() {
-  if (typeof L === 'undefined') { $('#map').innerHTML = '<p class="hint" style="padding:16px">La carte n\'a pas pu se charger (connexion requise).</p>'; return; }
-  map = L.map('map', { zoomControl: true, attributionControl: true });
-  // Fonds de carte sans clé d'API. OSM standard exige un Referer : il ne marche qu'une fois l'app servie en http(s).
+// fonds de carte sans clé d'API (nouvelles couches à chaque appel : une carte Leaflet par couche)
+function makeBases() {
   const osmAttr = '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
   const esriAttr = 'Tuiles © <a href="https://www.esri.com">Esri</a>';
-  const bases = {
+  return {
     'Plan (OSM)': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: osmAttr }),
     'Vélo (CyclOSM)': L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', { maxZoom: 20, subdomains: 'abc', attribution: osmAttr + ' · <a href="https://www.cyclosm.org">CyclOSM</a>' }),
     'Relief (OpenTopoMap)': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: osmAttr + ', SRTM · © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)' }),
     'Topo (Esri)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr }),
     'Satellite (Esri)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr + ', Maxar, Earthstar Geographics' })
   };
+}
+function initMap() {
+  if (typeof L === 'undefined') { $('#map').innerHTML = '<p class="hint" style="padding:16px">La carte n\'a pas pu se charger (connexion requise).</p>'; return; }
+  map = L.map('map', { zoomControl: true, attributionControl: true });
+  // Fonds de carte sans clé d'API. OSM standard exige un Referer : il ne marche qu'une fois l'app servie en http(s).
+  const osmAttr = '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  const esriAttr = 'Tuiles © <a href="https://www.esri.com">Esri</a>';
+  const bases = makeBases();
   const isLocal = location.protocol === 'file:';
   let baseName = isLocal ? 'Topo (Esri)' : 'Plan (OSM)';
   try { const saved = localStorage.getItem('pmr-base2'); if (saved && bases[saved] && !(isLocal && saved === 'Plan (OSM)')) baseName = saved; } catch (e) {}
@@ -1767,10 +1793,13 @@ const badgeHit = (a, b, box) => Math.abs(a[0] - b[0]) < box[0] && Math.abs(a[1] 
 function renderWindArrows() {
   if (!map) return;
   if (windLayer) windLayer.remove();
-  windLayer = L.layerGroup().addTo(map);
+  windLayer = drawArrowsOn(map, S.P ? tripRange() : null, 0);
+}
+// flèches de vent sur la carte m, pour les points rg = [i0, i1] (km affichés depuis kOff) ; renvoie le calque
+function drawArrowsOn(m, rg, kOff) {
+  const layer = L.layerGroup().addTo(m), map = m, windLayer = layer;
   const showA = $('#arrowsOn').checked, showS = $('#skyOn').checked;
-  const rg = S.P ? tripRange() : null;
-  if (!S.wx || !S.tl || !rg || (!showA && !showS)) return; // plusieurs tours : pas de vent sur la carte
+  if (!S.wx || !S.tl || !rg || (!showA && !showS)) return layer; // plusieurs tours : pas de vent sur la carte
   // Une flèche tous les ~40 px le long de la trace, quel que soit le zoom, et seulement dans la zone visible.
   // Entre deux points météo, la flèche prend le point le plus proche à l'heure de passage à cet endroit.
   const P = S.P, view = map.getBounds().pad(0.2), shown = [], box = badgeBox(showA, showS);
@@ -1795,9 +1824,10 @@ function renderWindArrows() {
     const html = `<div class="wa">${arrowHtml}<b class="${showA ? '' : 'solo'}">${sky}<span class="wt">${n0(w.temp)}°</span>${showA ? `<span class="ww">${n0(w.ws)}<small>km/h</small></span>` : ''}</b></div>`;
     const icon = showA ? { iconSize: [110, sz + 18], iconAnchor: [55, sz / 2] } : { iconSize: [60, 22], iconAnchor: [30, 11] };
     L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', ...icon }), keyboard: false })
-      .bindTooltip(`<b>km ${n1(P.d[i])}</b> · passage ${hm.format(new Date(t))}<br>${skyLabel(w.code, w.day)}${isFinite(w.cc) ? ` (nuages ${n0(w.cc)} %)` : ''} · ${n0(w.temp)} °C${w.pr >= 0.1 ? ` · pluie ${n1(w.pr)} mm/h` : ''}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
+      .bindTooltip(`<b>km ${n1(P.d[i] - (kOff || 0))}</b> · passage ${hm.format(new Date(t))}<br>${skyLabel(w.code, w.day)}${isFinite(w.cc) ? ` (nuages ${n0(w.cc)} %)` : ''} · ${n0(w.temp)} °C${w.pr >= 0.1 ? ` · pluie ${n1(w.pr)} mm/h` : ''}<br>Vent de ${compass(w.wd)} : ${n0(w.ws)} km/h (${lbl.toLowerCase()})${isFinite(w.gust) ? `<br>Rafales ${n0(w.gust)} km/h` : ''}<br>Pour vous : ${relLabel(head).txt}`)
       .addTo(windLayer);
   }
+  return layer;
 }
 /* ---------- vent animé (pages Sortie et Ultra) ----------
    Particules qui suivent le vent à l'heure choisie avec le curseur sous la carte (par quarts d'heure, du départ − 2 h
@@ -2467,6 +2497,9 @@ function applyModeUI() {
   for (const el of ['#vam', '#pause', '#calibOn']) $(el).closest('.field').hidden = taf;
   $('label[for="speed"]').textContent = taf ? 'Vitesse moyenne' : 'Vitesse sur le plat';
   $('#tripSeg').hidden = !taf; $('#optCard').hidden = taf; $('#flowOnLbl').hidden = taf;
+  // Vélotaf : deux colonnes au lieu de la carte unique, pas de feuille de route
+  $('#mapCard').hidden = taf; $('#roadCard').hidden = taf; if (!taf) $('#tafDuo').hidden = true;
+  if (!taf && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   $('label[for="date"]').textContent = taf ? 'Premier jour' : 'Départ'; $('label[for="time"]').textContent = taf ? 'Départ de l\'aller' : 'Heure';
   if (!taf) { $('#weekCard').hidden = true; }
   tafPerDayUI();
@@ -3226,13 +3259,13 @@ function drawSunEvent(c, x, y, s, dir) {
   c.restore();
 }
 const planKmAtT = t => { const T = S.tl.times; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return S.P.d[lo]; };
-function drawPlanWx() { for (const cv of document.querySelectorAll('#planRows canvas[data-wx], #lapRows canvas[data-wx]')) drawDayWx(cv); }
+function drawPlanWx() { for (const cv of document.querySelectorAll('#planRows canvas[data-wx], #lapRows canvas[data-wx], #tafDuo canvas[data-wx]')) drawDayWx(cv); }
 // cur : instant survolé (curseur), ou rien
 function drawDayWx(cv, cur) {
   const kmAtT = planKmAtT;
   {
-    const isLap = !!cv.closest('#lapRows'), d = (isLap ? LAPS.days : PLAN.days)[+cv.dataset.wx]; if (!d) return;
-    const W = Math.max(260, Math.max(cv.closest('.plan-scroll').clientWidth, 700) - 24), H = 150, dpr = window.devicePixelRatio || 1;
+    const isLap = !!cv.closest('#lapRows, #tafDuo'), d = (isLap ? LAPS.days : PLAN.days)[+cv.dataset.wx]; if (!d) return;
+    const sc = cv.closest('.plan-scroll'), W = sc ? Math.max(260, Math.max(sc.clientWidth, 700) - 24) : Math.max(260, cv.parentElement.clientWidth), H = 150, dpr = window.devicePixelRatio || 1;
     cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
     const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
     const ink = cssVar('--ink'), muted = cssVar('--muted'), mono = cssVar('--f-mono').split(',')[0];
@@ -3341,11 +3374,11 @@ function drawDayWx(cv, cur) {
       const x = X(cur), km = kmAtT(cur), i = idxAtKm(km), w = S.wx ? wxAt(sIdx(km), cur) : null;
       c.strokeStyle = ink; c.lineWidth = 1; c.beginPath(); c.moveTo(x + .5, 0); c.lineTo(x + .5, yT1 + 14); c.stroke();
       c.fillStyle = cssVar('--accent'); c.beginPath(); c.arc(x, Ye(S.P.es[i]), 4, 0, Math.PI * 2); c.fill();
-      const lines = [`${hm.format(new Date(cur))} · km ${n1(km)} · ${n0(S.P.es[i])} m`];
+      const lines = [`${hm.format(new Date(cur))} · km ${n1(km - (isLap && S.laps && S.laps.taf ? d.a.km : 0))} · ${n0(S.P.es[i])} m`];
       if (w) lines.push(`${skyLabel(w.code, w.day)} · ${n0(w.app)}° ressentis${w.pr >= 0.1 ? ` · ${n1(w.pr)} mm/h` : ''}`, `Vent ${compass(w.wd)} ${n0(w.ws)} km/h · ${relLabel(w.ws * Math.cos((w.wd - S.P.b[i]) * RAD)).txt}`);
       c.font = `600 11px ${mono}, monospace`;
       const bw = Math.max(...lines.map(s => c.measureText(s).width)) + 14, bh = lines.length * 15 + 8;
-      const bx = x + 10 + bw > W ? x - 10 - bw : x + 10, by = 40;
+      const bx = clamp(x + 10 + bw > W ? x - 10 - bw : x + 10, 2, Math.max(2, W - bw - 2)), by = 40;
       c.fillStyle = cssVar('--panel'); c.globalAlpha = .95; c.beginPath(); c.roundRect(bx, by, bw, bh, 6); c.fill(); c.globalAlpha = 1;
       c.strokeStyle = cssVar('--line'); c.stroke();
       c.fillStyle = ink; c.textAlign = 'left'; c.textBaseline = 'top';
@@ -3362,17 +3395,22 @@ function planWxHover(e) {
   drawDayWx(cv, t);
   if (PLAN.hoverCv && PLAN.hoverCv !== cv) drawDayWx(PLAN.hoverCv);
   PLAN.hoverCv = cv;
-  if (map && hoverMarker) { const p = S.P.pts[idxAtKm(planKmAtT(t))]; hoverMarker.setLatLng([p.lat, p.lon]); if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map); }
+  const duoK = cv.closest('#tafDuo') ? +cv.dataset.wx : -1, hm0 = duoK >= 0 ? DUO.maps[duoK] : map;
+  if (duoK >= 0 && DUO.maps[duoK] && !DUO.hov[duoK]) DUO.hov[duoK] = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
+  const mk = duoK >= 0 ? DUO.hov[duoK] : hoverMarker;
+  if (hm0 && mk) { const p = S.P.pts[idxAtKm(planKmAtT(t))]; mk.setLatLng([p.lat, p.lon]); if (!hm0.hasLayer(mk)) mk.addTo(hm0); }
 }
 function planWxLeave() {
   if (PLAN.hoverCv) drawDayWx(PLAN.hoverCv); PLAN.hoverCv = null;
   if (map && hoverMarker && map.hasLayer(hoverMarker)) hoverMarker.remove();
+  for (const mk of DUO.hov) if (mk) mk.remove();
 }
 $('#planRows').addEventListener('pointermove', planWxHover);
 $('#planRows').addEventListener('pointerdown', planWxHover);
 $('#planRows').addEventListener('pointerleave', planWxLeave);
 $('#planRows').addEventListener('pointercancel', planWxLeave);
-for (const ev of ['pointermove', 'pointerdown']) $('#lapRows').addEventListener(ev, planWxHover);
+for (const ev of ['pointermove', 'pointerdown']) { $('#lapRows').addEventListener(ev, planWxHover); $('#tafDuo').addEventListener(ev, e => { if (e.target.closest('canvas[data-wx]')) planWxHover(e); }); }
+$('#tafDuo').addEventListener('pointerleave', planWxLeave); $('#tafDuo').addEventListener('pointerout', e => { if (e.target.closest('canvas[data-wx]') && !e.relatedTarget?.closest?.('canvas[data-wx]')) planWxLeave(); });
 for (const ev of ['pointerleave', 'pointercancel']) $('#lapRows').addEventListener(ev, planWxLeave);
 function renderPlan() {
   const card = $('#planCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
@@ -3569,6 +3607,52 @@ $('#tripSeg').addEventListener('click', e => {
   if (S.tl) renderMap();
 });
 
+/* Vélotaf : deux colonnes Aller / Retour, chacune avec sa carte Leaflet (indépendantes : pas de zoom lié), sa trace
+   colorée selon la métrique, ses flèches de vent à l'heure de passage et son graphe (drawDayWx). */
+const DUO = { maps: [], routes: [], winds: [], hov: [], fit: ['', ''] };
+function duoRange(k) { return k ? [S.laps.start[1], S.P.n - 1] : [0, S.laps.start[1] - 1]; }
+function renderDuo(laps, opt) {
+  const card = $('#tafDuo'); card.hidden = false;
+  const vs = laps.map(d => tripVerdict(d.wx)), arrT = opt.tafGoMode === 'arr' ? tafOpt(opt, TAF.sel || opt.date).time : '';
+  $('#duoHint').textContent = TAF.ret ? 'Retour par un autre parcours.' : 'Retour par la même trace, dans l\'autre sens.';
+  laps.forEach((d, k) => {
+    $('#duoHead' + k).innerHTML = `<div class="ttl"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span><span class="hint">${n1(d.dist)} km · ${durShort(d.h)} · D+ ${n0(d.dplus)} m</span></div>
+      <div class="wk">${vdot(vs[k])}<div class="t">${d.wx ? `<b>${n0(d.wx.tmin)} à ${n0(d.wx.tmax)}° ressentis · ${d.wx.rain >= 0.1 ? 'pluie ' + n1(d.wx.rain) + ' mm' : 'sec'}</b>` : ''}<span class="vtxt l${Math.max(0, vs[k].lvl)}">${vs[k].txt}</span></div></div>
+      <div class="sub">${k ? `Départ du travail à ${hm.format(new Date(d.a.t))}` : (arrT ? `Pour être au travail à ${arrT}${opt.tafMargin ? ` (${opt.tafMargin} min de marge)` : ''}` : `Arrivée au travail à ${hm.format(new Date(d.b.t))}`)}${!k && d.pause != null ? (d.late ? ' · ⚠ arrivée après l\'heure du retour' : ` · ${durShort(d.pause)} au travail`) : ''}</div>`;
+  });
+  if (typeof L === 'undefined') return;
+  requestAnimationFrame(() => { for (let k = 0; k < 2; k++) duoMap(k); drawPlanWx(); });
+}
+function duoMap(k) {
+  let m = DUO.maps[k];
+  if (!m) {
+    m = DUO.maps[k] = L.map('duoMap' + k, { zoomControl: true, attributionControl: true });
+    const bases = makeBases(); let name = location.protocol === 'file:' ? 'Topo (Esri)' : 'Plan (OSM)';
+    try { const s = localStorage.getItem('pmr-base2'); if (s && bases[s] && !(location.protocol === 'file:' && s === 'Plan (OSM)')) name = s; } catch (e) {}
+    bases[name].addTo(m);
+    m.on('moveend', () => { if (DUO.winds[k]) DUO.winds[k].remove(); if (S.laps && S.laps.taf) { const rg = duoRange(k); DUO.winds[k] = drawArrowsOn(m, rg, S.P.d[rg[0]]); } });
+  }
+  m.invalidateSize();
+  const rg = duoRange(k), P = S.P;
+  if (DUO.routes[k]) DUO.routes[k].remove();
+  const lay = DUO.routes[k] = L.layerGroup().addTo(m), ll = [];
+  for (let i = rg[0]; i <= rg[1]; i++) ll.push([P.pts[i].lat, P.pts[i].lon]);
+  L.polyline(ll, { color: '#ffffff', weight: 9, opacity: .85 }).addTo(lay);
+  const s = S.samples, svs = s.map((_, j) => S.wx ? sampleValue(j) : null);
+  for (let j = 0; j < s.length - 1; j++) {
+    const a = s[j].i, b = s[j + 1].i; if (a < rg[0] || b > rg[1]) continue;
+    L.polyline(ll.slice(a - rg[0], b - rg[0] + 1), { color: metricColor(svs[j + 1] || svs[j]), weight: 5 }).addTo(lay);
+  }
+  const p0 = P.pts[rg[0]], p1 = P.pts[rg[1]];
+  L.circleMarker([p0.lat, p0.lon], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--tail'), fillOpacity: 1 }).bindTooltip(k ? 'Départ du travail' : 'Départ de la maison').addTo(lay);
+  L.circleMarker([p1.lat, p1.lon], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--head'), fillOpacity: 1 }).bindTooltip(k ? 'Arrivée à la maison' : 'Arrivée au travail').addTo(lay);
+  // cadrage sur le trajet à la première ouverture de ce parcours (ensuite on garde le zoom choisi)
+  const key = S.lapN + ':' + k;
+  if (DUO.fit[k] !== key) { DUO.fit[k] = key; m.fitBounds(L.latLngBounds(ll), { padding: [20, 20] }); }
+  if (DUO.winds[k]) DUO.winds[k].remove();
+  DUO.winds[k] = drawArrowsOn(m, rg, P.d[rg[0]]);
+}
+
 /* ---------- page Sortie : mode tours ---------- */
 const LAPS = { days: [] };
 // Un tour par ligne : horaires, distance, D+, durée, météo du tour (toutes les 5 min) et pause qui suit.
@@ -3600,6 +3684,8 @@ function renderLaps() {
   $('#lapCard thead th:first-child').textContent = taf ? 'Trajet' : 'Tour';
   $('#lapCard thead th:last-child').textContent = taf ? 'Au travail' : 'Pause';
   if (taf) {
+    // Vélotaf : deux colonnes (carte + graphe par trajet) au lieu du tableau
+    $('#lapCard').hidden = true; LAPS.days = laps; renderDuo(laps, opt); return;
     const vs = laps.map(d => tripVerdict(d.wx));
     $('#lapRows').innerHTML = laps.map((d, k) => `<tr><td><b>${S.laps.names[k]}</b></td><td>${whenTxt(d.a.t, t0)}</td><td>${whenTxt(d.b.t, t0)}</td>
       <td class="num">${n1(d.dist)} km</td><td class="num">${n0(d.dplus)} m</td><td class="num">${durShort(d.h)}</td>
