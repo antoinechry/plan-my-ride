@@ -882,9 +882,10 @@ function mbSample(s, pts, L) {
 }
 
 // MET Norway (api.met.no, Locationforecast 2.0 « complete », ~9 jours : horaire sur 2–3 jours puis pas de 6 h).
-// Appels simples depuis le navigateur (sans en-tête ajouté : le site est identifié par l'en-tête Origin, comme le
-// demandent les conditions d'utilisation), coordonnées à 4 décimales, un point tous les MET_KM km (au plus MET_MAX)
-// avec son altitude, MET_PAR appels à la fois ; chaque réponse est gardée jusqu'à son en-tête Expires (1 h au moins).
+// Passe par la fonction Supabase `met-norway` (User-Agent identifié, cache partagé entre visiteurs dans la table
+// `met_cache`, respect d'Expires / If-Modified-Since) ; si elle ne répond pas, appels directs depuis le navigateur
+// (MET_PAR à la fois). Coordonnées à 3 décimales et altitude au 10 m (mêmes clés que le cache partagé), un point
+// tous les MET_KM km (au plus MET_MAX) ; chaque prévision est gardée dans le navigateur jusqu'à Expires (1 h au moins).
 // Les points d'échantillonnage sont interpolés entre deux points voisins comme pour meteoblue (mbSample).
 const MET_KM = 10, MET_MAX = 40, MET_TTL = 3600e3, MET_CACHE = 'pmr-met-pts', MET_PAR = 3;
 const MET_PENDING = new Map();
@@ -898,7 +899,7 @@ function metCode(sym) {
   if (/thunder/.test(k)) return 95;
   return k in MET_SYM ? MET_SYM[k] : NaN;
 }
-const metKey = p => p.lat.toFixed(4) + ',' + p.lon.toFixed(4) + ',' + (p.asl == null ? '' : p.asl);
+const metKey = p => p.lat.toFixed(3) + ',' + p.lon.toFixed(3) + ',' + (p.asl == null ? '' : p.asl);
 function metCacheRead() {
   try { const c = JSON.parse(localStorage.getItem(MET_CACHE) || '{}') || {}; for (const k in c) if (!(c[k] && c[k].exp > Date.now())) delete c[k]; return c; } catch (e) { return {}; }
 }
@@ -960,7 +961,7 @@ function metSeries(q, p) {
     ws: F(q.ws), wd: F(q.wd), gust: F(q.gust), day: F(q.day), sun: F(q.sun), asl: p.asl };
 }
 async function metPoint(p) {
-  const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${p.lat.toFixed(4)}&lon=${p.lon.toFixed(4)}` + (p.asl != null ? `&altitude=${Math.round(p.asl)}` : '');
+  const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${p.lat.toFixed(3)}&lon=${p.lon.toFixed(3)}` + (p.asl != null ? `&altitude=${p.asl}` : '');
   let res;
   try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined }); }
   catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? 'MET Norway ne répond pas pour l\'instant' : 'pas de connexion au service MET Norway'); }
@@ -970,12 +971,24 @@ async function metPoint(p) {
   const at = Date.now(), exp = Date.parse(res.headers.get('Expires') || '') || 0;
   return { at, exp: Math.max(at + MET_TTL, exp), q: metCompact(json, p) };
 }
+// Fonction Supabase met-norway : un seul appel pour tous les points manquants.
+async function metRelay(miss) {
+  const r = await fetch(SB_URL + '/functions/v1/met-norway', { method: 'POST',
+    signal: AbortSignal.timeout ? AbortSignal.timeout(60000) : undefined,
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ points: miss.map(({ lat, lon, asl }) => ({ lat, lon, asl })) }) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 429) { const e = new Error('MET Norway limite les demandes pour l\'instant, réessaie dans quelques minutes'); e.throttled = true; throw e; }
+  if (!r.ok || !j.ok || !Array.isArray(j.points) || j.points.length !== miss.length) throw new Error('relais MET Norway indisponible');
+  return miss.map((p, i) => { const x = j.points[i], at = x.at || Date.now();
+    return { at, exp: Math.max(Date.now() + MET_TTL, x.exp || 0), q: metCompact(x.data, p) }; });
+}
 async function fetchMET() {
   const P = S.P, m = clamp(Math.ceil(P.total / MET_KM) + 1, 2, MET_MAX), pts = [];
   for (let k = 0, i = 0; k < m; k++) {
     const target = P.total * k / (m - 1);
     while (i < P.n - 1 && P.d[i] < target) i++;
-    pts.push({ km: P.d[i], lat: +P.pts[i].lat.toFixed(4), lon: +P.pts[i].lon.toFixed(4), asl: P.hasEle ? Math.round(P.es[i]) : null });
+    pts.push({ km: P.d[i], lat: +P.pts[i].lat.toFixed(3), lon: +P.pts[i].lon.toFixed(3), asl: P.hasEle ? Math.round(P.es[i] / 10) * 10 : null });
   }
   let cache = metCacheRead();
   // un même point (départ = arrivée d'une boucle) n'est demandé qu'une fois
@@ -983,9 +996,12 @@ async function fetchMET() {
   if (miss.length) {
     const rk = miss.map(metKey).join(';');
     if (!MET_PENDING.has(rk)) MET_PENDING.set(rk, (async () => {
-      const got = new Array(miss.length); let next = 0;
-      const worker = async () => { while (next < miss.length) { const i = next++; got[i] = await metPoint(miss[i]); } };
-      await Promise.all(Array.from({ length: Math.min(MET_PAR, miss.length) }, worker));
+      let got = await metRelay(miss).catch(e => { if (e.throttled) throw e; return null; });
+      if (!got) {
+        got = new Array(miss.length); let next = 0;
+        const worker = async () => { while (next < miss.length) { const i = next++; got[i] = await metPoint(miss[i]); } };
+        await Promise.all(Array.from({ length: Math.min(MET_PAR, miss.length) }, worker));
+      }
       const c = metCacheRead();
       miss.forEach((p, i) => { c[metKey(p)] = got[i]; });
       metCacheWrite(c);
