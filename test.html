@@ -359,6 +359,33 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .lap-box .unit-in input{flex:1;min-width:0}
 .lap-box .unit-in span{color:var(--muted);font-size:13px}
 .lap-err{margin:6px 0 0;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--head) 12%,transparent);color:var(--head);font-size:13px;font-weight:600;line-height:1.35}
+.week-scroll{overflow-x:auto}
+.week-table{width:100%;border-collapse:collapse;min-width:520px}
+.week-table th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:8px 12px;border-bottom:1px solid var(--line)}
+.week-table td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.week-table tbody tr{cursor:pointer}
+.week-table tbody tr:hover td{background:var(--bg)}
+.week-table tbody tr.sel td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.week-table tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.wk{display:flex;align-items:center;gap:8px;min-width:0}
+.wk .wsky{flex:none}
+.wk .t{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.wk .t b{font-size:14px}
+.wk .t span{font-size:12px;color:var(--muted)}
+@media (max-width:640px){
+  .week-table{min-width:0}
+  .week-table thead{display:none}
+  .week-table,.week-table tbody{display:block;width:100%}
+  .week-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-bottom:1px solid var(--line)}
+  .week-table td{border-bottom:0;padding:6px 10px;white-space:normal;min-width:0}
+  .wk .t b{font-size:13px}
+  .week-table td:first-child{grid-column:1 / -1;padding-top:10px}
+  .week-table td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .wk{align-items:flex-start}
+}
+.vdot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--line)}
+.vdot.l0{background:#2f9e44}.vdot.l1{background:#e8a200}.vdot.l2{background:#d6382e}.vdot.lx{background:var(--line)}
+.vtxt{font-weight:600}.vtxt.l0{color:#2f9e44}.vtxt.l1{color:#b97b00}.vtxt.l2{color:#d6382e}
 </style>
 </head>
 <body>
@@ -372,6 +399,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   <nav class="modes" aria-label="Page">
     <a href="#" data-mode="ride">Sortie</a>
     <a href="#ultra" data-mode="ultra">Ultra</a>
+    <a href="#velotaf" data-mode="taf">Vélotaf</a>
   </nav>
   <div class="theme-seg" role="group" aria-label="Thème" id="themeSeg">
     <button type="button" data-t="light" title="Thème clair" aria-label="Thème clair">☀︎</button>
@@ -473,6 +501,16 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <p class="hint">Boucle à faire plusieurs fois (circuit, tours d'un parc…) : la météo de chaque tour s'affiche sous la carte. Pause : entre deux tours.</p>
       <p class="lap-err" id="lapErr" role="alert" hidden></p>
     </div>
+    <div class="taf-box" id="tafField" hidden>
+      <div class="field"><label class="label" for="tafBack">Départ du retour</label><input type="time" id="tafBack" step="300"></div>
+      <div class="field">
+        <label class="label" for="tafRet">Trace du retour</label>
+        <select id="tafRet"></select>
+        <input type="file" id="tafFile" accept=".gpx,application/gpx+xml" hidden>
+        <p class="hint">Par défaut, la trace de l'aller dans l'autre sens. Tu peux choisir un autre parcours enregistré ou importer un GPX.</p>
+        <p class="lap-err" id="tafErr" role="alert" hidden></p>
+      </div>
+    </div>
 
     <div class="mode-ultra" id="ultraSettings">
       <hr class="sep">
@@ -534,6 +572,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
         <label class="arrows-toggle"><input type="checkbox" id="skyOn" checked> Ciel</label>
         <label class="arrows-toggle"><input type="checkbox" id="animOn" checked> Animation</label>
+        <div class="seg trip-seg" role="group" aria-label="Trajet affiché sur la carte" id="tripSeg" hidden>
+          <button type="button" data-trip="0" aria-pressed="true">Aller</button>
+          <button type="button" data-trip="1" aria-pressed="false">Retour</button>
+        </div>
         <div class="seg" role="group" aria-label="Colorer la trace selon">
           <button type="button" data-metric="wind" aria-pressed="true">Vent ressenti</button>
           <button type="button" data-metric="temp" aria-pressed="false">Température</button>
@@ -578,6 +620,16 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
           <thead><tr><th>Tour</th><th>Départ</th><th>Fin</th><th class="num">Km</th><th class="num">D+</th><th class="num">Durée</th><th>Météo</th><th class="num">Pause</th></tr></thead>
           <tbody id="lapRows"></tbody>
           <tfoot id="lapFoot"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="weekCard" hidden>
+      <div class="card-head"><h2>La semaine</h2><span class="hint">Les 5 prochains jours ouvrés, aux mêmes heures. Clique sur un jour pour le détail.</span></div>
+      <div class="week-scroll">
+        <table class="week-table">
+          <thead><tr><th>Jour</th><th>Aller <span class="hint" id="weekGoH"></span></th><th>Retour <span class="hint" id="weekBackH"></span></th></tr></thead>
+          <tbody id="weekRows"></tbody>
         </table>
       </div>
     </section>
@@ -691,7 +743,9 @@ const n1 = x => (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFract
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 /* ---------- état ---------- */
-const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '', mode: location.hash === '#ultra' ? 'ultra' : 'ride' };
+// pages : Sortie (#), Ultra (#ultra), Vélotaf (#velotaf)
+function hashMode(hs) { return hs === '#ultra' ? 'ultra' : hs === '#velotaf' ? 'taf' : 'ride'; }
+const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '', mode: hashMode(location.hash), trip: 0 };
 
 /* ---------- géométrie ---------- */
 function hav(a, b) {
@@ -775,8 +829,12 @@ const sIdx = km => {
    complète → point du tour). Le GPX doit être une boucle (arrivée à moins de LAP_GAP km du départ). */
 const LAP_GAP = 0.5;
 const wxExpand = a => (a && S.sMap ? S.sMap.map(j => a[j]) : a);
+// points et trace pour lesquels on demande la météo : un tour (mode tours), sinon la trace calculée
+const wxSmp = () => (S.sMap ? S.baseSamples : S.samples), wxTrk = () => (S.sMap ? S.lapBase : S.P);
 function applyLaps(opt) {
   const B = S.lapBase; if (!B) return;
+  if (S.mode === 'taf') return applyTaf(opt);
+  if (typeof S.lapN === 'string') { S.wxBase = S.wxAltBase = null; S.wxKey = ''; } // on quitte la page Vélotaf
   const want = S.mode === 'ride' ? clamp(Math.round(opt.laps || 1), 1, 50) : 1;
   const gap = hav(B.pts[0], B.pts[B.n - 1]), loop = gap <= LAP_GAP, n = want > 1 && loop ? want : 1;
   const err = $('#lapErr'); err.hidden = !(want > 1 && !loop);
@@ -809,8 +867,8 @@ const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '
 const AROME_MODEL = 'meteofrance_seamless';
 async function fetchOM(from, to, model) {
   const vars = model ? VARS.filter(v => v !== 'precipitation_probability') : VARS;
-  const lat = S.baseSamples.map(s => s.lat.toFixed(4)).join(',');
-  const lon = S.baseSamples.map(s => s.lon.toFixed(4)).join(',');
+  const lat = wxSmp().map(s => s.lat.toFixed(4)).join(',');
+  const lon = wxSmp().map(s => s.lon.toFixed(4)).join(',');
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars.join(',')}${model ? '&models=' + model : ''}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
   // 40 s au plus : si Open-Meteo ne répond pas, les horaires sont quand même calculés (sans météo)
   let res;
@@ -864,7 +922,7 @@ function mbCacheWrite(c) {
 async function fetchMB() {
   const sb = await sbIfLogged();
   if (!sb) throw new Error('connecte-toi à Coach Miguel pour utiliser meteoblue.');
-  const P = S.lapBase, m = clamp(Math.ceil(P.total / MB_KM) + 1, 2, MB_MAX), pts = [];
+  const P = wxTrk(), m = clamp(Math.ceil(P.total / MB_KM) + 1, 2, MB_MAX), pts = [];
   for (let k = 0, i = 0; k < m; k++) {
     const target = P.total * k / (m - 1);
     while (i < P.n - 1 && P.d[i] < target) i++;
@@ -894,7 +952,7 @@ async function fetchMB() {
   }
   const L = pts.map(p => mbSeries(cache[mbKey(p)].q, p));
   if (L.some(x => !x)) throw new Error('réponse incomplète.');
-  return { wx: S.baseSamples.map(s => mbSample(s, pts, L)), points: pts.length, fetched: miss.length,
+  return { wx: wxSmp().map(s => mbSample(s, pts, L)), points: pts.length, fetched: miss.length,
     credits: miss.length ? ((S.mbSpent && S.mbSpent.credits) || miss.length * MB_CREDITS) : 0,
     at: Math.min(...pts.map(p => cache[mbKey(p)].at)) };
 }
@@ -917,7 +975,7 @@ function mbSample(s, pts, L) {
   const A = L[j], B = L[j + 1] || A, span = (pts[j + 1] || pts[j]).km - pts[j].km;
   const f = B === A || span <= 0 ? 0 : clamp((s.km - pts[j].km) / span, 0, 1);
   const off = Math.round((A.t0 - B.t0) / 3600), n = A.n;
-  const ele = S.lapBase.hasEle ? S.lapBase.es[s.i] : null;
+  const ele = wxTrk().hasEle ? wxTrk().es[s.i] : null;
   const aslI = A.asl != null && B.asl != null ? A.asl + (B.asl - A.asl) * f : null;
   const dT = ele != null && aslI != null ? -0.0065 * (ele - aslI) : 0;
   const near = f < 0.5 ? A : B, nOff = near === A ? 0 : off;
@@ -1041,7 +1099,7 @@ async function metRelay(miss) {
     return { at, exp: Math.max(Date.now() + MET_TTL, x.exp || 0), q: metCompact(x.data, p) }; });
 }
 async function fetchMET() {
-  const P = S.lapBase, m = clamp(Math.ceil(P.total / MET_KM) + 1, 2, MET_MAX), pts = [];
+  const P = wxTrk(), m = clamp(Math.ceil(P.total / MET_KM) + 1, 2, MET_MAX), pts = [];
   for (let k = 0, i = 0; k < m; k++) {
     const target = P.total * k / (m - 1);
     while (i < P.n - 1 && P.d[i] < target) i++;
@@ -1067,7 +1125,7 @@ async function fetchMET() {
     cache = { ...cache, ...(await MET_PENDING.get(rk)) };
   }
   const L = pts.map(p => metSeries(cache[metKey(p)].q, p));
-  return { wx: S.baseSamples.map(s => mbSample(s, pts, L)), points: pts.length, at: Math.min(...pts.map(p => cache[metKey(p)].at)) };
+  return { wx: wxSmp().map(s => mbSample(s, pts, L)), points: pts.length, at: Math.min(...pts.map(p => cache[metKey(p)].at)) };
 }
 
 // Prévisions de la source choisie. meteoblue (7 jours), AROME (4 jours) et MET Norway (9 jours) : au-delà de leur
@@ -1202,7 +1260,9 @@ function readOpt() {
     planCustom: $('#planCustomOn').checked, planTimes: PLAN.times.slice(),
     planEnds: PLAN.ends.slice(),
     // page Sortie : nombre de tours de la boucle et pause entre deux tours (minutes)
-    laps: clamp(Math.round(+$('#laps').value || 1), 1, 50), lapPause: clamp(Math.round(+$('#lapPause').value || 0), 0, 240) };
+    laps: clamp(Math.round(+$('#laps').value || 1), 1, 50), lapPause: clamp(Math.round(+$('#lapPause').value || 0), 0, 240),
+    // page Vélotaf : heure de départ du retour et trace du retour ('' = l'aller à l'envers)
+    tafBack: $('#tafBack').value || '17:30', tafRet: TAF.ret };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -1280,9 +1340,11 @@ function simulate(t0, opt, useWx) {
     st.rideH += dtH;
     t += dtH * 3600e3;
     // mode tours : fin d'un tour, pause avant le suivant (arrêt « lap » = numéro du tour qui commence)
+    // page Vélotaf : journée au travail jusqu'à l'heure du retour (pas d'attente si on arrive après)
     if (S.laps && i < N - 1 && P.pts[i + 1].lap > P.pts[i].lap) {
-      const pz = Math.max(0, opt.lapPause || 0) * 60e3;
-      stops.push({ km: P.d[i], from: t, to: t + pz, lap: P.pts[i + 1].lap + 1 }); t += pz;
+      let to = t + Math.max(0, opt.lapPause || 0) * 60e3, late = false;
+      if (S.laps.taf) { const r = tafBackMs(t0, opt); late = r < t; to = Math.max(t, r); }
+      stops.push({ km: P.d[i], from: t, to, lap: P.pts[i + 1].lap + 1, work: !!S.laps.taf, late }); t = to;
     }
     // fin d'étape : nuit jusqu'au départ du jour suivant (sans repos si l'étape finit après ce départ)
     // (au km de coupe, ou à l'heure de fin choisie pour ce jour)
@@ -1309,22 +1371,30 @@ async function run() {
   if (!S.P) return;
   const id = ++runId, opt = readOpt();
   saveOpt(opt);
+  // Vélotaf : trace du retour à charger (un autre parcours enregistré)
+  if (S.mode === 'taf' && TAF.ret && TAF.id !== TAF.ret) {
+    const P = await tafLoad(TAF.ret); if (id !== runId) return;
+    if (P) { TAF.id = TAF.ret; TAF.P = P; } else { TAF.ret = ''; tafRenderSel(); setStatus('La trace du retour n\'est plus disponible : retour par la même trace.', 'err'); }
+  }
   applyLaps(opt); // page Sortie : boucle répétée N fois
   if (S.mode === 'ultra') placesEnsure(); // villes des graphes du jour : sans attendre la météo
   const t0 = startMs(opt);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const maxDay = new Date(today); maxDay.setDate(maxDay.getDate() + 15);
   const from = new Date(t0); from.setHours(0, 0, 0, 0);
+  const week = S.mode === 'taf' ? weekDays() : [];
+  if (week.length && from > today) from.setTime(today.getTime()); // la semaine part d'aujourd'hui
   // meilleure heure de départ (départs de 4 h à 16 h le même jour), seulement si la date a des prévisions
   const cand = [];
-  if (from <= maxDay) for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
+  if (from <= maxDay && S.mode !== 'taf') for (let h = 4; h <= 16; h++) cand.push(`${String(h).padStart(2, '0')}:00`);
   // fenêtre de prévision nécessaire
   let endMax = simulate(t0, opt, false).end;
   for (const c of cand) endMax = Math.max(endMax, simulate(startMs(opt, c), opt, false).end);
+  for (const d of week) { const o = { ...opt, date: ymd(d) }; endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
   const src = wxSrc();
-  const key = src + ':' + S.baseSamples.length + ':' + S.baseSamples[0].lat + ':' + S.lapBase.total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to) + ':' + ymd(today);
+  const key = src + ':' + wxSmp().length + ':' + wxSmp()[0].lat + ':' + wxTrk().total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to) + ':' + ymd(today);
   let note = '';
   if (from > maxDay) {
     S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxFallback = '';
@@ -1350,6 +1420,8 @@ async function run() {
   if (S.wx && S.tl.st.missKm > 0.5) note = note || `La fin du parcours (${n0(S.tl.st.missKm)} km) dépasse l'horizon des prévisions.`;
   setStatus(note, note ? 'err' : '');
   const opts = S.wx ? cand.map(c => { const r = simulate(startMs(opt, c), opt, true); return { time: c, r, sc: score(r.st, S.P.total) }; }) : [];
+  // Vélotaf : aller et retour de chaque jour ouvré de la semaine, aux mêmes heures
+  TAF.week = week.map(d => { const o = { ...opt, date: ymd(d) }, r = simulate(startMs(o), o, !!S.wx); return { date: ymd(d), trips: S.laps && S.laps.taf ? lapSummaries(r) : [] }; });
   renderAll(opts, opt);
 }
 
@@ -1463,7 +1535,7 @@ function whenTxt(t, ref) {
 
 /* ---------- rendu ---------- */
 function renderAll(opts, opt) {
-  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderPlan(); renderLaps();
+  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderPlan(); renderLaps(); renderWeek();
 }
 
 function renderSummary(opt) {
@@ -1481,6 +1553,12 @@ function renderSummary(opt) {
     tiles.push(['Vent', `${pct(st.headKm)} <small>% de face</small>`, `${pct(st.tailKm)} % de dos` + (st.hasGust ? ` · rafales ${n0(st.gust)} km/h` : '')]);
     tiles.push(['Soleil', `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? `${durTxt(st.nightH)} de nuit` : 'du temps en selle ensoleillé']);
   }
+  // Vélotaf : distance aller / retour, heures d'arrivée au travail et à la maison
+  const tafSum = S.laps && S.laps.taf ? lapSummaries() : null;
+  if (tafSum) {
+    tiles[0] = ['Distance', `${n1(tafSum[0].dist + tafSum[1].dist)} <small>km</small>`, `Aller ${n1(tafSum[0].dist)} km · retour ${n1(tafSum[1].dist)} km`];
+    tiles[1] = ['Arrivées', `${hm.format(new Date(tafSum[0].b.t))} · ${hm.format(new Date(tafSum[1].b.t))}`, `au travail · à la maison${tafSum[0].late ? ' · ⚠ retour avant l\'arrivée' : ''}`];
+  }
   const rs = has ? windRoseStats(tl.start, tl.end) : null; // rose du vent ressenti dans la tuile Vent
   $('#stats').innerHTML = tiles.map(([l, v, s]) => l === 'Vent' && rs
     ? `<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(rs.tail * 100)} %</b> de dos</span><span class="s">${rs.calm > 0.02 ? `${Math.round(rs.calm * 100)} % calme` : ''}${st.hasGust ? `${rs.calm > 0.02 ? ' · ' : ''}rafales ${n0(st.gust)} km/h` : ''}</span></div></div>`
@@ -1497,6 +1575,10 @@ function renderSummary(opt) {
     const wind = pct(st.headKm) >= 50 ? `<b>vent de face</b> sur ${pct(st.headKm)} % du parcours` : pct(st.tailKm) >= 50 ? `<b>poussé par le vent</b> sur ${pct(st.tailKm)} % du parcours` : Math.abs(avgHead) < 4 ? 'un vent <b>peu gênant</b>' : avgHead > 0 ? 'un vent <b>plutôt défavorable</b>' : 'un vent <b>plutôt favorable</b>';
     const temp = st.amin < 3 ? `, <b>froid</b> au plus bas (${n0(st.amin)} °C ressentis)` : st.amax > 30 ? `, <b>chaleur</b> jusqu'à ${n0(st.amax)} °C` : `, ${n0(st.tmin)} à ${n0(st.tmax)} °C`;
     txt = `${dep} : sortie ${rain}, ${wind}${temp}. Arrivée vers ${whenTxt(tl.end, tl.start)}.`;
+  }
+  if (tafSum) { // Vélotaf : une phrase par trajet
+    const vs = tafSum.map(d => tripVerdict(d.wx));
+    txt = `${dayFmt.format(new Date(tl.start))} : <b>aller</b> à ${hm.format(new Date(tafSum[0].a.t))}, ${vs[0].txt}${tafSum[0].wx ? ` (${n0(tafSum[0].wx.tmin)} °C ressentis)` : ''} ; <b>retour</b> à ${hm.format(new Date(tafSum[1].a.t))}, ${vs[1].txt}${tafSum[1].wx ? ` (${n0(tafSum[1].wx.tmin)} °C ressentis)` : ''}.`;
   }
   $('#verdict').innerHTML = txt;
 }
@@ -1566,16 +1648,27 @@ function metricColor(sv) {
   if (S.metric === 'sun') return sv.w.day ? sunColor(sv.w.sun) : mix(cssVar('--cross'), '#1d2733', .5);
   return windColor(sv.head);
 }
-// mode tours : la trace de la carte est colorée d'après le 1er tour (les tours se superposent)
-const lapSampleEnd = () => { if (!S.laps) return S.samples.length - 1; const k = S.samples.findIndex(s => s.i >= S.laps.start[1]); return k > 0 ? k : S.samples.length - 1; };
+// Partie de la trace montrée sur la carte (couleurs, flèches) : toute la trace ; en mode tours le 1er tour (sans
+// flèches) ; en Vélotaf le trajet choisi (Aller / Retour, S.trip). tripRange = indices de points, null = pas de flèches.
+function tripRange() {
+  if (!S.laps) return [0, S.P.n - 1];
+  if (S.laps.taf) { const k = S.trip ? 1 : 0; return k ? [S.laps.start[1], S.P.n - 1] : [0, S.laps.start[1] - 1]; }
+  return null;
+}
+function sampleRange() {
+  const r = tripRange() || [0, S.laps.start[1]], s = S.samples;
+  let k0 = s.findIndex(x => x.i >= r[0]), k1 = -1; for (let k = s.length - 1; k >= 0; k--) if (s[k].i <= r[1]) { k1 = k; break; }
+  if (k0 < 0) k0 = 0; if (k1 <= k0) k1 = Math.min(s.length - 1, k0 + 1);
+  return [k0, k1];
+}
 function renderMap() {
   if (!map) return;
   if (routeLayer) routeLayer.remove();
   routeLayer = L.layerGroup().addTo(map);
   const P = S.P, ll = P.pts.map(p => [p.lat, p.lon]);
   L.polyline(ll, { color: '#ffffff', weight: 9, opacity: .85 }).addTo(routeLayer);
-  const svs = S.samples.map((_, k) => S.wx ? sampleValue(k) : null);
-  for (let k = 0; k < lapSampleEnd(); k++) {
+  const svs = S.samples.map((_, k) => S.wx ? sampleValue(k) : null), [sk0, sk1] = sampleRange();
+  for (let k = sk0; k < sk1; k++) {
     const a = S.samples[k].i, b = S.samples[k + 1].i;
     const sv = svs[k + 1] || svs[k];
     L.polyline(ll.slice(a, b + 1), { color: metricColor(sv), weight: 5, opacity: 1 }).addTo(routeLayer);
@@ -1603,12 +1696,13 @@ function renderWindArrows() {
   if (windLayer) windLayer.remove();
   windLayer = L.layerGroup().addTo(map);
   const showA = $('#arrowsOn').checked, showS = $('#skyOn').checked;
-  if (!S.wx || !S.tl || S.laps || (!showA && !showS)) return; // plusieurs tours : pas de vent sur la carte
+  const rg = S.P ? tripRange() : null;
+  if (!S.wx || !S.tl || !rg || (!showA && !showS)) return; // plusieurs tours : pas de vent sur la carte
   // Une flèche tous les ~40 px le long de la trace, quel que soit le zoom, et seulement dans la zone visible.
   // Entre deux points météo, la flèche prend le point le plus proche à l'heure de passage à cet endroit.
   const P = S.P, view = map.getBounds().pad(0.2), shown = [], box = badgeBox(showA, showS);
   let run = ARROW_GAP / 2, prev = null;
-  for (let i = 0; i < P.n; i++) {
+  for (let i = rg[0]; i <= rg[1]; i++) {
     const p = P.pts[i], px = map.latLngToLayerPoint([p.lat, p.lon]);
     if (prev) run += px.distanceTo(prev);
     prev = px;
@@ -1639,7 +1733,7 @@ function renderLegend() {
   else if (S.metric === 'temp') el.innerHTML = `<span>Température ressentie</span><span>−5 °C <i class="ramp" style="background:linear-gradient(90deg,${TEMP_STOPS.map(s => s[1]).join(',')})"></i> 33 °C</span>`;
   else if (S.metric === 'rain') el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Sec</span><span>0,1 mm/h <i class="ramp" style="background:linear-gradient(90deg,#9cc7ef,#123f8c)"></i> 8 mm/h</span>`;
   else el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>Couvert</span><span><i style="background:${cssVar('--sun')}"></i>Plein soleil</span><span><i style="background:#3a4552"></i>Nuit</span>`;
-  if (S.laps) el.innerHTML += `<div class="wrow"><span>${S.laps.n} tours : trace colorée d'après le 1er tour, pas de flèches de vent sur la carte. La météo de chaque tour est sous la carte.</span></div>`;
+  if (S.laps && !S.laps.taf) el.innerHTML += `<div class="wrow"><span>${S.laps.n} tours : trace colorée d'après le 1er tour, pas de flèches de vent sur la carte. La météo de chaque tour est sous la carte.</span></div>`;
   else if ($('#arrowsOn').checked) el.innerHTML += `<div class="wrow"><span>Flèches : sens où va le vent · pastille : ${$('#skyOn').checked ? 'ciel, ' : ''}température et vent à l\'heure de passage</span><span>Force<span class="wscale">${WIND_SCALE.map((w, i) => `<span style="background:${w[1]};color:${w[3]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? w[0] + '+' : w[0] + '–' + WIND_SCALE[i + 1][0]}</span>`).join('')}</span></span></div>`;
   else if ($('#skyOn').checked) el.innerHTML += `<div class="wrow"><span>Pastilles : ciel (soleil, lune la nuit, nuages, pluie) et température à l'heure de passage</span></div>`;
 }
@@ -1671,17 +1765,19 @@ async function drawMapTo(c, x0, y0, W, H) {
   c.lineJoin = c.lineCap = 'round';
   c.beginPath(); P.pts.forEach((p, i) => { const [x, y] = pt(p.lat, p.lon); i ? c.lineTo(x, y) : c.moveTo(x, y); });
   c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 9; c.stroke();
-  for (let k = 0; k < lapSampleEnd(); k++) {
+  const [sk0, sk1] = sampleRange();
+  for (let k = sk0; k < sk1; k++) {
     const a = S.samples[k].i, b = S.samples[k + 1].i, sv = S.svs ? (S.svs[k + 1] || S.svs[k]) : null;
     c.beginPath(); for (let i = a; i <= b; i++) { const [x, y] = pt(P.pts[i].lat, P.pts[i].lon); i === a ? c.moveTo(x, y) : c.lineTo(x, y); }
     c.strokeStyle = metricColor(sv); c.lineWidth = 5; c.stroke();
   }
   // flèches de vent (même placement qu'à l'écran)
   const exA = $('#arrowsOn').checked, exS = $('#skyOn').checked;
-  if (S.wx && !S.laps && (exA || exS)) {
+  const rgx = tripRange();
+  if (S.wx && rgx && (exA || exS)) {
     const arrow = new Path2D(WARROW), shown = [], box = badgeBox(exA, exS);
     let run = ARROW_GAP / 2, prev = null;
-    for (let i = 0; i < P.n; i++) {
+    for (let i = rgx[0]; i <= rgx[1]; i++) {
       const [x, y] = pt(P.pts[i].lat, P.pts[i].lon);
       if (prev) run += Math.hypot(x - prev[0], y - prev[1]);
       prev = [x, y];
@@ -1869,7 +1965,7 @@ function renderChart() {
   if (S.laps) {
     c.save(); c.setLineDash([4, 4]); c.strokeStyle = muted; c.lineWidth = 1; c.font = `600 10px ${cssVar('--f-mono').split(',')[0]}, monospace`; c.fillStyle = muted; c.textAlign = 'left'; c.textBaseline = 'top';
     S.laps.start.forEach((i, k) => { const x = Math.round(X(P.d[i])) + .5; if (k) { c.beginPath(); c.moveTo(x, pad.t); c.lineTo(x, pad.t + ph); c.stroke(); }
-      if (X(P.total) - x > 26) c.fillText('T' + (k + 1), x + 3, pad.t + ph - 14); });
+      if (X(P.total) - x > 26) c.fillText(S.laps.names ? S.laps.names[k] : 'T' + (k + 1), x + 3, pad.t + ph - 14); });
     c.restore();
   }
   // axes altitude
@@ -2028,6 +2124,7 @@ const isNight = st => !st.lap && (!!st.sleep || st.to - st.from >= 3 * 3600e3);
 function renderTable() {
   const tl = S.tl;
   $('#rows').innerHTML = tableRows().map(r => {
+    if (r.stop && r.stop.work) return `<tr class="stop"><td colspan="8"><b>Retour</b> : départ ${whenTxt(r.stop.to, tl.start)}${r.stop.late ? ' ⚠ (arrivée au travail après l\'heure du retour)' : ` après ${durTxt((r.stop.to - r.stop.from) / 3600e3)} au travail`}</td></tr>`;
     if (r.stop && r.stop.lap) return `<tr class="stop"><td colspan="8"><b>Tour ${r.stop.lap}</b> au km ${n0(r.stop.km)} : départ ${whenTxt(r.stop.to, tl.start)}${r.stop.to > r.stop.from ? ` après ${durTxt((r.stop.to - r.stop.from) / 3600e3)} de pause` : ''}</td></tr>`;
     if (r.stop) return `<tr class="stop"><td colspan="8">${isNight(r.stop) ? 'Nuit' : 'Arrêt'} au km ${n0(r.stop.km)} : ${whenTxt(r.stop.from, tl.start)} → reprise ${whenTxt(r.stop.to, tl.start)} (${durTxt((r.stop.to - r.stop.from) / 3600e3)})</td></tr>`;
     const w = r.w, rel = relLabel(r.head);
@@ -2073,6 +2170,7 @@ function exportCsv() {
   const head = ['km', 'passage', 'altitude_m', 'ciel', 'temp_C', 'ressenti_C', 'vent_dir', 'vent_kmh', 'rafales_kmh', 'vent_relatif_kmh(+face)', 'pluie_mm_h', 'proba_pluie_%'];
   const lines = [head.join(';')];
   for (const r of tableRows()) {
+    if (r.stop && r.stop.work) { lines.push(`${r.stop.km.toFixed(1)};retour : départ ${new Date(r.stop.to).toLocaleString('fr-FR')}`); continue; }
     if (r.stop && r.stop.lap) { lines.push(`${r.stop.km.toFixed(1)};tour ${r.stop.lap} : départ ${new Date(r.stop.to).toLocaleString('fr-FR')} (pause ${Math.round((r.stop.to - r.stop.from) / 60e3)} min)`); continue; }
     if (r.stop) { lines.push(`${r.stop.km.toFixed(1)};${isNight(r.stop) ? 'nuit' : 'arrêt'} ${new Date(r.stop.from).toLocaleString('fr-FR')} -> ${new Date(r.stop.to).toLocaleString('fr-FR')}`); continue; }
     const w = r.w;
@@ -2128,9 +2226,10 @@ function handleFile(file) {
 /* ---------- réglages ---------- */
 // Quand le calage est actif, on garde en mémoire les réglages manuels (pas les valeurs calées).
 // Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
-const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : 'pmr-opt');
+const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : S.mode === 'taf' ? 'pmr-opt-taf' : 'pmr-opt');
 const MODE_DEF = {
   ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, poiRadius: 500, laps: 1, lapPause: 10 },
+  taf: { time: '07:45', speed: 22, vam: 600, pause: 5, windOn: true, poiRadius: 500, tafBack: '17:30', tafRet: '' },
   ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
@@ -2139,6 +2238,12 @@ function initInputs() {
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(optKey()) || '{}') || {}; } catch (e) {}
   const def = { ...MODE_DEF[S.mode], ...saved };
   $('#date').value = S.mode === 'ultra' && def.date && def.date >= ymd(new Date()) ? def.date : ymd(tm);
+  if (S.mode === 'taf') { // Vélotaf : aujourd'hui, ou demain si l'heure du retour est passée
+    const now = new Date(), [bh, bm] = (def.tafBack || '17:30').split(':').map(Number), d = new Date();
+    if (now.getHours() * 60 + now.getMinutes() >= bh * 60 + bm) d.setDate(d.getDate() + 1);
+    $('#date').value = ymd(d);
+  }
+  $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; tafRenderSel();
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
   $('#windOn').checked = !!def.windOn;
   $('#laps').value = clamp(Math.round(+def.laps || 1), 1, 50);
@@ -2166,9 +2271,13 @@ function applyModeUI() {
   if (ultra) { $('#planStartSlot').append($('#startRow')); $('#planSpeedSlot').append($('#manualSettings'), $('#windField')); }
   else { $('#startHome').before($('#startRow')); $('#manualHome').before($('#manualSettings')); $('#windHome').before($('#windField')); }
   for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
-  $('#ultraSettings').hidden = !ultra; $('#lapField').hidden = ultra;
-  $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
-  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Plan My Ride · Ultra' : 'Plan My Ride');
+  const taf = S.mode === 'taf';
+  $('#ultraSettings').hidden = !ultra; $('#lapField').hidden = S.mode !== 'ride'; $('#tafField').hidden = !taf;
+  $('#tripSeg').hidden = !taf; $('#optCard').hidden = taf;
+  $('label[for="date"]').textContent = taf ? 'Jour' : 'Départ'; $('label[for="time"]').textContent = taf ? 'Départ de l\'aller' : 'Heure';
+  if (!taf) { $('#weekCard').hidden = true; }
+  $('#brandSub').textContent = ultra ? 'Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.' : taf ? 'Vélotaf : la météo de ton trajet aller et retour, et la semaine d\'un coup d\'œil.' : 'Votre trace GPX, l\'heure de passage et la météo à chaque kilomètre.';
+  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Plan My Ride · Ultra' : taf ? 'Plan My Ride · Vélotaf' : 'Plan My Ride');
 }
 function switchMode(m) {
   if (m === S.mode) return;
@@ -2178,7 +2287,7 @@ function switchMode(m) {
   applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
   schedule();
 }
-window.addEventListener('hashchange', () => switchMode(location.hash === '#ultra' ? 'ultra' : 'ride'));
+window.addEventListener('hashchange', () => switchMode(hashMode(location.hash)));
 function syncOutputs() {
   const c = CAL.on ? ' · calé' : '';
   $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h' + c;
@@ -2967,7 +3076,7 @@ function drawDayWx(cv, cur) {
       c.globalAlpha = .8; c.fillStyle = rc; c.fillRect(xa, yT1 - hh, bw, hh); c.globalAlpha = 1;
       if (bw >= 22 && x.w.pr >= 0.1) { c.fillStyle = rc; c.textBaseline = 'bottom'; c.fillText(n1(x.w.pr), xa + bw / 2, yT1 - hh - 1); } }
     if (noWx) { c.fillStyle = muted; c.font = `12px ${cssVar('--f-body').split(',')[0]}, system-ui, sans-serif`; c.textAlign = 'left'; c.textBaseline = 'top';
-      c.fillText(S.wx ? `Pas encore de prévision météo pour ${isLap ? 'ce tour' : 'ce jour'} (disponible 16 jours avant).` : 'Météo indisponible pour l\'instant.', l, 8); }
+      c.fillText(S.wx ? `Pas encore de prévision météo pour ${isLap ? (S.laps && S.laps.taf ? 'ce trajet' : 'ce tour') : 'ce jour'} (disponible 16 jours avant).` : 'Météo indisponible pour l\'instant.', l, 8); }
     // température ressentie
     if (!noWx) {
     c.beginPath(); pts.forEach((p, i) => { const x = X(p.t), y = Yt(p.w.app); i ? c.lineTo(x, y) : c.moveTo(x, y); });
@@ -2992,11 +3101,12 @@ function drawDayWx(cv, cur) {
     const step = pw / Math.max(1, span / 3600e3) < 34 ? 2 : 1; let lastH = -99;
     for (let h0 = Math.ceil(ta / 3600e3) * 3600e3; h0 <= tb; h0 += 3600e3) { const hr = new Date(h0).getHours(); if (hr % step) continue; const x = X(h0); if (x - lastH < 26) continue; lastH = x; c.fillText(hr + 'h', x, yT1 + 4); }
     // découpage en km : repère au passage de chaque km rond (pas de 5 à 50 km selon la place)
-    const kmSpan = d.b.km - d.a.km, kStep = [5, 10, 20, 25, 50].find(s => pw / (kmSpan / s) >= 44) || 50;
+    const kmSpan = d.b.km - d.a.km, kStep = [1, 2, 5, 10, 20, 25, 50].find(s => pw / (kmSpan / s) >= 44) || 50;
     const tAtKm = km => S.tl.times[idxAtKm(km)];
     c.fillStyle = cssVar('--ink'); let lastR = -99;
-    for (let km = Math.ceil(d.a.km / kStep) * kStep; km <= d.b.km + 1e-6; km += kStep) {
-      const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(km), w2 = c.measureText(txt).width / 2;
+    const kOff = isLap && S.laps && S.laps.taf ? d.a.km : 0; // Vélotaf : km depuis le début du trajet
+    for (let km = Math.ceil((d.a.km - kOff) / kStep) * kStep + kOff; km <= d.b.km + 1e-6; km += kStep) {
+      const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(km - kOff), w2 = c.measureText(txt).width / 2;
       if (x - w2 < lastR + 8 || x - w2 < l - 2) continue; lastR = x + w2; c.fillText(txt, x, yT1 + 20); }
     c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
     // lever et coucher du soleil pendant la journée, calculés là où l'on se trouve à ce moment-là
@@ -3099,30 +3209,149 @@ function renderPlan() {
   $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
   $('#planReset').hidden = !(custom && opt.planDays > 1 && (PLAN.times.some(Boolean) || PLAN.ends.some(Boolean)));
 }
+/* ---------- page Vélotaf : aller et retour ---------- */
+/* La trace calculée = l'aller (trace chargée) puis le retour (même trace à l'envers, ou un autre parcours choisi :
+   TAF.ret = identifiant, TAF.P = trace préparée). Entre les deux, un arrêt « journée au travail » jusqu'à l'heure de
+   départ du retour. On réutilise le découpage du mode tours (S.laps avec taf: true, deux « tours » : Aller, Retour). */
+const TAF = { ret: '', id: '', P: null, week: [] };
+function applyTaf(opt) {
+  const B = S.lapBase, R = TAF.ret && TAF.id === TAF.ret ? TAF.P : null;
+  const sig = 'taf:' + (R ? TAF.ret : 'rev') + ':' + B.total;
+  $('#lapErr').hidden = true;
+  const gap = R ? hav(B.pts[B.n - 1], R.pts[0]) : 0, err = $('#tafErr');
+  err.hidden = gap <= 1; if (!err.hidden) err.textContent = `Le retour ne part pas de l'arrivée de l'aller (${n1(gap)} km d'écart) : vérifie le sens de la trace du retour.`;
+  if (S.lapN === sig) return;
+  S.lapN = sig; S.tl = null;
+  const raw = [], back = R ? R.pts : [...B.pts].reverse();
+  B.pts.forEach((p, i) => raw.push({ lat: p.lat, lon: p.lon, ele: p.ele, lap: 0, bi: i }));
+  back.forEach((p, i) => raw.push({ lat: p.lat, lon: p.lon, ele: p.ele, lap: 1, bi: i }));
+  const P = prepare(raw), i1 = P.pts.findIndex(p => p.lap === 1);
+  S.P = P; S.samples = makeSamples(P); S.sMap = null;
+  S.laps = { n: 2, start: [0, i1], taf: true, names: ['Aller', 'Retour'] };
+  S.wx = S.wxAlt = S.wxBase = S.wxAltBase = null; S.wxKey = '';
+}
+// heure de départ du retour, le jour du départ de l'aller (le lendemain si elle tombe avant)
+function tafBackMs(t0, opt) {
+  const d = new Date(t0), [hh, mm] = (opt.tafBack || '17:30').split(':').map(Number);
+  d.setHours(hh, mm, 0, 0); return d.getTime() <= t0 ? d.getTime() + 864e5 : d.getTime();
+}
+// les 5 prochains jours ouvrés (aujourd'hui compris)
+function weekDays() {
+  const out = [], d = new Date(); d.setHours(0, 0, 0, 0);
+  while (out.length < 5) { if (d.getDay() >= 1 && d.getDay() <= 5) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+  return out;
+}
+// trace du retour enregistrée dans « Mes parcours » (navigateur, sinon compte)
+async function tafLoad(id) {
+  let rec = null;
+  try { rec = await idbRun('pts', 'readonly', st => st.get(id)); } catch (e) {}
+  if (!rec) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; } }
+  if (!rec) return null;
+  try { return prepare(unpackPts(rec.pts)); } catch (e) { return null; }
+}
+function tafRenderSel() {
+  const sel = $('#tafRet'); if (!sel) return;
+  const opts = [`<option value="">Même trace, dans l'autre sens</option>`]
+    .concat(LIB.list.filter(m => m.id !== LIB.current).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || '')).map(m => `<option value="${m.id}">${escH(m.name)} · ${n1(+m.km || 0)} km</option>`))
+    .concat('<option value="__imp">＋ Importer un GPX pour le retour…</option>');
+  sel.innerHTML = opts.join('');
+  sel.value = TAF.ret && LIB.list.some(m => m.id === TAF.ret) ? TAF.ret : '';
+}
+$('#tafRet').addEventListener('change', () => {
+  const v = $('#tafRet').value;
+  if (v === '__imp') { $('#tafRet').value = TAF.ret || ''; $('#tafFile').click(); return; }
+  TAF.ret = v; schedule();
+});
+$('#tafFile').addEventListener('change', () => {
+  const file = $('#tafFile').files[0]; if (!file) return;
+  const rd = new FileReader();
+  rd.onload = async () => {
+    try {
+      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts)), P = prepare(pts);
+      const id = routeId(packPts(pts));
+      TAF.ret = TAF.id = id; TAF.P = P;
+      await libSave(pts, name, P, false); // gardé dans « Mes parcours » sans changer la trace de l'aller
+      tafRenderSel(); schedule();
+    } catch (e) { setStatus(e.message, 'err'); }
+    $('#tafFile').value = '';
+  };
+  rd.readAsText(file);
+});
+$('#tafBack').addEventListener('change', schedule);
+// Verdict d'un trajet : niveau 0 (vert), 1 (orange), 2 (rouge) et mots-clés
+function tripVerdict(wx) {
+  if (!wx) return { lvl: -1, txt: 'hors prévisions' };
+  const out = []; let lvl = 0; const up = l => { lvl = Math.max(lvl, l); };
+  if (wx.rain >= 1) { up(2); out.push('pluie, prends la veste'); } else if (wx.rain >= 0.2) { up(1); out.push('quelques gouttes'); } else if (wx.prob >= 70) { up(1); out.push('risque d\'averse'); }
+  if (wx.headAvg >= 20) { up(2); out.push('gros vent de face'); } else if (wx.headAvg >= 12) { up(1); out.push('vent de face'); } else if (wx.headAvg <= -12) out.push('vent dans le dos');
+  if (wx.tmin < 0) { up(1); out.push('gel possible'); } else if (wx.tmin < 4) { up(1); out.push('froid, gants'); } else if (wx.tmax > 30) { up(1); out.push('chaud'); }
+  if (wx.dark > 0.3) out.push('de nuit, lumières');
+  if (!out.length) out.push(wx.rain < 0.05 ? 'au sec, beau trajet' : 'au sec');
+  return { lvl, txt: out.join(' · ') };
+}
+const vdot = v => `<span class="vdot ${v.lvl < 0 ? 'lx' : 'l' + v.lvl}" aria-hidden="true"></span>`;
+function renderWeek() {
+  const on = S.mode === 'taf' && !!S.laps && S.laps.taf && !!S.tl;
+  $('#weekCard').hidden = !on; if (!on) return;
+  const opt = readOpt(), sel = opt.date;
+  $('#weekGoH').textContent = opt.time; $('#weekBackH').textContent = opt.tafBack;
+  const fmtD = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+  const cell = d => {
+    if (!d || !d.wx) return `<div class="wk">${vdot({ lvl: -1 })}<div class="t"><span>pas encore de prévision</span></div></div>`;
+    const v = tripVerdict(d.wx), w = d.wxMid;
+    return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${n0(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + n0(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? n1(d.wx.rain) + ' mm' : 'sec'} · ${d.wx.headAvg >= 4 ? 'face ' + n0(d.wx.headAvg) : d.wx.headAvg <= -4 ? 'dos ' + n0(-d.wx.headAvg) : 'vent faible'}${Math.abs(d.wx.headAvg) >= 4 ? ' km/h' : ''}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
+  };
+  $('#weekRows').innerHTML = TAF.week.map(x => `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${opt.time}">${cell(x.trips[0])}</td><td data-l="Retour ${opt.tafBack}">${cell(x.trips[1])}</td></tr>`).join('');
+}
+$('#weekRows').addEventListener('click', e => { const tr = e.target.closest('tr[data-date]'); if (!tr) return; $('#date').value = tr.dataset.date; schedule(); });
+$('#tripSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-trip]'); if (!b) return;
+  S.trip = +b.dataset.trip; for (const x of document.querySelectorAll('#tripSeg button')) x.setAttribute('aria-pressed', String(x === b));
+  if (S.tl) renderMap();
+});
+
 /* ---------- page Sortie : mode tours ---------- */
 const LAPS = { days: [] };
 // Un tour par ligne : horaires, distance, D+, durée, météo du tour (toutes les 5 min) et pause qui suit.
-function lapSummaries() {
-  const P = S.P, tl = S.tl, up = cumUp(), stops = tl.stops.filter(s => s.lap), out = [];
+function lapSummaries(tl = S.tl) {
+  const P = S.P, up = cumUp(), stops = tl.stops.filter(s => s.lap), out = [];
+  const kmAtT = t => { const T = tl.times; let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (T[m] < t) lo = m + 1; else hi = m; } return P.d[lo]; };
   for (let k = 0; k < S.laps.n; k++) {
     const s0 = stops[k - 1], s1 = stops[k];
     const a = { km: s0 ? s0.km : 0, t: s0 ? s0.to : tl.start }, b = { km: s1 ? s1.km : P.total, t: s1 ? s1.from : tl.end };
-    const d = { a, b, pause: s1 ? (s1.to - s1.from) / 3600e3 : null, dist: b.km - a.km, dplus: up[idxAtKm(b.km)] - up[idxAtKm(a.km)], h: (b.t - a.t) / 3600e3 };
-    let tmin = Infinity, tmax = -Infinity, rain = 0, head = 0, tot = 0;
+    const d = { a, b, pause: s1 ? (s1.to - s1.from) / 3600e3 : null, late: !!(s1 && s1.late), dist: b.km - a.km, dplus: up[idxAtKm(b.km)] - up[idxAtKm(a.km)], h: (b.t - a.t) / 3600e3 };
+    let tmin = Infinity, tmax = -Infinity, rain = 0, head = 0, tot = 0, hsum = 0, prob = 0, dark = 0, mid = null;
     if (S.wx) for (let t = a.t; t < b.t; t += 300e3) {
-      const dt = Math.min(300e3, b.t - t), tm = t + dt / 2, km = planKmAtT(tm), i = idxAtKm(km), w = wxAt(sIdx(km), tm); if (!w) continue;
-      const hh = dt / 3600e3; tot += hh; tmin = Math.min(tmin, w.app); tmax = Math.max(tmax, w.app); rain += w.pr * hh;
-      if (w.ws * Math.cos((w.wd - P.b[i]) * RAD) > 5) head += hh;
+      const dt = Math.min(300e3, b.t - t), tm = t + dt / 2, km = kmAtT(tm), i = idxAtKm(km), w = wxAt(sIdx(km), tm); if (!w) continue;
+      const hh = dt / 3600e3, hd = w.ws * Math.cos((w.wd - P.b[i]) * RAD); tot += hh; tmin = Math.min(tmin, w.app); tmax = Math.max(tmax, w.app); rain += w.pr * hh;
+      if (hd > 5) head += hh; hsum += hd * hh; prob = Math.max(prob, w.prob || 0); if (!w.day) dark += hh;
+      if (!mid || Math.abs(tm - (a.t + b.t) / 2) < Math.abs(mid.t - (a.t + b.t) / 2)) mid = { t: tm, w };
     }
-    d.wx = tot > d.h * 0.5 ? { tmin, tmax, rain, head: head / tot } : null;
+    d.wx = tot > d.h * 0.5 ? { tmin, tmax, rain, head: head / tot, headAvg: hsum / tot, prob, dark: dark / tot } : null;
+    d.wxMid = mid && mid.w;
     out.push(d);
   }
   return out;
 }
 function renderLaps() {
-  const on = S.mode === 'ride' && !!S.laps && !!S.tl;
+  const on = (S.mode === 'ride' || S.mode === 'taf') && !!S.laps && !!S.tl;
   $('#lapCard').hidden = !on; if (!on) { LAPS.days = []; return; }
-  const laps = lapSummaries(), t0 = S.tl.start, opt = readOpt();
+  const laps = lapSummaries(), t0 = S.tl.start, opt = readOpt(), taf = !!S.laps.taf;
+  $('#lapCard h2').textContent = taf ? 'Aller et retour' : 'Météo tour par tour';
+  $('#lapCard thead th:first-child').textContent = taf ? 'Trajet' : 'Tour';
+  $('#lapCard thead th:last-child').textContent = taf ? 'Au travail' : 'Pause';
+  if (taf) {
+    const vs = laps.map(d => tripVerdict(d.wx));
+    $('#lapRows').innerHTML = laps.map((d, k) => `<tr><td><b>${S.laps.names[k]}</b></td><td>${whenTxt(d.a.t, t0)}</td><td>${whenTxt(d.b.t, t0)}</td>
+      <td class="num">${n1(d.dist)} km</td><td class="num">${n0(d.dplus)} m</td><td class="num">${durShort(d.h)}</td>
+      <td><div class="wk">${vdot(vs[k])}<div class="t">${d.wx ? `<b>${n0(d.wx.tmin)} à ${n0(d.wx.tmax)}° ressentis · ${d.wx.rain >= 0.1 ? 'pluie ' + n1(d.wx.rain) + ' mm' : 'sec'}</b>` : ''}<span class="vtxt l${Math.max(0, vs[k].lvl)}">${vs[k].txt}</span></div></div></td>
+      <td class="num">${d.pause == null ? '<span class="hint">à la maison</span>' : (d.late ? '<span class="late" title="Arrivée au travail après l\'heure du retour">⚠ 0 h 00</span>' : durShort(d.pause))}</td></tr>
+      <tr class="plan-wx"><td colspan="8"><canvas data-wx="${k}" aria-label="Météo du trajet ${S.laps.names[k].toLowerCase()}"></canvas></td></tr>`).join('');
+    LAPS.days = laps; drawPlanWx();
+    $('#lapFoot').innerHTML = '';
+    $('#lapCardHint').textContent = `Retour à ${opt.tafBack}, ${TAF.ret ? 'par un autre parcours' : 'même trace dans l\'autre sens'}.`;
+    return;
+  }
   $('#lapRows').innerHTML = laps.map((d, k) => `<tr><td><b>Tour ${k + 1}</b></td><td>${whenTxt(d.a.t, t0)}</td><td>${whenTxt(d.b.t, t0)}</td>
       <td class="num">${n1(d.dist)} km<br><span class="hint">km ${n0(d.a.km)} → ${n0(d.b.km)}</span></td><td class="num">${n0(d.dplus)} m</td><td class="num">${durShort(d.h)}</td>
       <td>${d.wx ? `${n0(d.wx.tmin)} à ${n0(d.wx.tmax)}° ressentis<br><span class="hint">${d.wx.rain >= 0.1 ? `pluie ${n1(d.wx.rain)} mm` : 'au sec'} · vent de face ${Math.round(d.wx.head * 100)} %</span>` : '<span class="hint">hors prévisions</span>'}</td>
@@ -3315,11 +3544,11 @@ function routeId(packed) { // empreinte du tracé : le même GPX rechargé ne cr
   return 'r' + (h >>> 0).toString(36) + packed.length.toString(36);
 }
 
-async function libSave(raw, name) {
+async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
   try {
     const pts = packPts(raw), id = routeId(pts), now = new Date().toISOString();
-    const meta = { id, name: name || 'Trace sans nom', km: +S.P.total.toFixed(2), dplus: Math.round(S.P.up), used_at: now };
-    LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {}
+    const meta = { id, name: name || 'Trace sans nom', km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now };
+    if (setCurrent) { LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {} }
     try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
     libUpsert({ ...meta, local: true });
     const sb = await sbIfLogged();
@@ -3381,6 +3610,7 @@ async function libRename() {
 $('#libRenOk').addEventListener('click', libRename);
 $('#libNewName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); libRename(); } else if (e.key === 'Escape') $('#libRenRow').hidden = true; });
 function libRender() {
+  tafRenderSel();
   const box = $('#libBox');
   box.hidden = !LIB.list.length;
   libQShow(); if (!$('#libList').hidden) libSuggest();
@@ -3463,9 +3693,9 @@ function applyAnim() { $('#map').classList.toggle('anim', $('#animOn').checked);
 try { if (localStorage.getItem('pmr-anim') === '0') $('#animOn').checked = false; } catch (e) {}
 $('#animOn').addEventListener('change', applyAnim);
 applyAnim();
-document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('.seg button[data-metric]').forEach(b => b.addEventListener('click', () => {
   S.metric = b.dataset.metric;
-  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  document.querySelectorAll('.seg button[data-metric]').forEach(x => x.setAttribute('aria-pressed', x === b));
   if (S.tl) renderMap();
 }));
 $('#optList').addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b) return; $('#time').value = b.dataset.time; run(); });
