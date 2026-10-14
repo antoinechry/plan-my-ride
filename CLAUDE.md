@@ -39,6 +39,9 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Style des flèches de vent : flèche colorée à fin contour noir (`WARROW`, 22 px) dans un rond blanc de 30 px (`.wring`, `ringSize`), couleurs de force franches (`WIND_SCALE`, 4e valeur = couleur du texte de la légende) ; même dessin dans l'export image.
 - Pastille sous chaque flèche : pictogramme du ciel (case « Ciel », `#skyOn`), température (`.wt`), puis vent « 9 km/h » (`.ww`, seulement avec les flèches). Sans flèches : ciel + température seuls sur la carte. Placement : une pastille ne peut pas en chevaucher une autre (`badgeBox` / `badgeHit`, rectangle selon le contenu), à l'écran comme dans l'export. `skyKind(w)` choisit d'après le code WMO de `wxAt` et `w.day` : soleil / lune, éclaircies (soleil ou lune + nuage), couvert, brouillard, pluie (aussi bruine et averses), neige, orage. Traits dans `SKY_P` (boîte 24×24), dessinés par `skySvg` à l'écran et `drawSky` (Path2D) dans l'export image. L'infobulle de la flèche ajoute ciel, température et pluie.
 
+## Polices
+- Depuis le 14/10/2026 (page de test) : Bricolage Grotesque (`--f-display` : titres, onglets, étiquettes, résumé, chiffres des tuiles), Manrope (`--f-body`), IBM Plex Mono (`--f-mono`), via Google Fonts. Avant : Barlow Condensed / Barlow. Bricolage est plus large que Barlow Condensed : tailles réduites (logo 26 px, onglets 14 px, résumé `.verdict` 21 px, `.stat .v` 23 px, étiquettes 11 px). Les canvas lisent les variables CSS.
+
 ## Thème
 - Choix en haut de page « ☀︎ / Auto / ☾ » (`#themeSeg`, `setTheme`) : `data-theme` = `light` / `dark` sur `<html>`, ou rien en automatique (suit l'appareil). Gardé dans `localStorage` `pmr-theme`, appliqué par un petit script en tête de `<head>` (pas de flash) ; `coach.html` lit la même clé et a aussi des règles `:root[data-theme="dark"]`. Les dessins canvas (profil, carte, graphes du jour) sont refaits au changement (`redrawTheme`).
 

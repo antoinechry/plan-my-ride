@@ -9,7 +9,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -20,8 +20,8 @@
   --sun:#d9930b; --rain:#2f7fd0; --warm:#d4521c;
   --head:#c3302f; --tail:#2c8a46; --cross:#8b97a2;
   --night:rgba(21,32,42,.07); --elev:#c9d3db; --elev-line:#7d8d9a;
-  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
-  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-display:"Bricolage Grotesque",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   color-scheme:light;
 }
@@ -44,13 +44,13 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:0 32px}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--muted);font-weight:600}
+.label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted);font-weight:600}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:18px 14px;max-width:1440px;margin-inline:auto}
 .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-right:auto}
-.brand h1{font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.brand h1{font-size:26px;font-weight:800;text-transform:uppercase;letter-spacing:.01em}
 .brand h1 span{color:var(--accent)}
 .brand p{margin:0;color:var(--muted);font-size:14px}
 .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:500}
@@ -58,7 +58,7 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn.small{padding:5px 10px;font-size:13px}
 .modes{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
-.modes a{padding:8px 16px;text-decoration:none;color:var(--muted);font-weight:600;font-family:var(--f-display);font-size:16px;letter-spacing:.04em;text-transform:uppercase}
+.modes a{padding:8px 14px;text-decoration:none;color:var(--muted);font-weight:700;font-family:var(--f-display);font-size:14px;letter-spacing:.03em;text-transform:uppercase}
 .modes a+a{border-left:1px solid var(--line)}
 .modes a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
 .mode-ultra{display:flex;flex-direction:column;gap:18px}
@@ -117,8 +117,8 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .wxuse.low .bar i{background:var(--head)}
 .wxuse b{font-weight:600;color:var(--ink)}
 .route-card{border:1px dashed var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px}
-.route-card strong{font-family:var(--f-display);font-size:18px;font-weight:600;overflow-wrap:anywhere}
-.route-card .tag{align-self:flex-start;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
+.route-card strong{font-family:var(--f-display);font-size:17px;font-weight:600;overflow-wrap:anywhere}
+.route-card .tag{align-self:flex-start;font-size:10px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
 hr.sep{border:0;border-top:1px solid var(--line);margin:0}
 .route-card .rev-btn{align-self:flex-start;margin-top:4px}
 aside.settings .imp-btn{justify-content:center;text-align:center;width:100%}
@@ -152,7 +152,7 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .status.err{border-color:var(--head);color:var(--head)}
 .status.load{color:var(--muted)}
 
-.verdict{font-family:var(--f-display);font-size:24px;font-weight:500;line-height:1.25;max-width:60ch}
+.verdict{font-family:var(--f-display);font-size:21px;font-weight:500;line-height:1.3;max-width:62ch}
 .verdict b{font-weight:700}
 .taf-warn{margin:8px 0 0;max-width:70ch}
 .test-band{background:#fff3c4;color:#5a4300;border-bottom:1px solid #e9d27a;padding:8px 16px;font-size:14px;text-align:center}
@@ -175,7 +175,7 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .lib-rename input{flex:1;min-width:0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .stat{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
-.stat .v{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .v{font-family:var(--f-display);font-size:23px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
 .stat .s{font-size:13px;color:var(--muted)}
 .stat .v small{font-size:15px;font-weight:500;color:var(--muted)}
 
@@ -212,12 +212,12 @@ body.fs-lock{overflow:hidden}
 .opt:first-child{border-top:0}
 .opt:hover{background:var(--bg)}
 .opt.sel{box-shadow:inset 3px 0 0 var(--accent)}
-.opt .h{font-family:var(--f-display);font-size:20px;font-weight:600}
+.opt .h{font-family:var(--f-display);font-size:18px;font-weight:600}
 .opt .d{font-size:13px;color:var(--muted);min-width:0}
 .opt .d b{color:var(--ink);font-weight:600}
 .bar{height:8px;border-radius:4px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
 .bar span{display:block;height:100%;background:var(--tail)}
-.pill{display:inline-block;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;padding:1px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-size:10px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;padding:1px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
 .pill.best{background:var(--tail);color:#fff}
 .pill.mine{background:var(--accent);color:var(--accent-ink)}
 @media (max-width:560px){.opt{grid-template-columns:52px minmax(0,1fr)}.opt .bar{display:none}}
@@ -237,7 +237,7 @@ body.fs-lock{overflow:hidden}
 .poi-off{padding:12px 14px;margin:0}
 .poi-on b{color:var(--ink);font-weight:600}
 .poi-table{width:100%;border-collapse:collapse;font-size:13.5px}
-.poi-table th{position:sticky;top:0;background:var(--panel);text-align:left;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);z-index:1}
+.poi-table th{position:sticky;top:0;background:var(--panel);text-align:left;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:11px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);z-index:1}
 .poi-table td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 .poi-table tr{cursor:pointer}
 .poi-table tr:hover td{background:var(--bg)}
@@ -261,7 +261,7 @@ body.fs-lock{overflow:hidden}
 .switch input:checked+.track::after{transform:translateX(14px)}
 .switch input:focus-visible+.track{outline:2px solid var(--accent);outline-offset:2px}
 table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
-th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.07em;font-size:11.5px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.07em;font-size:10.5px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
 td.num{font-family:var(--f-mono);font-size:12.5px}
 tr.stop td{background:var(--bg);color:var(--muted);font-style:italic}
@@ -298,7 +298,7 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:240px;border:2px dashed var(--line);border-radius:10px;background:var(--bg);cursor:pointer;text-align:center;padding:24px;transition:border-color .15s}
 .dropzone:hover,.dropzone:focus-within{border-color:var(--accent)}
 .dropzone svg{width:46px;height:46px;color:var(--accent)}
-.dropzone strong{font-family:var(--f-display);font-size:22px;font-weight:600}
+.dropzone strong{font-family:var(--f-display);font-size:20px;font-weight:600}
 .dropzone span{color:var(--muted);font-size:14px}
 .empty ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
 .empty ul b{color:var(--ink);font-weight:600}
@@ -417,7 +417,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .duo-col{min-width:0;display:flex;flex-direction:column;gap:8px}
 .duo-head{display:flex;flex-direction:column;gap:3px}
 .duo-head .ttl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.duo-head .ttl b{font-size:18px}
+.duo-head .ttl b{font-size:17px}
 .duo-head .ttl span{font-family:var(--f-mono);font-size:14px}
 .duo-head .sub{font-size:13px;color:var(--muted)}
 .duo-map{height:340px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
