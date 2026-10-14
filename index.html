@@ -2348,11 +2348,15 @@ async function placesEnsure() {
   }
   if (b) { const p = P.pts[P.n - 1]; b.s = Math.min(b.s, p.lat); b.n = Math.max(b.n, p.lat); b.w = Math.min(b.w, p.lon); b.e = Math.max(b.e, p.lon); boxes.push(b); }
   const seen = new Map(); let failed = 0;
-  for (const bx of boxes) {
-    const dl = 0.03, dn = 0.03 / Math.cos(((bx.s + bx.n) / 2) * RAD);
-    const bb = [bx.s - dl, bx.w - dn, bx.n + dl, bx.e + dn].map(v => v.toFixed(4)).join(',');
+  // 6 rectangles (≈ 240 km de trace) par requête : une trentaine de rectangles → 5 ou 6 requêtes
+  const groups = []; for (let k = 0; k < boxes.length; k += 6) groups.push(boxes.slice(k, k + 6));
+  for (const grp of groups) {
+    const parts = grp.map(bx => {
+      const dl = 0.03, dn = 0.03 / Math.cos(((bx.s + bx.n) / 2) * RAD);
+      return `node["place"~"^(city|town|village)$"]["name"](${[bx.s - dl, bx.w - dn, bx.n + dl, bx.e + dn].map(v => v.toFixed(4)).join(',')});`;
+    }).join('\n');
     try {
-      const els = await overpassFetch(`[out:json][timeout:30];\nnode["place"~"^(city|town|village)$"]["name"](${bb});\nout body;`, ctl.signal);
+      const els = await overpassFetch(`[out:json][timeout:60];\n(\n${parts}\n);\nout body;`, ctl.signal);
       for (const el of els) if (el.lat != null && !seen.has(el.id)) seen.set(el.id, { id: el.id, lat: el.lat, lon: el.lon, name: el.tags.name, place: el.tags.place, pop: +el.tags.population || 0 });
     } catch (e) { if (seq !== PLACES.seq) return; failed++; }
     if (seq !== PLACES.seq) return;
