@@ -108,6 +108,9 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .toggle{display:flex;align-items:center;gap:8px;cursor:pointer}
 .toggle input{accent-color:var(--accent);width:16px;height:16px}
 .hint{font-size:12.5px;color:var(--muted);margin:0}
+.wxlock{margin-top:8px;padding:9px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;background:var(--panel);font-size:12.5px;line-height:1.4;display:grid;gap:4px}
+.wxlock[hidden]{display:none}
+.wxlock .btn{justify-self:end}
 .wxuse{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.35}
 .wxuse .bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden;margin-bottom:4px}
 .wxuse .bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
@@ -474,11 +477,14 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </div>
     <hr class="sep">
     <div class="field">
-      <span class="label" id="wxSrcLbl">Source météo</span>
-      <div class="seg2 priv" role="group" aria-labelledby="wxSrcLbl" id="wxSrcSeg">
-        <button type="button" data-v="mb" aria-pressed="false">meteoblue</button>
-        <button type="button" data-v="om" aria-pressed="true">Open-Meteo</button>
-      </div>
+      <label class="label" for="wxSrcSel">Source météo</label>
+      <select id="wxSrcSel">
+        <option value="mb">meteoblue</option>
+        <option value="arome">AROME (Météo-France)</option>
+        <option value="met">MET Norway</option>
+        <option value="om">Open-Meteo</option>
+      </select>
+      <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Plan My Ride est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
       <p class="hint" id="wxSrcHint"></p>
       <div class="wxuse priv" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
@@ -627,7 +633,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <li><i>4</i><div><b>Gardez la feuille de route</b><span>Horaires et météo point par point, en CSV, et « Exporter l'image » pour partager carte, vent et profil.</span></div></li>
       <li><i>5</i><div><b>Plusieurs jours ? Page Ultra</b><span>Onglet « Ultra » : planification en N jours (même distance ou adaptée au terrain, fin de journée estimée), et épiceries, boulangeries, restos, points d'eau, hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
     </ol>
-    <p class="note">Météo Open-Meteo, jusqu'à 16 jours : plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
+    <p class="note">Météo au choix (« Source météo ») : AROME de Météo-France par défaut, très fin sur la France (4 jours), MET Norway (9 jours) ou Open-Meteo (16 jours) ; au-delà, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
 </dialog>
@@ -741,11 +747,14 @@ const sIdx = km => Math.round(km / S.P.total * (S.samples.length - 1));
 const VARS = ['temperature_2m','apparent_temperature','precipitation','precipitation_probability','weather_code','cloud_cover','wind_speed_10m','wind_direction_10m','wind_gusts_10m','is_day','sunshine_duration'];
 const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 
-// Open-Meteo : un seul appel pour tous les points d'échantillonnage (jusqu'à 16 jours).
-async function fetchOM(from, to) {
+// Open-Meteo : un seul appel pour tous les points d'échantillonnage (jusqu'à 16 jours). `model` : modèle imposé
+// (AROME_MODEL pour la source AROME : AROME France puis ARPEGE, 4 jours, sans probabilité de pluie).
+const AROME_MODEL = 'meteofrance_seamless';
+async function fetchOM(from, to, model) {
+  const vars = model ? VARS.filter(v => v !== 'precipitation_probability') : VARS;
   const lat = S.samples.map(s => s.lat.toFixed(4)).join(',');
   const lon = S.samples.map(s => s.lon.toFixed(4)).join(',');
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${VARS.join(',')}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars.join(',')}${model ? '&models=' + model : ''}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
   // 40 s au plus : si Open-Meteo ne répond pas, les horaires sont quand même calculés (sans météo)
   let res;
   try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined }); }
@@ -756,7 +765,7 @@ async function fetchOM(from, to) {
   const arr = Array.isArray(json) ? json : [json];
   if (arr.some(L => !L || !L.hourly || !Array.isArray(L.hourly.time))) throw new Error('réponse incomplète d\'Open-Meteo (réessaie dans quelques minutes).');
   return arr.map(L => {
-    const h = L.hourly, f = k => Float32Array.from(h[k].map(v => v == null ? NaN : v));
+    const h = L.hourly, f = k => Array.isArray(h[k]) ? Float32Array.from(h[k].map(v => v == null ? NaN : v)) : new Float32Array(h.time.length).fill(NaN);
     return { t0: h.time[0], n: h.time.length, temp: f('temperature_2m'), app: f('apparent_temperature'), pr: f('precipitation'),
       prob: f('precipitation_probability'), code: f('weather_code'), cc: f('cloud_cover'), ws: f('wind_speed_10m'),
       wd: f('wind_direction_10m'), gust: f('wind_gusts_10m'), day: f('is_day'), sun: f('sunshine_duration') };
@@ -769,13 +778,18 @@ async function fetchOM(from, to) {
 // est interpolé entre les deux points voisins, température corrigée de l'altitude. Pas de rafales ; nébulosité et
 // ensoleillement du paquet clouds-3h (pas de 3 h ramené à l'heure par la fonction), à défaut déduits du pictogramme.
 const MB_DAYS = 7, MB_KM = 20, MB_MAX = 8, MB_TTL = 2 * 3600e3, MB_CACHE = 'pmr-mb-pts2', MB_CREDITS = 16000, MB_PKG = 'basic-1h_clouds-3h';
-const WX_SRC = { om: 'Open-Meteo', mb: 'meteoblue' };
+// Sources météo du menu « Source météo ». meteoblue : compte du propriétaire seulement (cadenas en public).
+const WX_SRC = { mb: 'meteoblue', arome: 'AROME (Météo-France)', met: 'MET Norway', om: 'Open-Meteo' };
+const WX_KEYS = Object.keys(WX_SRC);
+// Horizon de chaque source (jours à partir d'aujourd'hui) : au-delà, Open-Meteo prend le relais.
+const WX_DAYS = { mb: MB_DAYS, arome: 4, met: 9 };
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
-  if (!hasSbToken()) return 'om';
-  try { const v = localStorage.getItem('pmr-wxsrc'); if (v === 'om' || v === 'mb') return v; } catch (e) {}
-  return 'mb';
+  const logged = hasSbToken();
+  let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
+  if (WX_KEYS.includes(v) && (v !== 'mb' || logged)) return v;
+  return logged ? 'mb' : 'arome';
 }
 // Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
 const MB_PICTO = [null, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 1, 1, 45, 45, 45, 3, 3, 3, 3, 61, 71, 65, 75, 95, 95, 75, 95, 80, 85, 61, 71, 67];
@@ -867,47 +881,180 @@ function mbSample(s, pts, L) {
   return out;
 }
 
-// Prévisions de la source choisie. meteoblue : 7 jours à partir d'aujourd'hui, Open-Meteo prend le relais au-delà
-// (S.wxAlt) ; en cas d'échec de meteoblue, tout passe sur Open-Meteo avec une note.
-async function getWeather(src, from, to, today) {
-  if (src === 'mb') {
-    const mbEnd = new Date(today); mbEnd.setDate(mbEnd.getDate() + MB_DAYS - 1);
-    if (!hasSbToken()) return { wx: await fetchOM(ymd(from), ymd(to)), used: 'om', fallback: 'nolog' };
-    if (from <= mbEnd) {
-      try {
-        const r = await fetchMB();
-        const alt = to > mbEnd ? await fetchOM(ymd(from), ymd(to)).catch(() => null) : null;
-        return { wx: r.wx, alt, used: alt ? 'mb+om' : 'mb', info: r };
-      } catch (err) {
-        const wx = await fetchOM(ymd(from), ymd(to));
-        return { wx, used: 'om', fallback: 'error', note: 'meteoblue indisponible (' + String(err.message || err).replace(/\.$/, '') + ') : prévisions Open-Meteo.' };
-      }
-    }
-    return { wx: await fetchOM(ymd(from), ymd(to)), used: 'om', fallback: 'horizon' };
+// MET Norway (api.met.no, Locationforecast 2.0 « complete », ~9 jours : horaire sur 2–3 jours puis pas de 6 h).
+// Appels simples depuis le navigateur (sans en-tête ajouté : le site est identifié par l'en-tête Origin, comme le
+// demandent les conditions d'utilisation), coordonnées à 4 décimales, un point tous les MET_KM km (au plus MET_MAX)
+// avec son altitude, MET_PAR appels à la fois ; chaque réponse est gardée jusqu'à son en-tête Expires (1 h au moins).
+// Les points d'échantillonnage sont interpolés entre deux points voisins comme pour meteoblue (mbSample).
+const MET_KM = 10, MET_MAX = 40, MET_TTL = 3600e3, MET_CACHE = 'pmr-met-pts', MET_PAR = 3;
+const MET_PENDING = new Map();
+const MET_SYM = { clearsky: 0, fair: 1, partlycloudy: 2, cloudy: 3, fog: 45,
+  lightrain: 61, rain: 63, heavyrain: 65, lightrainshowers: 80, rainshowers: 81, heavyrainshowers: 82,
+  lightsleet: 66, sleet: 67, heavysleet: 67, lightsleetshowers: 85, sleetshowers: 85, heavysleetshowers: 86,
+  lightsnow: 71, snow: 73, heavysnow: 75, lightsnowshowers: 85, snowshowers: 85, heavysnowshowers: 86 };
+function metCode(sym) {
+  if (!sym) return NaN;
+  const k = String(sym).replace(/_(day|night|polartwilight)$/, '');
+  if (/thunder/.test(k)) return 95;
+  return k in MET_SYM ? MET_SYM[k] : NaN;
+}
+const metKey = p => p.lat.toFixed(4) + ',' + p.lon.toFixed(4) + ',' + (p.asl == null ? '' : p.asl);
+function metCacheRead() {
+  try { const c = JSON.parse(localStorage.getItem(MET_CACHE) || '{}') || {}; for (const k in c) if (!(c[k] && c[k].exp > Date.now())) delete c[k]; return c; } catch (e) { return {}; }
+}
+function metCacheWrite(c) {
+  const keys = Object.keys(c).sort((a, b) => c[b].at - c[a].at);
+  for (const k of keys.slice(60)) delete c[k];
+  try { localStorage.setItem(MET_CACHE, JSON.stringify(c)); } catch (e) { try { localStorage.removeItem(MET_CACHE); } catch (_) {} }
+}
+// Réponse MET → séries horaires compactes (même convention qu'Open-Meteo : la pluie d'une heure est rangée à la fin de l'heure).
+function metCompact(json, p) {
+  const ts = json && json.properties && json.properties.timeseries;
+  if (!Array.isArray(ts) || ts.length < 2) throw new Error('réponse incomplète de MET Norway');
+  const E = ts.map(e => ({ t: Date.parse(e.time) / 1000, d: e.data || {} })).filter(e => isFinite(e.t)).sort((a, b) => a.t - b.t);
+  // périodes de pluie / ciel : next_1_hours si présent, sinon next_6_hours réparti sur 6 h
+  const per = [];
+  for (const e of E) {
+    const h1 = e.d.next_1_hours, h6 = e.d.next_6_hours, h = h1 || h6;
+    if (!h) continue;
+    const span = h1 ? 1 : 6, det = h.details || {};
+    per.push({ a: e.t, b: e.t + span * 3600, mm: isFinite(det.precipitation_amount) ? det.precipitation_amount / span : NaN,
+      prob: isFinite(det.probability_of_precipitation) ? det.probability_of_precipitation : NaN, code: metCode(h.summary && h.summary.symbol_code) });
   }
-  return { wx: await fetchOM(ymd(from), ymd(to)), used: 'om' };
+  const t0 = Math.ceil(E[0].t / 3600) * 3600, n = Math.floor((E[E.length - 1].t - t0) / 3600) + 1;
+  const r1 = v => isFinite(v) ? Math.round(v * 10) / 10 : null;
+  const q = { t0, n, temp: [], app: [], pr: [], prob: [], code: [], cc: [], ws: [], wd: [], gust: [], day: [], sun: [] };
+  let j = 0, k = 0;
+  for (let i = 0; i < n; i++) {
+    const t = t0 + i * 3600;
+    while (j < E.length - 2 && E[j + 1].t <= t) j++;
+    const A = E[j], B = E[j + 1] || A, f = B.t > A.t ? clamp((t - A.t) / (B.t - A.t), 0, 1) : 0;
+    const da = (A.d.instant && A.d.instant.details) || {}, db = (B.d.instant && B.d.instant.details) || {};
+    const lin = key => { const a = da[key], b = db[key]; return isFinite(a) && isFinite(b) ? a + (b - a) * f : (isFinite(a) ? a : (isFinite(b) ? b : NaN)); };
+    const T = lin('air_temperature'), rh = lin('relative_humidity'), cc = lin('cloud_area_fraction');
+    // vent par composantes (m/s → km/h), direction d'où il vient
+    const ua = da.wind_speed * Math.sin(da.wind_from_direction * RAD), va = da.wind_speed * Math.cos(da.wind_from_direction * RAD);
+    const ub = db.wind_speed * Math.sin(db.wind_from_direction * RAD), vb = db.wind_speed * Math.cos(db.wind_from_direction * RAD);
+    const u = isFinite(ub) ? ua + (ub - ua) * f : ua, v = isFinite(vb) ? va + (vb - va) * f : va;
+    const wsMs = Math.hypot(u, v);
+    // ressenti : température apparente (formule de Steadman, celle d'Open-Meteo)
+    const e = isFinite(rh) ? rh / 100 * 6.105 * Math.exp(17.27 * T / (237.7 + T)) : 0;
+    const app = T + 0.33 * e - 0.70 * wsMs - 4.0;
+    // heure qui se termine à t
+    const ts0 = t - 3600;
+    while (k < per.length - 1 && per[k].b <= ts0) k++;
+    const P = per[k] && per[k].a <= ts0 + 1800 ? per[k] : null;
+    const sr = sunRiseSet(t * 1000, p.lat, p.lon);
+    const day = sr ? (t * 1000 > sr.rise && t * 1000 < sr.set ? 1 : 0) : (Math.abs(p.lat) > 60 && ((new Date(t * 1000).getMonth() + 9) % 12 < 6) === (p.lat > 0) ? 0 : 1);
+    q.temp.push(r1(T)); q.app.push(r1(app)); q.cc.push(r1(cc));
+    q.ws.push(r1(wsMs * 3.6)); q.wd.push(isFinite(wsMs) ? Math.round((Math.atan2(u, v) / RAD + 360) % 360) : null);
+    q.gust.push(r1(lin('wind_speed_of_gust') * 3.6));
+    q.pr.push(P ? r1(P.mm) : null); q.prob.push(P ? r1(P.prob) : null); q.code.push(P && isFinite(P.code) ? P.code : null);
+    q.day.push(day); q.sun.push(day && isFinite(cc) ? Math.round((1 - cc / 100) * 3600) : 0);
+  }
+  return q;
+}
+function metSeries(q, p) {
+  const F = a => Float32Array.from(a, v => v == null ? NaN : v);
+  return { t0: q.t0, n: q.n, temp: F(q.temp), app: F(q.app), pr: F(q.pr), prob: F(q.prob), code: F(q.code), cc: F(q.cc),
+    ws: F(q.ws), wd: F(q.wd), gust: F(q.gust), day: F(q.day), sun: F(q.sun), asl: p.asl };
+}
+async function metPoint(p) {
+  const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${p.lat.toFixed(4)}&lon=${p.lon.toFixed(4)}` + (p.asl != null ? `&altitude=${Math.round(p.asl)}` : '');
+  let res;
+  try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined }); }
+  catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? 'MET Norway ne répond pas pour l\'instant' : 'pas de connexion au service MET Norway'); }
+  if (res.status === 429) throw new Error('MET Norway limite les demandes pour l\'instant, réessaie dans quelques minutes');
+  if (!res.ok) throw new Error(`MET Norway a répondu ${res.status}`);
+  const json = await res.json().catch(() => null);
+  const at = Date.now(), exp = Date.parse(res.headers.get('Expires') || '') || 0;
+  return { at, exp: Math.max(at + MET_TTL, exp), q: metCompact(json, p) };
+}
+async function fetchMET() {
+  const P = S.P, m = clamp(Math.ceil(P.total / MET_KM) + 1, 2, MET_MAX), pts = [];
+  for (let k = 0, i = 0; k < m; k++) {
+    const target = P.total * k / (m - 1);
+    while (i < P.n - 1 && P.d[i] < target) i++;
+    pts.push({ km: P.d[i], lat: +P.pts[i].lat.toFixed(4), lon: +P.pts[i].lon.toFixed(4), asl: P.hasEle ? Math.round(P.es[i]) : null });
+  }
+  let cache = metCacheRead();
+  // un même point (départ = arrivée d'une boucle) n'est demandé qu'une fois
+  const miss = [...new Map(pts.filter(p => !cache[metKey(p)]).map(p => [metKey(p), p])).values()];
+  if (miss.length) {
+    const rk = miss.map(metKey).join(';');
+    if (!MET_PENDING.has(rk)) MET_PENDING.set(rk, (async () => {
+      const got = new Array(miss.length); let next = 0;
+      const worker = async () => { while (next < miss.length) { const i = next++; got[i] = await metPoint(miss[i]); } };
+      await Promise.all(Array.from({ length: Math.min(MET_PAR, miss.length) }, worker));
+      const c = metCacheRead();
+      miss.forEach((p, i) => { c[metKey(p)] = got[i]; });
+      metCacheWrite(c);
+      return c;
+    })().finally(() => MET_PENDING.delete(rk)));
+    cache = { ...cache, ...(await MET_PENDING.get(rk)) };
+  }
+  const L = pts.map(p => metSeries(cache[metKey(p)].q, p));
+  return { wx: S.samples.map(s => mbSample(s, pts, L)), points: pts.length, at: Math.min(...pts.map(p => cache[metKey(p)].at)) };
+}
+
+// Prévisions de la source choisie. meteoblue (7 jours), AROME (4 jours) et MET Norway (9 jours) : au-delà de leur
+// horizon, Open-Meteo prend le relais (S.wxAlt) ; en cas d'échec, tout passe sur Open-Meteo avec une note.
+async function getWeather(src, from, to, today) {
+  const om = () => fetchOM(ymd(from), ymd(to));
+  if (src === 'om' || !WX_DAYS[src]) return { wx: await om(), used: 'om' };
+  if (src === 'mb' && !hasSbToken()) return { wx: await om(), used: 'om', fallback: 'nolog' };
+  const end = new Date(today); end.setDate(end.getDate() + WX_DAYS[src] - 1);
+  if (from > end) return { wx: await om(), used: 'om', fallback: 'horizon' };
+  try {
+    const r = src === 'mb' ? await fetchMB() : src === 'met' ? await fetchMET()
+      : { wx: await fetchOM(ymd(from), ymd(to < end ? to : end), AROME_MODEL) };
+    // le dernier jour d'AROME / MET peut être incomplet : relais dès que la fenêtre l'atteint
+    const needAlt = src === 'mb' ? to > end : to >= end;
+    const alt = needAlt ? await om().catch(() => null) : null;
+    return { wx: r.wx, alt, used: alt ? src + '+om' : src, info: src === 'arome' ? null : r };
+  } catch (err) {
+    const wx = await om();
+    return { wx, used: 'om', fallback: 'error', note: WX_SRC[src] + ' indisponible (' + String(err.message || err).replace(/\.$/, '') + ') : prévisions Open-Meteo.' };
+  }
 }
 const MB_LINK = '<a href="https://www.meteoblue.com" target="_blank" rel="noopener">meteoblue</a>';
 const OM_LINK = '<a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)';
-function wxCreditTxt() {
-  return S.wxUsed === 'mb' ? 'Météo meteoblue' : S.wxUsed === 'mb+om' ? 'Météo meteoblue et Open-Meteo.com (CC BY 4.0)' : 'Météo Open-Meteo.com (CC BY 4.0)';
-}
+const WX_LINK = { mb: MB_LINK, om: OM_LINK,
+  arome: '<a href="https://meteofrance.com" target="_blank" rel="noopener">Météo-France</a> (AROME, ARPEGE) via ' + OM_LINK,
+  met: '<a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (CC BY 4.0)' };
+const WX_TXT = { mb: 'meteoblue', om: 'Open-Meteo.com (CC BY 4.0)', arome: 'Météo-France (AROME, ARPEGE) via Open-Meteo.com (CC BY 4.0)', met: 'MET Norway (CC BY 4.0)' };
+// sources réellement utilisées (« arome+om » : la mention d'Open-Meteo est déjà dans celle d'AROME)
+const wxParts = used => { const p = String(used || 'om').split('+').filter(k => WX_TXT[k]); return p.includes('arome') ? p.filter(k => k !== 'om') : p; };
+function wxCreditTxt() { return 'Météo ' + wxParts(S.wxUsed).map(k => WX_TXT[k]).join(' et '); }
 function renderWxSrc() {
-  const src = wxSrc(), logged = hasSbToken();
-  setSeg('#wxSrcSeg', src);
-  const used = S.wxUsed || src, I = S.wxInfo;
+  const src = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
+  sel.value = src;
+  sel.querySelector('option[value="mb"]').textContent = logged ? 'meteoblue' : '🔒 meteoblue';
+  if (logged) $('#wxLock').hidden = true;
+  const used = S.wxUsed || src, I = S.wxInfo, name = WX_SRC[src];
   let h;
-  if (src === 'mb' && !logged) h = 'meteoblue est réservé à ton compte : connecte-toi à Coach Miguel. En attendant, prévisions Open-Meteo.';
-  else if (src === 'mb') {
+  if (src === 'mb') {
     h = 'Prévisions meteoblue (multi-modèles, calculées au point exact et à son altitude), jusqu\'à 7 jours';
     if (used === 'mb+om') h += ' ; au-delà, Open-Meteo prend le relais';
     if (S.wxFallback === 'horizon') h = 'meteoblue ne prévoit que 7 jours : prévisions Open-Meteo pour cette date';
     else if (S.wxFallback === 'error') h = 'meteoblue n\'a pas répondu : prévisions Open-Meteo pour l\'instant';
     else if (I) h += ` · ${I.points} points du parcours, prévision de ${hm.format(new Date(I.at))}`;
-    h += '. Vent à 10 m' + (src === 'mb' && !S.wxFallback && S.wxUsed ? ', sans rafales.' : '.');
-  } else h = 'Prévisions Open-Meteo (modèles AROME / ICON / GFS selon la zone), jusqu\'à 16 jours. Vent à 10 m.';
+    h += '. Vent à 10 m' + (!S.wxFallback && S.wxUsed ? ', sans rafales.' : '.');
+  } else if (src === 'om') h = 'Prévisions Open-Meteo (meilleurs modèles selon la zone : AROME, ICON, GFS…), jusqu\'à 16 jours. Vent à 10 m.';
+  else {
+    h = src === 'arome'
+      ? 'Modèles de Météo-France : AROME (maille de 1,3 km, France et pays voisins) sur 2 jours, puis ARPEGE jusqu\'à 4 jours'
+      : 'Prévisions de l\'institut météo norvégien (modèle nordique en Scandinavie, ECMWF ailleurs), à l\'altitude du parcours, heure par heure sur 2–3 jours puis par pas de 6 h jusqu\'à 9 jours';
+    if (S.wxFallback === 'horizon') h = `${name} ne prévoit que ${WX_DAYS[src]} jours : prévisions Open-Meteo pour cette date`;
+    else if (S.wxFallback === 'error') h = `${name} n'a pas répondu : prévisions Open-Meteo pour l'instant`;
+    else {
+      if (used === src + '+om') h += ' ; au-delà, Open-Meteo prend le relais';
+      if (src === 'met' && I && I.points) h += ` · ${I.points} points du parcours`;
+    }
+    h += '. Vent à 10 m.';
+  }
   $('#wxSrcHint').textContent = h;
-  $('#wxCredit').innerHTML = used === 'mb' ? MB_LINK : used === 'mb+om' ? MB_LINK + ' et ' + OM_LINK : OM_LINK;
+  $('#wxCredit').innerHTML = wxParts(used).map(k => WX_LINK[k]).join(' et ');
   renderWxUse(src, logged, S.wxFallback ? null : I);
   if (src === 'mb' && logged) mbUsageRefresh(false);
 }
@@ -1111,7 +1258,7 @@ async function run() {
       if (id !== runId) return;
       S.wx = S.wxAlt = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
       note = 'Météo indisponible : ' + (err.message === 'Failed to fetch' ? 'pas de connexion au service Open-Meteo.' : err.message) + ' Les horaires restent calculés.'
-        + (hasSbToken() && src === 'om' ? ' Tu peux aussi passer la source météo sur meteoblue.' : '');
+        + ' Tu peux aussi essayer une autre source météo.';
     }
   }
   if (id !== runId) return;
@@ -2539,11 +2686,16 @@ $('#poiRows').addEventListener('click', e => {
 });
 
 const durShort = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
-$('#wxSrcSeg').addEventListener('click', e => {
-  const b = e.target.closest('button[data-v]'); if (!b || b.dataset.v === wxSrc()) return;
-  try { localStorage.setItem('pmr-wxsrc', b.dataset.v); } catch (err) {}
+$('#wxSrcSel').addEventListener('change', e => {
+  const v = e.target.value;
+  // version publique : meteoblue verrouillé (version d'essai, débloqué plus tard avec un forfait)
+  if (v === 'mb' && !hasSbToken()) { e.target.value = wxSrc(); $('#wxLock').hidden = false; return; }
+  $('#wxLock').hidden = true;
+  if (v === wxSrc()) return;
+  try { localStorage.setItem('pmr-wxsrc', v); } catch (err) {}
   S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); schedule();
 });
+$('#wxLockOk').addEventListener('click', () => { $('#wxLock').hidden = true; });
 
 /* ---------- page Ultra : planification journalière ---------- */
 function cumUp() {
