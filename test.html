@@ -393,6 +393,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .taf-days input{min-width:0;width:100%}
 .taf-days .label{margin:0}
 .taf-days .hint{grid-column:1 / -1;margin:0}
+.taf-margin{display:grid;grid-template-columns:1fr 72px auto;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.taf-margin input{width:72px;min-width:0}
+.taf-dep{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:14px;line-height:1.35}
+.taf-dep b{font-size:17px;font-family:var(--f-mono)}
 </style>
 </head>
 <body>
@@ -509,6 +513,15 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <p class="lap-err" id="lapErr" role="alert" hidden></p>
     </div>
     <div class="taf-box" id="tafField" hidden>
+      <div class="field">
+        <span class="label" id="tafGoLbl">Pour l'aller, je choisis</span>
+        <div class="seg2" role="group" aria-labelledby="tafGoLbl" id="tafGoSeg">
+          <button type="button" data-v="dep" aria-pressed="true">L'heure de départ</button>
+          <button type="button" data-v="arr" aria-pressed="false">L'heure d'arrivée</button>
+        </div>
+        <div class="taf-margin" id="tafMarginRow" hidden><label for="tafMargin" title="Temps pour garer le vélo, se changer…">Marge à l'arrivée</label><input type="number" id="tafMargin" min="0" max="60" step="1" inputmode="numeric"><span>min</span></div>
+        <p class="taf-dep" id="tafDepOut" hidden></p>
+      </div>
       <div class="field"><label class="label" for="tafBack">Départ du retour</label><input type="time" id="tafBack" step="300"></div>
       <label class="toggle taf-perday"><input type="checkbox" id="tafPerDay"> Heures différentes selon le jour</label>
       <div class="taf-days" id="tafDays" hidden>
@@ -1281,7 +1294,9 @@ function readOpt() {
     // page Vélotaf : heure de départ du retour et trace du retour ('' = l'aller à l'envers)
     tafBack: $('#tafBack').value || '17:30', tafRet: TAF.ret,
     // heures différentes selon le jour de la semaine (1 = lundi … 5 = vendredi) : { go, back }
-    tafPerDay: $('#tafPerDay').checked, tafDays: JSON.parse(JSON.stringify(TAF.days)) };
+    tafPerDay: $('#tafPerDay').checked, tafDays: JSON.parse(JSON.stringify(TAF.days)),
+    // aller : heure de départ (dep) ou heure d'arrivée au travail (arr), avec une marge en minutes
+    tafGoMode: segVal('#tafGoSeg'), tafMargin: clamp(Math.round(+$('#tafMargin').value || 0), 0, 60) };
 }
 function startMs(opt, time) {
   const [y, m, d] = (opt.date || ymd(new Date())).split('-').map(Number);
@@ -1390,7 +1405,7 @@ async function run() {
   if (!S.P) return;
   const id = ++runId, opt0 = readOpt();
   saveOpt(opt0);
-  const opt = S.mode === 'taf' ? tafOpt(opt0, opt0.date) : opt0; // Vélotaf : heures du jour choisi
+  let opt = S.mode === 'taf' ? tafOpt(opt0, opt0.date) : opt0; // Vélotaf : heures du jour choisi
   // Vélotaf : trace du retour à charger (un autre parcours enregistré)
   if (S.mode === 'taf' && TAF.ret && TAF.id !== TAF.ret) {
     const P = await tafLoad(TAF.ret); if (id !== runId) return;
@@ -1398,7 +1413,8 @@ async function run() {
   }
   applyLaps(opt); // page Sortie : boucle répétée N fois
   if (S.mode === 'ultra') placesEnsure(); // villes des graphes du jour : sans attendre la météo
-  const t0 = startMs(opt);
+  const optArr = opt; opt = tafSolve(opt, false); // Vélotaf « heure d'arrivée » : départ estimé sans la météo (fenêtre)
+  let t0 = startMs(opt);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const maxDay = new Date(today); maxDay.setDate(maxDay.getDate() + 15);
   const from = new Date(t0); from.setHours(0, 0, 0, 0);
@@ -1410,7 +1426,7 @@ async function run() {
   // fenêtre de prévision nécessaire
   let endMax = simulate(t0, opt, false).end;
   for (const c of cand) endMax = Math.max(endMax, simulate(startMs(opt, c), opt, false).end);
-  for (const d of week) { const o = tafOpt({ ...opt0, date: ymd(d) }, ymd(d)); endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
+  for (const d of week) { const o = tafSolve(tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), false); endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
   const src = wxSrc();
@@ -1436,12 +1452,14 @@ async function run() {
   S.wx = wxExpand(S.wxBase); S.wxAlt = wxExpand(S.wxAltBase); // recopiée sur chaque tour
   note = note || S.wxNote || '';
   renderWxSrc();
+  if (optArr !== opt) { opt = tafSolve(optArr, true); t0 = startMs(opt); } // puis avec le vent
   S.tl = simulate(t0, opt, true);
+  tafDepShow(opt);
   if (S.wx && S.tl.st.missKm > 0.5) note = note || `La fin du parcours (${n0(S.tl.st.missKm)} km) dépasse l'horizon des prévisions.`;
   setStatus(note, note ? 'err' : '');
   const opts = S.wx ? cand.map(c => { const r = simulate(startMs(opt, c), opt, true); return { time: c, r, sc: score(r.st, S.P.total) }; }) : [];
   // Vélotaf : aller et retour de chaque jour ouvré de la semaine, aux mêmes heures
-  TAF.week = week.map(d => { const o = tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), r = simulate(startMs(o), o, !!S.wx); return { date: ymd(d), go: o.time, back: o.tafBack, trips: S.laps && S.laps.taf ? lapSummaries(r) : [] }; });
+  TAF.week = week.map(d => { const o = tafSolve(tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), !!S.wx), r = simulate(startMs(o), o, !!S.wx); return { date: ymd(d), go: o.time, arr: o.arrTarget, back: o.tafBack, trips: S.laps && S.laps.taf ? lapSummaries(r) : [] }; });
   renderAll(opts, opt);
 }
 
@@ -1598,7 +1616,8 @@ function renderSummary(opt) {
   }
   if (tafSum) { // Vélotaf : une phrase par trajet
     const vs = tafSum.map(d => tripVerdict(d.wx));
-    txt = `${dayFmt.format(new Date(tl.start))} : <b>aller</b> à ${hm.format(new Date(tafSum[0].a.t))}, ${vs[0].txt}${tafSum[0].wx ? ` (${n0(tafSum[0].wx.tmin)} °C ressentis)` : ''} ; <b>retour</b> à ${hm.format(new Date(tafSum[1].a.t))}, ${vs[1].txt}${tafSum[1].wx ? ` (${n0(tafSum[1].wx.tmin)} °C ressentis)` : ''}.`;
+    const ro = readOpt(), arrT = ro.tafGoMode === 'arr' ? tafOpt(ro, ro.date).time : '';
+    txt = `${dayFmt.format(new Date(tl.start))} : <b>aller</b> à ${hm.format(new Date(tafSum[0].a.t))}${arrT ? ` pour arriver à ${arrT}` : ''}, ${vs[0].txt}${tafSum[0].wx ? ` (${n0(tafSum[0].wx.tmin)} °C ressentis)` : ''} ; <b>retour</b> à ${hm.format(new Date(tafSum[1].a.t))}, ${vs[1].txt}${tafSum[1].wx ? ` (${n0(tafSum[1].wx.tmin)} °C ressentis)` : ''}.`;
   }
   $('#verdict').innerHTML = txt;
 }
@@ -2264,6 +2283,7 @@ function initInputs() {
     $('#date').value = ymd(d);
   }
   $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; tafRenderSel();
+  setSeg('#tafGoSeg', def.tafGoMode === 'arr' ? 'arr' : 'dep'); $('#tafMargin').value = def.tafMargin != null && isFinite(+def.tafMargin) ? def.tafMargin : 5;
   $('#tafPerDay').checked = !!def.tafPerDay; TAF.days = def.tafDays && typeof def.tafDays === 'object' ? def.tafDays : {};
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
   tafPerDayUI();
@@ -3246,8 +3266,30 @@ function tafOpt(o, date) {
   return { ...o, time: e.go || o.time, tafBack: e.back || o.tafBack };
 }
 function tafPerDayUI() {
-  const on = S.mode === 'taf' && $('#tafPerDay').checked;
+  const on = S.mode === 'taf' && $('#tafPerDay').checked, arr = S.mode === 'taf' && segVal('#tafGoSeg') === 'arr';
   $('#tafDays').hidden = !on; $('#time').closest('.field').hidden = on; $('#tafBack').closest('.field').hidden = on;
+  $('#tafMarginRow').hidden = !arr; if (!arr) $('#tafDepOut').hidden = true;
+  if (S.mode === 'taf') $('label[for="time"]').textContent = arr ? 'Arrivée au travail' : 'Départ de l\'aller';
+  $('#tafDays .label').textContent = arr ? 'Arrivée' : 'Aller';
+}
+$('#tafGoSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; setSeg('#tafGoSeg', b.dataset.v); tafPerDayUI(); schedule(); });
+$('#tafMargin').addEventListener('input', () => { if ($('#tafMargin').value !== '') schedule(); });
+/* Heure d'arrivée choisie (« L'heure d'arrivée ») : on cherche l'heure de départ qui fait arriver au travail
+   `marge` minutes avant, météo comprise (vent) : quelques essais successifs, départ arrondi à la minute inférieure. */
+function tafDepShow(o) {
+  const el = $('#tafDepOut'); el.hidden = !(S.mode === 'taf' && o.arrTarget); if (el.hidden) return;
+  const day = o.date !== $('#date').value ? ` (la veille, ${dayFmt.format(new Date(o.date + 'T12:00'))})` : '';
+  el.innerHTML = `Pour arriver à ${o.arrTarget}${o.tafMargin ? ` avec ${o.tafMargin} min de marge` : ''}, pars à <b>${o.time}</b>${day}.`;
+}
+function tafSolve(o, useWx) {
+  if (o.tafGoMode !== 'arr' || !S.laps || !S.laps.taf) return o;
+  const target = startMs(o) - (o.tafMargin || 0) * 60e3;
+  const arrive = t => { const r = simulate(t, o, useWx), s = r.stops.find(x => x.work); return s ? s.from : r.end; };
+  let t = target - 30 * 60e3;
+  for (let k = 0; k < 6; k++) { const d = target - arrive(t); t += d; if (Math.abs(d) < 20e3) break; }
+  t = Math.floor(t / 60e3) * 60e3; if (arrive(t) > target + 30e3) t -= 60e3;
+  const dt = new Date(t);
+  return { ...o, time: `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`, date: ymd(dt), arrTarget: o.time };
 }
 $('#tafPerDay').addEventListener('change', () => {
   // première activation : chaque jour reprend les heures actuelles
@@ -3340,14 +3382,14 @@ function renderWeek() {
   $('#weekCard').hidden = !on; if (!on) return;
   const opt = readOpt(), sel = opt.date;
   $('#weekHint').textContent = `Les 5 prochains jours ouvrés, ${opt.tafPerDay ? 'avec les heures de chaque jour' : 'aux mêmes heures'}. Clique sur un jour pour le détail.`;
-  $('#weekGoH').textContent = opt.tafPerDay ? '' : opt.time; $('#weekBackH').textContent = opt.tafPerDay ? '' : opt.tafBack;
+  $('#weekGoH').textContent = opt.tafPerDay ? '' : (opt.tafGoMode === 'arr' ? 'arrivée ' : '') + opt.time; $('#weekBackH').textContent = opt.tafPerDay ? '' : opt.tafBack;
   const fmtD = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
   const cell = d => {
     if (!d || !d.wx) return `<div class="wk">${vdot({ lvl: -1 })}<div class="t"><span>pas encore de prévision</span></div></div>`;
     const v = tripVerdict(d.wx), w = d.wxMid;
     return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${n0(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + n0(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? n1(d.wx.rain) + ' mm' : 'sec'} · ${d.wx.headAvg >= 4 ? 'face ' + n0(d.wx.headAvg) : d.wx.headAvg <= -4 ? 'dos ' + n0(-d.wx.headAvg) : 'vent faible'}${Math.abs(d.wx.headAvg) >= 4 ? ' km/h' : ''}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
   };
-  $('#weekRows').innerHTML = TAF.week.map(x => `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${x.go}">${opt.tafPerDay ? `<span class="wk-h">${x.go}</span>` : ''}${cell(x.trips[0])}</td><td data-l="Retour ${x.back}">${opt.tafPerDay ? `<span class="wk-h">${x.back}</span>` : ''}${cell(x.trips[1])}</td></tr>`).join('');
+  $('#weekRows').innerHTML = TAF.week.map(x => `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${x.arr ? 'départ ' + x.go : x.go}">${opt.tafPerDay || x.arr ? `<span class="wk-h">${x.arr ? `départ ${x.go} → ${x.arr}` : x.go}</span>` : ''}${cell(x.trips[0])}</td><td data-l="Retour ${x.back}">${opt.tafPerDay ? `<span class="wk-h">${x.back}</span>` : ''}${cell(x.trips[1])}</td></tr>`).join('');
 }
 $('#weekRows').addEventListener('click', e => { const tr = e.target.closest('tr[data-date]'); if (!tr) return; $('#date').value = tr.dataset.date; schedule(); });
 $('#tripSeg').addEventListener('click', e => {
