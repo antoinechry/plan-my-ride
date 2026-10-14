@@ -77,6 +77,13 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .monthnav .label{min-width:9.5em;text-align:center;font-weight:650}
 .iconbtn{width:2.2rem;height:2.2rem;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.05rem}
 .paint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.refbtn{display:inline-flex;align-items:center;gap:.4em}
+.refbtn .ico{display:inline-block;line-height:1}
+.refbtn.busy .ico{animation:refspin 1s linear infinite}
+.refbtn.ok{border-color:#2e9e5b;color:#2e9e5b}
+.refbtn.ko{border-color:#c0392b;color:#c0392b}
+@keyframes refspin{to{transform:rotate(360deg)}}
+@media (max-width:560px){.refbtn .lbl{display:none}}
 .profbtn{display:inline-flex;align-items:center;gap:.45em}
 .profbtn .av{display:inline-grid;place-items:center;width:1.55em;height:1.55em;border-radius:50%;background:var(--ink);color:var(--bg);font-size:.76rem;font-weight:700;line-height:1}
 .authform{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-width:380px}
@@ -283,6 +290,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       </div>
     </div>
     <div class="navlinks"><a class="btn" href="index.html">Plan My Ride</a>
+      <button class="btn refbtn" id="refbtn" hidden title="Récupérer les dernières activités et données santé d'intervals.icu"><span class="ico" aria-hidden="true">↻</span><span class="lbl">Actualiser</span></button>
       <button class="btn profbtn" id="profbtn" hidden aria-haspopup="dialog"><span class="av" id="profav">?</span>Profil</button></div>
   </header>
 
@@ -1810,6 +1818,30 @@ $('icuform').addEventListener('submit', async e => {
   await icuSync();
 });
 $('icusync').addEventListener('click', icuSync);
+// Bouton « Actualiser » de l'en-tête : synchro intervals.icu (activités + santé) sans passer par le profil.
+async function refreshAll(){
+  const b = $('refbtn'), lbl = b.querySelector('.lbl');
+  if (b.classList.contains('busy')) return;
+  b.classList.remove('ok', 'ko'); b.classList.add('busy'); b.disabled = true; lbl.textContent = 'Actualisation…';
+  const before = new Set(state.acts.map(a => a.source+':'+a.ext_id));
+  let ok = false, text = '';
+  try {
+    const r = await callFn('intervals', { action:'sync' });
+    if (!r.ok){ text = 'Échec'; b.title = 'Échec de la synchronisation : '+r.detail; return; }
+    await loadActivities(); renderCalendar();
+    await loadWellness();
+    const n = state.acts.filter(a => !before.has(a.source+':'+a.ext_id)).length;
+    ok = true; text = n ? (n === 1 ? '1 nouvelle' : n+' nouvelles') : 'À jour';
+    b.title = 'Dernière actualisation à '+new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})
+      + (n ? ' · '+n+' nouvelle(s) activité(s)' : ' · rien de nouveau');
+  } catch(e){
+    text = 'Échec'; b.title = 'Échec de la synchronisation : '+(e.message||e);
+  } finally {
+    b.classList.remove('busy'); b.disabled = false; b.classList.add(ok ? 'ok' : 'ko'); lbl.textContent = text;
+    setTimeout(() => { b.classList.remove('ok', 'ko'); lbl.textContent = 'Actualiser'; }, 4000);
+  }
+}
+$('refbtn').addEventListener('click', refreshAll);
 $('icuunlink').addEventListener('click', async () => {
   const r = await callFn('intervals', { action:'unlink' });
   if (!r.ok){ setMsg($('icumsg'), 'Échec : '+r.detail, true); return; }
@@ -1820,13 +1852,13 @@ $('icuunlink').addEventListener('click', async () => {
 // Connexion par mot de passe seulement (signInWithPassword). Le mot de passe se change dans le profil (updateUser) ;
 // « Mot de passe oublié » envoie un lien de réinitialisation qui ouvre le profil.
 function showAuth(){
-  $('authbox').hidden = false; $('app').hidden = true; $('profbtn').hidden = true;
+  $('authbox').hidden = false; $('app').hidden = true; $('profbtn').hidden = true; $('refbtn').hidden = true;
   if ($('profdlg').open) $('profdlg').close();
   $('state').textContent = 'Connecte-toi pour accéder à ton plan.';
 }
 async function showApp(user){
   state.user = user;
-  $('authbox').hidden = true; $('app').hidden = false; $('profbtn').hidden = false;
+  $('authbox').hidden = true; $('app').hidden = false; $('profbtn').hidden = false; $('refbtn').hidden = false;
   $('profav').textContent = (user.email || '?').charAt(0).toUpperCase();
   $('profemail').textContent = user.email || '';
   $('pwuser').value = user.email || '';
