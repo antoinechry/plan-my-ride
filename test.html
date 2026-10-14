@@ -121,6 +121,9 @@ aside.settings{background:var(--panel);border:1px solid var(--line);border-radiu
 .route-card .tag{align-self:flex-start;font-size:11px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
 hr.sep{border:0;border-top:1px solid var(--line);margin:0}
 .route-card .rev-btn{align-self:flex-start;margin-top:4px}
+aside.settings .imp-btn{justify-content:center;text-align:center;width:100%}
+.route-card .tag.fwd{color:#fff;background:var(--tail);border-color:var(--tail)}
+.route-card .tag.rev{color:#fff;background:var(--head);border-color:var(--head)}
 .route-card .rev-btn[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
 .lib-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .btn.danger{border-color:var(--head);color:var(--head)}
@@ -454,12 +457,12 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   </div>
   <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
   <a class="btn priv" href="coach.html">Coach Miguel</a>
-  <label class="btn primary" for="file">Importer un GPX</label>
-  <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
 </header>
 
 <div class="app">
   <aside class="settings" aria-label="Réglages de la sortie">
+    <label class="btn primary imp-btn" for="file">Importer un GPX</label>
+    <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
     <div class="route-card" id="routeCard">
       <span class="tag" id="routeTag">Aucune trace</span>
       <strong id="routeName">Pas encore de parcours</strong>
@@ -2482,6 +2485,7 @@ function loadRoute(raw, name, rev) {
   if (POI.list.length && POI.key.startsWith(routeSig() + '|')) attachToRoute(POI.list);
   $('#routeName').textContent = name || 'Trace sans nom';
   $('#routeTag').textContent = rev ? 'Sens inverse' : 'Votre trace';
+  $('#routeTag').classList.toggle('rev', !!rev); $('#routeTag').classList.toggle('fwd', !rev); // rouge = sens inverse, vert = sens du GPX
   const rb = $('#revBtn'); rb.hidden = false; rb.setAttribute('aria-pressed', String(!!rev));
   $('#empty').hidden = true; $('#results').hidden = false;
   if (map) map.invalidateSize();
