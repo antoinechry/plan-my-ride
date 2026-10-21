@@ -325,6 +325,22 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 #bilanout .wait{color:var(--muted)}
 #bilanout .err{color:var(--run)}
 .study .note{float:right;font-weight:750;font-size:.95rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 .55em;margin-left:8px}
+#profdlg{width:min(620px,calc(100vw - 24px))}
+#profdlg .mpanel{min-height:300px}
+.mform{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:10px}
+.mform label{display:flex;flex-direction:column;gap:4px;font-size:.84rem;color:var(--muted);min-width:0}
+.mform label small{font-size:.74rem}
+.mform .wide,.mform .mnums,.mform .msg{grid-column:1/-1}
+.mform .msg{margin:-4px 0 0}
+.mform input,.mform textarea{font:inherit;font-size:.92rem;color:var(--ink);border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.5rem .6rem;width:100%;min-width:0}
+.mnums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:640px){
+  #profdlg{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0}
+  #profdlg .dlg{padding:16px 14px calc(16px + env(safe-area-inset-bottom));min-height:100%;display:flex;flex-direction:column}
+  #profdlg .dlgfoot{margin-top:auto;padding-top:16px}
+  .mform{grid-template-columns:1fr}
+  .mnums{grid-template-columns:1fr 1fr}
+}
 .profgoals{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.86rem;color:var(--muted)}
 .profgoals label{display:flex;flex-direction:column;gap:3px}
 .profgoals input{width:7.5em;font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.45rem .55rem}
@@ -352,7 +368,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
     </div>
     <div class="navlinks"><a class="btn" href="index.html">Plan My Ride</a>
       <button class="btn refbtn" id="refbtn" hidden title="Récupérer les dernières activités et données santé d'intervals.icu"><span class="ico" aria-hidden="true">↻</span><span class="lbl">Actualiser</span></button>
-      <button class="btn profbtn" id="profbtn" hidden aria-haspopup="dialog"><span class="av" id="profav">?</span>Profil</button></div>
+      <button class="btn profbtn" id="profbtn" hidden aria-haspopup="dialog"><span class="av" id="profav">?</span>Mon menu</button></div>
   </header>
 
   <!-- Connexion -->
@@ -419,10 +435,8 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
         <div id="bilanout" aria-live="polite"></div>
       </div>
       <div class="cityrow">
-        <label for="cityin">📍 Ma ville</label>
-        <input id="cityin" type="text" list="citylist" placeholder="Ex. Ribeauvillé" autocomplete="off" enterkeyhint="done" maxlength="80">
-        <datalist id="citylist"></datalist>
         <span class="citynow" id="citynow"></span>
+        <button class="linkbtn" id="citychg" type="button">Changer de ville</button>
       </div>
       <div class="paint" role="group" aria-label="Remplir mes dispos">
         <span>Remplir mes dispos :</span>
@@ -446,29 +460,49 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 
 <button class="newver" id="newver" hidden>Nouvelle version disponible · Recharger</button>
 
-<dialog id="profdlg" aria-labelledby="proftitle">
+<dialog id="profdlg" class="menu" aria-labelledby="proftitle">
   <div class="dlg">
     <div class="ahead">
-      <div class="atitle"><h3 id="proftitle">Mon profil</h3><div class="meta" id="profemail"></div></div>
+      <div class="atitle"><h3 id="proftitle">Mon menu</h3><div class="meta" id="profemail"></div></div>
       <button class="iconbtn" id="profx" aria-label="Fermer">×</button>
     </div>
-    <h4>Mot de passe</h4>
-    <p class="sub" id="pwstate">Change ton mot de passe de connexion.</p>
-    <form id="pwset" class="authform">
-      <input type="email" id="pwuser" autocomplete="username" hidden>
-      <label>Nouveau mot de passe<input type="password" id="pwnew" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
-      <label>Confirmation<input type="password" id="pwnew2" required minlength="8" autocomplete="new-password"></label>
-      <div class="authact"><button class="btn primary" type="submit" id="pwsave">Enregistrer le mot de passe</button></div>
-    </form>
-    <p class="msg" id="pwmsg"></p>
-    <h4>Objectifs hebdo</h4>
-    <div class="profgoals">
-      <label>Sortie vélo longue (km)<input type="number" id="goalride" min="10" max="400" step="5" inputmode="numeric"></label>
-      <label>Sortie course (km)<input type="number" id="goalrun" min="2" max="60" step="1" inputmode="numeric"></label>
-      <label>Course, maxi (km)<input type="number" id="goalrunmax" min="2" max="80" step="1" inputmode="numeric"></label>
+    <div class="tabs" id="mtabs" role="tablist" aria-label="Mon menu">
+      <button role="tab" data-mtab="moi" aria-selected="true">Moi</button>
+      <button role="tab" data-mtab="obj" aria-selected="false">Objectifs</button>
+      <button role="tab" data-mtab="cnx" aria-selected="false">Connexions</button>
+      <button role="tab" data-mtab="cpt" aria-selected="false">Compte</button>
     </div>
-    <p class="msg" id="goalmsg"></p>
-    <h4>intervals.icu</h4>
+    <section class="mpanel" data-mpanel="moi" role="tabpanel">
+      <p class="sub">Ce que Miguel sait de toi : il s'en sert pour chaque séance, étude et bilan. Tout est enregistré au fil de la saisie.</p>
+      <div class="mform">
+        <label>Prénom<input type="text" id="me-prenom" maxlength="40" autocomplete="given-name"></label>
+        <label>📍 Ma ville <small>météo du calendrier et départ des traces</small><input id="cityin" type="text" list="citylist" placeholder="Ex. Ribeauvillé" autocomplete="off" enterkeyhint="done" maxlength="80"><datalist id="citylist"></datalist></label>
+        <p class="msg" id="citymsg"></p>
+        <label class="wide">Objectif principal<input type="text" id="me-objectif" maxlength="160"></label>
+        <label class="wide">Terrain habituel<input type="text" id="me-terrain" maxlength="160"></label>
+        <label class="wide">Matériel<input type="text" id="me-materiel" maxlength="200"></label>
+        <div class="mnums">
+          <label>FTP vélo (W)<input type="number" id="me-ftp" min="80" max="500" inputmode="numeric"></label>
+          <label>FC seuil vélo<input type="number" id="me-lthr" min="100" max="210" inputmode="numeric"></label>
+          <label>FC seuil course<input type="number" id="me-lthrrun" min="100" max="210" inputmode="numeric"></label>
+          <label>FC max<input type="number" id="me-fcmax" min="120" max="230" inputmode="numeric"></label>
+        </div>
+        <label class="wide">À ne pas programmer<input type="text" id="me-exclure" maxlength="200"></label>
+        <label class="wide">À savoir pour Miguel <small>blessures, habitudes, contraintes…</small><textarea id="me-notes" maxlength="800" rows="4"></textarea></label>
+      </div>
+      <p class="saved" id="mesave"></p>
+    </section>
+    <section class="mpanel" data-mpanel="obj" role="tabpanel" hidden>
+      <p class="sub">Objectifs de chaque semaine, suivis dans la carte « Objectifs de la semaine ».</p>
+      <div class="profgoals">
+        <label>Sortie vélo longue (km)<input type="number" id="goalride" min="10" max="400" step="5" inputmode="numeric"></label>
+        <label>Sortie course (km)<input type="number" id="goalrun" min="2" max="60" step="1" inputmode="numeric"></label>
+        <label>Course, maxi (km)<input type="number" id="goalrunmax" min="2" max="80" step="1" inputmode="numeric"></label>
+      </div>
+      <p class="msg" id="goalmsg"></p>
+    </section>
+    <section class="mpanel" data-mpanel="cnx" role="tabpanel" hidden>
+      <h4 style="margin-top:0">intervals.icu</h4>
       <div>
         <p class="sub" id="icustate">Source : intervals.icu</p>
         <form id="icuform" hidden style="margin-top:10px">
@@ -486,8 +520,22 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
         <p class="msg" id="icumsg"></p>
         <div id="icumiss" class="msg" hidden></div>
       </div>
-    <div class="dlgfoot">
+    </section>
+    <section class="mpanel" data-mpanel="cpt" role="tabpanel" hidden>
+      <h4 style="margin-top:0">Mot de passe</h4>
+      <p class="sub" id="pwstate">Change ton mot de passe de connexion.</p>
+      <form id="pwset" class="authform">
+        <input type="email" id="pwuser" autocomplete="username" hidden>
+        <label>Nouveau mot de passe<input type="password" id="pwnew" required minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></label>
+        <label>Confirmation<input type="password" id="pwnew2" required minlength="8" autocomplete="new-password"></label>
+        <div class="authact"><button class="btn primary" type="submit" id="pwsave">Enregistrer le mot de passe</button></div>
+      </form>
+      <p class="msg" id="pwmsg"></p>
+      <h4>Session</h4>
       <button class="btn" id="logout">Se déconnecter</button>
+    </section>
+    <div class="dlgfoot">
+      <span></span>
       <button class="btn primary" id="profclose">Fermer</button>
     </div>
   </div>
@@ -1207,7 +1255,7 @@ function buildStudyPrompt(a, raw){
   return [
     'Fais l\'étude de cette sortie réalisée le '+longFmt.format(d)+' '+d.getFullYear()+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.',
     '',
-    'Profil et objectifs :', ...PROFILE,
+    'Profil et objectifs :', ...profileLines(),
     '',
     'La sortie :', ...S,
     '',
@@ -1744,7 +1792,7 @@ function syncAskSport(){
   // Trace GPX : vélo dehors seulement. Départ de « ma ville » (celle de la météo) ou d'un autre lieu.
   const out = ask.sport === 'ride' && $('askwhere').value === 'out', city = state.reglages.ville;
   const o = $('askstart').querySelector('[value="city"]');
-  o.textContent = city ? 'De '+city : 'De ma ville (à indiquer au-dessus du calendrier)'; o.disabled = !city;
+  o.textContent = city ? 'De '+city : 'De ma ville (à indiquer dans ton menu)'; o.disabled = !city;
   if (!city && $('askstart').value === 'city') $('askstart').value = 'other';
   $('askstartwrap').hidden = $('askhourwrap').hidden = !out;
   $('askaddr').hidden = !out || $('askstart').value !== 'other';
@@ -1768,15 +1816,30 @@ function weekStats(ws){
   }
   return { rideKm, runKm, rideMax, runMax, swimKm };
 }
-const PROFILE = [
-  '- Objectif principal : un trail de 30 km en 2027.',
-  '- Objectifs hebdo du plan : une sortie vélo d\'environ 100 km et une sortie course de 10 à 12 km.',
-  '- Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure.',
-  '- Matériel : vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift). FTP provisoire d\'environ 210 W, pas encore testée : exprime l\'intensité en zones de fréquence cardiaque (Z1 à Z5) et en ressenti (RPE sur 10) ; des watts seulement à titre indicatif.',
-  '- Terrain : autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
-  '- Il fait son renforcement à part : ne le programme pas.',
-  '- Il nage aussi, en complément (piscine ou eau libre).'
-];
+// Portrait de l'athlète pour Miguel : rubrique « Moi » du menu (doc « reglages », clé moi), sinon ces valeurs par défaut.
+const ME_DEF = {
+  prenom: 'Antoine',
+  objectif: 'Un trail de 30 km en 2027.',
+  terrain: 'Autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
+  materiel: 'Vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift), montre Garmin, compteur COROS Dura.',
+  ftp: 205, lthr: 165, lthrrun: 168, fcmax: 182,
+  exclure: 'Le renforcement (abdos, haut du corps) : il le fait à part.',
+  notes: 'Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure. Il nage aussi, en complément (piscine ou eau libre).'
+};
+const me = () => Object.assign({}, ME_DEF, state.reglages.moi || {});
+function profileLines(){
+  const m = me(), g = goals(), out = [];
+  if (m.prenom) out.push('- Prénom : '+m.prenom+' (tutoie-le).');
+  if (m.objectif) out.push('- Objectif principal : '+m.objectif);
+  out.push('- Objectifs hebdo du plan : une sortie vélo d\'au moins '+g.ride+' km et une sortie course de '+g.run+' à '+g.runMax+' km.');
+  if (m.notes) out.push('- À savoir : '+m.notes);
+  if (m.materiel) out.push('- Matériel : '+m.materiel);
+  const z = [m.ftp ? 'FTP vélo '+m.ftp+' W' : '', m.lthr ? 'FC seuil vélo '+m.lthr+' bpm' : '', m.lthrrun ? 'FC seuil course '+m.lthrrun+' bpm' : '', m.fcmax ? 'FC max '+m.fcmax+' bpm' : ''].filter(Boolean);
+  if (z.length) out.push('- Repères : '+z.join(', ')+'. Les cibles des séances sont en % de la FTP (vélo) et de la FC seuil (course) ; donne aussi les zones de FC (Z1 à Z5) et le ressenti (RPE sur 10).');
+  if (m.terrain) out.push('- Terrain : '+m.terrain);
+  if (m.exclure) out.push('- Ne programme pas : '+m.exclure);
+  return out;
+}
 function buildPrompt(k, prev){
   const d = new Date(k+'T00:00:00'), pd = planDay(d), series = computeSeries(), alerts = computeAlerts(series);
   const past = series.filter(p => !p.future), now = past[past.length-1], wk = past[Math.max(0, past.length-8)];
@@ -1806,7 +1869,7 @@ function buildPrompt(k, prev){
     'Propose UNE séance pour le '+longFmt.format(d)+' '+d.getFullYear()+(pd >= 1 ? ' (jour '+pd+' du plan, semaine '+planWeek(d)+')' : '')+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.',
     '',
     'Profil et objectifs :',
-    ...PROFILE,
+    ...profileLines(),
     '',
     'État actuel (modèle forme/fatigue sur la charge d\'entraînement) : '+(now ? 'forme '+nf1.format(now.ctl)+', fatigue '+nf1.format(now.atl)+', fraîcheur '+fmtSigned(now.tsb)+', évolution de la forme sur 7 jours '+fmtSigned(now.ctl-wk.ctl)+'.' : 'pas de données.'),
     ...(WX.days[k] ? ['Météo prévue ce jour-là à '+(state.reglages.ville || 'sa ville')+' : '+wxText(WX.days[k])+'. Tiens-en compte (pluie, vent fort, froid : séance adaptée ou home trainer, et dis-le dans pourquoi).'] : []),
@@ -2316,8 +2379,9 @@ function renderCityNow(){
   const r = state.reglages, el = $('citynow'), w = WX.days[key(t0)];
   if (document.activeElement !== $('cityin')) $('cityin').value = r.ville || '';
   el.classList.remove('err');
-  if (!r.ville){ el.textContent = 'Indique ta ville pour voir la météo dans le calendrier.'; return; }
-  if (!w){ el.textContent = WX.err || ''; return; }
+  $('citychg').textContent = r.ville ? 'Changer de ville' : 'Indiquer ma ville';
+  if (!r.ville){ el.textContent = '📍 Indique ta ville pour voir la météo dans le calendrier.'; return; }
+  if (!w){ el.textContent = '📍 '+r.ville+(WX.err ? ' · '+WX.err : ''); return; }
   el.innerHTML = '<span aria-hidden="true">'+wxEmoji(w.code)+'</span> Aujourd\'hui <b>'+esc(WX_TXT[w.code] || '')+'</b>, '+Math.round(w.tmin)+' à '+Math.round(w.tmax)+' °C'
     + (r.admin ? ' <span title="'+esc(r.admin)+'">· '+esc(r.admin)+'</span>' : '');
 }
@@ -2344,14 +2408,15 @@ async function setCity(){
     if (r.ville && (v === r.ville || v === suggLabel({ name: r.ville, admin: r.admin }))) return;
     let pick = WX.sugg.find(x => suggLabel(x) === v);
     if (!pick){
-      $('citynow').textContent = 'Recherche…';
+      setMsg($('citymsg'), 'Recherche…');
       try { pick = (await geocode(v.split(',')[0], 6))[0]; } catch(_){ pick = null; }
     }
-    if (!pick){ $('citynow').textContent = 'Ville introuvable, essaie une autre orthographe.'; $('citynow').classList.add('err'); return; }
+    if (!pick){ setMsg($('citymsg'), 'Ville introuvable, essaie une autre orthographe.', true); return; }
     Object.assign(r, { ville: pick.name, admin: pick.admin, lat: pick.lat, lon: pick.lon });
   }
   $('cityin').value = r.ville || ''; $('cityin').blur();
-  try { await saveDoc('reglages', r); } catch(_){ $('citynow').textContent = 'Échec de l\'enregistrement de la ville.'; }
+  try { await saveDoc('reglages', r); setMsg($('citymsg'), r.ville ? 'Ville enregistrée : '+r.ville+(r.admin ? ' ('+r.admin+')' : '')+'.' : 'Ville retirée.'); }
+  catch(_){ setMsg($('citymsg'), 'Échec de l\'enregistrement de la ville.', true); }
   WX.err = null; await loadCityWx(true); renderCalendar();
 }
 $('cityin').addEventListener('change', setCity);
@@ -2462,7 +2527,7 @@ function buildWeekPrompt(ws){
     'Fais le bilan de la semaine du '+longFmt.format(ws)+' au '+longFmt.format(we)+' '+we.getFullYear()+(we >= PLAN_START ? ' (semaine '+planWeek(we)+' du plan)' : '')+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.'
       + (ongoing ? ' La semaine n\'est pas finie : fais le point à date et dis ce qu\'il reste à faire d\'ici dimanche.' : ''),
     '',
-    'Profil et objectifs :', ...PROFILE,
+    'Profil et objectifs :', ...profileLines(),
     '',
     'Objectifs hebdo : une sortie vélo d\'au moins '+g.ride+' km et une sortie course de '+g.run+' à '+g.runMax+' km.',
     '- Vélo : '+(gw.ride.ok ? 'atteint ('+nf1.format(gw.ride.best)+' km)' : 'pas atteint'+(gw.ride.best ? ', plus longue '+nf1.format(gw.ride.best)+' km' : '')+(gw.ride.plan ? ', une sortie de ≈ '+nf0.format(gw.ride.plan.km)+' km est prévue le '+key(gw.ride.plan.d) : '')),
@@ -2571,6 +2636,7 @@ async function showApp(user){
   } catch(e){
     setMsg($('authmsg'), 'Impossible de charger tes données : '+(e.message||e), true);
   }
+  $('profav').textContent = (me().prenom || user.email || '?').charAt(0).toUpperCase();
   renderCalendar();
   renderCityNow();
   loadCityWx(false);
@@ -2590,7 +2656,7 @@ async function init(){
     if (session && (!state.user || state.user.id !== session.user.id)) showApp(session.user);
     if (!session && state.user){ state.user = null; showAuth(); }
     // Retour du lien « Mot de passe oublié » : on ouvre directement le choix du nouveau mot de passe.
-    if (ev === 'PASSWORD_RECOVERY') setTimeout(() => openProfile(true), 300);
+    if (ev === 'PASSWORD_RECOVERY') setTimeout(() => openProfile('cpt', true), 300);
   });
 }
 
@@ -2617,14 +2683,38 @@ $('pwforgot').addEventListener('click', async () => {
 });
 
 // Profil : mot de passe, intervals.icu, déconnexion
-function openProfile(recovery){
+// Menu utilisateur : Moi (portrait pour Miguel, ville), Objectifs, Connexions (intervals.icu), Compte (mot de passe, déconnexion).
+function setMenuTab(t){
+  for (const b of $('mtabs').querySelectorAll('[data-mtab]')) b.setAttribute('aria-selected', String(b.dataset.mtab === t));
+  for (const p of document.querySelectorAll('#profdlg .mpanel')) p.hidden = p.dataset.mpanel !== t;
+}
+$('mtabs').addEventListener('click', e => { const b = e.target.closest('[data-mtab]'); if (b) setMenuTab(b.dataset.mtab); });
+const ME_FIELDS = { prenom: 'me-prenom', objectif: 'me-objectif', terrain: 'me-terrain', materiel: 'me-materiel', ftp: 'me-ftp', lthr: 'me-lthr', lthrrun: 'me-lthrrun', fcmax: 'me-fcmax', exclure: 'me-exclure', notes: 'me-notes' };
+function fillMe(){ const m = me(); for (const [k, id] of Object.entries(ME_FIELDS)) $(id).value = m[k] ?? ''; $('mesave').textContent = ''; setMsg($('citymsg'), ''); }
+let meTimer = null;
+function onMeInput(){
+  const m = {};
+  for (const [k, id] of Object.entries(ME_FIELDS)){
+    const el = $(id), v = el.value.trim();
+    m[k] = el.type === 'number' ? (v === '' ? null : Math.round(Number(v))) : v;
+  }
+  state.reglages.moi = m; $('mesave').textContent = 'Enregistrement…';
+  clearTimeout(meTimer);
+  meTimer = setTimeout(async () => {
+    try { await saveDoc('reglages', state.reglages); $('mesave').textContent = 'Enregistré'; } catch(_){ $('mesave').textContent = 'Échec de l\'enregistrement, réessaie.'; }
+  }, 700);
+}
+for (const id of Object.values(ME_FIELDS)) $(id).addEventListener('input', onMeInput);
+function openProfile(tab, recovery){
   setMsg($('pwmsg'), ''); $('pwnew').value = ''; $('pwnew2').value = '';
   $('pwstate').textContent = recovery ? 'Choisis ton nouveau mot de passe.' : 'Change ton mot de passe de connexion.';
-  fillGoalInputs();
+  fillGoalInputs(); fillMe(); renderCityNow();
+  setMenuTab(tab || 'moi');
   if (!$('profdlg').open) $('profdlg').showModal();
   if (recovery) $('pwnew').focus();
 }
-$('profbtn').addEventListener('click', () => openProfile(false));
+$('profbtn').addEventListener('click', () => openProfile('moi'));
+$('citychg').addEventListener('click', () => { openProfile('moi'); setTimeout(() => $('cityin').focus(), 50); });
 $('profclose').addEventListener('click', () => $('profdlg').close());
 $('profx').addEventListener('click', () => $('profdlg').close());
 $('profdlg').addEventListener('click', e => { if (e.target === $('profdlg')) $('profdlg').close(); });
@@ -2682,7 +2772,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-21f';
+const APP_VERSION = '2026-10-21g';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
