@@ -98,6 +98,7 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .lmode button{border:none;background:var(--surface);padding:.28rem .75rem;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--muted)}
 .lmode button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .lkeys{flex:1;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 14px;font-size:.82rem;color:var(--muted)}
+.lkeys span{white-space:nowrap}
 .lkeys b{font-weight:700;color:var(--c,var(--ink));font-variant-numeric:tabular-nums}
 .lkeys i{font-style:normal;display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--c);margin-right:.35em}
 .iconbtn.sm{width:1.8rem;height:1.8rem;font-size:.85rem}
@@ -1435,6 +1436,8 @@ function wellSummary(at){
   }
   return out;
 }
+// Date d'un relevé Garmin : « aujourd'hui », « hier », sinon « 14 oct. ».
+const relDay = k => { if (!k) return ''; const n = Math.round((t0 - new Date(k+'T00:00:00'))/86400000); return n <= 0 ? 'aujourd\'hui' : n === 1 ? 'hier' : shortDate(k); };
 const fmtSleep = s => { const m = Math.round(s/60); return Math.floor(m/60)+' h '+pad(m%60); };
 const shortDate = k => new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(new Date(k+'T00:00:00'));
 function healthTile(id, label, color, valueHTML, subHTML, hasData, empty){
@@ -1453,17 +1456,21 @@ function renderHealth(){
   $('healthcard').hidden = false;
   const S = wellSummary();
   const w = S.weight, r = S.restingHR, h = S.hrv, sl = S.sleepSecs, sc = S.sleepScore, v = S.vo2max;
-  $('hkeys').innerHTML = v.last ? '<span>VO2max <b>'+nf0.format(v.last)+'</b></span>' : '';
+  // Dernière mise à jour des données Garmin (relevé le plus récent, toutes données confondues).
+  const lastK = Object.values(S).map(o => o.lastDate).filter(Boolean).sort().pop();
+  $('hkeys').innerHTML = (lastK ? '<span title="Dernier relevé Garmin reçu par intervals.icu">Màj <b>'+relDay(lastK)+'</b></span>' : '')
+    + (v.last ? '<span>VO2max <b>'+nf0.format(v.last)+'</b></span>' : '');
+  const upd = o => o.lastDate ? '<span title="Dernier relevé">relevé '+(relDay(o.lastDate).match(/^\d/) ? 'du ' : '')+relDay(o.lastDate)+'</span> · ' : '';
   $('hgrid').innerHTML = [
     healthTile('hc-wt', 'Poids', '--c-wt', w.last != null ? nf1.format(w.last)+'<small>kg</small>'+(S.bodyFat.last != null ? '<small>· '+nf1.format(S.bodyFat.last)+' % MG</small>' : '') : '',
-      w.last != null ? 'pesée du '+shortDate(w.lastDate)+(w.m30 != null ? ' · '+deltaTxt(w.last, w.m30, ' kg', null, true) : '') : '', w.last != null,
+      w.last != null ? 'pesée '+(relDay(w.lastDate).match(/^\d/) ? 'du ' : '')+relDay(w.lastDate)+(w.m30 != null ? ' · '+deltaTxt(w.last, w.m30, ' kg', null, true) : '') : '', w.last != null,
       'Pas encore de pesée. Monte sur ta balance Garmin : le poids remontera ici à la prochaine synchro.'),
     healthTile('hc-rhr', 'FC au repos', '--c-rhr', r.last != null ? nf0.format(r.last)+'<small>bpm</small>' : '',
-      (r.m7 != null ? 'moy. 7 j '+nf0.format(r.m7)+' · ' : '')+deltaTxt(r.m7, r.m30, ' bpm', false), r.last != null, 'Pas de donnée.'),
+      upd(r)+(r.m7 != null ? 'moy. 7 j '+nf0.format(r.m7)+' · ' : '')+deltaTxt(r.m7, r.m30, ' bpm', false), r.last != null, 'Pas de donnée.'),
     healthTile('hc-hrv', 'VFC (nuit)', '--c-hrv', h.last != null ? nf0.format(h.last)+'<small>ms</small>' : '',
-      (h.m7 != null ? 'moy. 7 j '+nf0.format(h.m7)+' · ' : '')+deltaTxt(h.m7, h.m30, ' ms', true), h.last != null, 'Pas de donnée.'),
+      upd(h)+(h.m7 != null ? 'moy. 7 j '+nf0.format(h.m7)+' · ' : '')+deltaTxt(h.m7, h.m30, ' ms', true), h.last != null, 'Pas de donnée.'),
     healthTile('hc-sleep', 'Sommeil', '--c-sleep', sl.last != null ? fmtSleep(sl.last)+(sc.last != null ? '<small>score '+nf0.format(sc.last)+'</small>' : '') : '',
-      sl.m7 != null ? 'moy. 7 j '+fmtSleep(sl.m7)+(sl.m30 != null ? ' · 30 j '+fmtSleep(sl.m30) : '') : '', sl.last != null, 'Pas de donnée.')
+      upd(sl)+(sl.m7 != null ? 'moy. 7 j '+fmtSleep(sl.m7)+(sl.m30 != null ? ' · 30 j '+fmtSleep(sl.m30) : '') : ''), sl.last != null, 'Pas de donnée.')
   ].join('');
   drawHealth();
 }
