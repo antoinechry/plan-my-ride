@@ -2559,6 +2559,9 @@ function initInputs() {
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
   tafPerDayUI();
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
+  // Heure de départ transmise par Coach Miguel (« Ouvrir dans Plan My Ride » d'une sortie proposée), page Sortie seulement.
+  if (S.mode === 'ride') { let rt = ''; try { rt = sessionStorage.getItem('pmr-ride-time') || ''; sessionStorage.removeItem('pmr-ride-time'); } catch (e) {}
+    if (/^\d\d:\d\d$/.test(rt)) $('#time').value = rt; }
   $('#windOn').checked = !!def.windOn;
   $('#laps').value = clamp(Math.round(+def.laps || 1), 1, 50);
   $('#lapPause').value = isFinite(+def.lapPause) && def.lapPause !== '' && def.lapPause != null ? clamp(Math.round(+def.lapPause), 0, 240) : 10;

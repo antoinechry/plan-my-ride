@@ -262,7 +262,15 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 .askrow{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0 8px;font-size:.88rem;color:var(--muted)}
 .askrow label{display:flex;flex-direction:column;gap:3px}
 .askrow select,#askwish{font:inherit;font-size:.92rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem}
-#askwish{width:100%}
+#askwish,#askaddr{width:100%}
+#askaddr{font:inherit;font-size:.92rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:8px}
+.trace{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.trace .tmap{height:220px;border-radius:8px;overflow:hidden;background:var(--surface);margin:6px 0}
+.trace .tmeta{font-size:.86rem;color:var(--muted)}
+.trace .tmeta b{color:var(--ink)}
+.trace .wait{color:var(--muted);font-size:.86rem}
+.trace .err{color:var(--run);font-size:.86rem}
+.tlinks{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:4px;font-size:.84rem}
 .askact{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #askout{margin-top:10px;font-size:.9rem}
 #askout .wait{color:var(--muted)}
@@ -527,7 +535,14 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
         <label id="askwherewrap">Où
           <select id="askwhere"><option value="out">Dehors</option><option value="ht">Home trainer</option></select>
         </label>
+        <label id="askstartwrap">Départ de la trace
+          <select id="askstart"><option value="city">De ma ville</option><option value="other">D'un autre lieu…</option><option value="none">Pas de trace</option></select>
+        </label>
+        <label id="askhourwrap">Heure de départ
+          <select id="askhour"><option value="06:00">6 h</option><option value="07:00">7 h</option><option value="08:00">8 h</option><option value="09:00" selected>9 h</option><option value="10:00">10 h</option><option value="11:00">11 h</option><option value="12:00">12 h</option><option value="13:00">13 h</option><option value="14:00">14 h</option><option value="15:00">15 h</option><option value="16:00">16 h</option><option value="17:00">17 h</option><option value="18:00">18 h</option><option value="19:00">19 h</option></select>
+        </label>
       </div>
+      <input id="askaddr" type="text" maxlength="120" placeholder="Lieu de départ : ville, village…" hidden>
       <input id="askwish" type="text" maxlength="200" placeholder="Une envie ? Du dénivelé, sortie tranquille, fractionné…">
       <div class="askact">
         <button class="btn primary" id="askgo">Proposer une séance</button>
@@ -1587,6 +1602,8 @@ function renderPlans(k){
     return '<li style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><button class="linkbtn" data-rm="'+i+'">Retirer</button><div class="meta">'+esc(meta)+'</div>'
       + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
       + (p.pourquoi ? '<div class="meta">'+esc(p.pourquoi)+'</div>' : '')
+      + (p.trace ? '<div class="tlinks">🗺️ Trace '+esc(fmtKmC(p.trace.km))+', '+nf0.format(p.trace.dplus||0)+' m D+'+(p.trace.depart ? ' · départ '+esc(p.trace.depart) : '')
+        + '<button class="linkbtn" data-tpmr="'+i+'">Météo dans Plan My Ride</button><button class="linkbtn" data-tgpx="'+i+'">GPX</button></div>' : '')
       + workoutBars(p) + sendHTML(p, i, k) + '</li>';
   }).join('') + '</ul>';
   updateTabs();
@@ -1681,6 +1698,8 @@ async function persistSeances(){
 }
 $('dlgplans').addEventListener('click', e => {
   const sb2 = e.target.closest('[data-send]'); if (sb2 && state.openKey){ sendSession(state.openKey, Number(sb2.dataset.send)); return; }
+  const tp = e.target.closest('[data-tpmr],[data-tgpx]');
+  if (tp && state.openKey){ const p = (state.seances[state.openKey] || [])[Number(tp.dataset.tpmr ?? tp.dataset.tgpx)]; if (p && p.trace) planTrace(p, state.openKey, tp.dataset.tpmr != null ? 'pmr' : 'gpx', tp); return; }
   const b = e.target.closest('[data-rm]'); if (!b || !state.openKey) return;
   const k = state.openKey, list = (state.seances[k] || []).slice(); const gone = list.splice(Number(b.dataset.rm), 1)[0];
   unsendSession(gone);
@@ -1691,13 +1710,25 @@ $('dlgplans').addEventListener('click', e => {
 /* ---------- Demander une sortie (Claude, via la fonction serveur coach-propose) ---------- */
 const ask = { sport: 'ride', ctl: null, proposal: null, key: null };
 function setupAsk(k){
-  if (ask.key !== k){ ask.key = k; ask.proposal = null; $('askout').innerHTML = ''; $('askwish').value = ''; $('asktime').value = 'auto'; }
+  if (ask.key !== k){ ask.key = k; ask.proposal = null; traceReset(); $('askout').innerHTML = ''; $('askwish').value = ''; $('asktime').value = 'auto'; }
   syncAskSport();
 }
 function syncAskSport(){
   for (const b of $('asksport').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.sport === ask.sport));
   $('askwherewrap').hidden = ask.sport !== 'ride';
+  // Trace GPX : vélo dehors seulement. Départ de « ma ville » (celle de la météo) ou d'un autre lieu.
+  const out = ask.sport === 'ride' && $('askwhere').value === 'out', city = state.reglages.ville;
+  const o = $('askstart').querySelector('[value="city"]');
+  o.textContent = city ? 'De '+city : 'De ma ville (à indiquer au-dessus du calendrier)'; o.disabled = !city;
+  if (!city && $('askstart').value === 'city') $('askstart').value = 'other';
+  $('askstartwrap').hidden = $('askhourwrap').hidden = !out;
+  $('askaddr').hidden = !out || $('askstart').value !== 'other';
 }
+$('askwhere').addEventListener('change', syncAskSport);
+$('askstart').addEventListener('change', () => { syncAskSport(); if (!$('askaddr').hidden) $('askaddr').focus(); });
+const traceWanted = () => ask.sport === 'ride' && $('askwhere').value === 'out' && $('askstart').value !== 'none'
+  && ($('askstart').value === 'city' ? state.reglages.lat != null : $('askaddr').value.trim().length >= 2);
+const startLabel = () => $('askstart').value === 'city' ? state.reglages.ville : $('askaddr').value.trim();
 $('asksport').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ask.sport = b.dataset.sport; syncAskSport(); });
 function ressentiTxt(r){
   return [r.rpe ? 'effort '+r.rpe+'/10' : '', r.forme ? 'sensations '+r.forme+'/5' : '', r.douleur && r.douleur !== 'aucune' ? r.douleur+(r.zone ? ' ('+r.zone+')' : '') : '', r.note || ''].filter(Boolean).join(', ');
@@ -1761,6 +1792,7 @@ function buildPrompt(k, prev){
     '- Sport : '+sportTxt,
     '- Temps disponible : '+timeTxt,
     '- Envie : '+(wish || 'aucune précisée'),
+    traceWanted() ? '- Départ de '+startLabel()+' vers '+$('askhour').value.replace(':00', ' h').replace(/^0/, '')+'. Une trace GPX en boucle sera calculée automatiquement depuis ce point d\'après distance_km et denivele_m : donne-les réalistes pour le relief autour du départ (denivele_m faible pour une sortie de plaine, plus élevé si la séance demande du dénivelé).' : null,
     prev ? '- Il a déjà vu cette proposition et en veut une autre, différente : '+prev : null,
     '',
     'Règles : respecte le temps disponible. S\'il y a des alertes actives ou une douleur signalée, la séance doit les prendre en compte (plus facile, plus courte, ou vélo plutôt que course si la douleur touche la course) et le champ pourquoi le dit. Adapte l\'intensité à la fraîcheur (fatigue élevée : séance facile ou courte). Évite deux séances intenses d\'affilée en tenant compte des séances prévues et réalisées. En course, la sortie la plus longue ne dépasse pas d\'environ 10 % la plus longue des dernières semaines.',
@@ -1813,6 +1845,7 @@ function renderProposal(){
   $('askout').innerHTML = '<div class="proposal" style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><div class="meta">'+esc(meta)+'</div>'
     + (p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
     + (p.pourquoi ? '<p class="why">'+esc(p.pourquoi)+'</p>' : '')
+    + '<div class="trace" id="tracebox"'+(traceWanted() || TRACE.res ? '' : ' hidden')+'></div>'
     + '<div class="askact"><button class="btn primary" data-act="addsend">Ajouter et envoyer sur '+(DEVICE[sportCls(p.sport)] || DEVICE.other)+'</button><button class="btn" data-act="add">Ajouter seulement</button><button class="btn" data-act="again">Autre proposition</button></div></div>';
 }
 const COACH_ERR = {
@@ -1847,7 +1880,7 @@ async function callCoach(task, prompt, signal){
 async function requestSession(prev){
   const k = state.openKey; if (!k) return;
   if (ask.ctl) ask.ctl.abort();
-  const ctl = new AbortController(); ask.ctl = ctl; ask.proposal = null;
+  const ctl = new AbortController(); ask.ctl = ctl; ask.proposal = null; traceReset();
   $('askgo').disabled = true; $('askstop').hidden = false;
   $('askout').innerHTML = '<span class="wait">Miguel prépare ta séance…</span>';
   try {
@@ -1855,6 +1888,7 @@ async function requestSession(prev){
     if (ask.ctl !== ctl || state.openKey !== k) return;
     ask.proposal = cleanProposal(j.proposal);
     renderProposal();
+    if (traceWanted()) traceStart();
   } catch(e){
     if (ask.ctl !== ctl) return;
     $('askout').innerHTML = e.name === 'AbortError' ? '' : '<span class="err">'+esc(e.message || 'La demande a échoué.')+'</span>';
@@ -1868,9 +1902,14 @@ $('askout').addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (g){ setTab(g.dataset.goto); return; }
   const b = e.target.closest('[data-act]'); if (!b || !ask.proposal || !state.openKey) return;
   const p = ask.proposal;
-  if (b.dataset.act === 'again'){ requestSession(p.titre+', '+p.duree_min+' min, '+p.intensite); return; }
+  if (b.dataset.act === 'again'){ traceReset(); requestSession(p.titre+', '+p.duree_min+' min, '+p.intensite); return; }
   const k = state.openKey;
-  state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', uid: newUid(), cree_le: new Date().toISOString() })]);
+  // Trace calculée : enregistrée dans « Mes parcours » (Plan My Ride) et rattachée à la séance.
+  const tr = TRACE.res && !TRACE.busy ? TRACE.res : null;
+  if (tr) traceSave(tr).catch(() => {});
+  state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', uid: newUid(), cree_le: new Date().toISOString() },
+    tr ? { trace: { id: tr.id, name: tr.name, km: Math.round(tr.km*10)/10, dplus: tr.up, depart: tr.start.label, heure: tr.hour } } : {})]);
+  traceReset();
   persistSeances();
   ask.proposal = null;
   $('askout').innerHTML = '<span class="wait">Séance ajoutée au calendrier.</span> <button class="linkbtn" data-goto="plans">Voir dans Sorties prévues</button>';
@@ -1878,6 +1917,158 @@ $('askout').addEventListener('click', e => {
   // « Ajouter et envoyer » : envoi vers intervals.icu → Dura / Garmin, suivi dans l'onglet Sorties prévues.
   if (b.dataset.act === 'addsend'){ setTab('plans'); sendSession(k, state.seances[k].length - 1); }
 });
+
+/* ---------- Trace GPX en boucle pour une sortie vélo proposée (BRouter, gratuit, sans clé) ---------- */
+// Depuis la ville de la météo (ou un autre lieu géocodé), on demande à brouter.de (profil « fastbike » : routes
+// revêtues, petites routes) plusieurs boucles dans des directions différentes : 3 points de passage sur un cercle qui
+// passe par le départ, de périmètre ≈ distance / 1,25 (détours des routes). On garde la boucle la plus proche de la
+// distance et du D+ demandés par Miguel, avec le moins d'allers-retours sur la même route, puis on corrige la taille
+// du cercle une fois. « Autre trace » tourne les directions de 45°. La trace va dans « Mes parcours » (table routes),
+// donc dans Plan My Ride, qui l'ouvre avec la date et l'heure de la séance pour vérifier la météo.
+const TRACE = { res: null, busy: false, err: null, ctl: null, seed: 0, map: null };
+const BROUTER = 'https://brouter.de/brouter';
+function traceReset(){ if (TRACE.ctl) TRACE.ctl.abort(); Object.assign(TRACE, { res: null, busy: false, err: null, ctl: null, seed: 0 }); if (TRACE.map){ TRACE.map.remove(); TRACE.map = null; } }
+const toRad = x => x*Math.PI/180, toDeg = x => x*180/Math.PI;
+function geoDest(lat, lon, km, brg){
+  const d = km/6371, b = toRad(brg), p1 = toRad(lat), l1 = toRad(lon);
+  const p2 = Math.asin(Math.sin(p1)*Math.cos(d) + Math.cos(p1)*Math.sin(d)*Math.cos(b));
+  const l2 = l1 + Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(p1), Math.cos(d) - Math.sin(p1)*Math.sin(p2));
+  return [toDeg(p2), toDeg(l2)];
+}
+function hav(a, b){ const dp = toRad(b.lat - a.lat), dl = toRad(b.lon - a.lon); const x = Math.sin(dp/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dl/2)**2; return 12742*Math.asin(Math.sqrt(x)); }
+async function brouterLoop(start, km, brg, scale, signal){
+  const r = km/(2*Math.PI*1.25)*scale, c = geoDest(start.lat, start.lon, r, brg), back = (brg + 180) % 360;
+  const wps = [90, 180, 270].map(a => geoDest(c[0], c[1], r, back + a));
+  const ll = [[start.lat, start.lon], ...wps, [start.lat, start.lon]].map(p => p[1].toFixed(5)+','+p[0].toFixed(5)).join('|');
+  const res = await fetch(BROUTER+'?lonlats='+ll+'&profile=fastbike&alternativeidx=0&format=geojson', { signal });
+  if (!res.ok) throw new Error('brouter '+res.status);
+  const f = ((await res.json()).features || [])[0]; if (!f) throw new Error('brouter vide');
+  const pts = f.geometry.coordinates.map(q => ({ lat: q[1], lon: q[0], ele: q[2] == null ? NaN : q[2] }));
+  const len = Number(f.properties['track-length'])/1000, up = Math.round(Number(f.properties['filtered ascend']) || 0);
+  // Part de la boucle qui repasse sur une route déjà empruntée (aller-retour) : cases de ~150 m.
+  const seen = new Map(); let again = 0, tot = 0;
+  pts.forEach((p, i) => { if (!i) return; const d = hav(pts[i-1], p); tot += d; const kc = Math.round(p.lat*700)+':'+Math.round(p.lon*470);
+    const j = seen.get(kc); if (j != null && i - j > 60) again += d; if (j == null) seen.set(kc, i); });
+  return { pts, km: len, up, overlap: tot ? again/tot : 0, brg, scale };
+}
+function traceScore(t, km, dp){ return Math.abs(t.km - km)/km + (dp ? 0.6*Math.abs(t.up - dp)/Math.max(dp, 300) : 0) + 1.5*t.overlap; }
+async function traceStart(){
+  const p = ask.proposal; if (!p) return;
+  if (TRACE.ctl) TRACE.ctl.abort();
+  const ctl = new AbortController(), k = state.openKey; TRACE.ctl = ctl; TRACE.busy = true; TRACE.err = null; TRACE.res = null; paintTrace();
+  try {
+    let start;
+    if ($('askstart').value === 'city') start = { lat: state.reglages.lat, lon: state.reglages.lon, label: state.reglages.ville };
+    else { const g = (await geocode($('askaddr').value.trim(), 1))[0]; if (!g) throw new Error('Lieu de départ introuvable : précise le nom de la ville ou du village.'); start = { lat: g.lat, lon: g.lon, label: g.name }; }
+    const km = Math.max(10, Math.min(250, p.distance_km || p.duree_min/60*25)), dp = p.denivele_m || 0;
+    const brgs = [0, 90, 180, 270].map(b => (b + TRACE.seed) % 360);
+    const got = (await Promise.allSettled(brgs.map(b => brouterLoop(start, km, b, 1, ctl.signal)))).filter(x => x.status === 'fulfilled').map(x => x.value);
+    if (ctl.signal.aborted) return;
+    if (!got.length) throw new Error('Le calcul d\'itinéraire (brouter.de) ne répond pas. Réessaie dans un instant.');
+    let best = got.sort((a, b) => traceScore(a, km, dp) - traceScore(b, km, dp))[0];
+    if (Math.abs(best.km - km)/km > 0.08){
+      try { const t2 = await brouterLoop(start, km, best.brg, best.scale*km/best.km, ctl.signal); if (traceScore(t2, km, dp) < traceScore(best, km, dp)) best = t2; } catch(e){ if (ctl.signal.aborted) return; }
+    }
+    if (TRACE.ctl !== ctl || state.openKey !== k) return;
+    const packed = packPts(best.pts), d = new Date(k+'T00:00:00');
+    TRACE.res = Object.assign(best, { start, hour: $('askhour').value, packed, id: routeId(packed),
+      name: 'Miguel · '+(p.titre || 'Sortie')+' · '+shortFmt(d) });
+  } catch(e){ if (e.name !== 'AbortError') TRACE.err = e.message || 'Calcul de la trace impossible.'; }
+  finally { if (TRACE.ctl === ctl){ TRACE.busy = false; TRACE.ctl = null; paintTrace(); } }
+}
+function paintTrace(){
+  const box = $('tracebox'); if (!box) return;
+  box.hidden = false;
+  if (TRACE.map){ TRACE.map.remove(); TRACE.map = null; }
+  if (TRACE.busy){ box.innerHTML = '<span class="wait">🗺️ Miguel cherche une boucle'+(traceWanted() ? ' depuis '+esc(startLabel()) : '')+'…</span>'; return; }
+  if (TRACE.err){ box.innerHTML = '<span class="err">'+esc(TRACE.err)+'</span> <button class="linkbtn" data-tact="retry">Réessayer</button>'; return; }
+  const t = TRACE.res; if (!t){ box.hidden = true; box.innerHTML = ''; return; }
+  const p = ask.proposal || {};
+  const gap = p.distance_km ? ' (demandé ≈ '+nf0.format(p.distance_km)+' km'+(p.denivele_m ? ', '+nf0.format(p.denivele_m)+' m' : '')+')' : '';
+  box.innerHTML = '<div class="tmeta">🗺️ <b>Boucle de '+fmtKmC(t.km)+', '+nf0.format(t.up)+' m D+</b> depuis '+esc(t.start.label)+gap
+    + (t.overlap > 0.15 ? ' · quelques portions en aller-retour' : '')+'</div><div class="tmap" id="tmap"></div>'
+    + '<div class="tlinks"><button class="btn" data-tact="pmr">Météo sur la trace (Plan My Ride)</button><button class="btn" data-tact="gpx">GPX pour le Dura</button><button class="linkbtn" data-tact="other">Autre trace</button></div>';
+  drawTraceMap($('tmap'), t.pts);
+}
+let leafletP = null;
+function loadLeaflet(){
+  if (window.L) return Promise.resolve();
+  if (!leafletP) leafletP = new Promise((ok, ko) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+    const js = document.createElement('script'); js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; js.onload = ok; js.onerror = ko; document.head.appendChild(js);
+  });
+  return leafletP;
+}
+async function drawTraceMap(el, pts){
+  try { await loadLeaflet(); } catch(_){ el.textContent = 'Carte indisponible.'; return; }
+  if (!el.isConnected) return;
+  const m = L.map(el, { zoomControl: false, attributionControl: true, scrollWheelZoom: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap' }).addTo(m);
+  const line = L.polyline(pts.map(p => [p.lat, p.lon]), { color: cssVar('--ride') || '#2A6A5B', weight: 4, opacity: .9 }).addTo(m);
+  L.circleMarker([pts[0].lat, pts[0].lon], { radius: 6, color: '#fff', weight: 2, fillColor: cssVar('--ink'), fillOpacity: 1 }).addTo(m).bindTooltip('Départ');
+  m.fitBounds(line.getBounds(), { padding: [12, 12] });
+  if (el.id === 'tmap') TRACE.map = m;
+}
+// Même format que « Mes parcours » de Plan My Ride (un point tous les ~5 m, 5 décimales) : même empreinte, pas de doublon.
+function packPts(raw){
+  const out = []; let last = null;
+  for (const p of raw){
+    if (last && hav(last, p) < 0.005) continue;
+    out.push([Math.round(p.lat*1e5)/1e5, Math.round(p.lon*1e5)/1e5, isFinite(p.ele) ? Math.round(p.ele*10)/10 : null]); last = p;
+  }
+  const lr = raw[raw.length-1];
+  if (last !== lr) out.push([Math.round(lr.lat*1e5)/1e5, Math.round(lr.lon*1e5)/1e5, isFinite(lr.ele) ? Math.round(lr.ele*10)/10 : null]);
+  return out;
+}
+function routeId(packed){
+  let h = 0x811c9dc5; const str = packed.length+':'+packed.map(q => q[0]+','+q[1]).join(';');
+  for (let i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return 'r'+(h >>> 0).toString(36)+packed.length.toString(36);
+}
+async function traceSave(t){
+  const { error } = await sb.from('routes').upsert({ id: t.id, name: t.name, km: Math.round(t.km*100)/100, dplus: t.up, pts: t.packed, used_at: new Date().toISOString() }, { onConflict: 'user_id,id' });
+  if (error) throw new Error('Enregistrement de la trace impossible : '+error.message);
+}
+function gpxText(name, packed){
+  const x = s2 => esc(s2);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Coach Miguel" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>'+x(name)+'</name></metadata>\n<trk><name>'+x(name)+'</name><trkseg>\n'
+    + packed.map(q => '<trkpt lat="'+q[0]+'" lon="'+q[1]+'">'+(q[2] != null ? '<ele>'+q[2]+'</ele>' : '')+'</trkpt>').join('\n')+'\n</trkseg></trk>\n</gpx>\n';
+}
+// iPhone : feuille de partage (ouvrir directement dans l'app COROS) ; ailleurs : téléchargement.
+async function gpxDeliver(name, packed){
+  const fname = name.replace(/[\\/:*?"<>|·]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70)+'.gpx';
+  const file = new File([gpxText(name, packed)], fname, { type: 'application/gpx+xml' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })){ try { await navigator.share({ files: [file], title: name }); return; } catch(e){ if (e.name === 'AbortError') return; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = fname; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+// Ouvre Plan My Ride (page Sortie) sur la trace, à la date et l'heure de la séance.
+function openInPmr(id, k, hour){
+  try { localStorage.setItem('pmr-last-route', id); sessionStorage.setItem('pmr-ride-date', k); if (hour) sessionStorage.setItem('pmr-ride-time', hour); } catch(_){}
+  location.href = 'index.html';
+}
+$('askout').addEventListener('click', async e => {
+  const b = e.target.closest('[data-tact]'); if (!b) return;
+  e.stopPropagation();
+  const act = b.dataset.tact, t = TRACE.res;
+  if (act === 'retry'){ traceStart(); return; }
+  if (act === 'other'){ TRACE.seed = (TRACE.seed + 45) % 360; traceStart(); return; }
+  if (!t) return;
+  if (act === 'gpx'){ gpxDeliver(t.name, t.packed); return; }
+  if (act === 'pmr'){ b.disabled = true; b.textContent = 'Ouverture…';
+    try { await traceSave(t); openInPmr(t.id, state.openKey, t.hour); } catch(err){ b.disabled = false; b.textContent = 'Météo sur la trace (Plan My Ride)'; TRACE.err = err.message; paintTrace(); } }
+}, true);
+// Depuis une séance déjà prévue : la trace est relue dans « Mes parcours ».
+async function planTrace(p, k, what, btn){
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '…';
+  try {
+    if (what === 'pmr'){ openInPmr(p.trace.id, k, p.trace.heure); return; }
+    const { data, error } = await sb.from('routes').select('pts,name').eq('id', p.trace.id).maybeSingle();
+    if (error || !data) throw new Error('trace introuvable');
+    await gpxDeliver(data.name || p.trace.name || 'Sortie', data.pts);
+  } catch(_){ btn.textContent = 'Trace indisponible'; setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 2500); return; }
+  btn.textContent = old; btn.disabled = false;
+}
 
 /* ---------- Activities (intervals.icu) ---------- */
 // Appel direct : on lit le corps de la réponse pour afficher la vraie cause.
@@ -2373,7 +2564,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-21c';
+const APP_VERSION = '2026-10-21d';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
