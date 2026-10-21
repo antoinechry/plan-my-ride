@@ -1602,7 +1602,7 @@ function renderPlans(k){
     return '<li style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><button class="linkbtn" data-rm="'+i+'">Retirer</button><div class="meta">'+esc(meta)+'</div>'
       + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
       + (p.pourquoi ? '<div class="meta">'+esc(p.pourquoi)+'</div>' : '')
-      + (p.trace ? '<div class="tlinks">🗺️ Trace '+esc(fmtKmC(p.trace.km))+', '+nf0.format(p.trace.dplus||0)+' m D+'+(p.trace.depart ? ' · départ '+esc(p.trace.depart) : '')
+      + (p.trace ? '<div class="tlinks">🗺️ Trace '+esc(fmtKmC(p.trace.km))+', '+nf0.format(p.trace.dplus||0)+' m D+'+(p.trace.depart ? ' · départ '+esc(p.trace.depart) : '')+(p.trace.meteo ? '<br><small>🌤️ '+esc(p.trace.meteo)+' (prévision au '+'moment du calcul)</small>' : '')
         + '<button class="linkbtn" data-tpmr="'+i+'">Météo dans Plan My Ride</button><button class="linkbtn" data-tgpx="'+i+'">GPX</button></div>' : '')
       + workoutBars(p) + sendHTML(p, i, k) + '</li>';
   }).join('') + '</ul>';
@@ -1908,7 +1908,7 @@ $('askout').addEventListener('click', e => {
   const tr = TRACE.res && !TRACE.busy ? TRACE.res : null;
   if (tr) traceSave(tr).catch(() => {});
   state.seances[k] = (state.seances[k] || []).concat([Object.assign({}, p, { source: 'app', uid: newUid(), cree_le: new Date().toISOString() },
-    tr ? { trace: { id: tr.id, name: tr.name, km: Math.round(tr.km*10)/10, dplus: tr.up, depart: tr.start.label, heure: tr.hour } } : {})]);
+    tr ? { trace: { id: tr.id, name: tr.name, km: Math.round(tr.km*10)/10, dplus: tr.up, depart: tr.start.label, heure: tr.hour, meteo: tr.wx ? tr.wxNote : '' } } : {})]);
   traceReset();
   persistSeances();
   ask.proposal = null;
@@ -1965,16 +1965,85 @@ async function traceStart(){
     const got = (await Promise.allSettled(brgs.map(b => brouterLoop(start, km, b, 1, ctl.signal)))).filter(x => x.status === 'fulfilled').map(x => x.value);
     if (ctl.signal.aborted) return;
     if (!got.length) throw new Error('Le calcul d\'itinéraire (brouter.de) ne répond pas. Réessaie dans un instant.');
-    let best = got.sort((a, b) => traceScore(a, km, dp) - traceScore(b, km, dp))[0];
+    // Météo : chaque boucle est évaluée dans les deux sens (vent, pluie, froid) si la séance est dans les 4 jours.
+    const hour = $('askhour').value, t0ms = new Date(k+'T'+hour+':00').getTime();
+    const durS = (p.duree_min || km/25*60)*60/(p.distance_km || km), useWx = t0ms > Date.now() - 3*3600e3 && t0ms < Date.now() + WXT_DAYS*86400e3;
+    const both = list => list.flatMap(t => [t, Object.assign({}, t, { pts: t.pts.slice().reverse(), rev: true })]);
+    let cands = both(got), wxOk = false;
+    if (useWx){ try { await wxEvalLoops(cands, t0ms, durS, ctl.signal); wxOk = true; } catch(e){ if (ctl.signal.aborted) return; } }
+    const total = t => traceScore(t, km, dp) + (t.wx ? t.wx.pen : 0);
+    let best = cands.sort((a, b) => total(a) - total(b))[0];
     if (Math.abs(best.km - km)/km > 0.08){
-      try { const t2 = await brouterLoop(start, km, best.brg, best.scale*km/best.km, ctl.signal); if (traceScore(t2, km, dp) < traceScore(best, km, dp)) best = t2; } catch(e){ if (ctl.signal.aborted) return; }
+      try {
+        const t2 = await brouterLoop(start, km, best.brg, best.scale*km/best.km, ctl.signal);
+        const c2 = best.rev ? [Object.assign({}, t2, { pts: t2.pts.slice().reverse(), rev: true }), t2] : both([t2]);
+        if (wxOk){ try { await wxEvalLoops(c2, t0ms, durS, ctl.signal); } catch(e){ if (ctl.signal.aborted) return; } }
+        for (const c of c2) if ((wxOk ? c.wx : true) && total(c) < total(best)) best = c;
+      } catch(e){ if (ctl.signal.aborted) return; }
     }
     if (TRACE.ctl !== ctl || state.openKey !== k) return;
+    best.wxNote = !useWx ? (t0ms >= Date.now() ? 'Séance dans plus de '+WXT_DAYS+' jours : prévisions trop incertaines pour choisir la direction selon la météo. Vérifie-la la veille.' : '')
+      : !best.wx ? 'Météo indisponible : direction choisie sans elle.' : wxNoteOf(best);
     const packed = packPts(best.pts), d = new Date(k+'T00:00:00');
     TRACE.res = Object.assign(best, { start, hour: $('askhour').value, packed, id: routeId(packed),
       name: 'Miguel · '+(p.titre || 'Sortie')+' · '+shortFmt(d) });
   } catch(e){ if (e.name !== 'AbortError') TRACE.err = e.message || 'Calcul de la trace impossible.'; }
   finally { if (TRACE.ctl === ctl){ TRACE.busy = false; TRACE.ctl = null; paintTrace(); } }
+}
+// Vent, pluie et froid le long de chaque boucle, à l'heure de passage (Open-Meteo, un seul appel multi-points).
+// Vent : on préfère le vent de face à l'aller (frais) et dans le dos au retour ; pluie : la boucle la plus sèche ;
+// froid : pas de passage en altitude (> 600 m) sous 2 °C (verglas).
+const WXT_DAYS = 4, WXT_N = 6;
+const cardFr = b => ['nord','nord-est','est','sud-est','sud','sud-ouest','ouest','nord-ouest'][Math.round(((b % 360) + 360) % 360 / 45) % 8];
+function geoBrg(a, b){ const y = Math.sin(toRad(b.lon - a.lon))*Math.cos(toRad(b.lat)), x = Math.cos(toRad(a.lat))*Math.sin(toRad(b.lat)) - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(toRad(b.lon - a.lon)); return (toDeg(Math.atan2(y, x)) + 360) % 360; }
+function loopSamples(t){
+  const cum = [0]; for (let i = 1; i < t.pts.length; i++) cum.push(cum[i-1] + hav(t.pts[i-1], t.pts[i]));
+  const L = cum[cum.length-1], at = f => { const d = f*L; let i = cum.findIndex(c => c >= d); if (i < 0) i = cum.length - 1; return i; };
+  const out = [];
+  for (let j = 0; j < WXT_N; j++){
+    const f = (j + .5)/WXT_N, i = at(f), a = t.pts[at(Math.max(0, f - .03))], b = t.pts[at(Math.min(1, f + .03))];
+    out.push({ f, p: t.pts[i], brg: geoBrg(a, b), ele: t.pts[i].ele });
+  }
+  return { L, out };
+}
+async function wxEvalLoops(cands, t0ms, durS, signal){
+  const sm = cands.map(loopSamples), pts = sm.flatMap(x => x.out.map(o => o.p));
+  const day = new Date(t0ms), d1 = new Date(t0ms + 86400e3), ymd = d => d.toISOString().slice(0, 10);
+  const u = 'https://api.open-meteo.com/v1/forecast?latitude='+pts.map(q => q.lat.toFixed(3)).join(',')+'&longitude='+pts.map(q => q.lon.toFixed(3)).join(',')
+    + '&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date='+ymd(day)+'&end_date='+ymd(d1);
+  const res = await fetch(u, { signal }); if (!res.ok) throw new Error('open-meteo '+res.status);
+  let js = await res.json(); if (!Array.isArray(js)) js = [js];
+  let n = 0;
+  cands.forEach((t, ci) => {
+    let h1 = 0, h2 = 0, n1 = 0, n2 = 0, rain = 0, cold = false, ws = 0;
+    for (const o of sm[ci].out){
+      const w = js[n++] && js[n-1].hourly; if (!w) continue;
+      const tm = (t0ms + o.f*sm[ci].L*durS*1000)/1000, hi = w.time.reduce((bi, x, i) => Math.abs(x - tm) < Math.abs(w.time[bi] - tm) ? i : bi, 0);
+      const sp = w.wind_speed_10m[hi] || 0, from = w.wind_direction_10m[hi] || 0, head = sp*Math.cos(toRad(from - o.brg));
+      if (o.f < .5){ h1 += head; n1++; } else { h2 += head; n2++; }
+      rain += (w.precipitation[hi] || 0)/WXT_N; ws += sp/WXT_N;
+      if (w.temperature_2m[hi] < 2 && o.ele > 600) cold = true;
+    }
+    h1 = n1 ? h1/n1 : 0; h2 = n2 ? h2/n2 : 0;
+    const pen = 0.4*Math.max(-1, Math.min(1.5, (h2 - h1)/30)) + 0.5*Math.min(3, rain) + (cold ? 0.6 : 0);
+    t.wx = { h1, h2, rain, mm: rain*sm[ci].L*durS/3600, cold, ws, pen, first: geoBrg(t.pts[0], loopSamples(t).out[1].p) };
+  });
+  // Écart avec la boucle la plus mouillée, pour l'explication.
+  const maxR = Math.max(...cands.map(t => t.wx ? t.wx.rain : 0));
+  for (const t of cands) if (t.wx) t.wx.drier = maxR - t.wx.rain;
+  return cands;
+}
+function wxNoteOf(t){
+  const w = t.wx, out = [];
+  if (w.ws >= 8){
+    if (w.h1 > 3 && w.h2 < w.h1 - 3) out.push('Départ vers le '+cardFr(w.first)+' face au vent (≈ '+Math.round(w.ws)+' km/h), retour avec le vent dans le dos.');
+    else if (w.h2 > 3 && w.h1 < w.h2) out.push('Vent ≈ '+Math.round(w.ws)+' km/h : impossible de l\'éviter au retour sur cette boucle, garde des forces.');
+    else out.push('Vent ≈ '+Math.round(w.ws)+' km/h, surtout de côté sur cette boucle.');
+  } else out.push('Vent faible : direction choisie pour le parcours.');
+  if (w.rain < 0.05) out.push('Pas de pluie prévue sur le parcours.');
+  else out.push('Pluie prévue ≈ '+nf1.format(w.mm)+' mm au fil du parcours'+(w.drier > 0.2 ? ', la boucle la plus sèche' : '')+'.');
+  if (w.cold) out.push('Attention : moins de 2 °C en altitude, risque de verglas.');
+  return out.join(' ');
 }
 function paintTrace(){
   const box = $('tracebox'); if (!box) return;
@@ -1986,7 +2055,7 @@ function paintTrace(){
   const p = ask.proposal || {};
   const gap = p.distance_km ? ' (demandé ≈ '+nf0.format(p.distance_km)+' km'+(p.denivele_m ? ', '+nf0.format(p.denivele_m)+' m' : '')+')' : '';
   box.innerHTML = '<div class="tmeta">🗺️ <b>Boucle de '+fmtKmC(t.km)+', '+nf0.format(t.up)+' m D+</b> depuis '+esc(t.start.label)+gap
-    + (t.overlap > 0.15 ? ' · quelques portions en aller-retour' : '')+'</div><div class="tmap" id="tmap"></div>'
+    + (t.overlap > 0.15 ? ' · quelques portions en aller-retour' : '')+'</div>'+(t.wxNote ? '<div class="tmeta">🌤️ '+esc(t.wxNote)+'</div>' : '')+'<div class="tmap" id="tmap"></div>'
     + '<div class="tlinks"><button class="btn" data-tact="pmr">Météo sur la trace (Plan My Ride)</button><button class="btn" data-tact="gpx">GPX pour le Dura</button><button class="linkbtn" data-tact="other">Autre trace</button></div>';
   drawTraceMap($('tmap'), t.pts);
 }
@@ -2564,7 +2633,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-21d';
+const APP_VERSION = '2026-10-21e';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
