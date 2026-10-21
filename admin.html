@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<script>try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>Admin · Coach Miguel & Plan My Ride</title>
+<link rel="icon" href="coach-miguel-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6EBE3; --surface:#F7F9F4; --surface-2:#EDF1EA; --ink:#16221B; --muted:#56635A; --line:#C7D0C3;
+  --ok:#2A6A5B; --warn:#A8711A; --bad:#B2404D; --focus:#2D5288;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33; --ok:#6DB4A2; --warn:#E3B45C; --bad:#E37C87; --focus:#86A9E0; }
+}
+:root[data-theme="dark"]{ --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33; --ok:#6DB4A2; --warn:#E3B45C; --bad:#E37C87; --focus:#86A9E0; color-scheme:dark }
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+a{color:inherit}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px;margin-bottom:18px}
+h1{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(1.5rem,4.5vw,2.1rem);line-height:1}
+.sub{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.nav{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:.42rem .9rem;cursor:pointer;font-weight:600;font-size:.88rem;text-decoration:none;display:inline-block;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:default}
+section{background:var(--surface);border-radius:12px;padding:14px 14px 10px;margin-bottom:14px}
+h2{margin:0 0 10px;font-size:1.1rem;font-weight:750;display:flex;align-items:center;gap:8px}
+h2 .n{font-size:.78rem;background:var(--surface-2);border-radius:999px;padding:0 .5em;font-weight:700}
+.empty{color:var(--muted);font-size:.9rem;margin:4px 0 8px}
+.msg{font-size:.88rem;color:var(--muted);margin:6px 0}
+.msg.err{color:var(--bad)}
+.users{display:flex;flex-direction:column;gap:8px}
+.u{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.u.pending{border-color:var(--warn);border-width:2px}
+.u.blocked{opacity:.7}
+.uh{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+.uh b{font-size:1rem}
+.uh .meta{color:var(--muted);font-size:.82rem}
+.badge{font-size:.72rem;font-weight:700;border-radius:999px;padding:.05em .55em;border:1px solid currentColor}
+.badge.active{color:var(--ok)} .badge.pending{color:var(--warn)} .badge.blocked{color:var(--bad)}
+.ur{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:8px;font-size:.88rem}
+.ur label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ur input[type=checkbox]{width:1.1em;height:1.1em;accent-color:var(--ok)}
+.ur .q{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.ur .q input{width:4.8em;border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:.25rem .4rem;color:var(--ink)}
+.ur .use{color:var(--muted);font-size:.82rem}
+.ur .use b{color:var(--ink)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.saved{font-size:.78rem;color:var(--muted);margin-left:auto}
+.links{display:flex;flex-direction:column;gap:8px}
+.lk{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.lk.off{opacity:.6}
+.lk .url{font-family:ui-monospace,Menlo,monospace;font-size:.8rem;word-break:break-all;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.35rem .5rem;margin:6px 0}
+.newlink{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+.newlink input{flex:1 1 200px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:.42rem .8rem}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.filter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filter button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>Administration</h1><p class="sub" id="state">Connexion…</p></div>
+    <nav class="nav"><a class="btn" href="index.html">Plan My Ride</a><a class="btn" href="coach.html">Coach Miguel</a></nav>
+  </header>
+
+  <div id="denied" hidden><section><p class="msg" id="deniedTxt"></p><a class="btn" href="coach.html">Se connecter</a></section></div>
+
+  <div id="app" hidden>
+    <section id="pendSec">
+      <h2>À valider <span class="n" id="pendN">0</span></h2>
+      <p class="empty" id="pendEmpty">Aucun compte en attente.</p>
+      <div class="users" id="pend"></div>
+    </section>
+
+    <section>
+      <h2>Liens d'inscription testeurs</h2>
+      <p class="msg">Un compte créé avec un lien actif a tout de suite accès à <b>Plan My Ride</b> (pas à Coach Miguel). Désactive un lien pour qu'il ne serve plus.</p>
+      <div class="newlink"><input id="newLabel" maxlength="60" placeholder="Nom du lien, ex. Groupe WhatsApp testeurs"><button class="btn primary" id="newGo">Créer un lien</button></div>
+      <div class="links" id="links"></div>
+    </section>
+
+    <section>
+      <h2>Comptes <span class="n" id="allN">0</span></h2>
+      <div class="filter" id="filter">
+        <button class="btn" data-f="all" aria-pressed="true">Tous</button><button class="btn" data-f="active" aria-pressed="false">Actifs</button><button class="btn" data-f="blocked" aria-pressed="false">Bloqués</button>
+      </div>
+      <div class="users" id="users"></div>
+    </section>
+
+    <section>
+      <h2>Consommation de <span id="monthLbl"></span></h2>
+      <p class="msg" id="mbBal"></p>
+      <div class="scroll"><table><thead><tr><th>Compte</th><th class="num">Demandes à Miguel</th><th class="num">Chargements meteoblue</th><th class="num">Crédits meteoblue</th></tr></thead><tbody id="useBody"></tbody></table></div>
+      <p class="msg">Quotas mensuels par compte (laisser vide = illimité). Miguel : ≈ 1 centime par demande. meteoblue : ≈ 80 000 crédits par chargement d'un parcours de 75 km, sur un essai de 10 millions.</p>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+'use strict';
+// Page Admin (comptes admin seulement, contrôlé par les politiques RLS de app_users / usage_log / tester_links) :
+// comptes en attente, accès par app (Coach Miguel, Plan My Ride), statut, rôle admin, quotas mensuels,
+// consommation du mois, liens d'inscription testeurs (index.html?invite=CODE).
+const SUPABASE_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const dtFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const nf = new Intl.NumberFormat('fr-FR');
+const S = { me: null, users: [], links: [], use: {}, filter: 'all' };
+let sb = null;
+const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+const linkUrl = code => base + 'index.html?invite=' + encodeURIComponent(code);
+
+async function load(){
+  const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+  const [u, l, g] = await Promise.all([
+    sb.from('app_users').select('*').order('created_at', { ascending: false }),
+    sb.from('tester_links').select('*').order('created_at', { ascending: false }),
+    sb.from('usage_log').select('user_id,kind,credits').gte('at', m0.toISOString()).limit(10000)
+  ]);
+  if (u.error) throw u.error;
+  S.users = u.data || []; S.links = l.data || [];
+  S.use = {};
+  for (const r of g.data || []){
+    const x = S.use[r.user_id] || (S.use[r.user_id] = { miguel: 0, mb: 0, cr: 0 });
+    if (r.kind === 'miguel') x.miguel++; else { x.mb++; x.cr += r.credits || 0; }
+  }
+  $('monthLbl').textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
+  render();
+}
+const name = u => (u.prenom ? u.prenom+' · ' : '')+(u.email || '?');
+function userCard(u, pending){
+  const self = u.user_id === S.me.id, use = S.use[u.user_id] || { miguel: 0, mb: 0, cr: 0 };
+  const cb = (k, lab, dis) => '<label><input type="checkbox" data-k="'+k+'"'+(u[k] ? ' checked' : '')+(dis ? ' disabled' : '')+'> '+lab+'</label>';
+  const q = (k, lab) => '<span class="q">'+lab+' <input type="number" min="0" max="9999" data-q="'+k+'" value="'+(u[k] == null ? '' : u[k])+'" placeholder="∞"></span>';
+  const badge = { active: 'Actif', pending: 'En attente', blocked: 'Bloqué' }[u.status] || u.status;
+  return '<div class="u '+u.status+'" data-id="'+u.user_id+'">'
+    + '<div class="uh"><b>'+esc(name(u))+'</b><span class="badge '+u.status+'">'+badge+'</span>'+(u.is_admin ? '<span class="badge active">Admin</span>' : '')
+    + '<span class="meta">inscrit le '+dFmt.format(new Date(u.created_at))+(u.invite ? ' · lien testeur' : '')+(self ? ' · toi' : '')+'</span></div>'
+    + '<div class="ur">'+cb('pmr', 'Plan My Ride')+cb('coach', 'Coach Miguel')+cb('is_admin', 'Admin', self)
+    + q('quota_miguel', 'Miguel / mois')+q('quota_mb', 'meteoblue / mois')
+    + '<span class="use">ce mois : <b>'+use.miguel+'</b> Miguel · <b>'+use.mb+'</b> meteoblue</span></div>'
+    + '<div class="acts">'
+    + (pending ? '<button class="btn primary" data-a="ok">Valider</button><button class="btn bad" data-a="block">Refuser</button>'
+      : u.status === 'blocked' ? '<button class="btn" data-a="ok">Réactiver</button>' : (self ? '' : '<button class="btn bad" data-a="block">Bloquer</button>'))
+    + '<span class="saved" data-s></span></div></div>';
+}
+function render(){
+  const pend = S.users.filter(u => u.status === 'pending');
+  $('pendN').textContent = pend.length; $('pendEmpty').hidden = !!pend.length;
+  $('pend').innerHTML = pend.map(u => userCard(u, true)).join('');
+  const rest = S.users.filter(u => u.status !== 'pending' && (S.filter === 'all' || u.status === S.filter));
+  $('allN').textContent = S.users.filter(u => u.status !== 'pending').length;
+  $('users').innerHTML = rest.map(u => userCard(u, false)).join('') || '<p class="empty">Aucun compte.</p>';
+  $('links').innerHTML = S.links.map(l => '<div class="lk'+(l.active ? '' : ' off')+'" data-code="'+esc(l.code)+'"><b>'+esc(l.label || 'Lien testeur')+'</b> · <span class="meta" style="color:var(--muted);font-size:.84rem">'
+    + l.uses+' compte'+(l.uses > 1 ? 's' : '')+' créé'+(l.uses > 1 ? 's' : '')+(l.last_used ? ', dernier le '+dtFmt.format(new Date(l.last_used)) : '')+(l.active ? '' : ' · désactivé')+'</span>'
+    + '<div class="url">'+esc(linkUrl(l.code))+'</div>'
+    + '<div class="acts"><button class="btn primary" data-l="copy">Copier le lien</button>'+(navigator.share ? '<button class="btn" data-l="share">Partager</button>' : '')
+    + '<button class="btn'+(l.active ? ' bad' : '')+'" data-l="toggle">'+(l.active ? 'Désactiver' : 'Réactiver')+'</button><span class="saved" data-s></span></div></div>').join('') || '<p class="empty">Aucun lien.</p>';
+  const rows = S.users.filter(u => S.use[u.user_id]).map(u => [u, S.use[u.user_id]]).sort((a, b) => b[1].miguel + b[1].mb - a[1].miguel - a[1].mb);
+  const tot = rows.reduce((t, [, x]) => ({ miguel: t.miguel + x.miguel, mb: t.mb + x.mb, cr: t.cr + x.cr }), { miguel: 0, mb: 0, cr: 0 });
+  $('useBody').innerHTML = rows.map(([u, x]) => '<tr><td>'+esc(name(u))+'</td><td class="num">'+x.miguel+(u.quota_miguel != null ? ' / '+u.quota_miguel : '')+'</td><td class="num">'+x.mb+(u.quota_mb != null ? ' / '+u.quota_mb : '')+'</td><td class="num">'+nf.format(x.cr)+'</td></tr>').join('')
+    + '<tr><th>Total</th><th class="num">'+tot.miguel+'</th><th class="num">'+tot.mb+'</th><th class="num">'+nf.format(tot.cr)+'</th></tr>';
+}
+async function save(id, patch, el){
+  const s = el && el.closest('.u') && el.closest('.u').querySelector('[data-s]');
+  if (s) s.textContent = 'Enregistrement…';
+  const { error } = await sb.from('app_users').update(patch).eq('user_id', id);
+  if (error){ if (s) s.textContent = 'Échec : '+error.message; return false; }
+  Object.assign(S.users.find(u => u.user_id === id), patch);
+  if (s) s.textContent = 'Enregistré';
+  return true;
+}
+function onUsers(e){
+  const card = e.target.closest('.u'); if (!card) return;
+  const id = card.dataset.id, u = S.users.find(x => x.user_id === id);
+  const a = e.target.closest('[data-a]');
+  if (a && e.type === 'click'){
+    if (a.dataset.a === 'ok'){
+      // Valider : au moins un accès ; Plan My Ride par défaut si rien n'est coché.
+      const pmr = card.querySelector('[data-k="pmr"]').checked, coach = card.querySelector('[data-k="coach"]').checked;
+      save(id, { status: 'active', pmr: pmr || !coach, coach, validated_at: new Date().toISOString() }, a).then(ok => ok && render());
+    } else if (a.dataset.a === 'block' && !(u.user_id === S.me.id)) save(id, { status: 'blocked' }, a).then(ok => ok && render());
+    return;
+  }
+  if (e.type !== 'change') return;
+  const k = e.target.dataset.k, q = e.target.dataset.q;
+  if (k) save(id, { [k]: e.target.checked }, e.target);
+  if (q){ const v = e.target.value.trim(); save(id, { [q]: v === '' ? null : Math.max(0, Math.round(Number(v))) }, e.target); }
+}
+for (const id of ['pend', 'users']){ $(id).addEventListener('click', onUsers); $(id).addEventListener('change', onUsers); }
+$('filter').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; S.filter = b.dataset.f; for (const x of $('filter').querySelectorAll('[data-f]')) x.setAttribute('aria-pressed', String(x === b)); render(); });
+$('links').addEventListener('click', async e => {
+  const b = e.target.closest('[data-l]'); if (!b) return;
+  const box = b.closest('.lk'), code = box.dataset.code, l = S.links.find(x => x.code === code), s = box.querySelector('[data-s]');
+  if (b.dataset.l === 'copy'){ try { await navigator.clipboard.writeText(linkUrl(code)); s.textContent = 'Lien copié'; } catch(_){ s.textContent = 'Sélectionne le lien pour le copier'; } return; }
+  if (b.dataset.l === 'share'){ try { await navigator.share({ title: 'Plan My Ride', text: 'Crée ton compte testeur Plan My Ride :', url: linkUrl(code) }); } catch(_){} return; }
+  const { error } = await sb.from('tester_links').update({ active: !l.active }).eq('code', code);
+  if (error){ s.textContent = 'Échec : '+error.message; return; }
+  l.active = !l.active; render();
+});
+$('newGo').addEventListener('click', async () => {
+  const code = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('').slice(0, 10);
+  const { error } = await sb.from('tester_links').insert({ code, label: $('newLabel').value.trim() || 'Lien testeur' });
+  if (error){ alert('Création impossible : '+error.message); return; }
+  $('newLabel').value = ''; await load();
+});
+// Solde du compte meteoblue (action usage de la fonction, réservée aux admins).
+async function mbBalance(){
+  try {
+    const { data } = await sb.functions.invoke('meteoblue', { body: { usage: true } });
+    if (data && data.ok && isFinite(data.remaining)) $('mbBal').innerHTML = 'Solde meteoblue : <b>'+nf.format(Math.round(data.remaining))+'</b> / '+nf.format(Math.round(data.quota))+' crédits ('+nf.format(data.today)+' aujourd\'hui).';
+  } catch(_){}
+}
+async function init(){
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+  const { data: { session } } = await sb.auth.getSession();
+  const deny = t => { $('denied').hidden = false; $('deniedTxt').textContent = t; $('state').textContent = ''; };
+  if (!session){ deny('Connecte-toi avec un compte administrateur (depuis Coach Miguel ou Plan My Ride), puis reviens ici.'); return; }
+  S.me = session.user;
+  const { data: me } = await sb.from('app_users').select('is_admin,status').eq('user_id', S.me.id).maybeSingle();
+  if (!me || !me.is_admin || me.status !== 'active'){ deny('Cette page est réservée aux administrateurs.'); return; }
+  $('state').textContent = 'Connecté : '+S.me.email;
+  $('app').hidden = false;
+  try { await load(); } catch(e){ $('pend').innerHTML = '<p class="msg err">Lecture impossible : '+esc(e.message || e)+'</p>'; }
+  mbBalance();
+}
+init();
+})();
+</script>
+</body>
+</html>

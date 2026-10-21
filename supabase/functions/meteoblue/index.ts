@@ -1,8 +1,9 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 // Plan My Ride : prévisions meteoblue (API « packages ») pour des points de la trace.
-// La clé METEOBLUE_API_KEY (secret Supabase) n'est jamais renvoyée au navigateur. Réservé aux utilisateurs
-// listés dans COACH_USER_IDS (par défaut : le propriétaire), pour protéger les crédits.
+// La clé METEOBLUE_API_KEY (secret Supabase) n'est jamais renvoyée au navigateur. Réservé aux comptes actifs ayant
+// l'accès Plan My Ride (table app_users), dans la limite de quota_mb chargements par mois (null = illimité) ;
+// chaque chargement est compté dans usage_log avec ses crédits. Le solde du compte meteoblue (usage) est réservé aux admins.
 // POST { points: [{ lat, lon, asl? }], days } → { ok, days, pkg, points: [{ t[], temp[], app[], pr[], prob[], pic[], day[],
 //   ws[] (km/h), wd[], gust[] (km/h), cc[], sun[], sunUnit, asl, modelrun, updated }] }
 // POST { debug: true, points: [un point], pkg? } → aperçu brut de la réponse meteoblue (unités, champs).
@@ -17,7 +18,17 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-const OWNER = 'e51d871e-c7bb-4aa7-aaf1-4aa96ca3e36b';
+
+// Accès et quotas (table app_users, écrite par la page Admin) ; consommation dans usage_log (clé de service).
+async function access(admin: SupabaseClient, uid: string) {
+  const { data } = await admin.from('app_users').select('status,is_admin,coach,pmr,quota_miguel,quota_mb').eq('user_id', uid).maybeSingle();
+  return data as { status: string; is_admin: boolean; coach: boolean; pmr: boolean; quota_miguel: number | null; quota_mb: number | null } | null;
+}
+async function usedThisMonth(admin: SupabaseClient, uid: string, kind: string) {
+  const d = new Date(), from = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();
+  const { count } = await admin.from('usage_log').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('kind', kind).gte('at', from);
+  return count ?? 0;
+}
 // Paquets accessibles à l'essai gratuit : basic-1h, wind-3h, clouds-3h… (pas de wind-1h ni clouds-1h).
 // Crédits par point (en-tête mb-credits-accounted) : basic-1h 8 000 ; avec clouds-3h 16 000 ; avec wind-3h et clouds-3h
 // 32 000, quelle que soit la durée (1 à 7 jours). Par défaut basic-1h seul ; au plus MAX_POINTS points par appel.
@@ -36,8 +47,9 @@ Deno.serve(async (req: Request) => {
   });
   const { data: { user }, error: userErr } = await userClient.auth.getUser();
   if (userErr || !user) return json({ error: 'unauthorized' }, 401);
-  const allowed = (Deno.env.get('COACH_USER_IDS') ?? OWNER).split(',').map((s) => s.trim()).filter(Boolean);
-  if (!allowed.includes(user.id)) return json({ error: 'forbidden' }, 403);
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const acc = await access(admin, user.id);
+  if (!acc || acc.status !== 'active' || !acc.pmr) return json({ error: 'forbidden' }, 403);
   const key = Deno.env.get('METEOBLUE_API_KEY');
   if (!key) return json({ error: 'no_key' }, 503);
   const mask = (s: string) => s.split(key).join('***');
@@ -45,6 +57,10 @@ Deno.serve(async (req: Request) => {
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch (_) { /* corps vide */ }
 
+  if (body.usage && !acc.is_admin) {
+    const used = await usedThisMonth(admin, user.id, 'meteoblue');
+    return json({ ok: true, mine: true, used, quota: acc.quota_mb });
+  }
   if (body.usage) {
     // Consommation réelle lue chez meteoblue (une ligne par jour et par type de requête, paginée).
     const quota = Number(Deno.env.get('METEOBLUE_QUOTA')) || QUOTA_DEFAULT;
@@ -82,7 +98,12 @@ Deno.serve(async (req: Request) => {
     (p.asl != null && isFinite(p.asl) && p.asl > -500 && p.asl < 9000 ? `&asl=${p.asl}` : '') +
     `&apikey=${encodeURIComponent(key)}&format=json&timeformat=timestamp_utc&windspeed=kmh&forecast_days=${days}`;
 
+  if (!body.debug && acc.quota_mb != null) {
+    const used = await usedThisMonth(admin, user.id, 'meteoblue');
+    if (used >= acc.quota_mb) return json({ error: 'quota', used, quota: acc.quota_mb }, 429);
+  }
   if (body.debug) {
+    if (!acc.is_admin) return json({ error: 'forbidden' }, 403);
     const t0 = Date.now();
     const r = await fetch(urlFor(clean[0]));
     const text = mask(await r.text());
@@ -138,6 +159,7 @@ Deno.serve(async (req: Request) => {
     let next = 0;
     const worker = async () => { while (next < clean.length) { const i = next++; out[i] = await one(clean[i]); } };
     await Promise.all([worker(), worker(), worker(), worker()]);
+    await admin.from('usage_log').insert({ user_id: user.id, kind: 'meteoblue', detail: clean.length + ' points', credits });
     return json({ ok: true, days, pkg, credits, points: out });
   } catch (e) {
     return json({ error: 'meteoblue', detail: mask(String((e as Error).message || e)) }, 502);

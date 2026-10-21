@@ -350,6 +350,26 @@ dialog.stats h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;col
 .sday .b.z{background:var(--line)}
 .sday span:last-child{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 dialog.stats .hint{color:var(--muted);font-size:12.5px;margin:10px 0 0}
+/* Accès réservé (depuis le 21/10/2026) : écran de connexion / création de compte avant l'app */
+.gate{display:none;min-height:100vh;min-height:100dvh;padding:24px 16px;place-items:center;background:var(--bg)}
+body.gated .gate{display:grid}
+body.gated > :not(.gate):not(script):not(dialog){display:none!important}
+.gate-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 22px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.gate-logo{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:-.01em;margin:0 0 4px}
+.gate-sub{margin:0 0 16px;color:var(--muted);font-size:14px}
+.gate-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-bottom:14px}
+.gate-tabs button{border:none;background:var(--panel);color:var(--muted);padding:8px 6px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.gate-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.gate form{display:flex;flex-direction:column;gap:10px}
+.gate label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.gate input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:16px}
+.gate .btn{justify-content:center;padding:10px 14px;font-size:15px}
+.gate .note{font-size:13px;color:var(--muted);margin:0}
+.gate .note.ok{color:#2e7d4f}
+.gate .err{color:#c0392b;font-size:13px;margin:0}
+.gate .lnk{background:none;border:none;color:var(--muted);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;padding:0;align-self:flex-start}
+body:not(.admin) .adm{display:none!important}
+body.nocoach .coachonly{display:none!important}
 dialog.login::backdrop{background:rgba(0,0,0,.35)}
 dialog.login form{display:flex;flex-direction:column;gap:10px}
 dialog.login h2{margin:0 0 4px;font-size:17px}
@@ -440,7 +460,34 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 </style>
 </head>
 <body>
-<script>try{if(!localStorage.getItem('sb-rynbzhuxwvfvblgwnhkk-auth-token'))document.body.classList.add('public')}catch(e){document.body.classList.add('public')}</script>
+<script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-rynbzhuxwvfvblgwnhkk-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <p class="gate-logo">Plan My Ride</p>
+    <p class="gate-sub" id="gateSub">La météo sur ta trace, heure par heure. Accès réservé aux comptes autorisés.</p>
+    <div id="gateWait" hidden>
+      <p class="note" id="gateWaitTxt"></p>
+      <div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn" id="gateRetry">Réessayer</button><button type="button" class="btn" id="gateOut">Se déconnecter</button></div>
+    </div>
+    <div id="gateForms">
+      <div class="gate-tabs" role="group" aria-label="Accès"><button type="button" data-g="in" aria-pressed="true">Se connecter</button><button type="button" data-g="up" aria-pressed="false">Créer un compte</button></div>
+      <form id="gateIn">
+        <label>E-mail<input type="email" id="giEmail" autocomplete="username" required></label>
+        <label>Mot de passe<input type="password" id="giPw" autocomplete="current-password" required></label>
+        <button type="submit" class="btn primary" id="giGo">Se connecter</button>
+        <button type="button" class="lnk" id="giForgot">Mot de passe oublié ?</button>
+      </form>
+      <form id="gateUp" hidden>
+        <p class="note" id="guInvite"></p>
+        <label>Prénom<input type="text" id="guName" autocomplete="given-name" maxlength="40" required></label>
+        <label>E-mail<input type="email" id="guEmail" autocomplete="email" required></label>
+        <label>Mot de passe <small>8 caractères minimum</small><input type="password" id="guPw" autocomplete="new-password" minlength="8" required></label>
+        <button type="submit" class="btn primary" id="guGo">Créer mon compte</button>
+      </form>
+      <p class="err" id="gateErr" hidden></p>
+    </div>
+  </div>
+</div>
 <div class="test-band" id="testBand" hidden>🧪 <b>Version test</b> : nouveautés en essai avant la mise en ligne. Mêmes parcours et réglages que la version normale. <a href="./">Revenir à la version normale</a></div>
 <header class="top">
   <div class="brand">
@@ -458,7 +505,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <button type="button" data-t="dark" title="Thème sombre" aria-label="Thème sombre">☾</button>
   </div>
   <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
-  <a class="btn priv" href="coach.html">Coach Miguel</a>
+  <a class="btn priv" href="coach.html" id="coachBtn" hidden>Coach Miguel</a>
 </header>
 
 <div class="app">
@@ -532,7 +579,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <div class="range"><input type="range" id="pause" min="0" max="40" step="1"><output id="pauseOut" class="mono"></output></div>
       <p class="hint">Ravitos, photos, feux : ajouté au temps de roulage.</p>
     </div>
-    <div class="field priv">
+    <div class="field priv coachonly">
       <label class="toggle"><input type="checkbox" id="calibOn"> <span class="label" style="color:var(--ink)">Caler sur mes sorties</span></label>
       <p class="hint" id="calibHint">Règle la vitesse sur le plat, la VAM et les arrêts d'après tes sorties enregistrées dans Coach Miguel.</p>
       <div class="calib-box" id="calibBox" hidden>
@@ -784,7 +831,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </div>
   </main>
 </div>
-<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink">Accès privé</a><a href="#" class="priv" id="statsLink">Fréquentation</a><span class="priv"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
+<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink" hidden>Accès privé</a><a href="#" class="priv adm" id="statsLink">Fréquentation</a><span class="priv adm"> · </span><a href="admin.html" class="priv adm">Admin</a><span class="priv adm"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
 <dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
   <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
   <div class="bd">
@@ -1039,7 +1086,7 @@ async function fetchMB() {
       const { data: res, error } = await sb.functions.invoke('meteoblue', { body: { points: miss.map(({ lat, lon, asl }) => ({ lat, lon, asl })), days: MB_DAYS, pkg: MB_PKG } });
       if (error) {
         let d = ''; try { const j = await error.context.json(); d = j.detail || j.error || ''; } catch (e) {}
-        throw new Error(d === 'forbidden' ? 'réservé au compte Coach Miguel du propriétaire.' : (d || error.message));
+        throw new Error(d === 'forbidden' ? 'non compris dans ton accès.' : d === 'quota' ? 'ton quota meteoblue du mois est atteint, Open-Meteo prend le relais.' : (d || error.message));
       }
       if (!res || !res.ok || !Array.isArray(res.points) || res.points.length !== miss.length) throw new Error((res && (res.detail || res.error)) || 'réponse vide.');
       const c = mbCacheRead(), at = Date.now();
@@ -1293,7 +1340,7 @@ function renderWxSrc() {
 }
 // Consommation meteoblue : crédits de ce chargement et reste du forfait (lu chez meteoblue, au plus toutes les 10 min).
 const fmtCr = x => x >= 1e6 ? (x / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' M' : Math.round(x).toLocaleString('fr-FR');
-function mbUsageGet() { try { const u = JSON.parse(localStorage.getItem(MB_USAGE) || 'null'); return u && isFinite(u.remaining) ? u : null; } catch (e) { return null; } }
+function mbUsageGet() { try { const u = JSON.parse(localStorage.getItem(MB_USAGE) || 'null'); return u && (u.mine || isFinite(u.remaining)) ? u : null; } catch (e) { return null; } }
 async function mbUsageRefresh(force) {
   if (wxSrc() !== 'mb' || !hasSbToken()) return;
   const u = mbUsageGet();
@@ -1302,8 +1349,11 @@ async function mbUsageRefresh(force) {
   try {
     const sb = await sbIfLogged(); if (!sb) return;
     const { data, error } = await sb.functions.invoke('meteoblue', { body: { usage: true } });
-    if (error || !data || !data.ok || !isFinite(data.remaining)) return;
-    try { localStorage.setItem(MB_USAGE, JSON.stringify({ used: data.used, today: data.today, quota: data.quota, remaining: data.remaining, at: Date.now() })); } catch (e) {}
+    if (error || !data || !data.ok) return;
+    // Compte non administrateur : son quota mensuel de chargements (pas le solde du compte meteoblue).
+    if (data.mine) { try { localStorage.setItem(MB_USAGE, JSON.stringify({ mine: true, used: data.used, quota: data.quota, at: Date.now() })); } catch (e) {} }
+    else if (!isFinite(data.remaining)) return;
+    else try { localStorage.setItem(MB_USAGE, JSON.stringify({ used: data.used, today: data.today, quota: data.quota, remaining: data.remaining, at: Date.now() })); } catch (e) {}
     renderWxUse(wxSrc(), hasSbToken(), S.wxFallback ? null : S.wxInfo);
   } catch (e) { /* affichage seulement */ } finally { S.mbUsageBusy = false; }
 }
@@ -1312,6 +1362,14 @@ function renderWxUse(src, logged, I) {
   if (src !== 'mb' || !logged || (!u && !I)) { el.hidden = true; return; }
   const lines = [];
   if (I) lines.push(I.credits ? `Ce chargement : <b>${fmtCr(I.credits)}</b> crédits` : 'Ce chargement : 0 crédit (prévision gardée 2 h)');
+  if (u && u.mine) {
+    lines.push(u.quota == null ? `meteoblue : <b>${u.used}</b> chargement${u.used > 1 ? 's' : ''} ce mois-ci` : `meteoblue : <b>${u.used}</b> / ${u.quota} chargements ce mois-ci`);
+    const fr = u.quota ? clamp(1 - u.used / u.quota, 0, 1) : 1;
+    el.hidden = false; el.querySelector('span').innerHTML = lines.slice(-1).join('<br>');
+    el.querySelector('.bar').hidden = !u.quota; el.querySelector('.bar i').style.width = (fr * 100).toFixed(1) + '%';
+    el.classList.toggle('low', !!u.quota && fr < 0.25); el.title = 'Chaque chargement d\'un parcours avec meteoblue compte une fois (prévision gardée 2 h).';
+    return;
+  }
   if (u) {
     const per = I ? I.points * MB_CREDITS : 0;
     lines.push(`Solde : <b>${Math.round(u.remaining).toLocaleString('fr-FR')}</b> / ${Math.round(u.quota).toLocaleString('fr-FR')} crédits` +
@@ -3889,7 +3947,7 @@ function visitorId() {
   return v;
 }
 function track(event, extra) {
-  if (IS_TEST || hasSbToken() || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+  if (IS_TEST || (ACC.row && ACC.row.is_admin) || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
   const row = { visitor: visitorId(), event, mode: S.mode === 'ultra' ? 'ultra' : 'ride',
     device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) };
   const hdr = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
@@ -3901,7 +3959,7 @@ function track(event, extra) {
       .then(r => { if (!r.ok) direct(); }).catch(direct);
   } catch (e) {}
 }
-try { if (!sessionStorage.getItem('pmr-visit')) { sessionStorage.setItem('pmr-visit', '1'); setTimeout(() => track('visit'), 800); } } catch (e) {}
+try { if (!sessionStorage.getItem('pmr-visit') && hasSbToken()) { setTimeout(() => { if (document.body.classList.contains('gated') || !ACC.row) return; sessionStorage.setItem('pmr-visit', '1'); track('visit'); }, 2500); } } catch (e) {}
 
 // Fenêtre « Fréquentation » (connecté) : visiteurs uniques, visites et GPX importés par période, puis jour par jour.
 async function openStats() {
@@ -3974,7 +4032,7 @@ $('#helpX').addEventListener('click', closeHelp);
 $('#helpOk').addEventListener('click', closeHelp);
 $('#helpDlg').addEventListener('cancel', e => { e.preventDefault(); closeHelp(); });
 $('#helpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) closeHelp(); });
-try { if (document.body.classList.contains('public') && !localStorage.getItem(HELP_KEY)) setTimeout(openHelp, 400); } catch (e) {}
+try { if (!localStorage.getItem(HELP_KEY)) setTimeout(() => { if (!document.body.classList.contains('gated') && ACC.row && !ACC.row.is_admin) openHelp(); }, 2500); } catch (e) {}
 // Accès privé : connexion par mot de passe (compte unique), déconnexion ; la page se recharge pour changer de mode.
 $('#loginLink').addEventListener('click', e => { e.preventDefault(); $('#loginErr').hidden = true; $('#loginDlg').showModal(); $('#loginEmail').focus(); });
 $('#loginCancel').addEventListener('click', () => $('#loginDlg').close());
@@ -3997,10 +4055,78 @@ $('#logoutLink').addEventListener('click', async e => {
   try { localStorage.removeItem(SB_TOKEN_KEY); } catch (err) {}
   location.reload();
 });
-// Jeton présent mais session expirée (refresh impossible) : retour au mode public.
-if (hasSbToken()) sbClient().then(sb => sb.auth.getSession()).then(({ data: { session } }) => {
-  if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); }
-}).catch(() => {});
+// Accès réservé (depuis le 21/10/2026) : sans session, écran #gate (connexion ou création de compte) ; avec une
+// session, la ligne de app_users décide (compte actif + accès Plan My Ride). Un lien testeur (?invite=CODE, table
+// tester_links) donne l'accès dès la création du compte ; sinon le compte attend la validation d'un administrateur.
+const ACC = { row: null };
+let INVITE = ''; try { INVITE = localStorage.getItem('pmr-invite') || ''; } catch (e) {}
+function gateShow(mode, msg) {
+  document.body.classList.add('gated');
+  $('#gateForms').hidden = mode === 'wait'; $('#gateWait').hidden = mode !== 'wait';
+  if (mode === 'wait') $('#gateWaitTxt').textContent = msg || '';
+  else gateTab(mode === 'up' || (INVITE && mode !== 'in') ? 'up' : 'in');
+}
+function gateTab(t) {
+  document.querySelectorAll('#gate [data-g]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.g === t)));
+  $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateErr').hidden = true;
+  $('#guInvite').textContent = INVITE ? '🎟️ Invitation testeur : ton accès sera ouvert tout de suite.' : 'Ton compte sera ouvert après validation par l\'administrateur.';
+  $('#guInvite').classList.toggle('ok', !!INVITE);
+}
+document.querySelectorAll('#gate [data-g]').forEach(b => b.addEventListener('click', () => gateTab(b.dataset.g)));
+const gateErr = t => { $('#gateErr').textContent = t; $('#gateErr').hidden = !t; };
+async function accessCheck() {
+  if (!hasSbToken()) { gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
+  try {
+    const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession();
+    if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} gateShow('in'); return; }
+    const { data } = await sb.from('app_users').select('status,pmr,coach,is_admin,prenom,quota_mb').eq('user_id', session.user.id).maybeSingle();
+    ACC.row = data || null;
+    if (!data || data.status !== 'active' || !data.pmr) {
+      gateShow('wait', data && data.status === 'blocked' ? 'Ton compte est suspendu. Contacte l\'administrateur.'
+        : data && data.status === 'active' ? 'Ton compte n\'a pas encore accès à Plan My Ride. L\'administrateur peut l\'ouvrir depuis sa page Admin.'
+        : 'Merci ' + ((data && data.prenom) || '') + ' ! Ton compte est créé et attend la validation de l\'administrateur. Réessaie un peu plus tard.');
+      return;
+    }
+    document.body.classList.remove('gated');
+    document.body.classList.toggle('admin', !!data.is_admin);
+    $('#coachBtn').hidden = !data.coach;
+    document.body.classList.toggle('nocoach', !data.coach); // « Caler sur mes sorties » lit les activités de Coach Miguel
+    try { localStorage.removeItem('pmr-invite'); } catch (e) {}
+    if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
+  } catch (e) { /* réseau : on laisse l'app, les fonctions serveur vérifient l'accès */ }
+}
+$('#gateIn').addEventListener('submit', async e => {
+  e.preventDefault(); gateErr(''); $('#giGo').disabled = true;
+  try {
+    const sb = await sbClient();
+    const { error } = await sb.auth.signInWithPassword({ email: $('#giEmail').value.trim(), password: $('#giPw').value });
+    if (error) throw error;
+    location.reload();
+  } catch (err) { gateErr(/invalid/i.test(String(err.message)) ? 'E-mail ou mot de passe incorrect.' : 'Connexion impossible : ' + (err.message || err)); $('#giGo').disabled = false; }
+});
+$('#giForgot').addEventListener('click', async () => {
+  const email = $('#giEmail').value.trim(); if (!email) { gateErr('Entre ton e-mail, puis clique à nouveau sur « Mot de passe oublié ? ».'); return; }
+  try { const sb = await sbClient(); const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, '') + 'coach.html' }); if (error) throw error;
+    gateErr(''); $('#gateErr').hidden = false; $('#gateErr').textContent = 'Lien envoyé par e-mail : il ouvre une page pour choisir un nouveau mot de passe.'; }
+  catch (err) { gateErr('Envoi impossible : ' + (err.message || err)); }
+});
+$('#gateUp').addEventListener('submit', async e => {
+  e.preventDefault(); gateErr(''); $('#guGo').disabled = true;
+  const email = $('#guEmail').value.trim(), password = $('#guPw').value;
+  try {
+    const r = await fetch(SB_URL + '/functions/v1/app-signup', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, prenom: $('#guName').value.trim(), code: INVITE }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error === 'exists' ? 'Un compte existe déjà avec cet e-mail : connecte-toi.' : j.error === 'code' ? 'Ce lien d\'invitation n\'est plus valable. Demande-en un nouveau.'
+      : j.error === 'password' ? 'Mot de passe trop court (8 caractères minimum).' : j.error === 'email' ? 'Adresse e-mail invalide.' : 'Création impossible, réessaie.');
+    const sb = await sbClient();
+    const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw error;
+    location.reload();
+  } catch (err) { gateErr(err.message || String(err)); $('#guGo').disabled = false; }
+});
+$('#gateRetry').addEventListener('click', () => location.reload());
+$('#gateOut').addEventListener('click', async () => { try { const sb = await sbClient(); await sb.auth.signOut(); } catch (e) {} try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); });
+accessCheck();
 async function sbIfLogged() {
   if (!hasSbToken()) return null;
   try { const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession(); return session ? sb : null; } catch (e) { return null; }

@@ -1,10 +1,11 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 // Coach Miguel : « Demander une sortie » (task 'propose'), « Étude de la sortie » (task 'study')
 // et « Bilan de la semaine » (task 'week').
 // Le navigateur envoie la consigne (profil, forme, activités, dispos, demande ou sortie à étudier) ; cette fonction
 // appelle l'API Claude avec la clé ANTHROPIC_API_KEY (secret Supabase, jamais renvoyée au navigateur) et renvoie
-// la réponse JSON. Réservé aux utilisateurs listés dans COACH_USER_IDS (par défaut : le propriétaire).
+// la réponse JSON. Réservé aux comptes actifs ayant l'accès Coach Miguel (table app_users), dans la limite de
+// quota_miguel demandes par mois (null = illimité) ; chaque réponse est comptée dans usage_log.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -14,7 +15,17 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-const OWNER = 'e51d871e-c7bb-4aa7-aaf1-4aa96ca3e36b';
+
+// Accès et quotas (table app_users, écrite par la page Admin) ; consommation dans usage_log (clé de service).
+async function access(admin: SupabaseClient, uid: string) {
+  const { data } = await admin.from('app_users').select('status,is_admin,coach,pmr,quota_miguel,quota_mb').eq('user_id', uid).maybeSingle();
+  return data as { status: string; is_admin: boolean; coach: boolean; pmr: boolean; quota_miguel: number | null; quota_mb: number | null } | null;
+}
+async function usedThisMonth(admin: SupabaseClient, uid: string, kind: string) {
+  const d = new Date(), from = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();
+  const { count } = await admin.from('usage_log').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('kind', kind).gte('at', from);
+  return count ?? 0;
+}
 const ROLE = "Tu es Miguel, coach d'endurance (vélo de route et course à pied / trail) d'un athlète amateur. ";
 const JSON_ONLY = 'Réponds uniquement avec un objet JSON valide, sans texte autour ni bloc de code.';
 const TASKS: Record<string, { system: string; maxTokens: number }> = {
@@ -45,8 +56,13 @@ Deno.serve(async (req: Request) => {
   });
   const { data: { user }, error: userErr } = await userClient.auth.getUser();
   if (userErr || !user) return json({ error: 'unauthorized' }, 401);
-  const allowed = (Deno.env.get('COACH_USER_IDS') ?? OWNER).split(',').map((s) => s.trim()).filter(Boolean);
-  if (!allowed.includes(user.id)) return json({ error: 'forbidden' }, 403);
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const acc = await access(admin, user.id);
+  if (!acc || acc.status !== 'active' || !acc.coach) return json({ error: 'forbidden' }, 403);
+  if (acc.quota_miguel != null) {
+    const used = await usedThisMonth(admin, user.id, 'miguel');
+    if (used >= acc.quota_miguel) return json({ error: 'quota', used, quota: acc.quota_miguel }, 429);
+  }
 
   const key = Deno.env.get('ANTHROPIC_API_KEY');
   if (!key) return json({ error: 'no_key' }, 503);
@@ -72,7 +88,10 @@ Deno.serve(async (req: Request) => {
   const out = await r.json();
   const text = (out.content ?? []).filter((c: { type: string }) => c.type === 'text').map((c: { text: string }) => c.text).join('');
   const proposal = parseJson(text);
-  if (proposal) return json({ ok: true, proposal, model });
+  if (proposal) {
+    await admin.from('usage_log').insert({ user_id: user.id, kind: 'miguel', detail: String(body.task ?? 'propose') });
+    return json({ ok: true, proposal, model });
+  }
   // Réponse illisible : on renvoie de quoi comprendre (raison d'arrêt, début et fin du texte).
   console.log('invalid_json', out.stop_reason, text.length, text.slice(0, 400), '…', text.slice(-200));
   return json({ error: 'invalid_json', stop: out.stop_reason ?? '', length: text.length, head: text.slice(0, 160), tail: text.slice(-120) }, 502);

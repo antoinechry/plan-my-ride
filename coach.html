@@ -380,6 +380,14 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       <div class="authact"><button class="btn primary" type="submit" id="pwgo">Se connecter</button><button class="linkbtn" type="button" id="pwforgot">Mot de passe oublié ?</button></div>
     </form>
     <p class="msg" id="authmsg"></p>
+    <p class="msg">Pas encore de compte ? <a href="index.html#inscription">Crée-le ici</a> : il sera ouvert après validation par l'administrateur.</p>
+  </div>
+
+  <!-- Pas d'accès à Coach Miguel (compte en attente, bloqué, ou accès Plan My Ride seulement) -->
+  <div id="noaccess" class="card" hidden>
+    <h2>Accès à Coach Miguel</h2>
+    <p class="msg" id="noaccessTxt"></p>
+    <div class="authact" style="margin-top:12px"><a class="btn" id="noaccessPmr" href="index.html" hidden>Ouvrir Plan My Ride</a><button class="btn" id="noaccessOut" type="button">Se déconnecter</button></div>
   </div>
 
   <!-- App -->
@@ -476,6 +484,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       <p class="sub">Ce que Miguel sait de toi : il s'en sert pour chaque séance, étude et bilan. Tout est enregistré au fil de la saisie.</p>
       <div class="mform">
         <label>Prénom<input type="text" id="me-prenom" maxlength="40" autocomplete="given-name"></label>
+        <label>Début du plan <small>jour 1, numéro des semaines</small><input type="date" id="me-debut"></label>
         <label>📍 Ma ville <small>météo du calendrier et départ des traces</small><input id="cityin" type="text" list="citylist" placeholder="Ex. Ribeauvillé" autocomplete="off" enterkeyhint="done" maxlength="80"><datalist id="citylist"></datalist></label>
         <p class="msg" id="citymsg"></p>
         <label class="wide">Objectif principal<input type="text" id="me-objectif" maxlength="160"></label>
@@ -532,7 +541,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       </form>
       <p class="msg" id="pwmsg"></p>
       <h4>Session</h4>
-      <button class="btn" id="logout">Se déconnecter</button>
+      <div class="authact"><button class="btn" id="logout">Se déconnecter</button><a class="btn" href="admin.html" id="adminLink" hidden>Administration</a></div>
     </section>
     <div class="dlgfoot">
       <span></span>
@@ -647,7 +656,10 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 
 const SUPABASE_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
-const PLAN_START = new Date(2026,9,5); // lundi 5 octobre 2026 = jour 1
+// Début du plan (jour 1) : rubrique « Moi » (debut) ; propriétaire : lundi 5 octobre 2026. Mis à jour par applyPlanStart.
+let PLAN_START = new Date(2026,9,5);
+const OWNER_ID = 'e51d871e-c7bb-4aa7-aaf1-4aa96ca3e36b';
+const ACCESS = { row: null };
 const DISPO_LABEL = {libre:'Libre', court:'Créneau court', indispo:'Indispo'};
 
 const $ = id => document.getElementById(id);
@@ -1818,7 +1830,7 @@ function weekStats(ws){
 }
 // Portrait de l'athlète pour Miguel : rubrique « Moi » du menu (doc « reglages », clé moi), sinon ces valeurs par défaut.
 const ME_DEF = {
-  prenom: 'Antoine',
+  prenom: 'Antoine', debut: '2026-10-05',
   objectif: 'Un trail de 30 km en 2027.',
   terrain: 'Autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
   materiel: 'Vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift), montre Garmin, compteur COROS Dura.',
@@ -1826,7 +1838,14 @@ const ME_DEF = {
   exclure: 'Le renforcement (abdos, haut du corps) : il le fait à part.',
   notes: 'Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure. Il nage aussi, en complément (piscine ou eau libre).'
 };
-const me = () => Object.assign({}, ME_DEF, state.reglages.moi || {});
+// Autres comptes : portrait vide (à remplir dans « Moi »), prénom de l'inscription, plan démarré la semaine de l'inscription.
+const ME_BLANK = { prenom: '', debut: '', objectif: '', terrain: '', materiel: '', ftp: null, lthr: null, lthrrun: null, fcmax: null, exclure: '', notes: '' };
+const me = () => {
+  const own = state.user && state.user.id === OWNER_ID, r = ACCESS.row || {};
+  const base = own ? ME_DEF : Object.assign({}, ME_BLANK, { prenom: r.prenom || '', debut: r.created_at ? key(startOfWeek(new Date(r.created_at))) : '' });
+  return Object.assign({}, base, state.reglages.moi || {});
+};
+function applyPlanStart(){ const d = me().debut; PLAN_START = /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? new Date(d+'T00:00:00') : startOfWeek(t0); }
 function profileLines(){
   const m = me(), g = goals(), out = [];
   if (m.prenom) out.push('- Prénom : '+m.prenom+' (tutoie-le).');
@@ -1953,8 +1972,9 @@ function renderProposal(){
     + '<div class="askact"><button class="btn primary" data-act="addsend">Ajouter et envoyer sur '+(DEVICE[sportCls(p.sport)] || DEVICE.other)+'</button><button class="btn" data-act="add">Ajouter seulement</button><button class="btn" data-act="again">Autre proposition</button></div></div>';
 }
 const COACH_ERR = {
+  quota: 'Tu as atteint ton nombre de demandes à Miguel pour ce mois-ci.',
   no_key: 'La clé API Anthropic n\'est pas encore enregistrée côté serveur (secret ANTHROPIC_API_KEY dans Supabase).',
-  forbidden: 'Miguel est réservé au propriétaire de l\'app.',
+  forbidden: 'Ton compte n\'a pas accès à Miguel.',
   invalid_json: 'La réponse reçue était illisible. Réessaie.',
   unauthorized: 'Session expirée : reconnecte-toi.'
 };
@@ -2617,13 +2637,28 @@ function renderMissing(list){
 /* ---------- Auth flow ---------- */
 // Connexion par mot de passe seulement (signInWithPassword). Le mot de passe se change dans le profil (updateUser) ;
 // « Mot de passe oublié » envoie un lien de réinitialisation qui ouvre le profil.
+$('noaccessOut').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
 function showAuth(){
+  $('noaccess').hidden = true;
   $('authbox').hidden = false; $('app').hidden = true; $('profbtn').hidden = true; $('refbtn').hidden = true;
   if ($('profdlg').open) $('profdlg').close();
   $('state').textContent = 'Connecte-toi pour accéder à ton plan.';
 }
 async function showApp(user){
   state.user = user;
+  // Accès (table app_users) : compte actif avec l'accès Coach Miguel, sinon message et lien éventuel vers Plan My Ride.
+  try { const { data } = await sb.from('app_users').select('status,coach,pmr,is_admin,prenom,created_at,quota_miguel').eq('user_id', user.id).maybeSingle(); ACCESS.row = data || null; } catch(_){ ACCESS.row = null; }
+  const a = ACCESS.row;
+  if (!a || a.status !== 'active' || !a.coach){
+    $('authbox').hidden = true; $('app').hidden = true; $('noaccess').hidden = false;
+    $('noaccessPmr').hidden = !(a && a.status === 'active' && a.pmr);
+    $('noaccessTxt').textContent = !a ? 'Compte introuvable : réessaie plus tard.' : a.status === 'blocked' ? 'Ton compte est suspendu. Contacte l\'administrateur.'
+      : a.status === 'pending' ? 'Ton compte attend la validation de l\'administrateur.' : 'Ton compte n\'a pas accès à Coach Miguel. L\'administrateur peut l\'ouvrir depuis sa page Admin.';
+    $('state').textContent = 'Connecté : '+user.email;
+    return;
+  }
+  $('noaccess').hidden = true;
+  $('adminLink').hidden = !a.is_admin;
   $('authbox').hidden = true; $('app').hidden = false; $('profbtn').hidden = false; $('refbtn').hidden = false;
   $('profav').textContent = (user.email || '?').charAt(0).toUpperCase();
   $('profemail').textContent = user.email || '';
@@ -2637,6 +2672,7 @@ async function showApp(user){
     setMsg($('authmsg'), 'Impossible de charger tes données : '+(e.message||e), true);
   }
   $('profav').textContent = (me().prenom || user.email || '?').charAt(0).toUpperCase();
+  applyPlanStart();
   renderCalendar();
   renderCityNow();
   loadCityWx(false);
@@ -2689,7 +2725,7 @@ function setMenuTab(t){
   for (const p of document.querySelectorAll('#profdlg .mpanel')) p.hidden = p.dataset.mpanel !== t;
 }
 $('mtabs').addEventListener('click', e => { const b = e.target.closest('[data-mtab]'); if (b) setMenuTab(b.dataset.mtab); });
-const ME_FIELDS = { prenom: 'me-prenom', objectif: 'me-objectif', terrain: 'me-terrain', materiel: 'me-materiel', ftp: 'me-ftp', lthr: 'me-lthr', lthrrun: 'me-lthrrun', fcmax: 'me-fcmax', exclure: 'me-exclure', notes: 'me-notes' };
+const ME_FIELDS = { debut: 'me-debut', prenom: 'me-prenom', objectif: 'me-objectif', terrain: 'me-terrain', materiel: 'me-materiel', ftp: 'me-ftp', lthr: 'me-lthr', lthrrun: 'me-lthrrun', fcmax: 'me-fcmax', exclure: 'me-exclure', notes: 'me-notes' };
 function fillMe(){ const m = me(); for (const [k, id] of Object.entries(ME_FIELDS)) $(id).value = m[k] ?? ''; $('mesave').textContent = ''; setMsg($('citymsg'), ''); }
 let meTimer = null;
 function onMeInput(){
@@ -2699,6 +2735,7 @@ function onMeInput(){
     m[k] = el.type === 'number' ? (v === '' ? null : Math.round(Number(v))) : v;
   }
   state.reglages.moi = m; $('mesave').textContent = 'Enregistrement…';
+  const d0 = key(PLAN_START); applyPlanStart(); if (key(PLAN_START) !== d0) renderCalendar();
   clearTimeout(meTimer);
   meTimer = setTimeout(async () => {
     try { await saveDoc('reglages', state.reglages); $('mesave').textContent = 'Enregistré'; } catch(_){ $('mesave').textContent = 'Échec de l\'enregistrement, réessaie.'; }
@@ -2772,7 +2809,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-21g';
+const APP_VERSION = '2026-10-21h';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();

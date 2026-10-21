@@ -15,7 +15,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 //   delete_workouts { external_ids } → retire ces séances du calendrier intervals.icu
 //   wellness { oldest, newest } → données de santé par jour (poids, masse grasse, FC au repos, VFC, sommeil…),
 //                                 importées par intervals.icu depuis Garmin / COROS
-// La clé n'est jamais renvoyée au navigateur.
+// La clé n'est jamais renvoyée au navigateur. Réservé aux comptes actifs ayant l'accès Coach Miguel (app_users).
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -56,6 +56,9 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch (_) { /* corps vide */ }
   const action = String(body.action ?? 'status');
   const admin = createClient(supaUrl, service);
+  // Réservé aux comptes actifs ayant l'accès Coach Miguel (table app_users).
+  const { data: acc } = await admin.from('app_users').select('status,coach').eq('user_id', user.id).maybeSingle();
+  if (!acc || acc.status !== 'active' || !acc.coach) return json({ error: 'forbidden' }, 403);
 
   if (action === 'status') {
     const { data, error } = await admin.from('intervals_keys').select('athlete_id').eq('user_id', user.id).maybeSingle();
