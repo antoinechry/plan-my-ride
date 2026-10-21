@@ -1,6 +1,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-// Coach Miguel : « Demander une sortie » (task 'propose') et « Étude de la sortie » (task 'study').
+// Coach Miguel : « Demander une sortie » (task 'propose'), « Étude de la sortie » (task 'study')
+// et « Bilan de la semaine » (task 'week').
 // Le navigateur envoie la consigne (profil, forme, activités, dispos, demande ou sortie à étudier) ; cette fonction
 // appelle l'API Claude avec la clé ANTHROPIC_API_KEY (secret Supabase, jamais renvoyée au navigateur) et renvoie
 // la réponse JSON. Réservé aux utilisateurs listés dans COACH_USER_IDS (par défaut : le propriétaire).
@@ -26,6 +27,12 @@ const TASKS: Record<string, { system: string; maxTokens: number }> = {
       "appuyée sur les chiffres fournis, sans inventer de données ni de détails sur le parcours. Tu le tutoies, phrases courtes, en français. " +
       JSON_ONLY,
     maxTokens: 4000,
+  },
+  week: {
+    system: ROLE + "Tu fais le bilan d'une semaine d'entraînement : ce qui a été fait par rapport aux objectifs et au plan, " +
+      "l'état de forme, et des conseils concrets pour la semaine suivante. Honnête, encourageant sans flatter, appuyé sur les chiffres fournis, " +
+      "sans inventer de données. Tu le tutoies, phrases courtes, en français. " + JSON_ONLY,
+    maxTokens: 3000,
   },
 };
 

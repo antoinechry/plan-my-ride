@@ -5,7 +5,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 //   status                      → { connected, athlete_id }
 //   link { api_key, athlete_id? } → vérifie la clé auprès d'intervals.icu puis l'enregistre
 //   unlink                      → supprime la clé
-//   sync                        → importe les activités des IMPORT_DAYS derniers jours
+//   sync                        → importe les activités des IMPORT_DAYS derniers jours ; missing = celles
+//                                 qu'intervals.icu reçoit de Strava et ne donne pas (date, type, distance)
 //   streams { ext_id }          → courbes d'une activité (temps, distance, altitude, vitesse, FC, puissance, cadence),
 //                                 moyennées par paquets pour tenir en STREAM_POINTS points au plus
 //   push_workouts { events }    → crée ou met à jour des séances planifiées (category WORKOUT) dans le calendrier
@@ -102,9 +103,16 @@ Deno.serve(async (req: Request) => {
 
     const rows: Record<string, unknown>[] = [];
     let skipped = 0;
+    // Activités qu'intervals.icu connaît mais ne donne pas (venues de Strava) : listées pour savoir quoi rapatrier.
+    const missing: Record<string, unknown>[] = [];
     for (const a of list) {
       // Les activités venues de Strava ne sont pas exposées par l'API d'intervals.icu (fiche vide).
-      if (!a || a._note || a.source === 'STRAVA' || !a.start_date_local) { skipped++; continue; }
+      if (!a || a._note || a.source === 'STRAVA' || !a.start_date_local) {
+        skipped++;
+        if (a) missing.push({ date: String(a.start_date_local ?? a.start_date ?? '').slice(0, 10) || null, type: a.type ?? null,
+          source: a.source ?? null, distance: a.distance ?? null, name: a.name ?? null });
+        continue;
+      }
       rows.push({
         user_id: user.id,
         source: 'intervals',
@@ -147,7 +155,7 @@ Deno.serve(async (req: Request) => {
         await admin.from('activities').delete().eq('user_id', user.id).eq('source', 'strava').in('ext_id', dup.slice(i, i + 200));
       }
     }
-    return json({ ok: true, imported: rows.length, skipped, from: oldest });
+    return json({ ok: true, imported: rows.length, skipped, missing: missing.slice(-200), from: oldest });
   }
 
   if (action === 'streams') {
