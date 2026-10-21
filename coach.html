@@ -82,6 +82,7 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .refbtn.busy .ico{animation:refspin 1s linear infinite}
 .refbtn.ok{border-color:#2e9e5b;color:#2e9e5b}
 .refbtn.ko{border-color:#c0392b;color:#c0392b}
+.newver{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);border:none;border-radius:999px;padding:.6rem 1.1rem;font-weight:650;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap}
 @keyframes refspin{to{transform:rotate(360deg)}}
 @media (max-width:560px){.refbtn .lbl{display:none}}
 .profbtn{display:inline-flex;align-items:center;gap:.45em}
@@ -431,6 +432,8 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 
   </div>
 </div>
+
+<button class="newver" id="newver" hidden>Nouvelle version disponible · Recharger</button>
 
 <dialog id="profdlg" aria-labelledby="proftitle">
   <div class="dlg">
@@ -2365,6 +2368,24 @@ $('dlgnote').addEventListener('input', e => {
 $('dlgclose').addEventListener('click', () => $('dlg').close());
 $('dlg').addEventListener('close', () => { state.openKey = null; });
 $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').close(); });
+
+/* ---------- Nouvelle version en ligne ---------- */
+// GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
+// celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
+// À changer à chaque mise en ligne de coach.html.
+const APP_VERSION = '2026-10-21c';
+let verAt = 0;
+async function checkVersion(){
+  if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
+  try {
+    const t = await (await fetch(location.pathname+'?v='+Date.now(), { cache: 'no-store' })).text();
+    const m = t.match(/const APP_VERSION = '([^']+)'/);
+    if (m && m[1] !== APP_VERSION) $('newver').hidden = false;
+  } catch(_){}
+}
+$('newver').addEventListener('click', () => { location.replace(location.pathname+'?v='+Date.now()+location.hash); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
+setTimeout(checkVersion, 3000);
 
 init();
 })();
