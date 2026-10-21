@@ -215,7 +215,7 @@ Deno.serve(async (req: Request) => {
     for (const e of list) {
       const date = String(e.date ?? '');
       if (!okId(e.external_id) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: 'bad_event' }, 400);
-      const type = ['Ride', 'VirtualRide', 'Run', 'TrailRun'].includes(String(e.type)) ? String(e.type) : 'Ride';
+      const type = ['Ride', 'VirtualRide', 'Run', 'TrailRun', 'Swim', 'OpenWaterSwim'].includes(String(e.type)) ? String(e.type) : 'Ride';
       events.push({
         category: 'WORKOUT', start_date_local: `${date}T00:00:00`, type,
         name: String(e.name ?? 'Séance').slice(0, 80),

@@ -13,7 +13,7 @@
 <style>
 :root{
   --bg:#E6EBE3; --surface:#F7F9F4; --surface-2:#EDF1EA; --ink:#16221B; --muted:#56635A; --line:#C7D0C3;
-  --ride:#2A6A5B; --run:#B2404D; --other:#8B7A4F;
+  --ride:#2A6A5B; --run:#B2404D; --swim:#2F72B5; --other:#8B7A4F;
   --libre:#CBE2C1; --libre-ink:#2C5726;
   --court:#F0DDA0; --court-ink:#6A5210;
   --indispo:#E8C4C7; --indispo-ink:#792A33;
@@ -26,7 +26,7 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33;
-    --ride:#6DB4A2; --run:#E37C87; --other:#C9B37E;
+    --ride:#6DB4A2; --run:#E37C87; --swim:#7FB4EA; --other:#C9B37E;
     --libre:#28452A; --libre-ink:#B7DDAD;
     --court:#4A3F18; --court-ink:#F0D98E;
     --indispo:#4E262B; --indispo-ink:#F1B7BD;
@@ -38,7 +38,7 @@
 }
 :root[data-theme="dark"]{
     --bg:#101914; --surface:#18241D; --surface-2:#1E2C24; --ink:#E3EAE1; --muted:#97A49A; --line:#2E3D33;
-    --ride:#6DB4A2; --run:#E37C87; --other:#C9B37E;
+    --ride:#6DB4A2; --run:#E37C87; --swim:#7FB4EA; --other:#C9B37E;
     --libre:#28452A; --libre-ink:#B7DDAD;
     --court:#4A3F18; --court-ink:#F0D98E;
     --indispo:#4E262B; --indispo-ink:#F1B7BD;
@@ -138,11 +138,11 @@ h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .dtag{font-size:.72rem;font-weight:650}
 .dnote{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip{font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;padding-left:6px;border-left:3px solid currentColor;color:var(--ink)}
-.chip.ride{border-left-color:var(--ride)} .chip.run{border-left-color:var(--run)} .chip.other{border-left-color:var(--other)}
+.chip.ride{border-left-color:var(--ride)} .chip.run{border-left-color:var(--run)} .chip.swim{border-left-color:var(--swim)} .chip.other{border-left-color:var(--other)}
 .chips{display:flex;flex-direction:column;gap:2px;min-width:0}
 .dots{display:none;gap:3px;margin-top:auto}
 .dot{width:7px;height:7px;border-radius:50%}
-.dot.ride{background:var(--ride)} .dot.run{background:var(--run)} .dot.other{background:var(--other)}
+.dot.ride{background:var(--ride)} .dot.run{background:var(--run)} .dot.swim{background:var(--swim)} .dot.other{background:var(--other)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.84rem;color:var(--muted);margin:0 0 10px}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 .weeksum{font-size:.84rem;color:var(--muted);padding:4px 4px 0}
@@ -263,6 +263,8 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 .askrow label{display:flex;flex-direction:column;gap:3px}
 .askrow select,#askwish{font:inherit;font-size:.92rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem}
 #askwish,#askaddr{width:100%}
+#asksport{grid-template-columns:repeat(3,1fr)}
+#askpool.need{border-color:var(--run);box-shadow:0 0 0 2px color-mix(in srgb, var(--run) 30%, transparent)}
 #askaddr{font:inherit;font-size:.92rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem;margin-bottom:8px}
 .trace{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
 .trace .tmap{height:220px;border-radius:8px;overflow:hidden;background:var(--surface);margin:6px 0}
@@ -432,6 +434,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       <div class="legend" aria-hidden="true">
         <span style="--c:var(--ride)">Vélo</span>
         <span style="--c:var(--run)">Course à pied</span>
+        <span style="--c:var(--swim)">Natation</span>
         <span style="--c:var(--other)">Autre</span>
       </div>
       <div class="dow" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
@@ -518,6 +521,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       <div class="seg" id="asksport">
         <button data-sport="ride" aria-pressed="true"><b>Vélo</b></button>
         <button data-sport="run" aria-pressed="false"><b>Course à pied</b></button>
+        <button data-sport="swim" aria-pressed="false"><b>Natation</b></button>
       </div>
       <div class="askrow">
         <label>Temps dispo
@@ -534,6 +538,9 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
         </label>
         <label id="askwherewrap">Où
           <select id="askwhere"><option value="out">Dehors</option><option value="ht">Home trainer</option></select>
+        </label>
+        <label id="askpoolwrap" hidden>Taille du bassin
+          <select id="askpool"><option value="">Choisir…</option><option value="25">Bassin de 25 m</option><option value="50">Bassin de 50 m</option><option value="open">Eau libre</option></select>
         </label>
         <label id="askstartwrap">Départ de la trace
           <select id="askstart"><option value="city">De ma ville</option><option value="other">D'un autre lieu…</option><option value="none">Pas de trace</option></select>
@@ -680,21 +687,24 @@ function setDispo(k, s, note){
 }
 // Catégorie de couleur par sport : vélo, course, autre.
 const SPORT_CLS = { Ride:'ride', GravelRide:'ride', MountainBikeRide:'ride', VirtualRide:'ride', EBikeRide:'ride',
-  Run:'run', TrailRun:'run', VirtualRun:'run' };
+  Run:'run', TrailRun:'run', VirtualRun:'run', Swim:'swim', OpenWaterSwim:'swim' };
 const SPORT_LABEL = { Ride:'Vélo', GravelRide:'Gravel', MountainBikeRide:'VTT', VirtualRide:'Home trainer', EBikeRide:'VAE',
   Run:'Course', TrailRun:'Trail', VirtualRun:'Tapis', Hike:'Rando', Walk:'Marche', WeightTraining:'Renfo', Workout:'Séance',
-  Swim:'Natation' };
+  Swim:'Natation', OpenWaterSwim:'Eau libre' };
 const sportCls = t => SPORT_CLS[t] || 'other';
 const sportLabel = t => SPORT_LABEL[t] || t || 'Activité';
 const fmtHM = s => { const t = Math.round(s/60), h = Math.floor(t/60), m = t%60; return h ? h+' h '+pad(m) : m+' min'; };
+const fmtSwimM = km => km < 10 ? nf0.format(Math.round(km*1000/25)*25)+' m' : fmtKmC(km);
+// Allure de natation : temps pour 100 m (s/km ÷ 10).
+const fmtP100 = (mv, km) => { const p = Math.round(mv/km/10); return Math.floor(p/60)+':'+pad(p%60)+' /100 m'; };
 const fmtKmC = km => (km >= 10 ? Math.round(km) : km.toFixed(1).replace('.',','))+' km';
 function weekTotals(ws, byDay){
-  const t = { ride:{s:0,km:0}, run:{s:0,km:0}, all:0 };
+  const t = { ride:{s:0,km:0}, run:{s:0,km:0}, swim:{s:0,km:0}, all:0 };
   for (let i=0;i<7;i++){
     for (const a of byDay.get(key(addDays(ws,i))) || []){
       t.all += a.moving_time_s || 0;
       const c = sportCls(a.sport_type);
-      if (c === 'ride' || c === 'run'){ t[c].s += a.moving_time_s || 0; t[c].km += (a.distance_m || 0)/1000; }
+      if (c === 'ride' || c === 'run' || c === 'swim'){ t[c].s += a.moving_time_s || 0; t[c].km += (a.distance_m || 0)/1000; }
     }
   }
   return t;
@@ -725,7 +735,7 @@ function renderCalendar(){
       if (dispo.s) cls.push('d-'+dispo.s);
       const j1 = k === key(PLAN_START) ? ' <span class="j1">J1</span>' : '';
       const chips = acts.map(a => {
-        const km = a.distance_m ? ' '+(a.distance_m/1000).toFixed(1).replace('.',',')+' km' : '';
+        const km = !a.distance_m ? '' : sportCls(a.sport_type) === 'swim' ? ' '+fmtSwimM(a.distance_m/1000) : ' '+(a.distance_m/1000).toFixed(1).replace('.',',')+' km';
         return '<span class="chip '+sportCls(a.sport_type)+'" data-act="'+esc(String(a.ext_id))+'" title="Voir la sortie">'+esc(sportLabel(a.sport_type))+km+'</span>';
       }).join('');
       const plans = state.seances[k] || [];
@@ -746,6 +756,7 @@ function renderCalendar(){
       + (ws >= PLAN_START ? 'Semaine <b>'+planWeek(ws)+'</b> · ' : '')
       + 'Vélo <b>'+fmtHM(tot.ride.s)+'</b>, <b>'+fmtKmC(tot.ride.km)+'</b>'
       + ' · Course <b>'+fmtHM(tot.run.s)+'</b>, <b>'+fmtKmC(tot.run.km)+'</b>'
+      + (tot.swim.s ? ' · Natation <b>'+fmtHM(tot.swim.s)+'</b>, <b>'+fmtSwimM(tot.swim.km)+'</b>' : '')
       + ' · Total <b>'+fmtHM(tot.all)+'</b>'
       + goalBadges(ws)
       + '</div>';
@@ -810,12 +821,13 @@ function actLink(a){
 function actStats(a){
   const out = [], km = (a.distance_m||0)/1000, mv = a.moving_time_s||0, el = num(a.elapsed), c = sportCls(a.sport_type);
   const add = (t, v) => out.push('<div><dt>'+t+'</dt><dd>'+v+'</dd></div>');
-  if (km > 0) add('Distance', nf1.format(km)+' km');
+  if (km > 0) add('Distance', c === 'swim' ? fmtSwimM(km) : nf1.format(km)+' km');
   if (mv) add('En mouvement', fmtHM(mv));
   if (el && el - mv >= 300) add('Temps total', fmtHM(el));
   if (a.elevation_gain_m) add('Dénivelé', nf0.format(a.elevation_gain_m)+' m D+');
   if (km > 0 && mv){
     if (c === 'run'){ const p = Math.round(mv/km); add('Allure', Math.floor(p/60)+':'+pad(p%60)+' /km'); }
+    else if (c === 'swim') add('Allure', fmtP100(mv, km));
     else add('Vitesse moyenne', nf1.format(km/(mv/3600))+' km/h');
   }
   const hr = num(a.hr), hrmax = num(a.hrmax);
@@ -955,14 +967,15 @@ const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(
 const fmtClock = s => { s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60); return h+':'+pad(m)+':'+pad(s%60); };
 const fmtPace = v => { const p = Math.round(v*60); return Math.floor(p/60)+':'+pad(p%60); };
 function chartDefs(){
-  const st = actView.st, run = sportCls(actView.a.sport_type) === 'run', defs = [];
+  const st = actView.st, run = sportCls(actView.a.sport_type) === 'run', swim = sportCls(actView.a.sport_type) === 'swim', defs = [];
   const v = st.velocity ? st.velocity.map(x => x == null ? null : x*3.6) : null;
   if (st.altitude) defs.push({ key:'alt', label:'Altitude', unit:' m', color:'--c-alt', h:70, area:true, data: st.altitude, fmt: x => nf0.format(x) });
-  if (v && !run) defs.push({ key:'spd', label:'Vitesse', unit:' km/h', color:'--c-spd', h:76, data: v, zero:true, fmt: x => nf1.format(x) });
+  if (v && swim) defs.push({ key:'pace', label:'Allure', unit:' /100 m', color:'--c-spd', h:76, invert:true, data: v.map(x => x == null || x < 0.6 ? null : Math.min(6, 6/x)), fmt: fmtPace });
+  if (v && !run && !swim) defs.push({ key:'spd', label:'Vitesse', unit:' km/h', color:'--c-spd', h:76, data: v, zero:true, fmt: x => nf1.format(x) });
   if (v && run) defs.push({ key:'pace', label:'Allure', unit:' /km', color:'--c-spd', h:76, invert:true, data: v.map(x => x == null || x < 3 ? null : Math.min(15, 60/x)), fmt: fmtPace });
   if (st.heartrate) defs.push({ key:'hr', label:'FC', unit:' bpm', color:'--c-hr', h:80, data: st.heartrate, fmt: x => Math.round(x) });
   if (st.watts) defs.push({ key:'pw', label:'Puissance', unit:' W', color:'--c-pw', h:80, data: st.watts, zero:true, fmt: x => Math.round(x) });
-  if (st.cadence) defs.push({ key:'cad', label:'Cadence', unit: run ? ' pas/min' : ' tr/min', color:'--c-cad', h:64, data: st.cadence, zero:true, nz:true, fmt: x => Math.round(x) });
+  if (st.cadence) defs.push({ key:'cad', label:'Cadence', unit: run ? ' pas/min' : swim ? ' mvts/min' : ' tr/min', color:'--c-cad', h:64, data: st.cadence, zero:true, nz:true, fmt: x => Math.round(x) });
   return defs;
 }
 function quant(arr, q){ const v = arr.filter(x => x != null).sort((a,b) => a-b); return v.length ? v[Math.min(v.length-1, Math.floor(q*(v.length-1)))] : 0; }
@@ -1136,7 +1149,7 @@ function zoneTxt(raw){
 }
 function actLine(x){
   const km = (x.distance_m||0)/1000, mv = x.moving_time_s||0, c = sportCls(x.sport_type), L = actLoad(x);
-  const sp = km && mv ? (c === 'run' ? (p => Math.floor(p/60)+':'+pad(p%60)+' /km')(Math.round(mv/km)) : nf1.format(km/(mv/3600))+' km/h') : '';
+  const sp = km && mv ? (c === 'run' ? (p => Math.floor(p/60)+':'+pad(p%60)+' /km')(Math.round(mv/km)) : c === 'swim' ? fmtP100(mv, km) : nf1.format(km/(mv/3600))+' km/h') : '';
   const w = num(x.w) ?? num(x.w2), np = num(x.np) ?? num(x.np2);
   return '- '+String(x.start_local).slice(0,10)+' '+sportLabel(x.sport_type)+(x.is_trainer ? ' (intérieur)' : '')+' : '+[nf1.format(km)+' km', fmtHM(mv), nf0.format(x.elevation_gain_m||0)+' m D+', sp,
     num(x.hr) ? 'FC '+Math.round(x.hr) : '', w ? Math.round(w)+' W'+(np ? ' / NP '+Math.round(np) : '') : '', num(x.ef) ? 'EF '+nf2.format(x.ef) : '',
@@ -1151,6 +1164,7 @@ function buildStudyPrompt(a, raw){
   if (km && mv){
     const vmax = rawNum(raw,'max_speed');
     if (c === 'run'){ const p = Math.round(mv/km); add('Allure moyenne '+Math.floor(p/60)+':'+pad(p%60)+' /km.'); }
+    else if (c === 'swim') add('Allure moyenne '+fmtP100(mv, km)+(raw.pool_length ? ', bassin de '+raw.pool_length+' m' : '')+'.');
     else add('Vitesse moyenne '+nf1.format(km/(mv/3600))+' km/h'+(vmax ? ', max '+nf1.format(vmax*3.6)+' km/h' : '')+'.');
   }
   const hr = num(a.hr), hrmax = num(a.hrmax);
@@ -1201,7 +1215,7 @@ function buildStudyPrompt(a, raw){
     ...(WELL.days.length ? ['Santé autour de la sortie (montre Garmin) :', ...wellPromptLines(d)] : []),
     'Séance prévue ce jour-là : '+(plan.length ? '\n'+plan.join('\n') : 'aucune.'),
     'Forme (modèle sur la charge d\'entraînement) : '+(before ? 'la veille '+fm(before) : 'inconnue la veille')+(after ? ' ; après la sortie '+fm(after) : '')+'.',
-    'FC max observées sur 12 mois : '+(Object.keys(hrMax).length ? Object.entries(hrMax).map(([cc,v]) => ({ride:'vélo',run:'course',other:'autres sports'}[cc])+' '+v+' bpm').join(', ') : 'inconnues')+'.',
+    'FC max observées sur 12 mois : '+(Object.keys(hrMax).length ? Object.entries(hrMax).map(([cc,v]) => ({ride:'vélo',run:'course',swim:'natation',other:'autres sports'}[cc])+' '+v+' bpm').join(', ') : 'inconnues')+'.',
     '',
     'Sorties comparables (même sport, 5 derniers mois, de la plus récente à la plus ancienne) :', comps.length ? comps.join('\n') : '- aucune',
     '',
@@ -1277,7 +1291,7 @@ function loadData(){
   const metricP = p => LOADV.mode === 'load' ? planLoad(p) : LOADV.mode === 'time' ? (Number(p.duree_min)||0)/60 : Number(p.distance_km)||0;
   const weeks = [];
   for (let ws = w0; ws <= wEnd; ws = addDays(ws, 7)){
-    const w = { ws, done: { ride:0, run:0, other:0 }, plan: { ride:0, run:0, other:0 } };
+    const w = { ws, done: { ride:0, run:0, swim:0, other:0 }, plan: { ride:0, run:0, swim:0, other:0 } };
     for (let i = 0; i < 7; i++){
       const d = addDays(ws, i), k = key(d);
       if (d <= t0) for (const a of byDay.get(k) || []) w.done[sportCls(a.sport_type)] += metricA(a);
@@ -1350,10 +1364,10 @@ function drawLoad(){
   }
   g.strokeStyle = line; g.beginPath(); g.moveTo(L, T + ph + .5); g.lineTo(W - R, T + ph + .5); g.stroke();
   // barres empilées par sport (réalisé plein, prévu en clair)
-  const bw = Math.max(3, band*0.62), cols = { ride: cssVar('--ride'), run: cssVar('--run'), other: cssVar('--other') };
+  const bw = Math.max(3, band*0.62), cols = { ride: cssVar('--ride'), run: cssVar('--run'), swim: cssVar('--swim'), other: cssVar('--other') };
   weeks.forEach((w, i) => {
     const x = L + i*band + (band - bw)/2; let y = T + ph;
-    for (const part of ['done', 'plan']) for (const c of ['ride', 'run', 'other']){
+    for (const part of ['done', 'plan']) for (const c of ['ride', 'run', 'swim', 'other']){
       const v = w[part][c]; if (!v) continue;
       const h = v/maxBar*ph; y -= h;
       g.globalAlpha = part === 'plan' ? .35 : (LOADV.hover === i ? 1 : .88);
@@ -1387,8 +1401,8 @@ function drawLoad(){
 function loadTip(i, clientX){
   const tip = $('ltip'), w = LOADV.weeks[i];
   if (!w){ tip.hidden = true; return; }
-  const end = addDays(w.ws, 6), lab = { ride: 'Vélo', run: 'Course', other: 'Autre' }, rows = [];
-  for (const c of ['ride', 'run', 'other']){
+  const end = addDays(w.ws, 6), lab = { ride: 'Vélo', run: 'Course', swim: 'Natation', other: 'Autre' }, rows = [];
+  for (const c of ['ride', 'run', 'swim', 'other']){
     const d = w.done[c], p = w.plan[c];
     if (d || p) rows.push(lab[c]+' <b>'+fmtMetric(d + p)+'</b>'+(p ? ' (dont '+fmtMetric(p)+' prévu)' : ''));
   }
@@ -1544,8 +1558,8 @@ function wellPromptLines(at){
 
 /* ---------- Charge, forme et fatigue (pour Miguel) ---------- */
 // Charge d'une activité : charge intervals.icu, sinon effort relatif Strava, sinon estimation par heure selon le sport.
-const LOAD_PER_H = { Ride:60, GravelRide:60, MountainBikeRide:65, VirtualRide:65, EBikeRide:25, Run:70, TrailRun:70, VirtualRun:70, Hike:12, Walk:8, WeightTraining:30, Workout:35, Swim:60 };
-const PLAN_SPORTS = { run: ['Run','TrailRun'], ride: ['Ride','VirtualRide'] };
+const LOAD_PER_H = { OpenWaterSwim:60, Ride:60, GravelRide:60, MountainBikeRide:65, VirtualRide:65, EBikeRide:25, Run:70, TrailRun:70, VirtualRun:70, Hike:12, Walk:8, WeightTraining:30, Workout:35, Swim:60 };
+const PLAN_SPORTS = { run: ['Run','TrailRun'], ride: ['Ride','VirtualRide'], swim: ['Swim','OpenWaterSwim'] };
 const nf1 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1});
 const nf0 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
 const fmtSigned = v => (v>0?'+':v<0?'−':'') + nf1.format(Math.abs(v));
@@ -1598,7 +1612,7 @@ function renderPlans(k){
     updateTabs(); return;
   }
   $('dlgplans').innerHTML = '<ul class="plist">' + plans.map((p,i) => {
-    const meta = [sportLabel(p.sport), fmtHM((p.duree_min||0)*60), p.distance_km ? '≈ '+nf0.format(p.distance_km)+' km' : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
+    const meta = [sportLabel(p.sport)+(p.bassin ? ' · bassin de '+p.bassin+' m' : ''), fmtHM((p.duree_min||0)*60), p.distance_km ? '≈ '+(sportCls(p.sport) === 'swim' ? fmtSwimM(p.distance_km) : nf0.format(p.distance_km)+' km') : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
     return '<li style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><button class="linkbtn" data-rm="'+i+'">Retirer</button><div class="meta">'+esc(meta)+'</div>'
       + (p.deroule && p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
       + (p.pourquoi ? '<div class="meta">'+esc(p.pourquoi)+'</div>' : '')
@@ -1614,12 +1628,19 @@ function renderPlans(k){
 // intervals.icu l'envoie ensuite vers COROS (Dura, vélo) ou Garmin (course) si l'envoi des séances planifiées est
 // coché dans ses connexions. Étapes : { label, min | sec, lo, hi, rampe?, libre? } ou { repeter, label, pas: [...] },
 // lo/hi en % de FTP (vélo) ou de FC seuil (course).
-const DEVICE = { ride: 'ton Dura', run: 'ta Garmin', other: 'ta montre' };
-const DEVICE_VIA = { ride: 'COROS', run: 'Garmin Connect', other: 'ta plateforme' };
+const DEVICE = { ride: 'ton Dura', run: 'ta Garmin', swim: 'ta Garmin', other: 'ta montre' };
+const DEVICE_VIA = { ride: 'COROS', run: 'Garmin Connect', swim: 'Garmin Connect', other: 'ta plateforme' };
+// Natation : étapes en mètres { label, dist } (récup en temps : { label, sec, libre }). Durée estimée à SWIM_P100 s / 100 m.
+const SWIM_P100 = 135;
 const sendRuns = {};
-const stepSec = st => Math.max(5, Math.round(st.sec != null ? Number(st.sec) : Number(st.min || 0)*60));
+const stepSec = st => Math.max(5, Math.round(st.dist != null ? Number(st.dist)/100*SWIM_P100 : st.sec != null ? Number(st.sec) : Number(st.min || 0)*60));
 const cleanLabel = t => String(t || '').replace(/[0-9%]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
 function defaultEtapes(p){
+  if (sportCls(p.sport) === 'swim'){
+    const pool = p.bassin === 50 ? 50 : 25, tot = Math.max(400, Math.round((Number(p.distance_km) || (Number(p.duree_min) || 45)*60/SWIM_P100/10)*1000));
+    const r = m => Math.max(pool, Math.round(m/pool)*pool), wu = r(Math.min(300, tot*0.2)), cd = r(Math.min(200, tot*0.15));
+    return [{ label: 'Échauffement', dist: wu, libre: true }, { label: 'Corps de séance', dist: r(tot - wu - cd), libre: true }, { label: 'Retour au calme', dist: cd, libre: true }];
+  }
   const run = sportCls(p.sport) === 'run', d = Math.max(10, Number(p.duree_min) || 60);
   const band = run ? { facile: [75, 89], 'modérée': [85, 94], soutenue: [90, 100] } : { facile: [56, 75], 'modérée': [76, 90], soutenue: [84, 97] };
   const [lo, hi] = band[p.intensite] || band.facile, wu = Math.min(15, Math.round(d*0.15)), cd = Math.min(10, Math.round(d*0.1));
@@ -1634,6 +1655,7 @@ function icuStep(st, run){
     const r = hi != null && hi !== lo ? lo+'-'+hi+'%' : lo+'%';
     tgt = (st.rampe && !run ? 'ramp ' : '') + r + (run ? ' LTHR' : '') + (!run && st.rpm && /^\d{2,3}(-\d{2,3})?$/.test(String(st.rpm)) ? ' '+st.rpm+'rpm' : '');
   }
+  if (st.dist != null) return '- '+(lab ? lab+' ' : '')+Math.round(st.dist)+'mtr';
   return '- '+(lab ? lab+' ' : '')+fmtIcuDur(stepSec(st))+' '+tgt;
 }
 function icuText(p){
@@ -1653,6 +1675,7 @@ function zoneColor(v, run){
 }
 function workoutBars(p){
   const run = sportCls(p.sport) === 'run', st = flatSteps(p); if (!st.length) return '';
+  if (sportCls(p.sport) === 'swim') return '<div class="wbars" title="Profil de la séance">' + st.map(x => '<span style="flex:'+stepSec(x)+';height:'+(x.dist != null ? (/échauf|calme|souple|récup/i.test(x.label || '') ? 40 : 70) : 15)+'%;background:'+(x.dist != null ? 'var(--swim)' : 'var(--line)')+'"></span>').join('') + '</div>';
   const top = run ? 105 : 125, bottom = run ? 60 : 30;
   return '<div class="wbars" title="Profil de la séance">' + st.map(x => {
     const v = x.libre || x.lo == null ? null : (Number(x.lo) + Number(x.hi ?? x.lo))/2;
@@ -1668,7 +1691,8 @@ function sendHTML(p, i, k){
     // intervals.icu n'envoie aux appareils que les séances des 7 prochains jours.
     const from = addDays(new Date(k+'T00:00:00'), -7), soon = from <= t0;
     const arrive = soon ? 'Elle arrive sur '+dev+' via '+DEVICE_VIA[c]+' à la prochaine synchro.' : 'Elle arrivera sur '+dev+' via '+DEVICE_VIA[c]+' à partir du '+longFmt.format(from)+' (7 jours avant).';
-    return '<div class="sendbar sent"><span>✓ Dans ton calendrier intervals.icu'+(when ? ' depuis le '+esc(when) : '')+(p.icu.charge ? ' · charge prévue '+p.icu.charge : '')+'. '+arrive+'</span>'
+    const swimTip = c === 'swim' ? ' Pour qu\'elle parte sur ta Garmin, coche « Natation » dans le filtre Garmin d\'intervals.icu.' : '';
+    return '<div class="sendbar sent"><span>✓ Dans ton calendrier intervals.icu'+(when ? ' depuis le '+esc(when) : '')+(p.icu.charge ? ' · charge prévue '+p.icu.charge : '')+'. '+arrive+swimTip+'</span>'
       + '<button class="linkbtn" data-send="'+i+'">Renvoyer</button><a class="linkbtn" href="https://intervals.icu/?w='+key(startOfWeek(new Date(k+'T00:00:00')))+'" target="_blank" rel="noopener">Voir dans intervals.icu ↗</a></div>';
   }
   return '<div class="sendbar"><button class="btn" data-send="'+i+'">Envoyer sur '+dev+'</button>'+(p.icu && p.icu.err ? '<span class="err">'+esc(p.icu.err)+'</span>' : '')+'</div>';
@@ -1710,12 +1734,13 @@ $('dlgplans').addEventListener('click', e => {
 /* ---------- Demander une sortie (Claude, via la fonction serveur coach-propose) ---------- */
 const ask = { sport: 'ride', ctl: null, proposal: null, key: null };
 function setupAsk(k){
-  if (ask.key !== k){ ask.key = k; ask.proposal = null; traceReset(); $('askout').innerHTML = ''; $('askwish').value = ''; $('asktime').value = 'auto'; }
+  if (ask.key !== k){ ask.key = k; ask.proposal = null; traceReset(); $('askout').innerHTML = ''; $('askwish').value = ''; $('asktime').value = 'auto'; $('askpool').value = ''; $('askpool').classList.remove('need'); }
   syncAskSport();
 }
 function syncAskSport(){
   for (const b of $('asksport').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.sport === ask.sport));
   $('askwherewrap').hidden = ask.sport !== 'ride';
+  $('askpoolwrap').hidden = ask.sport !== 'swim';
   // Trace GPX : vélo dehors seulement. Départ de « ma ville » (celle de la météo) ou d'un autre lieu.
   const out = ask.sport === 'ride' && $('askwhere').value === 'out', city = state.reglages.ville;
   const o = $('askstart').querySelector('[value="city"]');
@@ -1734,13 +1759,14 @@ function ressentiTxt(r){
   return [r.rpe ? 'effort '+r.rpe+'/10' : '', r.forme ? 'sensations '+r.forme+'/5' : '', r.douleur && r.douleur !== 'aucune' ? r.douleur+(r.zone ? ' ('+r.zone+')' : '') : '', r.note || ''].filter(Boolean).join(', ');
 }
 function weekStats(ws){
-  const byDay = actsByDay(); let rideKm = 0, runKm = 0, rideMax = 0, runMax = 0;
+  const byDay = actsByDay(); let rideKm = 0, runKm = 0, rideMax = 0, runMax = 0, swimKm = 0;
   for (let i = 0; i < 7; i++) for (const a of byDay.get(key(addDays(ws,i))) || []){
     const c = sportCls(a.sport_type), km = (a.distance_m||0)/1000;
     if (c === 'ride'){ rideKm += km; rideMax = Math.max(rideMax, km); }
     if (c === 'run'){ runKm += km; runMax = Math.max(runMax, km); }
+    if (c === 'swim') swimKm += km;
   }
-  return { rideKm, runKm, rideMax, runMax };
+  return { rideKm, runKm, rideMax, runMax, swimKm };
 }
 const PROFILE = [
   '- Objectif principal : un trail de 30 km en 2027.',
@@ -1748,7 +1774,8 @@ const PROFILE = [
   '- Il reprend la course en douceur : son erreur passée est d\'en faire trop, trop tôt. Priorité à une progression prudente et sans blessure.',
   '- Matériel : vélo de route avec pédales capteur de puissance, home trainer connecté (Zwift). FTP provisoire d\'environ 210 W, pas encore testée : exprime l\'intensité en zones de fréquence cardiaque (Z1 à Z5) et en ressenti (RPE sur 10) ; des watts seulement à titre indicatif.',
   '- Terrain : autour de Ribeauvillé, Vosges alsaciennes (relief disponible).',
-  '- Il fait son renforcement à part : ne le programme pas.'
+  '- Il fait son renforcement à part : ne le programme pas.',
+  '- Il nage aussi, en complément (piscine ou eau libre).'
 ];
 function buildPrompt(k, prev){
   const d = new Date(k+'T00:00:00'), pd = planDay(d), series = computeSeries(), alerts = computeAlerts(series);
@@ -1758,7 +1785,8 @@ function buildPrompt(k, prev){
     const dk = key(addDays(t0,-i));
     for (const a of (byDay.get(dk) || []).slice().reverse()){
       const L = actLoad(a), r = state.ressentis[String(a.ext_id)];
-      recent.push('- '+dk+' '+sportLabel(a.sport_type)+(a.is_trainer ? ' (intérieur)' : '')+' : '+nf1.format((a.distance_m||0)/1000)+' km, '+fmtHM(a.moving_time_s||0)+', '+nf0.format(a.elevation_gain_m||0)+' m D+, charge '+(L.est ? '≈' : '')+nf0.format(L.load)+(r ? ' ; ressenti : '+ressentiTxt(r) : ''));
+      const sw = sportCls(a.sport_type) === 'swim', dkm = (a.distance_m||0)/1000;
+      recent.push('- '+dk+' '+sportLabel(a.sport_type)+(a.is_trainer ? ' (intérieur)' : '')+' : '+(sw ? nf0.format(dkm*1000)+' m, '+fmtHM(a.moving_time_s||0)+(dkm ? ', '+fmtP100(a.moving_time_s||0, dkm) : '') : nf1.format(dkm)+' km, '+fmtHM(a.moving_time_s||0)+', '+nf0.format(a.elevation_gain_m||0)+' m D+')+', charge '+(L.est ? '≈' : '')+nf0.format(L.load)+(r ? ' ; ressenti : '+ressentiTxt(r) : ''));
     }
   }
   const plans = [];
@@ -1767,7 +1795,12 @@ function buildPrompt(k, prev){
   for (let i = -3; i <= 7; i++){ const dk = key(addDays(d,i)), x = state.dispos[dk]; if (x && (x.s || x.note)) disp.push('- '+dk+' : '+(x.s ? DISPO_LABEL[x.s] : 'non précisé')+(x.note ? ' ('+x.note+')' : '')); }
   const st = weekStats(startOfWeek(d)), dayDispo = state.dispos[k], t = $('asktime').value;
   const timeTxt = t === 'auto' ? (dayDispo && dayDispo.s === 'court' ? 'créneau court, 1 h 30 maximum' : dayDispo && dayDispo.s === 'indispo' ? 'jour marqué indispo : propose une séance très courte et signale-le' : 'journée libre, sortie longue possible') : (t === '300' ? '5 h ou plus' : fmtHM(Number(t)*60));
-  const sportTxt = ask.sport === 'run' ? 'course à pied (route ou trail)' : ($('askwhere').value === 'ht' ? 'vélo sur home trainer' : 'vélo de route dehors');
+  const pool = $('askpool').value;
+  const sportTxt = ask.sport === 'run' ? 'course à pied (route ou trail)' : ask.sport === 'swim' ? (pool === 'open' ? 'natation en eau libre' : 'natation en piscine, bassin de '+pool+' m')
+    : ($('askwhere').value === 'ht' ? 'vélo sur home trainer' : 'vélo de route dehors');
+  const swimRules = ask.sport !== 'swim' ? null : 'Natation : séance en mètres. distance_km = distance totale en km (ex. 1.6), denivele_m = null. Dans etapes, chaque étape de nage a "dist" en mètres'
+    + (pool === 'open' ? ' (eau libre : distances rondes, sans mur ; reste près du bord ou accompagné)' : ', toujours un multiple de '+pool+' m (longueur du bassin)')
+    + ' à la place de "min", sans lo ni hi, avec "libre": true ; une récupération est une étape {"label": "Récupération", "sec": 20, "libre": true} ; utilise "repeter" pour les séries (ex. 6 × 100 m). Indique nage, éducatifs et allure ressentie dans deroule (ex. « 6 × 100 m crawl allure moyenne, 20 s de récup »). sport vaut "Swim" en piscine, "OpenWaterSwim" en eau libre.';
   const wish = $('askwish').value.trim();
   return [
     'Propose UNE séance pour le '+longFmt.format(d)+' '+d.getFullYear()+(pd >= 1 ? ' (jour '+pd+' du plan, semaine '+planWeek(d)+')' : '')+'. Aujourd\'hui nous sommes le '+longFmt.format(t0)+'.',
@@ -1777,7 +1810,7 @@ function buildPrompt(k, prev){
     '',
     'État actuel (modèle forme/fatigue sur la charge d\'entraînement) : '+(now ? 'forme '+nf1.format(now.ctl)+', fatigue '+nf1.format(now.atl)+', fraîcheur '+fmtSigned(now.tsb)+', évolution de la forme sur 7 jours '+fmtSigned(now.ctl-wk.ctl)+'.' : 'pas de données.'),
     ...(WX.days[k] ? ['Météo prévue ce jour-là à '+(state.reglages.ville || 'sa ville')+' : '+wxText(WX.days[k])+'. Tiens-en compte (pluie, vent fort, froid : séance adaptée ou home trainer, et dis-le dans pourquoi).'] : []),
-    'Semaine de la séance, déjà réalisé : vélo '+nf1.format(st.rideKm)+' km (plus longue '+nf1.format(st.rideMax)+' km), course '+nf1.format(st.runKm)+' km (plus longue '+nf1.format(st.runMax)+' km).',
+    'Semaine de la séance, déjà réalisé : vélo '+nf1.format(st.rideKm)+' km (plus longue '+nf1.format(st.rideMax)+' km), course '+nf1.format(st.runKm)+' km (plus longue '+nf1.format(st.runMax)+' km)'+(st.swimKm ? ', natation '+nf0.format(st.swimKm*1000)+' m' : '')+'.',
     ...(WELL.days.length ? ['', 'Santé (montre Garmin) :', ...wellPromptLines(t0), 'Si la VFC sur 7 jours est nettement sous sa référence, si la FC au repos est au-dessus de sa référence de 4 bpm ou plus, ou si la dernière nuit est courte ou mauvaise, allège la séance et dis-le dans pourquoi.'] : []),
     '',
     'Alertes de surcharge actives :', alerts.length ? alerts.map(a => '- '+a.t+' : '+a.x).join('\n') : '- aucune',
@@ -1793,6 +1826,7 @@ function buildPrompt(k, prev){
     '- Temps disponible : '+timeTxt,
     '- Envie : '+(wish || 'aucune précisée'),
     traceWanted() ? '- Départ de '+startLabel()+' vers '+$('askhour').value.replace(':00', ' h').replace(/^0/, '')+'. Une trace GPX en boucle sera calculée automatiquement depuis ce point d\'après distance_km et denivele_m : donne-les réalistes pour le relief autour du départ (denivele_m faible pour une sortie de plaine, plus élevé si la séance demande du dénivelé).' : null,
+    swimRules ? '- '+swimRules : null,
     prev ? '- Il a déjà vu cette proposition et en veut une autre, différente : '+prev : null,
     '',
     'Règles : respecte le temps disponible. S\'il y a des alertes actives ou une douleur signalée, la séance doit les prendre en compte (plus facile, plus courte, ou vélo plutôt que course si la douleur touche la course) et le champ pourquoi le dit. Adapte l\'intensité à la fraîcheur (fatigue élevée : séance facile ou courte). Évite deux séances intenses d\'affilée en tenant compte des séances prévues et réalisées. En course, la sortie la plus longue ne dépasse pas d\'environ 10 % la plus longue des dernières semaines.',
@@ -1800,28 +1834,35 @@ function buildPrompt(k, prev){
     'Réponds uniquement avec un objet JSON, sans autre texte :',
     '{"titre": "Sortie longue endurance", "sport": "Ride", "duree_min": 180, "distance_km": 75, "denivele_m": 900, "intensite": "facile", "deroule": ["Échauffement 20 min en Z1-Z2", "…"], "pourquoi": "Une ou deux phrases.", "etapes": [{"label": "Échauffement", "min": 20, "lo": 45, "hi": 65, "rampe": true}, {"repeter": 3, "label": "Tempo", "pas": [{"label": "Effort", "min": 10, "lo": 80, "hi": 88}, {"label": "Récupération", "min": 5, "lo": 45, "hi": 60}]}, {"label": "Retour au calme", "min": 10, "lo": 40, "hi": 55}]}',
     'etapes décrit la même séance pour le compteur vélo ou la montre : lo et hi en % de la FTP pour le vélo, en % de la FC seuil pour la course ; "sec" au lieu de "min" pour les efforts courts ; "libre": true pour une étape sans cible (marche, accélérations) ; "rampe": true pour une montée progressive (vélo) ; "repeter" pour une série (sans série imbriquée). La somme des durées vaut duree_min. Labels courts, sans chiffres.',
-    'sport vaut "Ride" (vélo dehors), "VirtualRide" (home trainer), "Run" (course route) ou "TrailRun". intensite vaut "facile", "modérée" ou "soutenue". Titre de 40 caractères maximum. distance_km et denivele_m approximatifs, null si sans objet. deroule contient 3 à 6 étapes courtes en français.'
+    'sport vaut "Ride" (vélo dehors), "VirtualRide" (home trainer), "Run" (course route), "TrailRun", "Swim" (piscine) ou "OpenWaterSwim" (eau libre). intensite vaut "facile", "modérée" ou "soutenue". Titre de 40 caractères maximum. distance_km et denivele_m approximatifs, null si sans objet. deroule contient 3 à 6 étapes courtes en français.'
   ].filter(x => x !== null).join('\n');
 }
 function cleanProposal(r){
   if (!r || typeof r !== 'object') throw new Error('proposition illisible');
   const allowed = PLAN_SPORTS[ask.sport];
-  const sport = allowed.includes(r.sport) ? r.sport : (ask.sport === 'run' ? 'Run' : ($('askwhere').value === 'ht' ? 'VirtualRide' : 'Ride'));
+  const pool = $('askpool').value;
+  const sport = ask.sport === 'swim' ? (pool === 'open' ? 'OpenWaterSwim' : 'Swim') : allowed.includes(r.sport) ? r.sport : (ask.sport === 'run' ? 'Run' : ($('askwhere').value === 'ht' ? 'VirtualRide' : 'Ride'));
   const duree = Math.round(Number(r.duree_min));
   if (!duree || duree < 10 || duree > 900) throw new Error('proposition illisible');
-  const num = v => (v == null || v === '' || isNaN(Number(v)) || Number(v) <= 0) ? null : Math.round(Number(v)*10)/10;
+  const num = v => (v == null || v === '' || isNaN(Number(v)) || Number(v) <= 0) ? null : Math.round(Number(v)*(ask.sport === 'swim' ? 100 : 10))/(ask.sport === 'swim' ? 100 : 10);
   return { sport, titre: String(r.titre || sportLabel(sport)).slice(0,60), duree_min: duree,
     distance_km: num(r.distance_km), denivele_m: num(r.denivele_m) == null ? null : Math.round(num(r.denivele_m)),
     intensite: ['facile','modérée','soutenue'].includes(r.intensite) ? r.intensite : '',
     deroule: Array.isArray(r.deroule) ? r.deroule.map(x => String(x).slice(0,200)).slice(0,8) : [],
-    pourquoi: r.pourquoi ? String(r.pourquoi).slice(0,400) : '', etapes: cleanEtapes(r.etapes, sport) };
+    pourquoi: r.pourquoi ? String(r.pourquoi).slice(0,400) : '', etapes: cleanEtapes(r.etapes, sport, pool === '25' || pool === '50' ? Number(pool) : null),
+    ...(sport === 'Swim' && (pool === '25' || pool === '50') ? { bassin: Number(pool) } : {}) };
 }
 // Étapes proposées par Miguel : bornes vérifiées ; séance trop différente de duree_min → étapes par défaut.
-function cleanEtapes(list, sport){
+function cleanEtapes(list, sport, pool){
   if (!Array.isArray(list)) return null;
-  const run = sportCls(sport) === 'run', [mn, mx] = run ? [50, 110] : [30, 200];
+  const run = sportCls(sport) === 'run', swim = sportCls(sport) === 'swim', [mn, mx] = run ? [50, 110] : [30, 200];
   const step = x => {
     if (!x || typeof x !== 'object') return null;
+    if (swim && x.dist != null){
+      let d = Number(x.dist); if (!(d >= 10 && d <= 10000)) return null;
+      if (pool) d = Math.max(pool, Math.round(d/pool)*pool); else d = Math.max(25, Math.round(d/25)*25);
+      return { label: cleanLabel(x.label), dist: d, libre: true };
+    }
     const sec = x.sec != null ? Number(x.sec) : Number(x.min)*60;
     if (!(sec >= 5 && sec <= 6*3600)) return null;
     const o = { label: cleanLabel(x.label), sec: Math.round(sec) };
@@ -1841,7 +1882,7 @@ function cleanEtapes(list, sport){
 }
 function renderProposal(){
   const p = ask.proposal; if (!p) return;
-  const meta = [sportLabel(p.sport), fmtHM(p.duree_min*60), p.distance_km ? '≈ '+nf0.format(p.distance_km)+' km' : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
+  const meta = [sportLabel(p.sport)+(p.bassin ? ' · bassin de '+p.bassin+' m' : ''), fmtHM(p.duree_min*60), p.distance_km ? '≈ '+(sportCls(p.sport) === 'swim' ? fmtSwimM(p.distance_km) : nf0.format(p.distance_km)+' km') : '', p.denivele_m ? '≈ '+nf0.format(p.denivele_m)+' m D+' : '', p.intensite].filter(Boolean).join(', ');
   $('askout').innerHTML = '<div class="proposal" style="--c:var(--'+sportCls(p.sport)+')"><b>'+esc(p.titre)+'</b><div class="meta">'+esc(meta)+'</div>'
     + (p.deroule.length ? '<ol>'+p.deroule.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol>' : '')
     + (p.pourquoi ? '<p class="why">'+esc(p.pourquoi)+'</p>' : '')
@@ -1896,7 +1937,15 @@ async function requestSession(prev){
     if (ask.ctl === ctl){ ask.ctl = null; $('askgo').disabled = false; $('askstop').hidden = true; }
   }
 }
-$('askgo').addEventListener('click', () => requestSession(null));
+// Natation : la taille du bassin est demandée avant toute proposition.
+$('askgo').addEventListener('click', () => {
+  if (ask.sport === 'swim' && !$('askpool').value){
+    $('askpool').classList.add('need'); $('askpool').focus();
+    $('askout').innerHTML = '<span class="err">Indique d\'abord la taille du bassin (25 m, 50 m ou eau libre).</span>'; return;
+  }
+  requestSession(null);
+});
+$('askpool').addEventListener('change', () => { $('askpool').classList.remove('need'); if ($('askout').querySelector('.err')) $('askout').innerHTML = ''; });
 $('askstop').addEventListener('click', () => { if (ask.ctl) ask.ctl.abort(); });
 $('askout').addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (g){ setTab(g.dataset.goto); return; }
@@ -2419,7 +2468,7 @@ function buildWeekPrompt(ws){
     '- Vélo : '+(gw.ride.ok ? 'atteint ('+nf1.format(gw.ride.best)+' km)' : 'pas atteint'+(gw.ride.best ? ', plus longue '+nf1.format(gw.ride.best)+' km' : '')+(gw.ride.plan ? ', une sortie de ≈ '+nf0.format(gw.ride.plan.km)+' km est prévue le '+key(gw.ride.plan.d) : '')),
     '- Course : '+(gw.run.ok ? 'atteint ('+nf1.format(gw.run.best)+' km)' : 'pas atteint'+(gw.run.best ? ', plus longue '+nf1.format(gw.run.best)+' km' : '')+(gw.run.plan ? ', une sortie de ≈ '+nf0.format(gw.run.plan.km)+' km est prévue le '+key(gw.run.plan.d) : '')),
     '',
-    'Volumes de la semaine : vélo '+fmtHM(tot.ride.s)+' / '+nf1.format(tot.ride.km)+' km, course '+fmtHM(tot.run.s)+' / '+nf1.format(tot.run.km)+' km, total toutes activités '+fmtHM(tot.all)+', charge '+nf0.format(load(ws))+'.',
+    'Volumes de la semaine : vélo '+fmtHM(tot.ride.s)+' / '+nf1.format(tot.ride.km)+' km, course '+fmtHM(tot.run.s)+' / '+nf1.format(tot.run.km)+' km'+(tot.swim.s ? ', natation '+fmtHM(tot.swim.s)+' / '+nf0.format(tot.swim.km*1000)+' m' : '')+', total toutes activités '+fmtHM(tot.all)+', charge '+nf0.format(load(ws))+'.',
     'Moyenne des 4 semaines précédentes : vélo '+fmtHM(avg(t => t.ride.s))+' / '+nf1.format(avg(t => t.ride.km))+' km, course '+fmtHM(avg(t => t.run.s))+' / '+nf1.format(avg(t => t.run.km))+' km, total '+fmtHM(avg(t => t.all))+', charge '+nf0.format(prev.reduce((s2, _, i) => s2 + load(addDays(ws, -7*(i+1))), 0)/4)+'.',
     'Forme (modèle sur la charge) : avant la semaine '+fm(a0)+' ; '+(ongoing ? 'aujourd\'hui ' : 'en fin de semaine ')+fm(a1)+'.',
     ...(WELL.days.length ? ['', 'Santé (montre Garmin) :', ...wellPromptLines(endRef)] : []),
@@ -2633,7 +2682,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-21e';
+const APP_VERSION = '2026-10-21f';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
