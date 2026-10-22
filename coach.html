@@ -75,6 +75,7 @@ section{margin-top:24px}
 h2{margin:0;font-weight:750;font-stretch:112%;font-size:1.3rem}
 .monthnav{display:flex;align-items:center;gap:6px}
 .monthnav .label{min-width:9.5em;text-align:center;font-weight:650}
+.bottomnav{justify-content:center;margin-top:12px}
 .iconbtn{width:2.2rem;height:2.2rem;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.05rem}
 .paint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
 .refbtn{display:inline-flex;align-items:center;gap:.4em}
@@ -461,6 +462,11 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
       </div>
       <div class="dow" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
       <div id="cal"></div>
+      <div class="monthnav bottomnav">
+        <button class="iconbtn" id="prev2" aria-label="Mois précédent">‹</button>
+        <span class="label" id="monthlabel2"></span>
+        <button class="iconbtn" id="next2" aria-label="Mois suivant">›</button>
+      </div>
     </section>
 
   </div>
@@ -780,7 +786,7 @@ function actsByDay(){
 }
 function renderCalendar(){
   const m = state.month;
-  $('monthlabel').textContent = cap(monthFmt.format(m));
+  $('monthlabel').textContent = $('monthlabel2').textContent = cap(monthFmt.format(m));
   const byDay = actsByDay();
   const last = new Date(m.getFullYear(), m.getMonth()+1, 0);
   const html = [];
@@ -2773,8 +2779,12 @@ $('pwset').addEventListener('submit', async e => {
 });
 
 /* ---------- Calendar events ---------- */
-$('prev').addEventListener('click', () => { state.month = new Date(state.month.getFullYear(), state.month.getMonth()-1, 1); renderCalendar(); });
-$('next').addEventListener('click', () => { state.month = new Date(state.month.getFullYear(), state.month.getMonth()+1, 1); renderCalendar(); });
+// Changement de mois : flèches en haut et en bas du calendrier (en bas, on remonte au début du calendrier).
+const goMonth = (d, fromBottom) => { state.month = new Date(state.month.getFullYear(), state.month.getMonth()+d, 1); renderCalendar(); if (fromBottom) $('cal').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+$('prev').addEventListener('click', () => goMonth(-1));
+$('next').addEventListener('click', () => goMonth(1));
+$('prev2').addEventListener('click', () => goMonth(-1, true));
+$('next2').addEventListener('click', () => goMonth(1, true));
 for (const b of document.querySelectorAll('.paint .tool')) b.addEventListener('click', () => {
   state.paint = state.paint === b.dataset.paint ? null : b.dataset.paint;
   for (const t of document.querySelectorAll('.paint .tool')) t.setAttribute('aria-pressed', String(t.dataset.paint === state.paint));
@@ -2809,7 +2819,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-21h';
+const APP_VERSION = '2026-10-22a';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
