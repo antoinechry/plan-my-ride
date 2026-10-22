@@ -1,0 +1,756 @@
+{
+ "id": "bloc-2026-10-25",
+ "user": "e51d871e-c7bb-4aa7-aaf1-4aa96ca3e36b",
+ "titre": "Bloc vélo, course et natation",
+ "du": "2026-10-25",
+ "au": "2026-11-12",
+ "remplace": true,
+ "sessions": {
+  "2026-10-25": [
+   {
+    "uid": "d25endur01",
+    "sport": "Ride",
+    "titre": "Reprise endurance 2 h 30",
+    "duree_min": 150,
+    "distance_km": 60,
+    "denivele_m": 450,
+    "intensite": "facile",
+    "deroule": [
+     "2 h 30 (2 h mini, 3 h maxi) en zone 2 : FC 133–147, 115–150 W, effort 3–4/10",
+     "Montées sous 185 W, sans relances",
+     "Départ vers 13 h 30–14 h (pluie prévue jusqu'à 14 h, coucher du soleil vers 17 h, passage à l'heure d'hiver) : prends une lampe arrière",
+     "Aller vers le sud par la route des Vins (Riquewihr, Kaysersberg, Turckheim) face au vent du sud-ouest, retour par la plaine vent dans le dos",
+     "40–60 g de glucides par heure, 1 bidon par heure"
+    ],
+    "pourquoi": "Première sortie après 10 jours sans entraînement : on remet du volume sans intensité. Prévision à J-3, à revérifier samedi.",
+    "etapes": [
+     {
+      "label": "Mise en route",
+      "min": 15,
+      "lo": 45,
+      "hi": 60,
+      "rampe": true
+     },
+     {
+      "label": "Endurance",
+      "min": 125,
+      "lo": 56,
+      "hi": 73,
+      "rpm": "85-95"
+     },
+     {
+      "label": "Retour au calme",
+      "min": 10,
+      "lo": 40,
+      "hi": 55
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T09:00:00Z"
+   }
+  ],
+  "2026-10-26": [
+   {
+    "uid": "d26nage001",
+    "sport": "Swim",
+    "titre": "Natation souple",
+    "duree_min": 30,
+    "distance_km": 1.1,
+    "denivele_m": null,
+    "intensite": "facile",
+    "deroule": [
+     "200 m crawl souple",
+     "4 × 50 m éducatifs, 20 s de récup",
+     "4 × 100 m crawl souple, 20 s de récup",
+     "300 m souple au choix (dos, brasse)",
+     "Ou repos complet si tu préfères"
+    ],
+    "pourquoi": "Remplace le vélo d'1 h 15 pour ne pas enchaîner 7 jours d'affilée après la sortie de dimanche. Piscine : lundi 16 h – 19 h, à vérifier pendant les vacances de la Toussaint.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "dist": 200,
+      "libre": true
+     },
+     {
+      "repeter": 4,
+      "label": "Éducatifs",
+      "pas": [
+       {
+        "label": "Éducatif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 4,
+      "label": "Crawl souple",
+      "pas": [
+       {
+        "label": "Crawl souple",
+        "dist": 100,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "label": "Retour au calme",
+      "dist": 300,
+      "libre": true
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T09:00:00Z",
+    "bassin": 25
+   }
+  ],
+  "2026-10-31": [
+   {
+    "uid": "regbfzo1o1",
+    "sport": "Swim",
+    "titre": "Natation récup technique",
+    "duree_min": 35,
+    "distance_km": 1.2,
+    "denivele_m": null,
+    "intensite": "facile",
+    "deroule": [
+     "200 m crawl souple (dos ou brasse si besoin)",
+     "4 × 50 m éducatifs (rattrapé, respiration 3 temps), 20 s de récup",
+     "4 × 100 m crawl souple, 20 s de récup",
+     "4 × 50 m dos ou brasse, 15 s de récup",
+     "200 m souple au choix"
+    ],
+    "pourquoi": "Récupération active le lendemain des 100 km : on délie les jambes sans charge. Piscine en horaires de vacances de la Toussaint jusqu'au 1er novembre : vérifie l'ouverture avant d'y aller.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "dist": 200,
+      "libre": true
+     },
+     {
+      "repeter": 4,
+      "label": "Éducatifs",
+      "pas": [
+       {
+        "label": "Éducatif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 4,
+      "label": "Crawl souple",
+      "pas": [
+       {
+        "label": "Crawl souple",
+        "dist": 100,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 4,
+      "label": "Dos ou brasse",
+      "pas": [
+       {
+        "label": "Dos ou brasse",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 15,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "label": "Retour au calme",
+      "dist": 200,
+      "libre": true
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z",
+    "bassin": 25
+   }
+  ],
+  "2026-11-02": [
+   {
+    "uid": "1xbw1bl1lt",
+    "sport": "Swim",
+    "titre": "Natation technique et endurance",
+    "duree_min": 45,
+    "distance_km": 1.5,
+    "denivele_m": null,
+    "intensite": "facile",
+    "deroule": [
+     "300 m échauffement (crawl et dos)",
+     "6 × 50 m éducatifs, 20 s de récup",
+     "6 × 100 m crawl allure endurance (≈ 2:10–2:20 /100 m), 20 s de récup",
+     "300 m souple, pull-buoy si tu en as un"
+    ],
+    "pourquoi": "Ouvre la 2e semaine sans impact pour les jambes, après le week-end de repos. Piscine : lundi 16 h – 19 h.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "dist": 300,
+      "libre": true
+     },
+     {
+      "repeter": 6,
+      "label": "Éducatifs",
+      "pas": [
+       {
+        "label": "Éducatif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 6,
+      "label": "Endurance",
+      "pas": [
+       {
+        "label": "Crawl endurance",
+        "dist": 100,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "label": "Retour au calme",
+      "dist": 300,
+      "libre": true
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z",
+    "bassin": 25
+   }
+  ],
+  "2026-11-03": [
+   {
+    "uid": "4exbcx1val",
+    "sport": "Ride",
+    "titre": "Sweet spot 2 × 15 min",
+    "duree_min": 90,
+    "distance_km": 40,
+    "denivele_m": 300,
+    "intensite": "soutenue",
+    "deroule": [
+     "Échauffement 20 min progressif en Z1–Z2",
+     "2 × 15 min à 175–190 W (FC 148–158, effort 6–7/10), 5 min faciles entre les deux",
+     "25 min en zone 2 (115–150 W), puis 5 min de retour au calme",
+     "Dehors sur le plat ou sur le home trainer s'il pleut"
+    ],
+    "pourquoi": "La séance de qualité de la semaine, un cran au-dessus des 3 × 10 min de la semaine 1.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "min": 20,
+      "lo": 50,
+      "hi": 75,
+      "rampe": true
+     },
+     {
+      "repeter": 2,
+      "label": "Sweet spot",
+      "pas": [
+       {
+        "label": "Sweet spot",
+        "min": 15,
+        "lo": 85,
+        "hi": 93
+       },
+       {
+        "label": "Récupération",
+        "min": 5,
+        "lo": 45,
+        "hi": 60
+       }
+      ]
+     },
+     {
+      "label": "Endurance",
+      "min": 25,
+      "lo": 56,
+      "hi": 73,
+      "rpm": "85-95"
+     },
+     {
+      "label": "Retour au calme",
+      "min": 5,
+      "lo": 40,
+      "hi": 55
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z"
+   }
+  ],
+  "2026-11-04": [
+   {
+    "uid": "ai64wz27z7",
+    "sport": "Run",
+    "titre": "Footing facile + lignes droites",
+    "duree_min": 42,
+    "distance_km": 6.5,
+    "denivele_m": 60,
+    "intensite": "facile",
+    "deroule": [
+     "34 min sur terrain plat, FC sous 150 (ralentis ou marche si ça monte)",
+     "6 × 20 s d'accélération progressive, 1 min de marche entre chaque"
+    ],
+    "pourquoi": "Entretien de la course entre deux séances de vélo, sans fatigue avant la sortie longue de dimanche.",
+    "etapes": [
+     {
+      "label": "Footing facile",
+      "min": 34,
+      "lo": 75,
+      "hi": 89
+     },
+     {
+      "repeter": 6,
+      "label": "Accélérations",
+      "pas": [
+       {
+        "label": "Accélération progressive",
+        "sec": 20,
+        "libre": true
+       },
+       {
+        "label": "Marche",
+        "min": 1,
+        "libre": true
+       }
+      ]
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z"
+   }
+  ],
+  "2026-11-05": [
+   {
+    "uid": "76q2vj5jbk",
+    "sport": "Swim",
+    "titre": "Natation 3 × 300 m",
+    "duree_min": 50,
+    "distance_km": 1.7,
+    "denivele_m": null,
+    "intensite": "modérée",
+    "deroule": [
+     "300 m échauffement",
+     "4 × 50 m éducatifs, 20 s de récup",
+     "3 × 300 m crawl allure régulière, 30 s de récup (même temps sur les trois)",
+     "4 × 50 m progressif, 20 s de récup",
+     "100 m souple"
+    ],
+    "pourquoi": "Premier travail d'endurance un peu plus long en continu. Piscine : jeudi 10 h 15 – 14 h ou 16 h – 19 h.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "dist": 300,
+      "libre": true
+     },
+     {
+      "repeter": 4,
+      "label": "Éducatifs",
+      "pas": [
+       {
+        "label": "Éducatif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 3,
+      "label": "Allure régulière",
+      "pas": [
+       {
+        "label": "Crawl régulier",
+        "dist": 300,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 30,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 4,
+      "label": "Progressif",
+      "pas": [
+       {
+        "label": "Progressif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "label": "Retour au calme",
+      "dist": 100,
+      "libre": true
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z",
+    "bassin": 25
+   }
+  ],
+  "2026-11-06": [
+   {
+    "uid": "nvdo8h7bfo",
+    "sport": "Ride",
+    "titre": "Sortie longue 105 km",
+    "duree_min": 240,
+    "distance_km": 105,
+    "denivele_m": 1000,
+    "intensite": "facile",
+    "deroule": [
+     "105 km avec environ 1 000 m D+ (route des Vins et premiers cols des Vosges) en zone 2 : FC 133–147, 120–155 W",
+     "Montées sous 185 W, sans relances",
+     "60–80 g de glucides par heure dès la 1re heure, 1 bidon par heure"
+    ],
+    "pourquoi": "L'objectif vélo de la semaine, un peu plus long et plus vallonné que la semaine 1. Une trace peut être demandée à Miguel la veille, avec la météo.",
+    "etapes": [
+     {
+      "label": "Mise en route",
+      "min": 15,
+      "lo": 45,
+      "hi": 60,
+      "rampe": true
+     },
+     {
+      "label": "Endurance",
+      "min": 215,
+      "lo": 58,
+      "hi": 75
+     },
+     {
+      "label": "Retour au calme",
+      "min": 10,
+      "lo": 40,
+      "hi": 55
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z"
+   }
+  ],
+  "2026-11-08": [
+   {
+    "uid": "s3nepofkpd",
+    "sport": "Run",
+    "titre": "Sortie longue facile 10 km",
+    "duree_min": 70,
+    "distance_km": 10,
+    "denivele_m": 150,
+    "intensite": "facile",
+    "deroule": [
+     "10 km légèrement vallonnés, FC sous 150, sans allure cible",
+     "Marche dans les côtes raides",
+     "Arrête-toi à 8 km au moindre signe de douleur"
+    ],
+    "pourquoi": "Objectif course de la semaine : 10 km, soit +1 km par rapport au 29 octobre (progression de 10 % maximum).",
+    "etapes": [
+     {
+      "label": "Sortie longue facile",
+      "min": 70,
+      "lo": 75,
+      "hi": 89
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z"
+   }
+  ],
+  "2026-11-09": [
+   {
+    "uid": "nn18v7iw7l",
+    "sport": "Swim",
+    "titre": "Natation 2 × 400 m",
+    "duree_min": 55,
+    "distance_km": 1.8,
+    "denivele_m": null,
+    "intensite": "modérée",
+    "deroule": [
+     "300 m échauffement",
+     "4 × 50 m éducatifs, 20 s de récup",
+     "2 × 400 m crawl allure régulière, 30 s de récup",
+     "4 × 100 m un peu plus vite (effort 6/10), 30 s de récup",
+     "100 m souple"
+    ],
+    "pourquoi": "La séance de natation la plus longue du bloc : endurance en continu puis un peu de rythme. Piscine : lundi 16 h – 19 h.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "dist": 300,
+      "libre": true
+     },
+     {
+      "repeter": 4,
+      "label": "Éducatifs",
+      "pas": [
+       {
+        "label": "Éducatif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 2,
+      "label": "Allure régulière",
+      "pas": [
+       {
+        "label": "Crawl régulier",
+        "dist": 400,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 30,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 4,
+      "label": "Rythme",
+      "pas": [
+       {
+        "label": "Crawl soutenu",
+        "dist": 100,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 30,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "label": "Retour au calme",
+      "dist": 100,
+      "libre": true
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z",
+    "bassin": 25
+   }
+  ],
+  "2026-11-10": [
+   {
+    "uid": "xep4az5xce",
+    "sport": "Ride",
+    "titre": "Sortie longue 100 km avec tempo",
+    "duree_min": 225,
+    "distance_km": 100,
+    "denivele_m": 800,
+    "intensite": "modérée",
+    "deroule": [
+     "1 h 35 en zone 2 (120–155 W)",
+     "2 × 10 min en tempo à 155–175 W (FC 145–152), 5 min faciles entre les deux",
+     "1 h 30 en zone 2, puis retour au calme",
+     "60–80 g de glucides par heure, 1 bidon par heure"
+    ],
+    "pourquoi": "L'objectif vélo de la dernière semaine, avant les 5 jours d'indispo : on peut y mettre un peu de rythme.",
+    "etapes": [
+     {
+      "label": "Mise en route",
+      "min": 15,
+      "lo": 45,
+      "hi": 60,
+      "rampe": true
+     },
+     {
+      "label": "Endurance",
+      "min": 80,
+      "lo": 58,
+      "hi": 75
+     },
+     {
+      "repeter": 2,
+      "label": "Tempo",
+      "pas": [
+       {
+        "label": "Tempo",
+        "min": 10,
+        "lo": 76,
+        "hi": 85
+       },
+       {
+        "label": "Récupération",
+        "min": 5,
+        "lo": 50,
+        "hi": 60
+       }
+      ]
+     },
+     {
+      "label": "Endurance",
+      "min": 90,
+      "lo": 58,
+      "hi": 75
+     },
+     {
+      "label": "Retour au calme",
+      "min": 10,
+      "lo": 40,
+      "hi": 55
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z"
+   }
+  ],
+  "2026-11-11": [
+   {
+    "uid": "rb37barhw6",
+    "sport": "Run",
+    "titre": "Sortie longue facile 11 km",
+    "duree_min": 75,
+    "distance_km": 11,
+    "denivele_m": 150,
+    "intensite": "facile",
+    "deroule": [
+     "11 km légèrement vallonnés, FC sous 150, sans allure cible",
+     "Marche dans les côtes raides",
+     "Si les jambes sont lourdes après la veille, reste à 10 km"
+    ],
+    "pourquoi": "Dernier pas de la progression (9 → 10 → 11 km) ; le 11 novembre est férié, la piscine est sans doute fermée, d'où la course ce jour-là.",
+    "etapes": [
+     {
+      "label": "Sortie longue facile",
+      "min": 75,
+      "lo": 75,
+      "hi": 89
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z"
+   }
+  ],
+  "2026-11-12": [
+   {
+    "uid": "qli5lba8d3",
+    "sport": "Swim",
+    "titre": "Natation souple",
+    "duree_min": 40,
+    "distance_km": 1.4,
+    "denivele_m": null,
+    "intensite": "facile",
+    "deroule": [
+     "300 m échauffement",
+     "6 × 50 m éducatifs, 20 s de récup",
+     "4 × 150 m crawl souple, 20 s de récup",
+     "200 m souple au choix"
+    ],
+    "pourquoi": "Séance légère pour finir le bloc avant les 5 jours d'indispo. Piscine : jeudi 10 h 15 – 14 h ou 16 h – 19 h.",
+    "etapes": [
+     {
+      "label": "Échauffement",
+      "dist": 300,
+      "libre": true
+     },
+     {
+      "repeter": 6,
+      "label": "Éducatifs",
+      "pas": [
+       {
+        "label": "Éducatif",
+        "dist": 50,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "repeter": 4,
+      "label": "Crawl souple",
+      "pas": [
+       {
+        "label": "Crawl souple",
+        "dist": 150,
+        "libre": true
+       },
+       {
+        "label": "Récupération",
+        "sec": 20,
+        "libre": true
+       }
+      ]
+     },
+     {
+      "label": "Retour au calme",
+      "dist": 200,
+      "libre": true
+     }
+    ],
+    "source": "claude",
+    "cree_le": "2026-10-22T08:00:00Z",
+    "bassin": 25
+   }
+  ]
+ }
+}

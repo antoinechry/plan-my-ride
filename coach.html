@@ -297,6 +297,10 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
 .dlgwx{margin:-6px 0 12px;font-size:.88rem;color:var(--muted)}
 .dlgwx:empty{display:none}
 /* Objectifs de la semaine */
+.importcard{background:var(--surface);border:2px solid var(--ride);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.importcard b{font-size:1rem}
+.importcard .meta{color:var(--muted);font-size:.86rem;margin:2px 0 10px}
+.importcard ul{margin:6px 0 10px;padding-left:1.1em;font-size:.86rem}
 .goalcard,.bilancard{background:var(--surface);border-radius:12px;padding:10px 12px;margin-bottom:14px}
 .ggrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:8px}
 .gtile{background:var(--surface-2);border-radius:10px;padding:8px 10px;border-left:4px solid var(--c);min-width:0}
@@ -420,6 +424,7 @@ dialog.big{width:min(960px,calc(100vw - 24px))}
         </div>
         <div class="hgrid" id="hgrid"></div>
       </div>
+      <div class="importcard" id="importcard" hidden></div>
       <div class="goalcard" id="goalcard">
         <div class="loadhead">
           <h3 class="hh">Objectifs de la semaine <small id="goalweek"></small></h3>
@@ -2277,6 +2282,52 @@ async function planTrace(p, k, what, btn){
   btn.textContent = old; btn.disabled = false;
 }
 
+/* ---------- Import d'un plan préparé (fichier plans/import.json du dépôt) ---------- */
+// Un plan préparé hors de l'app (séances au format du doc « seances ») est posé dans plans/import.json ; il n'est
+// proposé qu'à son destinataire (user) et tant que ses séances ne sont pas déjà dans le calendrier. « Importer » :
+// pour chaque jour du plan, les séances remplacent celles du jour (remplace: true) puis tout est enregistré.
+const IMP = { doc: null };
+async function checkImport(){
+  try {
+    const r = await fetch('plans/import.json?v='+Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+    const d = await r.json();
+    if (!d || d.user !== state.user.id || !d.sessions) return;
+    const uids = Object.values(d.sessions).flat().map(x => x.uid);
+    const have = new Set(Object.values(state.seances).flat().map(x => x && x.uid));
+    if (uids.every(u => have.has(u))) return;
+    IMP.doc = d; renderImport();
+  } catch(_){}
+}
+function renderImport(msg){
+  const d = IMP.doc, box = $('importcard'); if (!d){ box.hidden = true; return; }
+  const days = Object.keys(d.sessions).sort(), all = days.flatMap(k => d.sessions[k].map(p => [k, p]));
+  const icon = p => ({ ride: '🚴', run: '🏃', swim: '🏊' }[sportCls(p.sport)] || '•');
+  const repl = days.filter(k => (state.seances[k] || []).length && !(state.seances[k] || []).some(x => d.sessions[k].some(y => y.uid === x.uid)));
+  box.hidden = false;
+  box.innerHTML = '<b>📋 Plan proposé : '+esc(d.titre || 'séances')+'</b><div class="meta">'+all.length+' séances du '+shortDate(days[0])+' au '+shortDate(days[days.length-1])
+    + (repl.length ? ' · remplace ce qui est prévu le '+repl.map(shortDate).join(', ') : '')+'</div>'
+    + '<ul>'+all.map(([k, p]) => '<li>'+esc(cap(readFmt.format(new Date(k+'T00:00:00'))))+' '+icon(p)+' '+esc(p.titre)+'</li>').join('')+'</ul>'
+    + (msg ? '<p class="msg">'+esc(msg)+'</p>' : '')
+    + '<div class="authact"><button class="btn primary" id="impgo">Importer dans mon calendrier</button><button class="btn" id="impno">Plus tard</button></div>';
+  $('impgo').onclick = doImport;
+  $('impno').onclick = () => { box.hidden = true; };
+}
+async function doImport(){
+  const d = IMP.doc; if (!d) return;
+  $('impgo').disabled = true; $('impgo').textContent = 'Import…';
+  const backup = JSON.parse(JSON.stringify(state.seances));
+  for (const [k, list] of Object.entries(d.sessions)){
+    const keep = d.remplace ? [] : (state.seances[k] || []).filter(x => !list.some(y => y.uid === x.uid));
+    state.seances[k] = keep.concat(list);
+  }
+  try { await saveSeances(); }
+  catch(e){ state.seances = backup; renderImport('Échec de l\'enregistrement : '+(e.message || e)+'. Réessaie.'); return; }
+  IMP.doc = null;
+  $('importcard').innerHTML = '<b>✓ Plan importé</b><div class="meta">'+Object.values(d.sessions).flat().length+' séances ajoutées à ton calendrier. Envoie-les sur ton Dura / ta Garmin depuis chaque journée (« Sorties prévues »).</div>';
+  renderCalendar();
+  setTimeout(() => { $('importcard').hidden = true; }, 8000);
+}
+
 /* ---------- Activities (intervals.icu) ---------- */
 // Appel direct : on lit le corps de la réponse pour afficher la vraie cause.
 async function callFn(name, body){
@@ -2680,6 +2731,7 @@ async function showApp(user){
   $('profav').textContent = (me().prenom || user.email || '?').charAt(0).toUpperCase();
   applyPlanStart();
   renderCalendar();
+  checkImport();
   renderCityNow();
   loadCityWx(false);
   icuStatus();
@@ -2819,7 +2871,7 @@ $('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').cl
 // GitHub Pages et les navigateurs mobiles gardent la page en cache un moment : on compare APP_VERSION avec
 // celle du fichier en ligne (sans cache) au chargement et au retour sur l'onglet, et on propose de recharger.
 // À changer à chaque mise en ligne de coach.html.
-const APP_VERSION = '2026-10-22a';
+const APP_VERSION = '2026-10-22b';
 let verAt = 0;
 async function checkVersion(){
   if (Date.now() - verAt < 60e3 || location.protocol === 'file:') return; verAt = Date.now();
