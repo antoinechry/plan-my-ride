@@ -2584,6 +2584,7 @@ function handleFile(file) {
       libSave(pts, name); // fixe LIB.current avant sa première attente
       revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
       track('gpx', { km: Math.round(S.lapBase.total) });
+      logAct('gpx', { detail: String(name).slice(0, 120), km: Math.round(S.lapBase.total * 10) / 10 });
     }
     catch (e) { setStatus(e.message, 'err'); }
   };
@@ -4074,6 +4075,14 @@ function gateTab(t) {
 }
 document.querySelectorAll('#gate [data-g]').forEach(b => b.addEventListener('click', () => gateTab(b.dataset.g)));
 const gateErr = t => { $('#gateErr').textContent = t; $('#gateErr').hidden = !t; };
+// Journal par compte (table activity_log, lu par la page Admin) : ouverture de l'app (une fois par onglet) et GPX importés.
+async function logAct(event, extra) {
+  if (!hasSbToken()) return;
+  try {
+    const sb = await sbClient();
+    await sb.from('activity_log').insert({ app: 'pmr', event, device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) });
+  } catch (e) { /* le journal est un plus */ }
+}
 async function accessCheck() {
   if (!hasSbToken()) { gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
   try {
@@ -4092,6 +4101,7 @@ async function accessCheck() {
     $('#coachBtn').hidden = !data.coach;
     document.body.classList.toggle('nocoach', !data.coach); // « Caler sur mes sorties » lit les activités de Coach Miguel
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
+    try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); logAct('open'); } } catch (e) {}
     if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   } catch (e) { /* réseau : on laisse l'app, les fonctions serveur vérifient l'accès */ }
 }

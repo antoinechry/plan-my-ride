@@ -72,6 +72,27 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .scroll{overflow-x:auto}
 .filter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .filter button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--surface);border-radius:12px;padding:10px 14px}
+.kpi .l{font-size:.78rem;color:var(--muted);font-weight:600}
+.kpi .v{font-size:1.6rem;font-weight:800;font-stretch:115%;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:.78rem;color:var(--muted)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 10px;align-items:end}
+.form label.f{display:flex;flex-direction:column;gap:3px;font-size:.8rem;color:var(--muted);font-weight:600}
+.form input[type=text],.form input[type=email],.pwrow input{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:.42rem .6rem;color:var(--ink);font-size:.95rem}
+.pwbox{display:flex;gap:6px}.pwbox input{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace}
+.checks{display:flex;flex-wrap:wrap;gap:12px;font-size:.9rem;padding:.4rem 0}
+.checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.done{border:1px solid var(--ok);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:.9rem}
+.done pre{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:var(--surface-2);border-radius:7px;padding:.5rem .6rem;margin:6px 0;white-space:pre-wrap}
+.activity{font-size:.82rem;color:var(--muted);margin-top:6px}
+.activity b{color:var(--ink)}
+.activity .old{color:var(--warn)}
+.pwrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.pwrow input{font-family:ui-monospace,Menlo,monospace;flex:1 1 180px;min-width:0}
+.ev-gpx{color:var(--ok);font-weight:700}.ev-open{color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.toolbar select{border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:.38rem .7rem}
 </style>
 </head>
 <body>
@@ -84,10 +105,26 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <div id="denied" hidden><section><p class="msg" id="deniedTxt"></p><a class="btn" href="coach.html">Se connecter</a></section></div>
 
   <div id="app" hidden>
+    <div class="kpis" id="kpis"></div>
+
     <section id="pendSec">
       <h2>À valider <span class="n" id="pendN">0</span></h2>
       <p class="empty" id="pendEmpty">Aucun compte en attente.</p>
       <div class="users" id="pend"></div>
+    </section>
+
+    <section>
+      <h2>Créer un compte</h2>
+      <p class="msg">Le compte est actif tout de suite, sans e-mail de confirmation. Transmets ensuite l'e-mail et le mot de passe provisoire à la personne ; elle pourra le changer dans Coach Miguel (Mon menu → Compte) ou par « Mot de passe oublié ? ».</p>
+      <form class="form" id="newUser" autocomplete="off">
+        <label class="f">Prénom<input type="text" id="nuPrenom" maxlength="40"></label>
+        <label class="f">E-mail<input type="email" id="nuEmail" required maxlength="200"></label>
+        <label class="f">Mot de passe provisoire<span class="pwbox"><input type="text" id="nuPw" minlength="8" maxlength="200" required><button type="button" class="btn" id="nuGen">Générer</button></span></label>
+        <div class="checks"><label><input type="checkbox" id="nuPmr" checked> Plan My Ride</label><label><input type="checkbox" id="nuCoach"> Coach Miguel</label></div>
+        <div><button class="btn primary" id="nuGo" type="submit">Créer le compte</button></div>
+      </form>
+      <p class="msg err" id="nuErr" hidden></p>
+      <div class="done" id="nuDone" hidden></div>
     </section>
 
     <section>
@@ -106,6 +143,16 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </section>
 
     <section>
+      <h2>Connexions et GPX chargés</h2>
+      <div class="toolbar">
+        <div class="filter" id="evFilter" style="margin:0"><button class="btn" data-e="all" aria-pressed="true">Tout</button><button class="btn" data-e="open" aria-pressed="false">Connexions</button><button class="btn" data-e="gpx" aria-pressed="false">GPX</button></div>
+        <select id="evUser" aria-label="Compte"><option value="">Tous les comptes</option></select>
+      </div>
+      <div class="scroll"><table><thead><tr><th>Quand</th><th>Compte</th><th>App</th><th>Évènement</th><th class="num">km</th><th>Appareil</th></tr></thead><tbody id="evBody"></tbody></table></div>
+      <p class="msg">30 derniers jours. Une connexion = une ouverture de l'app dans un onglet (journal tenu depuis le 23/10/2026) ; « Dernière connexion » sur chaque compte vient de l'identification Supabase.</p>
+    </section>
+
+    <section>
       <h2>Consommation de <span id="monthLbl"></span></h2>
       <p class="msg" id="mbBal"></p>
       <div class="scroll"><table><thead><tr><th>Compte</th><th class="num">Demandes à Miguel</th><th class="num">Chargements meteoblue</th><th class="num">Crédits meteoblue</th></tr></thead><tbody id="useBody"></tbody></table></div>
@@ -120,7 +167,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 'use strict';
 // Page Admin (comptes admin seulement, contrôlé par les politiques RLS de app_users / usage_log / tester_links) :
 // comptes en attente, accès par app (Coach Miguel, Plan My Ride), statut, rôle admin, quotas mensuels,
-// consommation du mois, liens d'inscription testeurs (index.html?invite=CODE).
+// consommation du mois, liens d'inscription testeurs (index.html?invite=CODE),
+// création de compte et changement de mot de passe (fonction admin-users), connexions et GPX chargés (table activity_log).
 const SUPABASE_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
 const $ = id => document.getElementById(id);
@@ -128,20 +176,24 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp
 const dFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 const dtFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const nf = new Intl.NumberFormat('fr-FR');
-const S = { me: null, users: [], links: [], use: {}, filter: 'all' };
+const S = { me: null, users: [], links: [], use: {}, filter: 'all', auth: {}, ev: [], evF: 'all', evU: '', pwOpen: null };
 let sb = null;
 const base = location.origin + location.pathname.replace(/[^/]*$/, '');
 const linkUrl = code => base + 'index.html?invite=' + encodeURIComponent(code);
 
 async function load(){
   const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
-  const [u, l, g] = await Promise.all([
+  const d30 = new Date(Date.now() - 30 * 864e5);
+  const [u, l, g, ev, au] = await Promise.all([
     sb.from('app_users').select('*').order('created_at', { ascending: false }),
     sb.from('tester_links').select('*').order('created_at', { ascending: false }),
-    sb.from('usage_log').select('user_id,kind,credits').gte('at', m0.toISOString()).limit(10000)
+    sb.from('usage_log').select('user_id,kind,credits').gte('at', m0.toISOString()).limit(10000),
+    sb.from('activity_log').select('user_id,at,app,event,detail,km,device').gte('at', d30.toISOString()).order('at', { ascending: false }).limit(5000),
+    sb.functions.invoke('admin-users', { body: { action: 'list' } }).catch(e => ({ error: e }))
   ]);
   if (u.error) throw u.error;
-  S.users = u.data || []; S.links = l.data || [];
+  S.users = u.data || []; S.links = l.data || []; S.ev = ev.data || [];
+  S.auth = {}; for (const x of (au && au.data && au.data.users) || []) S.auth[x.id] = x;
   S.use = {};
   for (const r of g.data || []){
     const x = S.use[r.user_id] || (S.use[r.user_id] = { miguel: 0, mb: 0, cr: 0 });
@@ -151,6 +203,19 @@ async function load(){
   render();
 }
 const name = u => (u.prenom ? u.prenom+' · ' : '')+(u.email || '?');
+const ago = iso => { if (!iso) return 'jamais'; const m = (Date.now() - new Date(iso)) / 6e4;
+  return m < 2 ? 'à l\'instant' : m < 60 ? 'il y a '+Math.round(m)+' min' : m < 1440 ? 'il y a '+Math.round(m / 60)+' h' : m < 2880 ? 'hier' : m < 43200 ? 'il y a '+Math.round(m / 1440)+' j' : 'le '+dFmt.format(new Date(iso)); };
+// dernière activité d'un compte : connexion Supabase, ouvertures et GPX du journal, parcours enregistrés
+function actLine(u){
+  const a = S.auth[u.user_id] || {}, mine = S.ev.filter(e => e.user_id === u.user_id), d7 = Date.now() - 7 * 864e5;
+  const opens = mine.filter(e => e.event === 'open'), gpx = mine.filter(e => e.event === 'gpx');
+  const lastOpen = opens[0] && opens[0].at, last = [a.last_sign_in_at, lastOpen].filter(Boolean).sort().pop();
+  const old = !last || Date.now() - new Date(last) > 14 * 864e5;
+  return '<div class="activity">Dernière activité : <b class="'+(old ? 'old' : '')+'">'+ago(last)+'</b>'
+    + ' · <b>'+opens.filter(e => new Date(e.at) > d7).length+'</b> ouverture(s) sur 7 j, <b>'+opens.length+'</b> sur 30 j'
+    + ' · <b>'+gpx.length+'</b> GPX chargé(s) sur 30 j'+(gpx[0] ? ' (dernier : '+esc(gpx[0].detail || '?')+(gpx[0].km ? ', '+Math.round(gpx[0].km)+' km' : '')+')' : '')
+    + ' · <b>'+(a.routes || 0)+'</b> parcours enregistré(s)</div>';
+}
 function userCard(u, pending){
   const self = u.user_id === S.me.id, use = S.use[u.user_id] || { miguel: 0, mb: 0, cr: 0 };
   const cb = (k, lab, dis) => '<label><input type="checkbox" data-k="'+k+'"'+(u[k] ? ' checked' : '')+(dis ? ' disabled' : '')+'> '+lab+'</label>';
@@ -162,12 +227,40 @@ function userCard(u, pending){
     + '<div class="ur">'+cb('pmr', 'Plan My Ride')+cb('coach', 'Coach Miguel')+cb('is_admin', 'Admin', self)
     + q('quota_miguel', 'Miguel / mois')+q('quota_mb', 'meteoblue / mois')
     + '<span class="use">ce mois : <b>'+use.miguel+'</b> Miguel · <b>'+use.mb+'</b> meteoblue</span></div>'
+    + actLine(u)
+    + (S.pwOpen === u.user_id ? '<div class="pwrow"><input type="text" data-pw minlength="8" maxlength="200" placeholder="Nouveau mot de passe (8 caractères ou plus)" autocomplete="off"><button class="btn" data-a="pwgen">Générer</button><button class="btn primary" data-a="pwsave">Enregistrer</button><button class="btn" data-a="pwcancel">Annuler</button></div>' : '')
     + '<div class="acts">'
     + (pending ? '<button class="btn primary" data-a="ok">Valider</button><button class="btn bad" data-a="block">Refuser</button>'
       : u.status === 'blocked' ? '<button class="btn" data-a="ok">Réactiver</button>' : (self ? '' : '<button class="btn bad" data-a="block">Bloquer</button>'))
+    + (S.pwOpen === u.user_id ? '' : '<button class="btn" data-a="pw">Changer le mot de passe</button>')
     + '<span class="saved" data-s></span></div></div>';
 }
+const genPw = () => { const A = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from(crypto.getRandomValues(new Uint8Array(12)), b => A[b % A.length]).join(''); };
+function renderKpis(){
+  const d7 = Date.now() - 7 * 864e5, recent = e => new Date(e.at) > d7;
+  const act = S.users.filter(u => u.status === 'active').length;
+  const who7 = new Set(S.ev.filter(e => e.event === 'open' && recent(e)).map(e => e.user_id));
+  for (const [id, a] of Object.entries(S.auth)) if (a.last_sign_in_at && new Date(a.last_sign_in_at) > d7) who7.add(id);
+  const gpx = S.ev.filter(e => e.event === 'gpx');
+  const k = (l, v, sub) => '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+sub+'</div></div>';
+  $('kpis').innerHTML = k('Comptes actifs', act, S.users.filter(u => u.status === 'pending').length+' en attente')
+    + k('Actifs sur 7 jours', who7.size, 'comptes connectés')
+    + k('Ouvertures sur 7 jours', S.ev.filter(e => e.event === 'open' && recent(e)).length, S.ev.filter(e => e.event === 'open').length+' sur 30 jours')
+    + k('GPX chargés sur 7 jours', gpx.filter(recent).length, gpx.length+' sur 30 jours');
+}
+function renderEvents(){
+  const byId = Object.fromEntries(S.users.map(u => [u.user_id, u]));
+  const sel = $('evUser'), cur = S.evU;
+  sel.innerHTML = '<option value="">Tous les comptes</option>' + S.users.map(u => '<option value="'+u.user_id+'"'+(u.user_id === cur ? ' selected' : '')+'>'+esc(name(u))+'</option>').join('');
+  const rows = S.ev.filter(e => (S.evF === 'all' || e.event === S.evF) && (!S.evU || e.user_id === S.evU)).slice(0, 300);
+  $('evBody').innerHTML = rows.map(e => { const u = byId[e.user_id];
+    return '<tr><td>'+dtFmt.format(new Date(e.at))+'</td><td>'+esc(u ? name(u) : e.user_id.slice(0, 8))+'</td><td>'+(e.app === 'coach' ? 'Coach Miguel' : 'Plan My Ride')+'</td>'
+      + '<td>'+(e.event === 'gpx' ? '<span class="ev-gpx">GPX</span> '+esc(e.detail || '') : '<span class="ev-open">Ouverture</span>')+'</td>'
+      + '<td class="num">'+(e.km ? Math.round(e.km) : '')+'</td><td>'+(e.device === 'mobile' ? 'Mobile' : e.device === 'desktop' ? 'Ordinateur' : '')+'</td></tr>'; }).join('')
+    || '<tr><td colspan="6" class="empty">Rien sur cette période.</td></tr>';
+}
 function render(){
+  renderKpis(); renderEvents();
   const pend = S.users.filter(u => u.status === 'pending');
   $('pendN').textContent = pend.length; $('pendEmpty').hidden = !!pend.length;
   $('pend').innerHTML = pend.map(u => userCard(u, true)).join('');
@@ -203,12 +296,27 @@ function onUsers(e){
       const pmr = card.querySelector('[data-k="pmr"]').checked, coach = card.querySelector('[data-k="coach"]').checked;
       save(id, { status: 'active', pmr: pmr || !coach, coach, validated_at: new Date().toISOString() }, a).then(ok => ok && render());
     } else if (a.dataset.a === 'block' && !(u.user_id === S.me.id)) save(id, { status: 'blocked' }, a).then(ok => ok && render());
+    else if (a.dataset.a === 'pw'){ S.pwOpen = id; render(); const i = document.querySelector('.u[data-id="'+id+'"] [data-pw]'); if (i) i.focus(); }
+    else if (a.dataset.a === 'pwcancel'){ S.pwOpen = null; render(); }
+    else if (a.dataset.a === 'pwgen'){ card.querySelector('[data-pw]').value = genPw(); }
+    else if (a.dataset.a === 'pwsave') setPassword(id, card, a);
     return;
   }
   if (e.type !== 'change') return;
   const k = e.target.dataset.k, q = e.target.dataset.q;
   if (k) save(id, { [k]: e.target.checked }, e.target);
   if (q){ const v = e.target.value.trim(); save(id, { [q]: v === '' ? null : Math.max(0, Math.round(Number(v))) }, e.target); }
+}
+async function setPassword(id, card, btn){
+  const pw = card.querySelector('[data-pw]').value, s = card.querySelector('[data-s]');
+  if (pw.length < 8){ s.textContent = 'Au moins 8 caractères.'; return; }
+  btn.disabled = true; s.textContent = 'Enregistrement…';
+  const { data, error } = await sb.functions.invoke('admin-users', { body: { action: 'set_password', user_id: id, password: pw } });
+  btn.disabled = false;
+  if (error || !data || !data.ok){ s.textContent = 'Échec : '+((data && (data.detail || data.error)) || (error && error.message) || 'inconnu'); return; }
+  const u = S.users.find(x => x.user_id === id); S.pwOpen = null; render();
+  const s2 = document.querySelector('.u[data-id="'+id+'"] [data-s]');
+  if (s2) s2.innerHTML = 'Mot de passe changé : <b style="font-family:ui-monospace,Menlo,monospace">'+esc(pw)+'</b> (à transmettre'+(u && u.email ? ' à '+esc(u.email) : '')+')';
 }
 for (const id of ['pend', 'users']){ $(id).addEventListener('click', onUsers); $(id).addEventListener('change', onUsers); }
 $('filter').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; S.filter = b.dataset.f; for (const x of $('filter').querySelectorAll('[data-f]')) x.setAttribute('aria-pressed', String(x === b)); render(); });
@@ -227,6 +335,31 @@ $('newGo').addEventListener('click', async () => {
   if (error){ alert('Création impossible : '+error.message); return; }
   $('newLabel').value = ''; await load();
 });
+$('nuGen').addEventListener('click', () => { $('nuPw').value = genPw(); });
+$('newUser').addEventListener('submit', async e => {
+  e.preventDefault(); $('nuErr').hidden = true; $('nuDone').hidden = true;
+  const email = $('nuEmail').value.trim(), password = $('nuPw').value, prenom = $('nuPrenom').value.trim();
+  const pmr = $('nuPmr').checked, coach = $('nuCoach').checked;
+  const err = t => { $('nuErr').textContent = t; $('nuErr').hidden = false; };
+  if (password.length < 8) return err('Le mot de passe doit faire au moins 8 caractères.');
+  $('nuGo').disabled = true;
+  const { data, error } = await sb.functions.invoke('admin-users', { body: { action: 'create', email, password, prenom, pmr, coach } });
+  $('nuGo').disabled = false;
+  if (error || !data || !data.ok){
+    const c = data && data.error;
+    return err(c === 'exists' ? 'Un compte existe déjà avec cet e-mail.' : c === 'email' ? 'E-mail invalide.' : 'Création impossible : '+((data && data.detail) || (error && error.message) || c || 'inconnu'));
+  }
+  const apps = [pmr || !coach ? 'Plan My Ride' : '', coach ? 'Coach Miguel' : ''].filter(Boolean).join(' et ');
+  const txt = 'Ton compte '+apps+' est prêt.\nAdresse : '+base+(coach && !pmr ? 'coach.html' : 'index.html')+'\nE-mail : '+email+'\nMot de passe provisoire : '+password;
+  $('nuDone').innerHTML = '<b>Compte créé'+(prenom ? ' pour '+esc(prenom) : '')+'</b>'+(data.warn ? ' (accès à vérifier ci-dessous)' : '')+'<pre id="nuTxt">'+esc(txt)+'</pre><button class="btn primary" type="button" id="nuCopy">Copier le message</button>'+(navigator.share ? ' <button class="btn" type="button" id="nuShare">Partager</button>' : '');
+  $('nuDone').hidden = false;
+  $('nuCopy').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('nuCopy').textContent = 'Copié'; } catch(_){} };
+  if ($('nuShare')) $('nuShare').onclick = () => navigator.share({ text: txt }).catch(() => {});
+  $('newUser').reset(); $('nuPmr').checked = true;
+  await load();
+});
+$('evFilter').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; S.evF = b.dataset.e; for (const x of $('evFilter').querySelectorAll('[data-e]')) x.setAttribute('aria-pressed', String(x === b)); renderEvents(); });
+$('evUser').addEventListener('change', e => { S.evU = e.target.value; renderEvents(); });
 // Solde du compte meteoblue (action usage de la fonction, réservée aux admins).
 async function mbBalance(){
   try {

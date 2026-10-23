@@ -2716,6 +2716,9 @@ async function showApp(user){
   }
   $('noaccess').hidden = true;
   $('adminLink').hidden = !a.is_admin;
+  // Journal par compte (table activity_log, lu par la page Admin) : une ouverture par onglet
+  try { if (!sessionStorage.getItem('cm-act-open')) { sessionStorage.setItem('cm-act-open', '1');
+    sb.from('activity_log').insert({ app: 'coach', event: 'open', device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop' }).then(() => {}, () => {}); } } catch(_){}
   $('authbox').hidden = true; $('app').hidden = false; $('profbtn').hidden = false; $('refbtn').hidden = false;
   $('profav').textContent = (user.email || '?').charAt(0).toUpperCase();
   $('profemail').textContent = user.email || '';
