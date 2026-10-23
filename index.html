@@ -1576,6 +1576,7 @@ async function run() {
       const r = await getWeather(src, from, to, today);
       if (id !== runId) return;
       S.wxBase = r.wx; S.wxAltBase = r.alt || null; S.wxKey = key; S.wxUsed = r.used; S.wxInfo = r.info || null; S.wxNote = r.note || ''; S.wxFallback = r.fallback || '';
+      routeWxNote(r.used);
     } catch (err) {
       if (id !== runId) return;
       S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
@@ -2584,7 +2585,7 @@ function handleFile(file) {
       libSave(pts, name); // fixe LIB.current avant sa première attente
       revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
       track('gpx', { km: Math.round(S.lapBase.total) });
-      logAct('gpx', { detail: String(name).slice(0, 120), km: Math.round(S.lapBase.total * 10) / 10 });
+      logAct('gpx', { detail: String(name).slice(0, 120), km: Math.round(S.lapBase.total * 10) / 10, route_id: LIB.current || null });
     }
     catch (e) { setStatus(e.message, 'err'); }
   };
@@ -4137,6 +4138,12 @@ $('#gateUp').addEventListener('submit', async e => {
 $('#gateRetry').addEventListener('click', () => location.reload());
 $('#gateOut').addEventListener('click', async () => { try { const sb = await sbClient(); await sb.auth.signOut(); } catch (e) {} try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); });
 accessCheck();
+// Dernière source météo utilisée sur le parcours courant (colonne routes.wx, lue par la carte des GPX de la page Admin)
+function routeWxNote(used) {
+  const id = typeof LIB !== 'undefined' && LIB.current; if (!id || !used || S._wxNoted === id + '|' + used) return;
+  S._wxNoted = id + '|' + used;
+  sbIfLogged().then(sb => { if (sb) sb.from('routes').update({ wx: String(used).slice(0, 40), wx_at: new Date().toISOString() }).eq('id', id).then(() => {}, () => {}); }).catch(() => {});
+}
 async function sbIfLogged() {
   if (!hasSbToken()) return null;
   try { const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession(); return session ? sb : null; } catch (e) { return null; }
@@ -4185,7 +4192,7 @@ async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
     try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
     libUpsert({ ...meta, local: true });
     const sb = await sbIfLogged();
-    if (sb) { const { error } = await sb.from('routes').upsert({ ...meta, pts }, { onConflict: 'user_id,id' }); if (!error) libUpsert({ id, remote: true }); }
+    if (sb) { const { error } = await sb.from('routes').upsert({ ...meta, pts }, { onConflict: 'user_id,id' }); if (!error) { libUpsert({ id, remote: true }); if (LIB.current === id && S.wxUsed) { S._wxNoted = ''; routeWxNote(S.wxUsed); } } }
     libRender();
   } catch (e) { /* l'enregistrement est un confort : la trace reste utilisable */ }
 }

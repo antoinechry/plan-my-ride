@@ -9,6 +9,7 @@
 <link rel="icon" href="coach-miguel-logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -92,6 +93,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .pwrow input{font-family:ui-monospace,Menlo,monospace;flex:1 1 180px;min-width:0}
 .ev-gpx{color:var(--ok);font-weight:700}.ev-open{color:var(--muted)}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.gmap{height:min(62vh,520px);border-radius:10px;border:1px solid var(--line);z-index:0}
+.glegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;margin:8px 0 4px}
+.glegend span{display:inline-flex;align-items:center;gap:6px}
+.glegend i{width:18px;height:4px;border-radius:2px;display:inline-block}
+.leaflet-tooltip.gtip,.leaflet-popup-content{font-family:'Archivo',system-ui,sans-serif;font-size:13px;line-height:1.4}
+.gtip b,.leaflet-popup-content b{font-size:14px}
+.gtip .m,.leaflet-popup-content .m{color:#56635A}
 .toolbar select{border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:.38rem .7rem}
 </style>
 </head>
@@ -143,6 +151,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </section>
 
     <section>
+      <h2>Carte des GPX <span class="n" id="gN">0</span></h2>
+      <div class="toolbar"><select id="gUser" aria-label="Compte"><option value="">Tous les comptes</option></select><span class="msg" id="gMsg" style="margin:0">Chargement des parcours…</span></div>
+      <div class="gmap" id="gmap"></div>
+      <div class="glegend" id="gLegend"></div>
+      <p class="msg">Tous les parcours enregistrés dans les comptes. Survole une trace (ou touche-la sur téléphone) : qui l'a chargée, quand, et la dernière source météo utilisée dessus. Le clic ouvre aussi « Télécharger le GPX » et « Centrer ».</p>
+    </section>
+
+    <section>
       <h2>Connexions et GPX chargés</h2>
       <div class="toolbar">
         <div class="filter" id="evFilter" style="margin:0"><button class="btn" data-e="all" aria-pressed="true">Tout</button><button class="btn" data-e="open" aria-pressed="false">Connexions</button><button class="btn" data-e="gpx" aria-pressed="false">GPX</button></div>
@@ -162,6 +178,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -360,6 +377,74 @@ $('newUser').addEventListener('submit', async e => {
 });
 $('evFilter').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; S.evF = b.dataset.e; for (const x of $('evFilter').querySelectorAll('[data-e]')) x.setAttribute('aria-pressed', String(x === b)); renderEvents(); });
 $('evUser').addEventListener('change', e => { S.evU = e.target.value; renderEvents(); });
+/* Carte des GPX : tous les parcours de la table routes (lisible par les admins), une couleur par compte,
+   infobulle au survol (compte, import, dernière ouverture, source météo routes.wx), fenêtre au clic avec téléchargement. */
+const WX_NAME = { mb: 'meteoblue', arome: 'AROME (Météo-France)', met: 'MET Norway', om: 'Open-Meteo' };
+const wxLabel = w => { if (!w) return 'pas encore enregistrée'; const p = String(w).split('+').filter(k => WX_NAME[k]); return p.map((k, i) => WX_NAME[k] + (i ? ' (au-delà de son horizon)' : '')).join(' puis ') || w; };
+const G_COL = ['#2A6A5B', '#B2404D', '#2D5288', '#A8711A', '#7A4BA0', '#1F8A9A', '#C25E1F', '#4E7A1E', '#A03B7A', '#5A5A5A'];
+const G = { map: null, routes: [], layers: [], col: {} };
+function gpxText(r){
+  const pts = r.pts || [];
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Plan My Ride" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>'+esc(r.name || 'Parcours')+'</name><trkseg>\n'
+    + pts.map(q => '<trkpt lat="'+q[0]+'" lon="'+q[1]+'">'+(q[2] == null ? '' : '<ele>'+q[2]+'</ele>')+'</trkpt>').join('\n')+'\n</trkseg></trk></gpx>';
+}
+function gpxDownload(r){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([gpxText(r)], { type: 'application/gpx+xml' }));
+  a.download = (r.name || 'parcours').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80)+'.gpx'; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function gInfo(r){
+  const u = S.users.find(x => x.user_id === r.user_id);
+  return '<b>'+esc(r.name || 'Parcours')+'</b><br>'
+    + '<span class="m">'+(r.km ? Math.round(r.km)+' km' : '')+(r.dplus ? ' · D+ '+nf.format(Math.round(r.dplus))+' m' : '')+'</span><br>'
+    + 'Chargé par <b>'+esc(u ? name(u) : r.user_id.slice(0, 8))+'</b><br>'
+    + 'le '+dtFmt.format(new Date(r.created_at))+(r.used_at && r.used_at !== r.created_at ? '<br><span class="m">ouvert pour la dernière fois '+ago(r.used_at)+'</span>' : '')+'<br>'
+    + 'Météo : <b>'+esc(wxLabel(r.wx))+'</b>'+(r.wx_at ? ' <span class="m">('+dtFmt.format(new Date(r.wx_at))+')</span>' : '');
+}
+async function gLoad(){
+  const { data, error } = await sb.from('routes').select('user_id,id,name,km,dplus,pts,created_at,used_at,wx,wx_at').order('used_at', { ascending: false, nullsFirst: false }).limit(300);
+  if (error){ $('gMsg').textContent = 'Lecture impossible : '+error.message; return; }
+  G.routes = data || []; G.col = {};
+  const ids = [...new Set(G.routes.map(r => r.user_id))]; ids.forEach((id, i) => G.col[id] = G_COL[i % G_COL.length]);
+  const sel = $('gUser');
+  sel.innerHTML = '<option value="">Tous les comptes</option>' + ids.map(id => { const u = S.users.find(x => x.user_id === id); return '<option value="'+id+'">'+esc(u ? name(u) : id.slice(0, 8))+' ('+G.routes.filter(r => r.user_id === id).length+')</option>'; }).join('');
+  gDraw();
+}
+function gDraw(){
+  if (!window.L){ $('gMsg').textContent = 'Carte indisponible (Leaflet non chargé).'; return; }
+  if (!G.map){
+    G.map = L.map('gmap', { zoomControl: true }).setView([48.3, 7.5], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(G.map);
+  }
+  for (const l of G.layers) l.remove(); G.layers = [];
+  const f = $('gUser').value, list = G.routes.filter(r => !f || r.user_id === f), bounds = [];
+  for (const r of list){
+    const pts = r.pts || []; if (pts.length < 2) continue;
+    const step = Math.max(1, Math.ceil(pts.length / 600)), ll = [];
+    for (let i = 0; i < pts.length; i += step) ll.push([pts[i][0], pts[i][1]]);
+    ll.push([pts[pts.length - 1][0], pts[pts.length - 1][1]]);
+    const col = G.col[r.user_id];
+    // trace large invisible par-dessus pour attraper le doigt ou la souris, trace fine visible dessous
+    const line = L.polyline(ll, { color: col, weight: 4, opacity: .85 }).addTo(G.map);
+    const hit = L.polyline(ll, { color: col, weight: 18, opacity: 0 }).addTo(G.map);
+    hit.bindTooltip(gInfo(r), { sticky: true, className: 'gtip', direction: 'top', offset: [0, -8] });
+    hit.on('mouseover', () => { line.setStyle({ weight: 7, opacity: 1 }); line.bringToFront(); hit.bringToFront(); });
+    hit.on('mouseout', () => line.setStyle({ weight: 4, opacity: .85 }));
+    hit.on('click', e => {
+      const box = document.createElement('div'); box.innerHTML = gInfo(r) + '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-g="dl">Télécharger le GPX</button><button class="btn" data-g="fit">Centrer</button></div>';
+      box.querySelector('[data-g="dl"]').onclick = () => gpxDownload(r);
+      box.querySelector('[data-g="fit"]').onclick = () => G.map.fitBounds(line.getBounds(), { padding: [20, 20] });
+      hit.closeTooltip(); L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(box).openOn(G.map);
+    });
+    G.layers.push(line, hit); bounds.push(...ll);
+  }
+  $('gN').textContent = list.length;
+  $('gMsg').textContent = list.length ? '' : 'Aucun parcours enregistré.';
+  if (bounds.length) G.map.fitBounds(bounds, { padding: [20, 20], maxZoom: 13 });
+  const shown = [...new Set(list.map(r => r.user_id))];
+  $('gLegend').innerHTML = shown.map(id => { const u = S.users.find(x => x.user_id === id); return '<span><i style="background:'+G.col[id]+'"></i>'+esc(u ? (u.prenom || u.email) : id.slice(0, 8))+' · '+list.filter(r => r.user_id === id).length+'</span>'; }).join('');
+  setTimeout(() => G.map.invalidateSize(), 50);
+}
+$('gUser').addEventListener('change', gDraw);
 // Solde du compte meteoblue (action usage de la fonction, réservée aux admins).
 async function mbBalance(){
   try {
@@ -378,6 +463,7 @@ async function init(){
   $('state').textContent = 'Connecté : '+S.me.email;
   $('app').hidden = false;
   try { await load(); } catch(e){ $('pend').innerHTML = '<p class="msg err">Lecture impossible : '+esc(e.message || e)+'</p>'; }
+  gLoad().catch(e => { $('gMsg').textContent = 'Carte : '+(e.message || e); });
   mbBalance();
 }
 init();
