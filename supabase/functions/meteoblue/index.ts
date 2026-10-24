@@ -21,8 +21,8 @@ const json = (body: unknown, status = 200) =>
 
 // Accès et quotas (table app_users, écrite par la page Admin) ; consommation dans usage_log (clé de service).
 async function access(admin: SupabaseClient, uid: string) {
-  const { data } = await admin.from('app_users').select('status,is_admin,coach,pmr,quota_miguel,quota_mb').eq('user_id', uid).maybeSingle();
-  return data as { status: string; is_admin: boolean; coach: boolean; pmr: boolean; quota_miguel: number | null; quota_mb: number | null } | null;
+  const { data } = await admin.from('app_users').select('status,is_admin,pmr,quota_mb').eq('user_id', uid).maybeSingle();
+  return data as { status: string; is_admin: boolean; pmr: boolean; quota_mb: number | null } | null;
 }
 async function usedThisMonth(admin: SupabaseClient, uid: string, kind: string) {
   const d = new Date(), from = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();

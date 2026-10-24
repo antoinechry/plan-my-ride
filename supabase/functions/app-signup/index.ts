@@ -1,6 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-// Création de compte pour Plan My Ride / Coach Miguel (les inscriptions directes restent fermées dans Supabase).
+// Création de compte pour Plan My Ride (les inscriptions directes restent fermées dans Supabase).
 // POST { email, password, prenom?, code? } (clé anon) → { ok, status: 'active' | 'pending' }
 // Avec un code de lien testeur actif (table tester_links), le compte a tout de suite accès à Plan My Ride
 // (le déclencheur handle_new_user lit user_metadata.invite) ; sinon il attend la validation d'un administrateur.

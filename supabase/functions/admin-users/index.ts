@@ -3,7 +3,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 // Gestion des comptes pour la page Admin (admin.html), réservée aux administrateurs actifs (app_users.is_admin).
 // POST (jeton de session de l'admin) :
 //   { action: 'list' }                                   → { ok, users: [{ id, email, created_at, last_sign_in_at, routes, routes_last }] }
-//   { action: 'create', email, password, prenom?, pmr?, coach? } → { ok, id }  (compte actif tout de suite, adresse confirmée d'office)
+//   { action: 'create', email, password, prenom? } → { ok, id }  (compte actif tout de suite, adresse confirmée d'office)
 //   { action: 'set_password', user_id, password }        → { ok }
 // Ces actions demandent la clé de service (auth.admin) : elles ne peuvent pas se faire depuis le navigateur.
 
@@ -63,10 +63,9 @@ Deno.serve(async (req: Request) => {
       if (error && /already|exists|registered/i.test(error.message)) return json({ error: 'exists' }, 409);
       return json({ error: 'create', detail: (error?.message ?? '').slice(0, 200) }, 500);
     }
-    // la ligne app_users est créée par le déclencheur handle_new_user : on l'ouvre tout de suite avec les accès choisis
-    const pmr = body.pmr !== false, coach = !!body.coach;
+    // la ligne app_users est créée par le déclencheur handle_new_user : on l'ouvre tout de suite
     const { error: e2 } = await admin.from('app_users').update({
-      status: 'active', pmr: pmr || !coach, coach, prenom: prenom || null, validated_at: new Date().toISOString(),
+      status: 'active', pmr: true, prenom: prenom || null, validated_at: new Date().toISOString(),
     }).eq('user_id', data.user.id);
     if (e2) return json({ ok: true, id: data.user.id, warn: 'access', detail: e2.message.slice(0, 200) });
     return json({ ok: true, id: data.user.id });

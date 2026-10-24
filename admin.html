@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <script>try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
-<title>Admin · Coach Miguel & Plan My Ride</title>
-<link rel="icon" href="coach-miguel-logo.png" type="image/png">
+<title>Admin · Plan My Ride</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9A%B4%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -130,10 +130,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 <div class="wrap">
   <header>
     <div><h1>Administration</h1><p class="sub" id="state">Connexion…</p></div>
-    <nav class="nav"><a class="btn" href="index.html">Plan My Ride</a><a class="btn" href="coach.html">Coach Miguel</a></nav>
+    <nav class="nav"><a class="btn" href="index.html">Plan My Ride</a></nav>
   </header>
 
-  <div id="denied" hidden><section><p class="msg" id="deniedTxt"></p><a class="btn" href="coach.html">Se connecter</a></section></div>
+  <div id="denied" hidden><section><p class="msg" id="deniedTxt"></p><a class="btn" href="index.html">Se connecter</a></section></div>
 
   <div id="app" hidden>
     <div class="kpis" id="kpis"></div>
@@ -146,12 +146,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
     <section>
       <h2>Créer un compte</h2>
-      <p class="msg">Le compte est actif tout de suite, sans e-mail de confirmation. Transmets ensuite l'e-mail et le mot de passe provisoire à la personne ; elle pourra le changer dans Coach Miguel (Mon menu → Compte) ou par « Mot de passe oublié ? ».</p>
+      <p class="msg">Le compte est actif tout de suite, sans e-mail de confirmation. Transmets ensuite l'e-mail et le mot de passe provisoire à la personne ; elle pourra le changer depuis Plan My Ride (pied de page → Mon mot de passe) ou par « Mot de passe oublié ? ».</p>
       <form class="form" id="newUser" autocomplete="off">
         <label class="f">Prénom<input type="text" id="nuPrenom" maxlength="40"></label>
         <label class="f">E-mail<input type="email" id="nuEmail" required maxlength="200"></label>
         <label class="f">Mot de passe provisoire<span class="pwbox"><input type="text" id="nuPw" minlength="8" maxlength="200" required><button type="button" class="btn" id="nuGen">Générer</button></span></label>
-        <div class="checks"><label><input type="checkbox" id="nuPmr" checked> Plan My Ride</label><label><input type="checkbox" id="nuCoach"> Coach Miguel</label></div>
+        <div class="checks"><label><input type="checkbox" id="nuPmr" checked disabled> Plan My Ride</label></div>
         <div><button class="btn primary" id="nuGo" type="submit">Créer le compte</button></div>
       </form>
       <p class="msg err" id="nuErr" hidden></p>
@@ -160,7 +160,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
     <section>
       <h2>Liens d'inscription testeurs</h2>
-      <p class="msg">Un compte créé avec un lien actif a tout de suite accès à <b>Plan My Ride</b> (pas à Coach Miguel). Désactive un lien pour qu'il ne serve plus.</p>
+      <p class="msg">Un compte créé avec un lien actif a tout de suite accès à <b>Plan My Ride</b>. Désactive un lien pour qu'il ne serve plus.</p>
       <div class="newlink"><input id="newLabel" maxlength="60" placeholder="Nom du lien, ex. Groupe WhatsApp testeurs"><button class="btn primary" id="newGo">Créer un lien</button></div>
       <div class="links" id="links"></div>
     </section>
@@ -202,15 +202,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="filter" id="evFilter" style="margin:0"><button class="btn" data-e="all" aria-pressed="true">Tout</button><button class="btn" data-e="open" aria-pressed="false">Connexions</button><button class="btn" data-e="gpx" aria-pressed="false">GPX</button></div>
         <select id="evUser" aria-label="Compte"><option value="">Tous les comptes</option></select>
       </div>
-      <div class="scroll"><table><thead><tr><th>Quand</th><th>Compte</th><th>App</th><th>Évènement</th><th class="num">km</th><th>Appareil</th></tr></thead><tbody id="evBody"></tbody></table></div>
+      <div class="scroll"><table><thead><tr><th>Quand</th><th>Compte</th><th>Évènement</th><th class="num">km</th><th>Appareil</th></tr></thead><tbody id="evBody"></tbody></table></div>
       <p class="msg">30 derniers jours. Une connexion = une ouverture de l'app dans un onglet (journal tenu depuis le 23/10/2026) ; « Dernière connexion » sur chaque compte vient de l'identification Supabase.</p>
     </section>
 
     <section>
       <h2>Consommation de <span id="monthLbl"></span></h2>
       <p class="msg" id="mbBal"></p>
-      <div class="scroll"><table><thead><tr><th>Compte</th><th class="num">Demandes à Miguel</th><th class="num">Chargements meteoblue</th><th class="num">Crédits meteoblue</th></tr></thead><tbody id="useBody"></tbody></table></div>
-      <p class="msg">Quotas mensuels par compte (laisser vide = illimité). Miguel : ≈ 1 centime par demande. meteoblue : ≈ 80 000 crédits par chargement d'un parcours de 75 km, sur un essai de 10 millions.</p>
+      <div class="scroll"><table><thead><tr><th>Compte</th><th class="num">Chargements meteoblue</th><th class="num">Crédits meteoblue</th></tr></thead><tbody id="useBody"></tbody></table></div>
+      <p class="msg">Quotas mensuels par compte (laisser vide = illimité). meteoblue : ≈ 80 000 crédits par chargement d'un parcours de 75 km, sur un essai de 10 millions.</p>
     </section>
   </div>
 </div>
@@ -221,11 +221,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 (function(){
 'use strict';
 // Page Admin (comptes admin seulement, contrôlé par les politiques RLS de app_users / usage_log / tester_links) :
-// comptes en attente, accès par app (Coach Miguel, Plan My Ride), statut, rôle admin, quotas mensuels,
+// comptes en attente, accès à Plan My Ride, statut, rôle admin, quotas mensuels,
 // consommation du mois, liens d'inscription testeurs (index.html?invite=CODE),
 // création de compte et changement de mot de passe (fonction admin-users), connexions et GPX chargés (table activity_log).
-const SUPABASE_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
+const SUPABASE_URL = 'https://bsypkdsnhiepvcnhmfsm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzeXBrZHNuaGllcHZjbmhtZnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDMwOTMsImV4cCI6MjEwODM3OTA5M30.tzanguKC0_oEOqfnrhJEzzNRbdDCxVUzhkLfqO5zthQ';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -243,7 +243,7 @@ async function load(){
     sb.from('app_users').select('*').order('created_at', { ascending: false }),
     sb.from('tester_links').select('*').order('created_at', { ascending: false }),
     sb.from('usage_log').select('user_id,kind,credits').gte('at', m0.toISOString()).limit(10000),
-    sb.from('activity_log').select('user_id,at,app,event,detail,km,device').gte('at', d30.toISOString()).order('at', { ascending: false }).limit(5000),
+    sb.from('activity_log').select('user_id,at,event,detail,km,device').gte('at', d30.toISOString()).order('at', { ascending: false }).limit(5000),
     sb.functions.invoke('admin-users', { body: { action: 'list' } }).catch(e => ({ error: e }))
   ]);
   if (u.error) throw u.error;
@@ -251,8 +251,8 @@ async function load(){
   S.auth = {}; for (const x of (au && au.data && au.data.users) || []) S.auth[x.id] = x;
   S.use = {};
   for (const r of g.data || []){
-    const x = S.use[r.user_id] || (S.use[r.user_id] = { miguel: 0, mb: 0, cr: 0 });
-    if (r.kind === 'miguel') x.miguel++; else { x.mb++; x.cr += r.credits || 0; }
+    const x = S.use[r.user_id] || (S.use[r.user_id] = { mb: 0, cr: 0 });
+    x.mb++; x.cr += r.credits || 0;
   }
   $('monthLbl').textContent = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
   render();
@@ -272,16 +272,16 @@ function actLine(u){
     + ' · <b>'+(a.routes || 0)+'</b> parcours enregistré(s)</div>';
 }
 function userCard(u, pending){
-  const self = u.user_id === S.me.id, use = S.use[u.user_id] || { miguel: 0, mb: 0, cr: 0 };
+  const self = u.user_id === S.me.id, use = S.use[u.user_id] || { mb: 0, cr: 0 };
   const cb = (k, lab, dis) => '<label><input type="checkbox" data-k="'+k+'"'+(u[k] ? ' checked' : '')+(dis ? ' disabled' : '')+'> '+lab+'</label>';
   const q = (k, lab) => '<span class="q">'+lab+' <input type="number" min="0" max="9999" data-q="'+k+'" value="'+(u[k] == null ? '' : u[k])+'" placeholder="∞"></span>';
   const badge = { active: 'Actif', pending: 'En attente', blocked: 'Bloqué' }[u.status] || u.status;
   return '<div class="u '+u.status+'" data-id="'+u.user_id+'">'
     + '<div class="uh"><b>'+esc(name(u))+'</b><span class="badge '+u.status+'">'+badge+'</span>'+(u.is_admin ? '<span class="badge active">Admin</span>' : '')
     + '<span class="meta">inscrit le '+dFmt.format(new Date(u.created_at))+(u.invite ? ' · lien testeur' : '')+(self ? ' · toi' : '')+'</span></div>'
-    + '<div class="ur">'+cb('pmr', 'Plan My Ride')+cb('coach', 'Coach Miguel')+cb('is_admin', 'Admin', self)
-    + q('quota_miguel', 'Miguel / mois')+q('quota_mb', 'meteoblue / mois')
-    + '<span class="use">ce mois : <b>'+use.miguel+'</b> Miguel · <b>'+use.mb+'</b> meteoblue</span></div>'
+    + '<div class="ur">'+cb('pmr', 'Plan My Ride')+cb('is_admin', 'Admin', self)
+    + q('quota_mb', 'meteoblue / mois')
+    + '<span class="use">ce mois : <b>'+use.mb+'</b> meteoblue</span></div>'
     + actLine(u)
     + (S.pwOpen === u.user_id ? '<div class="pwrow"><input type="text" data-pw minlength="8" maxlength="200" placeholder="Nouveau mot de passe (8 caractères ou plus)" autocomplete="off"><button class="btn" data-a="pwgen">Générer</button><button class="btn primary" data-a="pwsave">Enregistrer</button><button class="btn" data-a="pwcancel">Annuler</button></div>' : '')
     + '<div class="acts">'
@@ -309,7 +309,7 @@ function renderEvents(){
   sel.innerHTML = '<option value="">Tous les comptes</option>' + S.users.map(u => '<option value="'+u.user_id+'"'+(u.user_id === cur ? ' selected' : '')+'>'+esc(name(u))+'</option>').join('');
   const rows = S.ev.filter(e => (S.evF === 'all' || e.event === S.evF) && (!S.evU || e.user_id === S.evU)).slice(0, 300);
   $('evBody').innerHTML = rows.map(e => { const u = byId[e.user_id];
-    return '<tr><td>'+dtFmt.format(new Date(e.at))+'</td><td>'+esc(u ? name(u) : e.user_id.slice(0, 8))+'</td><td>'+(e.app === 'coach' ? 'Coach Miguel' : 'Plan My Ride')+'</td>'
+    return '<tr><td>'+dtFmt.format(new Date(e.at))+'</td><td>'+esc(u ? name(u) : e.user_id.slice(0, 8))+'</td>'
       + '<td>'+(e.event === 'gpx' ? '<span class="ev-gpx">GPX</span> '+esc(e.detail || '') : '<span class="ev-open">Ouverture</span>')+'</td>'
       + '<td class="num">'+(e.km ? Math.round(e.km) : '')+'</td><td>'+(e.device === 'mobile' ? 'Mobile' : e.device === 'desktop' ? 'Ordinateur' : '')+'</td></tr>'; }).join('')
     || '<tr><td colspan="6" class="empty">Rien sur cette période.</td></tr>';
@@ -327,10 +327,10 @@ function render(){
     + '<div class="url">'+esc(linkUrl(l.code))+'</div>'
     + '<div class="acts"><button class="btn primary" data-l="copy">Copier le lien</button>'+(navigator.share ? '<button class="btn" data-l="share">Partager</button>' : '')
     + '<button class="btn'+(l.active ? ' bad' : '')+'" data-l="toggle">'+(l.active ? 'Désactiver' : 'Réactiver')+'</button><span class="saved" data-s></span></div></div>').join('') || '<p class="empty">Aucun lien.</p>';
-  const rows = S.users.filter(u => S.use[u.user_id]).map(u => [u, S.use[u.user_id]]).sort((a, b) => b[1].miguel + b[1].mb - a[1].miguel - a[1].mb);
-  const tot = rows.reduce((t, [, x]) => ({ miguel: t.miguel + x.miguel, mb: t.mb + x.mb, cr: t.cr + x.cr }), { miguel: 0, mb: 0, cr: 0 });
-  $('useBody').innerHTML = rows.map(([u, x]) => '<tr><td>'+esc(name(u))+'</td><td class="num">'+x.miguel+(u.quota_miguel != null ? ' / '+u.quota_miguel : '')+'</td><td class="num">'+x.mb+(u.quota_mb != null ? ' / '+u.quota_mb : '')+'</td><td class="num">'+nf.format(x.cr)+'</td></tr>').join('')
-    + '<tr><th>Total</th><th class="num">'+tot.miguel+'</th><th class="num">'+tot.mb+'</th><th class="num">'+nf.format(tot.cr)+'</th></tr>';
+  const rows = S.users.filter(u => S.use[u.user_id]).map(u => [u, S.use[u.user_id]]).sort((a, b) => b[1].mb - a[1].mb);
+  const tot = rows.reduce((t, [, x]) => ({ mb: t.mb + x.mb, cr: t.cr + x.cr }), { mb: 0, cr: 0 });
+  $('useBody').innerHTML = rows.map(([u, x]) => '<tr><td>'+esc(name(u))+'</td><td class="num">'+x.mb+(u.quota_mb != null ? ' / '+u.quota_mb : '')+'</td><td class="num">'+nf.format(x.cr)+'</td></tr>').join('')
+    + '<tr><th>Total</th><th class="num">'+tot.mb+'</th><th class="num">'+nf.format(tot.cr)+'</th></tr>';
 }
 async function save(id, patch, el){
   const s = el && el.closest('.u') && el.closest('.u').querySelector('[data-s]');
@@ -347,9 +347,7 @@ function onUsers(e){
   const a = e.target.closest('[data-a]');
   if (a && e.type === 'click'){
     if (a.dataset.a === 'ok'){
-      // Valider : au moins un accès ; Plan My Ride par défaut si rien n'est coché.
-      const pmr = card.querySelector('[data-k="pmr"]').checked, coach = card.querySelector('[data-k="coach"]').checked;
-      save(id, { status: 'active', pmr: pmr || !coach, coach, validated_at: new Date().toISOString() }, a).then(ok => ok && render());
+      save(id, { status: 'active', pmr: true, validated_at: new Date().toISOString() }, a).then(ok => ok && render());
     } else if (a.dataset.a === 'block' && !(u.user_id === S.me.id)) save(id, { status: 'blocked' }, a).then(ok => ok && render());
     else if (a.dataset.a === 'pw'){ S.pwOpen = id; render(); const i = document.querySelector('.u[data-id="'+id+'"] [data-pw]'); if (i) i.focus(); }
     else if (a.dataset.a === 'pwcancel'){ S.pwOpen = null; render(); }
@@ -394,18 +392,16 @@ $('nuGen').addEventListener('click', () => { $('nuPw').value = genPw(); });
 $('newUser').addEventListener('submit', async e => {
   e.preventDefault(); $('nuErr').hidden = true; $('nuDone').hidden = true;
   const email = $('nuEmail').value.trim(), password = $('nuPw').value, prenom = $('nuPrenom').value.trim();
-  const pmr = $('nuPmr').checked, coach = $('nuCoach').checked;
   const err = t => { $('nuErr').textContent = t; $('nuErr').hidden = false; };
   if (password.length < 8) return err('Le mot de passe doit faire au moins 8 caractères.');
   $('nuGo').disabled = true;
-  const { data, error } = await sb.functions.invoke('admin-users', { body: { action: 'create', email, password, prenom, pmr, coach } });
+  const { data, error } = await sb.functions.invoke('admin-users', { body: { action: 'create', email, password, prenom } });
   $('nuGo').disabled = false;
   if (error || !data || !data.ok){
     const c = data && data.error;
     return err(c === 'exists' ? 'Un compte existe déjà avec cet e-mail.' : c === 'email' ? 'E-mail invalide.' : 'Création impossible : '+((data && data.detail) || (error && error.message) || c || 'inconnu'));
   }
-  const apps = [pmr || !coach ? 'Plan My Ride' : '', coach ? 'Coach Miguel' : ''].filter(Boolean).join(' et ');
-  const txt = 'Ton compte '+apps+' est prêt.\nAdresse : '+base+(coach && !pmr ? 'coach.html' : 'index.html')+'\nE-mail : '+email+'\nMot de passe provisoire : '+password;
+  const txt = 'Ton compte Plan My Ride est prêt.\nAdresse : '+base+'index.html'+'\nE-mail : '+email+'\nMot de passe provisoire : '+password;
   $('nuDone').innerHTML = '<b>Compte créé'+(prenom ? ' pour '+esc(prenom) : '')+'</b>'+(data.warn ? ' (accès à vérifier ci-dessous)' : '')+'<pre id="nuTxt">'+esc(txt)+'</pre><button class="btn primary" type="button" id="nuCopy">Copier le message</button>'+(navigator.share ? ' <button class="btn" type="button" id="nuShare">Partager</button>' : '');
   $('nuDone').hidden = false;
   $('nuCopy').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('nuCopy').textContent = 'Copié'; } catch(_){} };
@@ -536,7 +532,7 @@ async function init(){
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   const { data: { session } } = await sb.auth.getSession();
   const deny = t => { $('denied').hidden = false; $('deniedTxt').textContent = t; $('state').textContent = ''; };
-  if (!session){ deny('Connecte-toi avec un compte administrateur (depuis Coach Miguel ou Plan My Ride), puis reviens ici.'); return; }
+  if (!session){ deny('Connecte-toi avec un compte administrateur (depuis Plan My Ride), puis reviens ici.'); return; }
   S.me = session.user;
   const { data: me } = await sb.from('app_users').select('is_admin,status').eq('user_id', S.me.id).maybeSingle();
   if (!me || !me.is_admin || me.status !== 'active'){ deny('Cette page est réservée aux administrateurs.'); return; }

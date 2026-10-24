@@ -128,19 +128,6 @@ aside.settings .imp-btn{justify-content:center;text-align:center;width:100%}
 .lib-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .btn.danger{border-color:var(--head);color:var(--head)}
 .field select{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 10px;width:100%;font-size:14px}
-.calib-box{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg)}
-details.calib summary{cursor:pointer;font-size:13px;font-weight:500}
-.calib-list{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto;display:flex;flex-direction:column}
-.calib-list label{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:start;font-size:12.5px;cursor:pointer;padding:4px 0;border-top:1px solid var(--line)}
-.calib-list input{accent-color:var(--accent);margin:2px 0 0;width:15px;height:15px}
-.calib-list .d{font-family:var(--f-mono);font-size:12px}
-.calib-list .m{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.calib-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:start;border-top:1px solid var(--line)}
-.calib-list li label{border-top:0}
-.calib-list li.other label{opacity:.55;cursor:default}
-.calib-list .mv{border:1px solid var(--line);background:var(--panel);border-radius:4px;font-size:11.5px;padding:1px 6px;margin-top:4px;cursor:pointer;color:var(--muted);white-space:nowrap}
-.calib-list .mv:hover{border-color:var(--accent);color:var(--ink)}
-.calib-list .grp{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted);padding:8px 0 2px;display:block;border-top:1px solid var(--line)}
 .kind{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
 .kind button{border:0;background:transparent;padding:6px 8px;font-size:13.5px;cursor:pointer;color:var(--muted)}
 .kind button+button{border-left:1px solid var(--line)}
@@ -369,7 +356,6 @@ body.gated > :not(.gate):not(script):not(dialog){display:none!important}
 .gate .err{color:#c0392b;font-size:13px;margin:0}
 .gate .lnk{background:none;border:none;color:var(--muted);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;padding:0;align-self:flex-start}
 body:not(.admin) .adm{display:none!important}
-body.nocoach .coachonly{display:none!important}
 dialog.login::backdrop{background:rgba(0,0,0,.35)}
 dialog.login form{display:flex;flex-direction:column;gap:10px}
 dialog.login h2{margin:0 0 4px;font-size:17px}
@@ -460,7 +446,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 </style>
 </head>
 <body>
-<script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-rynbzhuxwvfvblgwnhkk-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
+<script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
 <div class="gate" id="gate">
   <div class="gate-card">
     <p class="gate-logo">Plan My Ride</p>
@@ -505,7 +491,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <button type="button" data-t="dark" title="Thème sombre" aria-label="Thème sombre">☾</button>
   </div>
   <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
-  <a class="btn priv" href="coach.html" id="coachBtn" hidden>Coach Miguel</a>
 </header>
 
 <div class="app">
@@ -578,33 +563,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <label class="label" for="pause">Arrêts courts</label>
       <div class="range"><input type="range" id="pause" min="0" max="40" step="1"><output id="pauseOut" class="mono"></output></div>
       <p class="hint">Ravitos, photos, feux : ajouté au temps de roulage.</p>
-    </div>
-    <div class="field priv coachonly">
-      <label class="toggle"><input type="checkbox" id="calibOn"> <span class="label" style="color:var(--ink)">Caler sur mes sorties</span></label>
-      <p class="hint" id="calibHint">Règle la vitesse sur le plat, la VAM et les arrêts d'après tes sorties enregistrées dans Coach Miguel.</p>
-      <div class="calib-box" id="calibBox" hidden>
-        <div class="field">
-          <span class="label" id="calibKindLbl">Type de sortie</span>
-          <div class="kind" role="group" aria-labelledby="calibKindLbl">
-            <button type="button" data-kind="route" aria-pressed="true">Vélo route</button>
-            <button type="button" data-kind="voyage" aria-pressed="false">Voyage</button>
-          </div>
-          <p class="hint">Voyage : séjours loin de chez toi où tu roulais nettement plus lentement qu'à la maison (bikepacking chargé, pistes…). Tu peux reclasser une sortie dans la liste.</p>
-        </div>
-        <div class="field">
-          <label class="label" for="calibDays">Période</label>
-          <select id="calibDays">
-            <option value="60">60 derniers jours</option>
-            <option value="120">4 derniers mois</option>
-            <option value="365">12 derniers mois</option>
-          </select>
-        </div>
-        <details class="calib">
-          <summary id="calibSum">Sorties utilisées</summary>
-          <p class="hint" style="margin-top:6px">Décoche une sortie pour l'ignorer (balade, sortie de groupe…), ou change sa catégorie avec le bouton à droite.</p>
-          <ul class="calib-list" id="calibList"></ul>
-        </details>
-      </div>
     </div>
     </div>
     <div id="manualHome" hidden></div>
@@ -831,7 +789,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </div>
   </main>
 </div>
-<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink" hidden>Accès privé</a><a href="#" class="priv adm" id="statsLink">Fréquentation</a><span class="priv adm"> · </span><a href="admin.html" class="priv adm">Admin</a><span class="priv adm"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
+<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink" hidden>Accès privé</a><a href="#" class="priv adm" id="statsLink">Fréquentation</a><span class="priv adm"> · </span><a href="admin.html" class="priv adm">Admin</a><span class="priv adm"> · </span><a href="#" class="priv" id="pwLink">Mon mot de passe</a><span class="priv"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
 <dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
   <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
   <div class="bd">
@@ -872,6 +830,14 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <input type="password" id="loginPw" autocomplete="current-password" placeholder="Mot de passe" required>
     <p class="err" id="loginErr" hidden></p>
     <div class="acts"><button type="button" class="btn" id="loginCancel">Annuler</button><button type="submit" class="btn primary" id="loginGo">Se connecter</button></div>
+  </form>
+</dialog>
+<dialog class="login" id="pwDlg">
+  <form id="pwForm">
+    <h2 id="pwTitle">Changer mon mot de passe</h2>
+    <input type="password" id="pwNew" autocomplete="new-password" placeholder="Nouveau mot de passe (8 caractères minimum)" minlength="8" maxlength="200" required>
+    <p class="err" id="pwErr" hidden></p>
+    <div class="acts"><button type="button" class="btn" id="pwCancel">Annuler</button><button type="submit" class="btn primary" id="pwGo">Enregistrer</button></div>
   </form>
 </dialog>
 <div class="drop-overlay" id="dropOverlay" hidden>Déposez le fichier GPX</div>
@@ -1036,7 +1002,7 @@ async function fetchOM(from, to, model) {
   });
 }
 
-// meteoblue (7 jours) : via la fonction Supabase `meteoblue` (clé côté serveur, réservée au compte Coach Miguel).
+// meteoblue (7 jours) : via la fonction Supabase `meteoblue` (clé côté serveur, réservée aux comptes ayant l'accès).
 // Paquets basic-1h + clouds-3h (16 000 crédits par point, quelle que soit la durée : on prend toujours 7 jours). Un point tous les
 // ~MB_KM km (au plus MB_MAX) avec son altitude, gardé MB_TTL dans le navigateur ; chaque point d'échantillonnage
 // est interpolé entre les deux points voisins, température corrigée de l'altitude. Pas de rafales ; nébulosité et
@@ -1070,7 +1036,7 @@ function mbCacheWrite(c) {
 }
 async function fetchMB() {
   const sb = await sbIfLogged();
-  if (!sb) throw new Error('connecte-toi à Coach Miguel pour utiliser meteoblue.');
+  if (!sb) throw new Error('connecte-toi pour utiliser meteoblue.');
   const P = wxTrk(), m = clamp(Math.ceil(P.total / MB_KM) + 1, 2, MB_MAX), pts = [];
   for (let k = 0, i = 0; k < m; k++) {
     const target = P.total * k / (m - 1);
@@ -2592,7 +2558,6 @@ function handleFile(file) {
   rd.readAsText(file);
 }
 /* ---------- réglages ---------- */
-// Quand le calage est actif, on garde en mémoire les réglages manuels (pas les valeurs calées).
 // Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
 const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : S.mode === 'taf' ? 'pmr-opt-taf' : 'pmr-opt');
 const MODE_DEF = {
@@ -2600,7 +2565,7 @@ const MODE_DEF = {
   taf: { time: '07:45', speed: 20, vam: 600, pause: 5, windOn: true, poiRadius: 500, tafBack: '17:30', tafRet: '' },
   ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
 };
-function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, ...(CAL.on ? CAL.manual : {}), calibOn: CAL.on, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
+function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
   const tm = new Date(); tm.setDate(tm.getDate() + 1);
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(optKey()) || '{}') || {}; } catch (e) {}
@@ -2619,9 +2584,6 @@ function initInputs() {
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
   tafPerDayUI();
   $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
-  // Heure de départ transmise par Coach Miguel (« Ouvrir dans Plan My Ride » d'une sortie proposée), page Sortie seulement.
-  if (S.mode === 'ride') { let rt = ''; try { rt = sessionStorage.getItem('pmr-ride-time') || ''; sessionStorage.removeItem('pmr-ride-time'); } catch (e) {}
-    if (/^\d\d:\d\d$/.test(rt)) $('#time').value = rt; }
   $('#windOn').checked = !!def.windOn;
   $('#laps').value = clamp(Math.round(+def.laps || 1), 1, 50);
   $('#lapPause').value = isFinite(+def.lapPause) && def.lapPause !== '' && def.lapPause != null ? clamp(Math.round(+def.lapPause), 0, 240) : 10;
@@ -2629,15 +2591,7 @@ function initInputs() {
   $('#planDays').value = clamp(Math.round(+def.planDays || 3), 1, 30); setSeg('#planSplitSeg', def.planSplit === 'terrain' ? 'terrain' : 'km');
   PLAN.ends = Array.isArray(def.planEnds) ? def.planEnds.slice(0, 30) : [];
   $('#planCustomOn').checked = !!def.planCustom; PLAN.times = Array.isArray(def.planTimes) ? def.planTimes.slice(0, 30) : [];
-  try { const d = localStorage.getItem('pmr-calib-days'); $('#calibDays').value = ['60', '120', '365'].includes(d) ? d : '120'; } catch (e) { $('#calibDays').value = '120'; }
-  // type de sorties de référence pour le calage : « route » sur la page Sortie, « voyage » sur la page Ultra (modifiable)
-  let k = ''; try { k = localStorage.getItem('pmr-calib-kind-' + S.mode) || ''; } catch (e) {}
-  CAL.kind = k === 'route' || k === 'voyage' ? k : (S.mode === 'ultra' ? 'voyage' : 'route');
-  for (const b of document.querySelectorAll('.kind button')) b.setAttribute('aria-pressed', String(b.dataset.kind === CAL.kind));
-  const calib = !!def.calibOn && hasSbToken();
-  $('#calibOn').checked = calib;
   syncOutputs();
-  if (calib) calibStart(true);
 }
 const segVal = sel => (document.querySelector(sel + ' button[aria-pressed="true"]') || document.querySelector(sel + ' button')).dataset.v;
 function setSeg(sel, v) { for (const b of document.querySelectorAll(sel + ' button')) b.setAttribute('aria-pressed', String(b.dataset.v === v)); }
@@ -2651,7 +2605,7 @@ function applyModeUI() {
   const taf = S.mode === 'taf';
   $('#ultraSettings').hidden = !ultra; $('#lapField').hidden = S.mode !== 'ride'; $('#tafField').hidden = !taf; $('#tafTimes').hidden = !taf;
   // Vélotaf : vitesse moyenne seulement (pas de VAM, d'arrêts courts ni de calage)
-  for (const el of ['#vam', '#pause', '#calibOn']) $(el).closest('.field').hidden = taf;
+  for (const el of ['#vam', '#pause']) $(el).closest('.field').hidden = taf;
   $('label[for="speed"]').textContent = taf ? 'Vitesse moyenne' : 'Vitesse sur le plat';
   $('#tripSeg').hidden = !taf; $('#optCard').hidden = taf; $('#flowOnLbl').hidden = taf;
   // Vélotaf : deux colonnes au lieu de la carte unique, pas de feuille de route
@@ -2666,237 +2620,38 @@ function applyModeUI() {
 function switchMode(m) {
   if (m === S.mode) return;
   saveOpt(readOpt()); // réglages de la page qu'on quitte
-  if (CAL.on) { CAL.seq++; CAL.on = false; lockSliders(false); $('#calibBox').hidden = true; }
   S.mode = m;
   applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
   schedule();
 }
 window.addEventListener('hashchange', () => switchMode(hashMode(location.hash)));
 function syncOutputs() {
-  const c = CAL.on ? ' · calé' : '';
-  $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h' + c;
-  $('#vamOut').textContent = $('#vam').value + ' m/h' + c;
-  $('#pauseOut').textContent = '+' + $('#pause').value + ' %' + c;
+  $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h';
+  $('#vamOut').textContent = $('#vam').value + ' m/h';
+  $('#pauseOut').textContent = '+' + $('#pause').value + ' %';
 }
 let deb;
 function schedule() { syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250); }
 
-/* ---------- calage sur l'historique (activités Coach Miguel, Supabase) ---------- */
-// Même projet Supabase et même origine que coach.html : la session de connexion est partagée.
-const SB_URL = 'https://rynbzhuxwvfvblgwnhkk.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bmJ6aHV4d3ZmdmJsZ3duaGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MzI1OTYsImV4cCI6MjEwNzMwODU5Nn0.S4S4E0zBfY4DD2J23Hc7JeSlJ-_XxxFRdFHg_EzpyYM';
+/* ---------- client Supabase (projet « plan-my-ride ») ---------- */
+const SB_URL = 'https://bsypkdsnhiepvcnhmfsm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzeXBrZHNuaGllcHZjbmhtZnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDMwOTMsImV4cCI6MjEwODM3OTA5M30.tzanguKC0_oEOqfnrhJEzzNRbdDCxVUzhkLfqO5zthQ';
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
-const RIDE_TYPES = new Set(['Ride', 'GravelRide', 'EBikeRide']);
-const CAL = { on: false, manual: null, rides: [], excl: new Set(), cat: {}, kind: 'route', sb: null, seq: 0 };
-try { CAL.excl = new Set(JSON.parse(localStorage.getItem('pmr-calib-excl') || '[]')); } catch (e) {}
-try { CAL.cat = JSON.parse(localStorage.getItem('pmr-calib-cat') || '{}') || {}; } catch (e) {}
-const KIND = { route: 'route', voyage: 'voyage' };
-const KIND_LBL = { route: 'Route', voyage: 'Voyage' };
-const TRIP_KM = 80;      // « loin de chez toi » : départ à plus de 80 km du point de départ habituel
-const TRIP_SLOW = 1.25;  // un séjour loin de chez toi est un « voyage » si tu y roulais ≥ 25 % plus lentement qu'à la maison
-const shortDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
-
+let SBP = null;
 function loadScript(src) {
   return new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => ko(new Error('script')); document.head.appendChild(s); });
 }
-async function sbClient() {
-  if (CAL.sb) return CAL.sb;
-  if (!window.supabase) await loadScript(SB_JS);
-  CAL.sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
-  return CAL.sb;
+// un seul client, même si plusieurs appels arrivent en même temps au chargement
+function sbClient() {
+  if (SBP) return SBP;
+  return SBP = (async () => {
+    if (!window.supabase) await loadScript(SB_JS);
+    const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    // lien « Mot de passe oublié ? » : Supabase ouvre une session de récupération, on demande le nouveau mot de passe
+    sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') pwOpen(true); });
+    return sb;
+  })().catch(e => { SBP = null; throw e; });
 }
-const rideKey = r => r.source + ':' + r.ext_id;
-
-// Modèle de l'app sur une sortie entière : temps ≈ (D − k·D+)/v + D+/VAM.
-// Le terme k·D+ approche le gain de la descente (pente moyenne ~5 %), pour ne pas le compter deux fois.
-function fitRides(list, fallbackVam) {
-  const K = 0.0039;
-  let sxx = 0, sxy = 0, syy = 0, sxt = 0, syt = 0;
-  const pts = list.map(r => ({ x: r.km - K * r.dplus, y: r.dplus, t: r.h }));
-  for (const p of pts) { const w = p.t; sxx += w * p.x * p.x; sxy += w * p.x * p.y; syy += w * p.y * p.y; sxt += w * p.x * p.t; syt += w * p.y * p.t; }
-  const det = sxx * syy - sxy * sxy;
-  let a = det > 0 ? (sxt * syy - syt * sxy) / det : NaN, b = det > 0 ? (syt * sxx - sxt * sxy) / det : NaN;
-  let vam = b > 0 ? 1 / b : NaN;
-  if (!(a > 0) || !(vam >= 300 && vam <= 1400)) {
-    // Pas assez de variété de dénivelé : on borne la VAM et on ne cale que la vitesse sur le plat.
-    vam = clamp(Number.isFinite(vam) && vam > 0 ? vam : fallbackVam, 300, 1400);
-    let num = 0, den = 0;
-    for (const p of pts) { num += p.t * p.x * (p.t - p.y / vam); den += p.t * p.x * p.x; }
-    a = num / den;
-  }
-  const speed = clamp(Math.round(2 / a) / 2, 12, 40);
-  vam = clamp(Math.round(vam / 50) * 50, 300, 1400);
-  const errs = pts.map(p => Math.abs(p.x / speed + p.y / vam - p.t) / p.t).sort((u, v) => u - v);
-  const pauses = list.filter(r => r.elapsed > 0).map(r => Math.max(0, (r.elapsed - r.moving) / r.moving * 100)).sort((u, v) => u - v);
-  const pause = pauses.length ? clamp(Math.round(pauses[Math.floor(pauses.length / 2)]), 0, 40) : null;
-  return { speed, vam, pause, err: errs[Math.floor(errs.length / 2)] };
-}
-
-// On lit toujours 12 mois : le « chez toi » se calcule sur l'ensemble, la période ne filtre qu'ensuite.
-async function calibFetch() {
-  const sb = await sbClient();
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return { error: 'login' };
-  const since = new Date(); since.setDate(since.getDate() - 366);
-  const { data, error } = await sb.from('activities')
-    .select('source,ext_id,start_local,sport_type,name,distance_m,moving_time_s,elevation_gain_m,is_trainer,elapsed:raw->elapsed_time,ll:raw->start_latlng,tz:raw->>timezone')
-    .gte('start_local', ymd(since)).order('start_local', { ascending: false }).limit(1500);
-  if (error) return { error: error.message };
-  const rides = (data || []).filter(a => RIDE_TYPES.has(a.sport_type) && !a.is_trainer && a.distance_m >= 10000 && a.moving_time_s >= 1200)
-    .map(a => ({ key: rideKey(a), date: String(a.start_local).slice(0, 10), name: a.name || '', km: a.distance_m / 1000,
-      dplus: a.elevation_gain_m || 0, h: a.moving_time_s / 3600, moving: a.moving_time_s, elapsed: +a.elapsed || 0,
-      startH: (m => (m ? +m[1] + m[2] / 60 : null))(String(a.start_local).match(/T(\d\d):(\d\d)/)),
-      ll: Array.isArray(a.ll) && a.ll.length === 2 && Number.isFinite(+a.ll[0]) ? [+a.ll[0], +a.ll[1]] : null,
-      tz: a.tz ? String(a.tz).replace(/^\(GMT[^)]*\)\s*/, '') : '' }));
-  classifyRides(rides);
-  return { rides };
-}
-
-// Classement automatique (les reclassements manuels priment) :
-// - « chez toi » = zone de départ la plus fréquente (cases de ~10 km) ; sans coordonnées, le fuseau horaire habituel ;
-// - les sorties loin de chez toi sont regroupées en séjours (sorties à ≤ 3 jours d'écart, dans la même région) ;
-// - un séjour est « voyage » si tu y roulais nettement plus lentement que ce que prévoit le modèle calé sur tes
-//   sorties à la maison (bikepacking chargé, pistes…). Un séjour vélo de route (Alpes, Jura…) reste en « route ».
-function kmBetween(a, b) {
-  const dLa = (b[0] - a[0]) * RAD, dLo = (b[1] - a[1]) * RAD;
-  const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * RAD) * Math.cos(b[0] * RAD) * Math.sin(dLo / 2) ** 2;
-  return 12742 * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-const dayGap = (a, b) => Math.abs(new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5;
-function classifyRides(rides) {
-  const cells = new Map(), tzs = new Map();
-  for (const r of rides) {
-    if (r.ll) { const k = Math.round(r.ll[0] * 10) + ':' + Math.round(r.ll[1] * 10); if (!cells.has(k)) cells.set(k, []); cells.get(k).push(r.ll); }
-    if (r.tz) tzs.set(r.tz, (tzs.get(r.tz) || 0) + 1);
-  }
-  let best = null; for (const v of cells.values()) if (!best || v.length > best.length) best = v;
-  const home = best ? [best.reduce((s, p) => s + p[0], 0) / best.length, best.reduce((s, p) => s + p[1], 0) / best.length] : null;
-  let homeTz = '', n = 0; for (const [z, c] of tzs) if (c > n) { homeTz = z; n = c; }
-  for (const r of rides) r.far = home && r.ll ? kmBetween(home, r.ll) > TRIP_KM : !!(r.tz && homeTz && r.tz !== homeTz);
-
-  const base = rides.filter(r => !r.far);
-  const ref = base.length >= 3 ? fitRides(base, 700) : null;
-  const expected = r => (r.km - 0.0039 * r.dplus) / ref.speed + r.dplus / ref.vam;
-  const far = rides.filter(r => r.far).sort((a, b) => (a.date < b.date ? -1 : 1));
-  let trip = [];
-  const flush = () => {
-    if (!trip.length) return;
-    const slow = !ref || trip.reduce((s, r) => s + r.h, 0) / trip.reduce((s, r) => s + expected(r), 0) >= TRIP_SLOW;
-    for (const r of trip) r.auto = slow ? KIND.voyage : KIND.route;
-    trip = [];
-  };
-  for (const r of far) {
-    const p = trip[trip.length - 1];
-    if (p && (dayGap(p.date, r.date) > 3 || (p.ll && r.ll && kmBetween(p.ll, r.ll) > 500))) flush();
-    trip.push(r);
-  }
-  flush();
-  for (const r of rides) { if (!r.far) r.auto = KIND.route; r.cat = CAL.cat[r.key] || r.auto; }
-}
-function calibInPeriod() {
-  const since = new Date(); since.setDate(since.getDate() - +$('#calibDays').value);
-  const from = ymd(since);
-  return CAL.rides.filter(r => r.date >= from);
-}
-
-function calibRow(r, active) {
-  const li = document.createElement('li'), lb = document.createElement('label'), cb = document.createElement('input'), tx = document.createElement('span');
-  if (!active) li.className = 'other';
-  cb.type = 'checkbox'; cb.dataset.key = r.key;
-  cb.checked = active && !CAL.excl.has(r.key); cb.disabled = !active;
-  const d = new Date(r.date + 'T12:00:00');
-  const dl = document.createElement('span'); dl.className = 'd';
-  dl.textContent = `${shortDate.format(d)} · ${n0(r.km)} km · ${n0(r.dplus)} m · ${n1(r.km / r.h)} km/h`;
-  const nm = document.createElement('span'); nm.className = 'm'; nm.textContent = r.name;
-  tx.append(dl, nm); lb.append(cb, tx);
-  const to = r.cat === KIND.route ? KIND.voyage : KIND.route;
-  const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mv'; mv.dataset.move = r.key;
-  mv.textContent = '→ ' + KIND_LBL[to]; mv.title = 'Classer cette sortie en ' + KIND_LBL[to].toLowerCase();
-  li.append(lb, mv);
-  return li;
-}
-function calibRenderList() {
-  const ul = $('#calibList'); ul.textContent = '';
-  const inP = calibInPeriod();
-  const mine = inP.filter(r => r.cat === CAL.kind), other = inP.filter(r => r.cat !== CAL.kind);
-  for (const r of mine) ul.append(calibRow(r, true));
-  if (other.length) {
-    const h = document.createElement('li'); const g = document.createElement('span'); g.className = 'grp';
-    g.textContent = `Classées ${KIND_LBL[other[0].cat].toLowerCase()} · non utilisées`;
-    h.style.display = 'block'; h.style.borderTop = '0'; h.append(g); ul.append(h);
-    for (const r of other) ul.append(calibRow(r, false));
-  }
-  for (const b of document.querySelectorAll('.kind button')) b.setAttribute('aria-pressed', String(b.dataset.kind === CAL.kind));
-}
-
-function calibApply() {
-  const inP = calibInPeriod(), lbl = KIND_LBL[CAL.kind].toLowerCase();
-  const used = inP.filter(r => r.cat === CAL.kind && !CAL.excl.has(r.key)), others = inP.filter(r => r.cat !== CAL.kind).length;
-  $('#calibSum').textContent = `Sorties ${lbl} utilisées : ${used.length}` + (others ? ` · ${others} écartée${others > 1 ? 's' : ''} (${CAL.kind === KIND.route ? 'voyage' : 'route'})` : '');
-  if (used.length < 3) {
-    setSliders(CAL.manual);
-    $('#calibHint').textContent = `Il faut au moins 3 sorties ${lbl} cochées sur la période pour caler les réglages. Tes réglages manuels restent appliqués.`;
-    syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250);
-    return;
-  }
-  const f = fitRides(used, CAL.manual.vam);
-  setSliders({ speed: f.speed, vam: f.vam, pause: f.pause ?? CAL.manual.pause });
-  $('#calibHint').textContent = `Calé sur ${used.length} sortie${used.length > 1 ? 's' : ''} ${lbl} : ${n1(f.speed)} km/h sur le plat, VAM ${f.vam} m/h`
-    + (f.pause != null ? `, arrêts +${f.pause} %` : '') + `. Écart médian avec tes temps réels : ±${Math.round(f.err * 100)} %.`;
-  syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250);
-}
-function setSliders(v) { $('#speed').value = v.speed; $('#vam').value = v.vam; $('#pause').value = v.pause; }
-function lockSliders(on) { for (const id of ['#speed', '#vam', '#pause']) $(id).disabled = on; }
-
-async function calibStart(silent) {
-  const seq = ++CAL.seq;
-  if (!CAL.on) CAL.manual = { speed: +$('#speed').value, vam: +$('#vam').value, pause: +$('#pause').value };
-  CAL.on = true; lockSliders(true); $('#calibBox').hidden = false;
-  $('#calibHint').textContent = 'Lecture de tes sorties…';
-  let res;
-  try { res = await calibFetch(); } catch (e) { res = { error: 'réseau' }; }
-  if (seq !== CAL.seq || !CAL.on) return;
-  if (res.error) {
-    calibStop();
-    $('#calibOn').checked = false;
-    const hint = $('#calibHint');
-    if (res.error === 'login') {
-      hint.textContent = 'Connecte-toi d\'abord dans ';
-      const a = document.createElement('a'); a.href = 'coach.html'; a.textContent = 'Coach Miguel'; hint.append(a, ' (même navigateur), puis recoche la case.');
-    } else hint.textContent = silent ? 'Calage indisponible pour le moment : réglages manuels appliqués.' : 'Impossible de lire tes sorties (' + res.error + '). Réglages manuels appliqués.';
-    return;
-  }
-  CAL.rides = res.rides;
-  calibRenderList(); calibApply();
-}
-function calibStop() {
-  CAL.seq++;
-  if (CAL.on && CAL.manual) setSliders(CAL.manual);
-  CAL.on = false; lockSliders(false); $('#calibBox').hidden = true;
-  $('#calibHint').textContent = 'Règle la vitesse sur le plat, la VAM et les arrêts d\'après tes sorties enregistrées dans Coach Miguel.';
-  syncOutputs();
-}
-$('#calibOn').addEventListener('change', e => { if (e.target.checked) calibStart(false); else { calibStop(); schedule(); } saveOpt(readOpt()); });
-$('#calibDays').addEventListener('change', () => { try { localStorage.setItem('pmr-calib-days', $('#calibDays').value); } catch (e) {} if (CAL.on && CAL.rides.length) { calibRenderList(); calibApply(); } });
-document.querySelectorAll('.kind button').forEach(b => b.addEventListener('click', () => {
-  CAL.kind = b.dataset.kind === KIND.voyage ? KIND.voyage : KIND.route;
-  try { localStorage.setItem('pmr-calib-kind-' + S.mode, CAL.kind); } catch (e) {}
-  calibRenderList(); if (CAL.on && CAL.rides.length) calibApply();
-}));
-$('#calibList').addEventListener('click', e => {
-  const b = e.target.closest('button.mv'); if (!b) return;
-  const r = CAL.rides.find(x => x.key === b.dataset.move); if (!r) return;
-  r.cat = r.cat === KIND.route ? KIND.voyage : KIND.route;
-  if (r.cat === r.auto) delete CAL.cat[r.key]; else CAL.cat[r.key] = r.cat;
-  try { localStorage.setItem('pmr-calib-cat', JSON.stringify(CAL.cat)); } catch (err) {}
-  calibRenderList(); calibApply();
-});
-$('#calibList').addEventListener('change', e => {
-  const k = e.target.dataset && e.target.dataset.key; if (!k) return;
-  if (e.target.checked) CAL.excl.delete(k); else CAL.excl.add(k);
-  try { localStorage.setItem('pmr-calib-excl', JSON.stringify([...CAL.excl].slice(-500))); } catch (err) {}
-  calibApply();
-});
 
 /* ---------- mode ultra : lieux utiles le long de la trace (OpenStreetMap / Overpass) ---------- */
 const POI_GROUPS = {
@@ -3928,12 +3683,12 @@ $('#planRows').addEventListener('change', e => {
   schedule();
 });
 
-/* ---------- mes parcours (navigateur + compte Coach Miguel) ---------- */
-// Chaque GPX chargé est gardé : dans le navigateur (IndexedDB, sans connexion) et, si tu es connecté à
-// Coach Miguel, dans ton compte (table Supabase `routes`) pour le retrouver sur tes autres appareils.
+/* ---------- mes parcours (navigateur + compte) ---------- */
+// Chaque GPX chargé est gardé : dans le navigateur (IndexedDB, sans connexion) et, si tu es connecté,
+// dans ton compte (table Supabase `routes`) pour le retrouver sur tes autres appareils.
 // Points simplifiés (un point tous les ~5 m, 5 décimales, altitude au décimètre). Le dernier parcours se rouvre au démarrage.
 const LIB = { list: [], current: '', db: null, delArm: 0 };
-const SB_TOKEN_KEY = 'sb-rynbzhuxwvfvblgwnhkk-auth-token';
+const SB_TOKEN_KEY = 'sb-bsypkdsnhiepvcnhmfsm-auth-token';
 const hasSbToken = () => { try { return !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) { return false; } };
 // Mesure d'audience de la version publique (table Supabase `pmr_visits`, ajout seul pour les visiteurs, lecture
 // réservée au propriétaire). Identifiant aléatoire gardé dans le navigateur, sans cookie ; la fonction pmr-track ajoute une
@@ -4051,6 +3806,31 @@ $('#loginForm').addEventListener('submit', async e => {
     $('#loginErr').hidden = false; btn.disabled = false;
   }
 });
+function pwOpen(recovery) {
+  $('#pwTitle').textContent = recovery ? 'Choisis ton nouveau mot de passe' : 'Changer mon mot de passe';
+  $('#pwCancel').hidden = !!recovery; $('#pwErr').hidden = true; $('#pwNew').value = ''; $('#pwGo').disabled = false;
+  $('#pwDlg').dataset.recovery = recovery ? '1' : '';
+  if (!$('#pwDlg').open) $('#pwDlg').showModal();
+}
+$('#pwLink').addEventListener('click', e => { e.preventDefault(); pwOpen(false); });
+$('#pwCancel').addEventListener('click', () => $('#pwDlg').close());
+$('#pwForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pw = $('#pwNew').value; $('#pwErr').hidden = true;
+  if (pw.length < 8) { $('#pwErr').textContent = '8 caractères au minimum.'; $('#pwErr').hidden = false; return; }
+  $('#pwGo').disabled = true;
+  try {
+    const sb = await sbClient();
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) throw error;
+    if ($('#pwDlg').dataset.recovery) { location.replace(location.pathname + location.search); return; }
+    $('#pwDlg').close();
+  } catch (err) {
+    $('#pwErr').textContent = 'Changement impossible : ' + (err.message || err); $('#pwErr').hidden = false; $('#pwGo').disabled = false;
+  }
+});
+// retour du lien « Mot de passe oublié ? » : le client Supabase lit le jeton dans l'adresse et demande le nouveau mot de passe
+if (/type=recovery/.test(location.hash)) sbClient().catch(() => {});
 $('#logoutLink').addEventListener('click', async e => {
   e.preventDefault();
   try { const sb = await sbClient(); await sb.auth.signOut(); } catch (err) {}
@@ -4089,7 +3869,7 @@ async function accessCheck() {
   try {
     const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession();
     if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} gateShow('in'); return; }
-    const { data } = await sb.from('app_users').select('status,pmr,coach,is_admin,prenom,quota_mb').eq('user_id', session.user.id).maybeSingle();
+    const { data } = await sb.from('app_users').select('status,pmr,is_admin,prenom,quota_mb').eq('user_id', session.user.id).maybeSingle();
     ACC.row = data || null;
     if (!data || data.status !== 'active' || !data.pmr) {
       gateShow('wait', data && data.status === 'blocked' ? 'Ton compte est suspendu. Contacte l\'administrateur.'
@@ -4099,8 +3879,6 @@ async function accessCheck() {
     }
     document.body.classList.remove('gated');
     document.body.classList.toggle('admin', !!data.is_admin);
-    $('#coachBtn').hidden = !data.coach;
-    document.body.classList.toggle('nocoach', !data.coach); // « Caler sur mes sorties » lit les activités de Coach Miguel
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
     try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); logAct('open'); } } catch (e) {}
     if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
@@ -4117,7 +3895,7 @@ $('#gateIn').addEventListener('submit', async e => {
 });
 $('#giForgot').addEventListener('click', async () => {
   const email = $('#giEmail').value.trim(); if (!email) { gateErr('Entre ton e-mail, puis clique à nouveau sur « Mot de passe oublié ? ».'); return; }
-  try { const sb = await sbClient(); const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, '') + 'coach.html' }); if (error) throw error;
+  try { const sb = await sbClient(); const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname }); if (error) throw error;
     gateErr(''); $('#gateErr').hidden = false; $('#gateErr').textContent = 'Lien envoyé par e-mail : il ouvre une page pour choisir un nouveau mot de passe.'; }
   catch (err) { gateErr('Envoi impossible : ' + (err.message || err)); }
 });
@@ -4256,7 +4034,7 @@ function libRender() {
   libQShow(); if (!$('#libList').hidden) libSuggest();
   $('#libDel').disabled = $('#libRen').disabled = !LIB.current;
   const n = LIB.list.length;
-  $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte Coach Miguel : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur.');
+  $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur.');
 }
 async function libOpen(id) {
   const m = LIB.list.find(x => x.id === id); if (!m) return;
@@ -4287,7 +4065,7 @@ async function libInit() {
   let last = ''; try { last = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
   libRender();
   if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
-  // Compte Coach Miguel : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
+  // Compte : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
   const sb = await sbIfLogged(); if (!sb) return;
   const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at').order('used_at', { ascending: false }).limit(200);
   if (error) return;
@@ -4354,7 +4132,7 @@ window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth =
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dropOverlay').hidden = true; handleFile(e.dataTransfer.files[0]); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.tl) { renderChart(); drawPlanWx(); } }, 150); });
-// thème : clair, sombre ou automatique (comme l'appareil), gardé dans le navigateur (partagé avec Coach Miguel)
+// thème : clair, sombre ou automatique (comme l'appareil), gardé dans le navigateur 
 function redrawTheme() { if (S.tl) { const rc = $('#roseAll'); if (rc && S.rose) roseCanvas(rc, S.rose, 172, 96);
   if (S.roses) S.roses.forEach((r, k) => { const c = $('#rose' + k); if (c && r) roseCanvas(c, r, 150, 84); }); renderChart(); renderMap(); drawPlanWx(); } }
 function setTheme(t) {
