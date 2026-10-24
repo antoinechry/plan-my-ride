@@ -4377,7 +4377,28 @@ async function outPts(m) {
   if (!rec && m.remote) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('id', m.id).maybeSingle(); if (data && data.pts) { rec = { id: m.id, pts: data.pts }; try { await idbRun('pts', 'readwrite', st => st.put(rec)); } catch (e) {} } } }
   if (!rec || !rec.pts || rec.pts.length < 2) return null;
   if (!lpThumbs()[m.id]) thumbSave(m.id, rec.pts);
-  const P = prepare(unpackPts(rec.pts)); return (OUT.pts[m.id] = { P, samples: makeSamples(P) });
+  const P = prepare(unpackPts(rec.pts)); return (OUT.pts[m.id] = { P, samples: outSamples(P) });
+}
+// Peu de points par parcours (un tous les ~8 km, 12 au plus) : Open-Meteo compte chaque point comme un appel (limite par minute)
+function outSamples(P) {
+  const m = clamp(Math.round(P.total / 8), 2, 12), out = []; let i = 0;
+  for (let k = 0; k <= m; k++) { const target = P.total * k / m; while (i < P.n - 1 && P.d[i] < target) i++; out.push({ i, km: P.d[i], lat: P.pts[i].lat, lon: P.pts[i].lon }); }
+  return out;
+}
+async function outFetch(id, date, to, smp) { // limite par minute d'Open-Meteo : une pause d'une minute puis une seconde tentative
+  for (let k = 0; ; k++) {
+    if (OUT.waitUntil > Date.now()) await new Promise(r => setTimeout(r, OUT.waitUntil - Date.now()));
+    if (id !== OUT.run) throw new Error('annulé');
+    try { return await fetchOM(date, to, AROME_MODEL, smp); }
+    catch (e) {
+      if (k < 2 && /limit|429/i.test(String(e.message))) {
+        OUT.waitUntil = Math.max(OUT.waitUntil || 0, Date.now() + 62e3);
+        if (id === OUT.run) $('#outProg').textContent = 'Open-Meteo limite les demandes par minute : reprise automatique dans une minute…';
+        continue;
+      }
+      throw e;
+    }
+  }
 }
 function outDays() { const t = new Date(); t.setHours(12, 0, 0, 0); return [0, 1, 2, 3].map(k => { const d = new Date(t); d.setDate(d.getDate() + k); return d; }); }
 function outDaysRender() {
@@ -4398,7 +4419,7 @@ async function outRun() {
       const R = await outPts(m); if (!R || id !== OUT.run) return;
       if (R.P.total > OUT_MAXKM) { long.push(m); return; }
       const key = m.id + '|' + date; let c = OUT.wx[key];
-      if (!c || Date.now() - c.at > 3600e3) { c = OUT.wx[key] = { at: Date.now(), wx: await fetchOM(date, ymd(toD), AROME_MODEL, R.samples) }; }
+      if (!c || Date.now() - c.at > 3600e3) { c = { at: Date.now(), wx: await outFetch(id, date, ymd(toD), R.samples) }; OUT.wx[key] = c; }
       if (id !== OUT.run) return;
       const r = withRoute({ ...R, wx: c.wx }, () => {
         const sim = simulate(t0.getTime(), opt, true), sc = outScore(sim.st, sim.st.rideH, R.P.total);
@@ -4408,11 +4429,11 @@ async function outRun() {
         return { sim, sc, best };
       });
       res.push({ m, R, ...r });
-    } catch (e) { res.push({ m, err: String(e.message || e) }); }
+    } catch (e) { if (id === OUT.run) res.push({ m, err: String(e.message || e) }); }
     finally { done++; prog(); if (id === OUT.run) outRender(res, long); }
   };
   const queue = list.slice(); const worker = async () => { while (queue.length && id === OUT.run) await one(queue.shift()); };
-  await Promise.all([worker(), worker(), worker()]);
+  await Promise.all([worker(), worker()]);
 }
 function outRender(res, long) {
   const t = lpThumbs(), ok = res.filter(r => r.sim).sort((a, b) => a.sc - b.sc), bad = res.filter(r => !r.sim);
