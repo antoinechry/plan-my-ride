@@ -4192,7 +4192,7 @@ async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
     try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
     libUpsert({ ...meta, local: true });
     const sb = await sbIfLogged();
-    if (sb) { const { error } = await sb.from('routes').upsert({ ...meta, pts }, { onConflict: 'user_id,id' }); if (!error) { libUpsert({ id, remote: true }); if (LIB.current === id && S.wxUsed) { S._wxNoted = ''; routeWxNote(S.wxUsed); } } }
+    if (sb) { const { error } = await sb.from('routes').upsert({ ...meta, pts, deleted_at: null }, { onConflict: 'user_id,id' }); if (!error) { libUpsert({ id, remote: true }); if (LIB.current === id && S.wxUsed) { S._wxNoted = ''; routeWxNote(S.wxUsed); } } }
     libRender();
   } catch (e) { /* l'enregistrement est un confort : la trace reste utilisable */ }
 }
@@ -4289,9 +4289,15 @@ async function libInit() {
   if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
   // Compte Coach Miguel : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
   const sb = await sbIfLogged(); if (!sb) return;
-  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at').order('used_at', { ascending: false }).limit(200);
+  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at').order('used_at', { ascending: false }).limit(200);
   if (error) return;
-  for (const r of data || []) libUpsert({ ...r, remote: true });
+  // parcours supprimés par un admin (page Admin) : retirés de ce navigateur au lieu d'être renvoyés au compte
+  for (const r of (data || []).filter(r => r.deleted_at)) {
+    try { await idbRun('pts', 'readwrite', st => st.delete(r.id)); await idbRun('meta', 'readwrite', st => st.delete(r.id)); } catch (e) {}
+    LIB.list = LIB.list.filter(x => x.id !== r.id);
+    if (LIB.current === r.id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} }
+  }
+  for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; libUpsert({ ...m, remote: true }); }
   libRender();
   if (!S.P && last && LIB.list.some(x => x.id === last)) await libOpen(last);
   for (const m of LIB.list.filter(x => x.local && !x.remote)) {

@@ -40,7 +40,7 @@ Deno.serve(async (req: Request) => {
       if (data.users.length < 200) break;
     }
     // parcours enregistrés dans le compte (table routes) : nombre et dernière utilisation
-    const { data: rt } = await admin.from('routes').select('user_id,used_at,created_at').limit(20000);
+    const { data: rt } = await admin.from('routes').select('user_id,used_at,created_at').is('deleted_at', null).limit(20000);
     const byId = new Map(users.map(u => [u.id as string, u]));
     for (const r of rt ?? []) {
       const u = byId.get(r.user_id); if (!u) continue;

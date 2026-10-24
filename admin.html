@@ -100,6 +100,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .leaflet-tooltip.gtip,.leaflet-popup-content{font-family:'Archivo',system-ui,sans-serif;font-size:13px;line-height:1.4}
 .gtip b,.leaflet-popup-content b{font-size:14px}
 .gtip .m,.leaflet-popup-content .m{color:#56635A}
+.rlist td.nm{white-space:normal;min-width:160px}
+.rlist .acts2{display:flex;gap:4px;justify-content:flex-end}
+.rlist .btn{padding:.25rem .6rem;font-size:.8rem}
+.rlist .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.rlist th.sort{cursor:pointer;user-select:none}
+.rlist th.sort[aria-sort]::after{content:' ▾'}
+.rlist th.sort[aria-sort="ascending"]::after{content:' ▴'}
 .toolbar select{border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:.38rem .7rem}
 </style>
 </head>
@@ -156,6 +163,21 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="gmap" id="gmap"></div>
       <div class="glegend" id="gLegend"></div>
       <p class="msg">Tous les parcours enregistrés dans les comptes. Survole une trace (ou touche-la sur téléphone) : qui l'a chargée, quand, et la dernière source météo utilisée dessus. Le clic ouvre aussi « Télécharger le GPX » et « Centrer ».</p>
+    </section>
+
+    <section>
+      <h2>Liste des GPX <span class="n" id="rN">0</span></h2>
+      <div class="toolbar">
+        <select id="rSort" aria-label="Trier par">
+          <option value="date">Les plus récents d'abord</option>
+          <option value="user">Par compte</option>
+          <option value="km-desc">Distance, du plus long au plus court</option>
+          <option value="km-asc">Distance, du plus court au plus long</option>
+        </select>
+        <span class="msg" style="margin:0">Le filtre de compte de la carte s'applique aussi ici.</span>
+      </div>
+      <div class="scroll"><table class="rlist"><thead><tr><th class="sort" data-s="name">Parcours</th><th class="sort" data-s="user">Compte</th><th class="sort num" data-s="km">km</th><th class="num">D+</th><th class="sort" data-s="date">Chargé le</th><th>Météo</th><th></th></tr></thead><tbody id="rBody"></tbody></table></div>
+      <p class="msg">« Supprimer » retire le parcours du compte de la personne, de la carte et, à sa prochaine ouverture de Plan My Ride, de son navigateur. Si elle réimporte le même GPX, il revient.</p>
     </section>
 
     <section>
@@ -382,7 +404,7 @@ $('evUser').addEventListener('change', e => { S.evU = e.target.value; renderEven
 const WX_NAME = { mb: 'meteoblue', arome: 'AROME (Météo-France)', met: 'MET Norway', om: 'Open-Meteo' };
 const wxLabel = w => { if (!w) return 'pas encore enregistrée'; const p = String(w).split('+').filter(k => WX_NAME[k]); return p.map((k, i) => WX_NAME[k] + (i ? ' (au-delà de son horizon)' : '')).join(' puis ') || w; };
 const G_COL = ['#2A6A5B', '#B2404D', '#2D5288', '#A8711A', '#7A4BA0', '#1F8A9A', '#C25E1F', '#4E7A1E', '#A03B7A', '#5A5A5A'];
-const G = { map: null, routes: [], layers: [], col: {} };
+const G = { map: null, routes: [], layers: [], col: {}, byKey: {}, cur: null };
 function gpxText(r){
   const pts = r.pts || [];
   return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Plan My Ride" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>'+esc(r.name || 'Parcours')+'</name><trkseg>\n'
@@ -401,7 +423,7 @@ function gInfo(r){
     + 'Météo : <b>'+esc(wxLabel(r.wx))+'</b>'+(r.wx_at ? ' <span class="m">('+dtFmt.format(new Date(r.wx_at))+')</span>' : '');
 }
 async function gLoad(){
-  const { data, error } = await sb.from('routes').select('user_id,id,name,km,dplus,pts,created_at,used_at,wx,wx_at').order('used_at', { ascending: false, nullsFirst: false }).limit(300);
+  const { data, error } = await sb.from('routes').select('user_id,id,name,km,dplus,pts,created_at,used_at,wx,wx_at').is('deleted_at', null).order('used_at', { ascending: false, nullsFirst: false }).limit(300);
   if (error){ $('gMsg').textContent = 'Lecture impossible : '+error.message; return; }
   G.routes = data || []; G.col = {};
   const ids = [...new Set(G.routes.map(r => r.user_id))]; ids.forEach((id, i) => G.col[id] = G_COL[i % G_COL.length]);
@@ -417,7 +439,7 @@ function gDraw(){
     G.map.on('mouseout zoomstart movestart', gOff); // souris sortie de la carte, zoom ou déplacement : on referme
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(G.map);
   }
-  for (const l of G.layers) l.remove(); G.layers = [];
+  for (const l of G.layers) l.remove(); G.layers = []; G.byKey = {}; G.cur = null;
   const f = $('gUser').value, list = G.routes.filter(r => !f || r.user_id === f), bounds = [];
   for (const r of list){
     const pts = r.pts || []; if (pts.length < 2) continue;
@@ -438,7 +460,7 @@ function gDraw(){
       box.querySelector('[data-g="fit"]').onclick = () => G.map.fitBounds(line.getBounds(), { padding: [20, 20] });
       hit.closeTooltip(); L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(box).openOn(G.map);
     });
-    G.layers.push(line, hit); bounds.push(...ll);
+    G.layers.push(line, hit); bounds.push(...ll); G.byKey[r.user_id+'|'+r.id] = { line, hit, r };
   }
   $('gN').textContent = list.length;
   $('gMsg').textContent = list.length ? '' : 'Aucun parcours enregistré.';
@@ -446,7 +468,46 @@ function gDraw(){
   const shown = [...new Set(list.map(r => r.user_id))];
   $('gLegend').innerHTML = shown.map(id => { const u = S.users.find(x => x.user_id === id); return '<span><i style="background:'+G.col[id]+'"></i>'+esc(u ? (u.prenom || u.email) : id.slice(0, 8))+' · '+list.filter(r => r.user_id === id).length+'</span>'; }).join('');
   setTimeout(() => G.map.invalidateSize(), 50);
+  rRender();
 }
+/* Liste des GPX : tri (récents, compte, distance), filtre de compte partagé avec la carte, Voir / GPX / Supprimer. */
+const uName = id => { const u = S.users.find(x => x.user_id === id); return u ? (u.prenom || u.email) : id.slice(0, 8); };
+function rRender(){
+  const f = $('gUser').value, k = $('rSort').value;
+  const list = G.routes.filter(r => !f || r.user_id === f).slice();
+  const t = r => r.used_at || r.created_at || '';
+  const cmp = { date: (a, b) => t(b) < t(a) ? -1 : 1, 'km-desc': (a, b) => (b.km || 0) - (a.km || 0), 'km-asc': (a, b) => (a.km || 0) - (b.km || 0),
+    user: (a, b) => uName(a.user_id).localeCompare(uName(b.user_id), 'fr') || (t(b) < t(a) ? -1 : 1) }[k];
+  list.sort(cmp);
+  for (const th of document.querySelectorAll('.rlist th.sort')){ const s2 = th.dataset.s;
+    const on = (s2 === 'date' && k === 'date') || (s2 === 'user' && k === 'user') || (s2 === 'km' && k.startsWith('km'));
+    if (on) th.setAttribute('aria-sort', k === 'km-asc' ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort'); }
+  $('rN').textContent = list.length;
+  $('rBody').innerHTML = list.map(r => '<tr data-k="'+esc(r.user_id+'|'+r.id)+'"><td class="nm">'+esc(r.name || 'Parcours')+'</td>'
+    + '<td><span class="dot" style="background:'+G.col[r.user_id]+'"></span>'+esc(uName(r.user_id))+'</td>'
+    + '<td class="num">'+(r.km ? Math.round(r.km) : '')+'</td><td class="num">'+(r.dplus ? nf.format(Math.round(r.dplus)) : '')+'</td>'
+    + '<td>'+dFmt.format(new Date(r.created_at))+'</td><td>'+esc(r.wx ? wxLabel(r.wx) : '–')+'</td>'
+    + '<td><div class="acts2"><button class="btn" data-r="see">Voir</button><button class="btn" data-r="dl">GPX</button><button class="btn bad" data-r="del">Supprimer</button></div></td></tr>').join('')
+    || '<tr><td colspan="7" class="empty">Aucun parcours.</td></tr>';
+}
+$('rSort').addEventListener('change', rRender);
+document.querySelector('.rlist thead').addEventListener('click', e => {
+  const th = e.target.closest('th.sort'); if (!th) return; const s2 = th.dataset.s, sel = $('rSort');
+  sel.value = s2 === 'km' ? (sel.value === 'km-desc' ? 'km-asc' : 'km-desc') : s2 === 'user' ? 'user' : 'date'; rRender();
+});
+$('rBody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-r]'); if (!b) return;
+  const tr = b.closest('tr'), g = G.byKey[tr.dataset.k], r = g ? g.r : G.routes.find(x => x.user_id+'|'+x.id === tr.dataset.k); if (!r) return;
+  if (b.dataset.r === 'dl') return gpxDownload(r);
+  if (b.dataset.r === 'see'){ if (!g) return; $('gmap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    G.map.fitBounds(g.line.getBounds(), { padding: [20, 20] }); setTimeout(() => { g.line.setStyle({ weight: 8, opacity: 1 }); setTimeout(() => g.line.setStyle({ weight: 4, opacity: .85 }), 1800); }, 400); return; }
+  // Supprimer : deux clics (le premier arme le bouton 4 s)
+  if (!b.dataset.arm){ b.dataset.arm = '1'; b.textContent = 'Confirmer ?'; b.classList.add('primary'); setTimeout(() => { if (b.isConnected){ delete b.dataset.arm; b.textContent = 'Supprimer'; b.classList.remove('primary'); } }, 4000); return; }
+  b.disabled = true; b.textContent = 'Suppression…';
+  const { error } = await sb.from('routes').update({ deleted_at: new Date().toISOString() }).eq('user_id', r.user_id).eq('id', r.id);
+  if (error){ b.disabled = false; b.textContent = 'Échec'; alert('Suppression impossible : '+error.message); return; }
+  G.routes = G.routes.filter(x => x !== r); gDraw();
+});
 $('gUser').addEventListener('change', gDraw);
 // Solde du compte meteoblue (action usage de la fonction, réservée aux admins).
 async function mbBalance(){
