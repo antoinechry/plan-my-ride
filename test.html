@@ -449,7 +449,9 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 @media (max-width:700px){
   body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   header.top{padding-block:12px 6px;gap:10px}
-  header.top .modes,header.top .theme-seg,#brandSub{display:none}
+  header.top .theme-seg,#brandSub{display:none}
+  header.top .modes{order:3;flex:1 0 100%;display:grid;grid-template-columns:repeat(3,1fr)}
+  header.top .modes a{text-align:center;padding:10px 4px;min-height:44px}
   header.top .brand{flex:1}
   .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:900;background:var(--panel);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
   .tabbar a,.tabbar button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:var(--muted);text-decoration:none;font:600 11.5px/1.2 var(--f-body);cursor:pointer}
@@ -518,6 +520,36 @@ body.lib-open{overflow:hidden}
 .lp-empty b{color:var(--ink)}
 #lpAll{margin-top:6px}
 @media (max-width:700px){.libpage{bottom:calc(61px + env(safe-area-inset-bottom,0px))}#libPageX{display:none}}
+
+/* ---- page « Mes sorties » (essai du 24/10/2026) ---- */
+.out-days{grid-template-columns:repeat(4,1fr)}
+.out-days button{min-height:44px;font-size:13.5px}
+.out-when{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.out-when input{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:16px}
+.out-prog{font-size:14px;color:var(--muted);margin:2px 0 12px}
+.out-rank{flex:0 0 26px;font-family:var(--f-display);font-weight:800;font-size:22px;color:var(--muted);text-align:center}
+.out-item .lp-open{grid-column:1/-1}
+.out-v{display:flex;align-items:center;gap:7px;color:var(--ink)!important;font-weight:700;font-size:14.5px!important}
+.out-pill{flex:0 0 10px;width:10px;height:10px;border-radius:5px;background:var(--tail)}
+.out-pill.o{background:var(--sun)}.out-pill.r{background:var(--head)}.out-pill.n{background:var(--line)}
+.out-best{color:var(--accent)!important;font-weight:600}
+.out-sec{margin:22px auto 8px;font-size:15px;font-weight:700}
+.out-note{margin-top:16px}
+
+/* ---- page « Moi » (essai du 24/10/2026) ---- */
+.me-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.me-card h3{margin:0 0 4px;font-size:18px}
+.me-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.me-btns .btn{min-height:42px;display:inline-flex;align-items:center}
+.me-mode{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.me-mode h4{margin:0 0 6px;font-size:15px}
+.me-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;min-height:44px}
+.me-row label{font-size:14px;color:var(--muted)}
+.me-row output{font-family:var(--f-mono);font-size:14px;min-width:84px;text-align:right}
+.me-row input[type=range]{grid-column:1/-1;width:100%}
+.me-theme{grid-template-columns:repeat(3,1fr);margin-top:8px}
+.me-theme button{min-height:44px}
+body:not(.admin) .me-btns .adm{display:none}
 </style>
 </head>
 <body>
@@ -578,7 +610,28 @@ body.lib-open{overflow:hidden}
   </div>
   <ul class="lp-list" id="lpList"></ul>
 </section>
-<nav class="tabbar" aria-label="Pages"><a href="#" data-mode="ride"><svg viewBox="0 0 24 24"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l3 8h5"/></svg>Sortie</a><a href="#ultra" data-mode="ultra"><svg viewBox="0 0 24 24"><path d="M3 19l6-10 4 6 3-4 5 8z"/></svg>Ultra</a><a href="#velotaf" data-mode="taf"><svg viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>Vélotaf</a><button type="button" id="tabLib"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/></svg>Parcours</button></nav>
+<section class="libpage" id="outPage" hidden aria-labelledby="outTitle">
+  <div class="lp-head"><h2 id="outTitle">Mes sorties</h2><button type="button" class="btn small pg-x">Fermer</button></div>
+  <p class="hint lp-count">Tes parcours classés du plus au moins favorable selon la météo AROME (Météo-France).</p>
+  <div class="lp-tools">
+    <div class="seg2 out-days" id="outDays" role="group" aria-label="Jour de la sortie"></div>
+    <label class="out-when">Départ à <input type="time" id="outTime" step="900"> <span id="outPace"></span></label>
+  </div>
+  <p class="out-prog" id="outProg" aria-live="polite"></p>
+  <ol class="lp-list" id="outList"></ol>
+  <div id="outLong"></div>
+  <p class="hint out-note">AROME : modèle fin de Météo-France sur 2 jours, puis ARPEGE jusqu'à 4 jours. Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
+</section>
+<section class="libpage" id="mePage" hidden aria-labelledby="meTitle">
+  <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
+  <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
+    <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div></div>
+  <div class="me-card"><h3>Mes réglages par mode</h3><p class="hint">Utilisés pour calculer tes horaires de passage. Chaque mode garde les siens.</p><div id="meModes"></div></div>
+  <div class="me-card"><h3>Affichage</h3>
+    <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
+    <div class="me-btns"><button type="button" class="btn small" id="meHelp">Mode d'emploi</button></div></div>
+</section>
+<nav class="tabbar" aria-label="Navigation"><button type="button" id="tabMode" aria-current="page"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l3 8h5"/></svg><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/></svg>Parcours</button><button type="button" id="tabOut"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Sorties</button><button type="button" id="tabMe"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Moi</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
@@ -608,6 +661,7 @@ body.lib-open{overflow:hidden}
       </div>
       <p class="hint" id="libHint"></p>
       <button type="button" class="btn small" id="lpAll">Voir tous mes parcours</button>
+      <button type="button" class="btn small" id="outAll">Classer selon la météo</button>
     </div>
 
     <div class="row2" id="startRow">
@@ -1073,10 +1127,10 @@ const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '
 // Open-Meteo : un seul appel pour tous les points d'échantillonnage (jusqu'à 16 jours). `model` : modèle imposé
 // (AROME_MODEL pour la source AROME : AROME France puis ARPEGE, 4 jours, sans probabilité de pluie).
 const AROME_MODEL = 'meteofrance_seamless';
-async function fetchOM(from, to, model) {
+async function fetchOM(from, to, model, smp = wxSmp()) { // smp : points demandés (par défaut ceux du parcours ouvert)
   const vars = model ? VARS.filter(v => v !== 'precipitation_probability') : VARS;
-  const lat = wxSmp().map(s => s.lat.toFixed(4)).join(',');
-  const lon = wxSmp().map(s => s.lon.toFixed(4)).join(',');
+  const lat = smp.map(s => s.lat.toFixed(4)).join(',');
+  const lon = smp.map(s => s.lon.toFixed(4)).join(',');
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars.join(',')}${model ? '&models=' + model : ''}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
   // 40 s au plus : si Open-Meteo ne répond pas, les horaires sont quand même calculés (sans météo)
   let res;
@@ -2749,8 +2803,8 @@ function applyModeUI() {
   // page Sortie : dans la barre latérale. Les éléments sont déplacés (mêmes identifiants, mêmes écouteurs).
   if (ultra) { $('#planStartSlot').append($('#startRow')); $('#planSpeedSlot').append($('#manualSettings'), $('#windField')); }
   else { $('#startHome').before($('#startRow')); $('#manualHome').before($('#manualSettings')); $('#windHome').before($('#windField')); }
-  document.body.dataset.mode = S.mode;
-  for (const a of document.querySelectorAll('.modes a, .tabbar a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
+  document.body.dataset.mode = S.mode; try { tabModeRender(); } catch (e) {}
+  for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   const taf = S.mode === 'taf';
   $('#ultraSettings').hidden = !ultra; $('#lapField').hidden = S.mode !== 'ride'; $('#tafField').hidden = !taf; $('#tafTimes').hidden = !taf;
   // Vélotaf : vitesse moyenne seulement (pas de VAM, d'arrêts courts ni de calage)
@@ -4250,17 +4304,8 @@ function lpRender() {
   if (LP.ren) { const i = $('#lpRenIn'); if (i) { i.focus(); i.select(); } }
   lpFillThumbs();
 }
-function lpOpen() {
-  LP.open = LP.ren = LP.del = ''; $('#lpQ').value = ''; sheetClose();
-  $('#libPage').hidden = false; document.body.classList.add('lib-open'); $('#libPage').scrollTop = 0;
-  for (const a of document.querySelectorAll('.tabbar a')) a.removeAttribute('aria-current'); $('#tabLib').setAttribute('aria-current', 'page');
-  lpRender();
-}
-function lpClose() {
-  if ($('#libPage').hidden) return;
-  $('#libPage').hidden = true; document.body.classList.remove('lib-open'); $('#tabLib').removeAttribute('aria-current');
-  for (const a of document.querySelectorAll('.tabbar a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); }
-}
+function lpOpen() { LP.open = LP.ren = LP.del = ''; $('#lpQ').value = ''; pageOpen('libPage', '#tabLib'); lpRender(); }
+function lpClose() { pageClose(); }
 async function lpRename(id, name) {
   const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
   libUpsert({ id, name });
@@ -4270,9 +4315,140 @@ async function lpRename(id, name) {
   libRender();
 }
 $('#lpAll').addEventListener('click', lpOpen);
+// Pages plein écran (Mes parcours, Mes sorties, Moi) : une seule ouverte à la fois, onglet du bas allumé.
+const PAGES = ['libPage', 'outPage', 'mePage'];
+function pageOpen(pid, tabSel) {
+  sheetClose();
+  for (const q of PAGES) { const el = document.getElementById(q); if (el) el.hidden = q !== pid; }
+  document.body.classList.add('lib-open'); document.getElementById(pid).scrollTop = 0;
+  for (const a of document.querySelectorAll('.tabbar [aria-current]')) a.removeAttribute('aria-current');
+  const tb = tabSel && $(tabSel); if (tb) tb.setAttribute('aria-current', 'page');
+}
+function pageClose() {
+  if (!PAGES.some(q => { const el = document.getElementById(q); return el && !el.hidden; })) return;
+  for (const q of PAGES) { const el = document.getElementById(q); if (el) el.hidden = true; }
+  document.body.classList.remove('lib-open');
+  for (const a of document.querySelectorAll('.tabbar [aria-current]')) a.removeAttribute('aria-current');
+  const mt = $('#tabMode'); if (mt) mt.setAttribute('aria-current', 'page');
+  for (const a of document.querySelectorAll('.tabbar a[data-mode]')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); }
+}
+for (const b of document.querySelectorAll('.pg-x')) b.addEventListener('click', pageClose);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('lib-open') && !LP.ren) pageClose(); });
+
+/* Page « Mes sorties » (essai du 24/10/2026) : tous les parcours enregistrés, météo AROME pour le jour choisi (aujourd'hui → J+3)
+   à l'heure de départ choisie, réglages de la page Sortie ; classés du plus au moins favorable (score par heure de selle,
+   pour ne pas avantager les parcours courts) ; meilleure heure de départ entre 6 h et 16 h si nettement meilleure. */
+const OUT = { day: 0, wx: {}, pts: {}, run: 0, res: [] };
+const OUT_MAXKM = 300;
+function outOpt() {
+  let o = null;
+  if (S.mode === 'ride') o = readOpt();
+  else { let sv = {}; try { sv = JSON.parse(localStorage.getItem('pmr-opt') || '{}') || {}; } catch (e) {} o = { ...MODE_DEF.ride, ...sv }; }
+  return { ...o, laps: 1, windOn: o.windOn !== false };
+}
+function outScore(st, rideH, total) { // pluie (mm/h et part du temps mouillé) d'abord, puis froid, nuit et vent ; par heure de selle
+  const h = Math.max(0.5, rideH), cover = 1 - st.missKm / total, amin = isFinite(st.amin) ? st.amin : 10;
+  return st.rain / h * 20 + st.wetH / h * 10 + st.coldH / h * 6 + Math.max(0, 5 - amin) * 0.5 + st.nightH / h * 5
+    + (st.headKm / total) * 10 - (st.tailKm / total) * 5 + (st.amax > 30 ? (st.amax - 30) * 1.5 : 0) + (1 - cover) * 200;
+}
+function outHead(st, total) {
+  const cov = Math.max(0.1, total - st.missKm), pct = x => Math.round(x / cov * 100), avgHead = st.headSum / cov;
+  const headwind = pct(st.headKm) >= 50 || avgHead >= 8, tailwind = !headwind && (pct(st.tailKm) >= 50 || avgHead <= -8);
+  const sunPct = st.rideH > 0 ? st.sunH / st.rideH * 100 : 0, neg = [], pos = [];
+  if (st.rain >= 10) neg.push('grosse pluie'); else if (st.rain >= 3) neg.push('pluie'); else if (st.rain >= 0.3) neg.push('quelques gouttes');
+  if (st.amin < 3) neg.push('froid'); else if (st.amin < 8) neg.push('fraîcheur'); else if (st.amax > 34) neg.push('canicule'); else if (st.amax > 30) neg.push('chaleur');
+  if (headwind) neg.push('vent de face');
+  if (tailwind) pos.push('vent dans le dos'); if (sunPct >= 60) pos.push('soleil');
+  const list = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1], cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+  const dry = st.rain < 0.3;
+  const txt = !neg.length ? `Belles conditions : ${list(['au sec', ...pos.map(x => x === 'soleil' ? 'ensoleillé' : x)])}`
+    : dry ? `Au sec, mais ${list(neg)}` : cap(list(neg)) + (pos.length ? `, mais ${list(pos.map(x => x === 'soleil' ? 'du soleil' : x))}` : '');
+  const lvl = st.rain >= 3 || pct(st.headKm) >= 60 || st.amin < 0 ? 'r' : st.rain >= 0.3 || st.amin < 5 || headwind || st.amax > 30 ? 'o' : 'g';
+  return { txt, lvl, head: pct(st.headKm) };
+}
+function withRoute(R, fn) { // simulation sur un autre parcours que celui ouvert (S remis en place ensuite)
+  const keep = { P: S.P, samples: S.samples, wx: S.wx, wxAlt: S.wxAlt, laps: S.laps, sMap: S.sMap, mode: S.mode };
+  Object.assign(S, { P: R.P, samples: R.samples, wx: R.wx, wxAlt: null, laps: null, sMap: null, mode: 'ride' });
+  try { return fn(); } finally { Object.assign(S, keep); }
+}
+async function outPts(m) {
+  if (OUT.pts[m.id]) return OUT.pts[m.id];
+  let rec = null; try { rec = await idbRun('pts', 'readonly', st => st.get(m.id)); } catch (e) {}
+  if (!rec && m.remote) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('id', m.id).maybeSingle(); if (data && data.pts) { rec = { id: m.id, pts: data.pts }; try { await idbRun('pts', 'readwrite', st => st.put(rec)); } catch (e) {} } } }
+  if (!rec || !rec.pts || rec.pts.length < 2) return null;
+  if (!lpThumbs()[m.id]) thumbSave(m.id, rec.pts);
+  const P = prepare(unpackPts(rec.pts)); return (OUT.pts[m.id] = { P, samples: makeSamples(P) });
+}
+function outDays() { const t = new Date(); t.setHours(12, 0, 0, 0); return [0, 1, 2, 3].map(k => { const d = new Date(t); d.setDate(d.getDate() + k); return d; }); }
+function outDaysRender() {
+  $('#outDays').innerHTML = outDays().map((d, k) => `<button type="button" data-k="${k}" aria-pressed="${k === OUT.day}">${k === 0 ? 'Aujourd\'hui' : k === 1 ? 'Demain' : dayFmt.format(d).replace(/\.$/, '')}</button>`).join('');
+}
+async function outRun() {
+  const id = ++OUT.run, opt = outOpt(), day = outDays()[OUT.day], date = ymd(day), time = $('#outTime').value || opt.time || '08:00';
+  $('#outPace').textContent = `· ${n1(opt.speed)} km/h`;
+  const [hh, mm] = time.split(':').map(Number), t0 = new Date(day); t0.setHours(hh, mm, 0, 0);
+  const end = outDays()[3], to = new Date(day); to.setDate(to.getDate() + 1); const toD = to > end ? end : to;
+  const list = LIB.list.slice(), res = [], long = [];
+  if (!list.length) { $('#outProg').textContent = ''; $('#outList').innerHTML = '<li class="lp-empty"><b>Aucun parcours enregistré.</b><br>Importe un GPX : il sera classé ici selon la météo.</li>'; $('#outLong').innerHTML = ''; return; }
+  let done = 0; const prog = () => { if (id === OUT.run) $('#outProg').textContent = done < list.length ? `Météo de ${done} parcours sur ${list.length}…` : `${res.length} parcours classés pour ${OUT.day === 0 ? 'aujourd\'hui' : OUT.day === 1 ? 'demain' : dayFmt.format(day)}, départ ${time}.`; };
+  prog();
+  const one = async m => {
+    try {
+      if ((m.km || 0) > OUT_MAXKM) { long.push(m); return; }
+      const R = await outPts(m); if (!R || id !== OUT.run) return;
+      if (R.P.total > OUT_MAXKM) { long.push(m); return; }
+      const key = m.id + '|' + date; let c = OUT.wx[key];
+      if (!c || Date.now() - c.at > 3600e3) { c = OUT.wx[key] = { at: Date.now(), wx: await fetchOM(date, ymd(toD), AROME_MODEL, R.samples) }; }
+      if (id !== OUT.run) return;
+      const r = withRoute({ ...R, wx: c.wx }, () => {
+        const sim = simulate(t0.getTime(), opt, true), sc = outScore(sim.st, sim.st.rideH, R.P.total);
+        let best = null; // meilleure heure de départ ce jour-là (6 h → 16 h)
+        for (let h = 6; h <= 16; h++) { const tt = new Date(day); tt.setHours(h, 0, 0, 0); const s2 = simulate(tt.getTime(), opt, true);
+          if (s2.st.missKm > R.P.total * 0.05) continue; const v = outScore(s2.st, s2.st.rideH, R.P.total); if (!best || v < best.sc) best = { h, sc: v, st: s2.st }; }
+        return { sim, sc, best };
+      });
+      res.push({ m, R, ...r });
+    } catch (e) { res.push({ m, err: String(e.message || e) }); }
+    finally { done++; prog(); if (id === OUT.run) outRender(res, long); }
+  };
+  const queue = list.slice(); const worker = async () => { while (queue.length && id === OUT.run) await one(queue.shift()); };
+  await Promise.all([worker(), worker(), worker()]);
+}
+function outRender(res, long) {
+  const t = lpThumbs(), ok = res.filter(r => r.sim).sort((a, b) => a.sc - b.sc), bad = res.filter(r => !r.sim);
+  $('#outList').innerHTML = ok.map((r, k) => {
+    const st = r.sim.st, h = outHead(st, r.R.P.total), th = t[r.m.id];
+    const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
+    const miss = st.missKm > r.R.P.total * 0.05;
+    const bestTxt = r.best && r.best.sc < r.sc - 2 && !miss ? `Mieux à ${String(r.best.h).padStart(2, '0')}:00 : ${outHead(r.best.st, r.R.P.total).txt.charAt(0).toLowerCase() + outHead(r.best.st, r.R.P.total).txt.slice(1)}` : '';
+    return `<li class="lp-item out-item"><button type="button" class="lp-open" data-go="${r.m.id}"><span class="out-rank">${k + 1}</span><svg class="lp-thumb" viewBox="0 0 64 64" aria-hidden="true">${svg}</svg>
+      <span class="lp-txt"><b>${escH(r.m.name)}</b><span class="out-v"><i class="out-pill ${miss ? 'n' : h.lvl}"></i>${miss ? 'Prévision incomplète' : escH(h.txt)}</span>
+      <span>${n1(r.R.P.total)} km · arrivée ${whenTxt(r.sim.end, r.sim.start)} · ${n1(st.rain)} mm · face ${h.head} % · ${n0(st.amin)} à ${n0(st.amax)} °C ressentis</span>
+      ${bestTxt ? `<span class="out-best">${escH(bestTxt)}</span>` : ''}</span></button></li>`;
+  }).join('') + bad.map(r => `<li class="lp-empty">${escH(r.m.name)} : météo indisponible (${escH(r.err || 'tracé introuvable')}).</li>`).join('');
+  $('#outLong').innerHTML = long.length ? `<p class="out-sec">Sur plusieurs jours, à planifier dans Ultra</p><ul class="lp-list">${long.map(m => `<li class="lp-item"><button type="button" class="lp-open" data-ultra="${m.id}"><span class="lp-txt"><b>${escH(m.name)}</b><span>${n0(m.km || 0)} km · D+ ${n0(m.dplus || 0)} m</span></span></button></li>`).join('')}</ul>` : '';
+}
+function outOpen() {
+  pageOpen('outPage', '#tabOut');
+  const o = outOpt(); if (!$('#outTime').value) $('#outTime').value = o.time || '08:00';
+  outDaysRender(); outRun();
+}
+async function outGo(id, mode) { // ouvrir le parcours (page Sortie au jour et à l'heure choisis, ou page Ultra)
+  pageClose(); window.scrollTo(0, 0);
+  if (mode === 'ultra') { if (S.mode !== 'ultra') location.hash = '#ultra'; }
+  else {
+    if (S.mode !== 'ride') { history.replaceState(null, '', location.pathname + location.search); switchMode('ride'); }
+    $('#date').value = ymd(outDays()[OUT.day]); $('#time').value = $('#outTime').value || $('#time').value;
+  }
+  if (id !== LIB.current) await libOpen(id); else schedule();
+}
+$('#outAll').addEventListener('click', outOpen);
+$('#outDays').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; OUT.day = +b.dataset.k; outDaysRender(); outRun(); });
+$('#outTime').addEventListener('change', () => { if ($('#outTime').value) outRun(); });
+$('#outPage').addEventListener('click', e => { const b = e.target.closest('button[data-go], button[data-ultra]'); if (b) outGo(b.dataset.go || b.dataset.ultra, b.dataset.ultra ? 'ultra' : 'ride'); });
+
 $('#libPageX').addEventListener('click', lpClose);
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#libPage').hidden && !LP.ren) lpClose(); });
-for (const a of document.querySelectorAll('.tabbar a, .modes a')) a.addEventListener('click', lpClose);
+for (const a of document.querySelectorAll('.modes a')) a.addEventListener('click', pageClose);
 $('#lpQ').addEventListener('input', () => { LP.open = LP.ren = ''; lpRender(); });
 $('#lpSort').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.sort = b.dataset.v; setSeg('#lpSort', LP.sort); lpRender(); });
 $('#lpList').addEventListener('click', async e => {
@@ -4351,6 +4527,56 @@ function setTheme(t) {
 }
 for (const b of document.querySelectorAll('#themeSeg button')) b.setAttribute('aria-pressed', String(b.dataset.t === (document.documentElement.dataset.theme || 'auto')));
 $('#themeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTheme(b.dataset.t); });
+/* Onglet « Mode » : icône et nom du mode en cours ; le choix du mode se fait en haut de l'écran. */
+const TAB_ICO = { ride: '<circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l3 8h5"/>', ultra: '<path d="M3 19l6-10 4 6 3-4 5 8z"/>', taf: '<path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/>' };
+function tabModeRender() { const ic = $('#tabModeIco'); if (!ic) return; ic.innerHTML = TAB_ICO[S.mode] || TAB_ICO.ride; $('#tabModeTxt').textContent = S.mode === 'ultra' ? 'Ultra' : S.mode === 'taf' ? 'Vélotaf' : 'Sortie'; }
+$('#tabMode').addEventListener('click', () => { const was = document.body.classList.contains('lib-open'); pageClose(); if (!was) window.scrollTo({ top: 0, behavior: 'smooth' }); });
+$('#tabOut').addEventListener('click', outOpen);
+$('#tabMe').addEventListener('click', meOpen);
+tabModeRender();
+/* Page « Moi » (essai du 24/10/2026) : compte, réglages de vitesse par mode (Sortie, Ultra : vitesse sur le plat, VAM,
+   arrêts en minutes par heure de pédalage ; Vélotaf : vitesse moyenne), thème et mode d'emploi. Le mode en cours est
+   réglé directement dans la page ; les autres dans leurs réglages enregistrés (pmr-opt, pmr-opt-ultra, pmr-opt-taf). */
+const ME_KEY = { ride: 'pmr-opt', ultra: 'pmr-opt-ultra', taf: 'pmr-opt-taf' }, ME_NAME = { ride: 'Sortie', ultra: 'Ultra', taf: 'Vélotaf' };
+function meGet(m) {
+  if (m === S.mode) { const o = readOpt(); return { speed: o.speed, vam: o.vam, pmin: o.pauseMode === 'min' ? Math.round(o.pauseMin / o.pauseEvery) : Math.round(o.pause * 0.6) }; }
+  let sv = {}; try { sv = JSON.parse(localStorage.getItem(ME_KEY[m]) || '{}') || {}; } catch (e) {}
+  const o = { ...MODE_DEF[m], ...sv };
+  return { speed: +o.speed, vam: +o.vam, pmin: o.pauseMode === 'min' && +o.pauseEvery > 0 ? Math.round(o.pauseMin / o.pauseEvery) : Math.round((+o.pause || 0) * 0.6) };
+}
+function meSet(m, k, v) {
+  if (m === S.mode) {
+    if (k === 'speed') $('#speed').value = v; else if (k === 'vam') $('#vam').value = v;
+    else { setSeg('#pauseSeg', 'min'); $('#pauseMin').value = v; $('#pauseEvery').value = 1; }
+    schedule(); return;
+  }
+  let sv = {}; try { sv = JSON.parse(localStorage.getItem(ME_KEY[m]) || '{}') || {}; } catch (e) {}
+  const o = { ...MODE_DEF[m], ...sv };
+  if (k === 'pmin') Object.assign(o, { pauseMode: 'min', pauseMin: v, pauseEvery: 1, pause: v / 60 * 100 }); else o[k] = v;
+  try { localStorage.setItem(ME_KEY[m], JSON.stringify(o)); } catch (e) {}
+}
+function meRender() {
+  let who = ''; try { const t = JSON.parse(localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token') || 'null'); who = t && t.user ? t.user.email : ''; } catch (e) {}
+  $('#meWho').textContent = who ? `Connecté avec ${who}.` + (LIB.list.length ? ` ${LIB.list.length} parcours dans ton compte.` : '') : 'Pas connecté.';
+  const row = (m, k, label, min, max, step, v, unit) => `<div class="me-row"><label for="me-${m}-${k}">${label}</label><output id="me-${m}-${k}-o">${unit(v)}</output>
+    <input type="range" id="me-${m}-${k}" data-m="${m}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
+  const kmh = v => n1(+v) + ' km/h', mh = v => v + ' m/h', mn = v => v + ' min / h';
+  $('#meModes').innerHTML = ['ride', 'ultra', 'taf'].map(m => { const g = meGet(m);
+    return `<div class="me-mode"><h4>${ME_NAME[m]}${m === S.mode ? ' · mode en cours' : ''}</h4>`
+      + row(m, 'speed', m === 'taf' ? 'Vitesse moyenne' : 'Vitesse sur le plat', 12, 40, 0.5, g.speed, kmh)
+      + (m === 'taf' ? '' : row(m, 'vam', 'Vitesse de montée (VAM)', 300, 1400, 50, g.vam, mh) + row(m, 'pmin', 'Arrêts par heure de pédalage', 0, 30, 1, g.pmin, mn))
+      + '</div>'; }).join('');
+  const th = document.documentElement.dataset.theme || 'auto';
+  for (const b of document.querySelectorAll('#meTheme button')) b.setAttribute('aria-pressed', String(b.dataset.t === th));
+}
+function meOpen() { pageOpen('mePage', '#tabMe'); meRender(); }
+$('#meModes').addEventListener('input', e => { const i = e.target.closest('input[data-k]'); if (!i) return; const v = +i.value, k = i.dataset.k;
+  $('#' + i.id + '-o').textContent = k === 'speed' ? n1(v) + ' km/h' : k === 'vam' ? v + ' m/h' : v + ' min / h'; meSet(i.dataset.m, k, v); });
+$('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); });
+$('#meHelp').addEventListener('click', () => $('#helpBtn').click());
+$('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
+$('#meOut').addEventListener('click', () => $('#logoutLink').click());
+
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (!document.documentElement.dataset.theme) redrawTheme(); });
 
 applyModeUI();
