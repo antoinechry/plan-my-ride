@@ -413,6 +413,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .taf-days .hint{grid-column:1 / -1;margin:0}
 .taf-margin{display:grid;grid-template-columns:1fr 72px auto;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .taf-margin input{width:72px;min-width:0}
+.pause-min{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:13.5px;color:var(--muted)}
+#pauseMinRow input{width:64px;min-width:0;flex:0 0 64px}
+#pauseMinRow span{white-space:nowrap}
+#pauseSeg{margin-bottom:8px}
 .taf-dep{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:14px;line-height:1.35}
 .taf-dep b{font-size:17px;font-family:var(--f-mono)}
 .flow-bar{display:flex;align-items:center;gap:10px 14px;padding:8px 12px;border-top:1px solid var(--line);flex-wrap:wrap;font-size:13px}
@@ -560,9 +564,14 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
       <p class="hint">Mètres de dénivelé positif gravis par heure, en plus du temps de plat.</p>
     </div>
     <div class="field">
-      <label class="label" for="pause">Arrêts courts</label>
-      <div class="range"><input type="range" id="pause" min="0" max="40" step="1"><output id="pauseOut" class="mono"></output></div>
-      <p class="hint">Ravitos, photos, feux : ajouté au temps de roulage.</p>
+      <span class="label" id="pauseLbl">Arrêts courts</span>
+      <div class="seg2" role="group" aria-labelledby="pauseLbl" id="pauseSeg">
+        <button type="button" data-v="pct" aria-pressed="true">En %</button>
+        <button type="button" data-v="min" aria-pressed="false">En minutes</button>
+      </div>
+      <div class="range" id="pausePctRow"><input type="range" id="pause" min="0" max="40" step="1" aria-labelledby="pauseLbl"><output id="pauseOut" class="mono"></output></div>
+      <div class="pause-min" id="pauseMinRow" hidden><input type="number" id="pauseMin" min="0" max="120" step="1" inputmode="numeric" aria-label="Minutes d'arrêt"><span>min d'arrêt toutes les</span><input type="number" id="pauseEvery" min="0.5" max="12" step="0.5" inputmode="decimal" aria-label="Heures de pédalage"><span>h</span></div>
+      <p class="hint" id="pauseHint">Ravitos, photos, feux : ajouté au temps de roulage.</p>
     </div>
     </div>
     <div id="manualHome" hidden></div>
@@ -1377,9 +1386,15 @@ function wxAtL(L, tMs) {
 }
 
 /* ---------- simulation ---------- */
+// Arrêts courts : en % du temps de roulage, ou « X min d'arrêt toutes les Y h de pédalage » (converti en %).
+const pauseMinVal = () => clamp(Math.round(+$('#pauseMin').value || 0), 0, 120);
+const pauseEveryVal = () => clamp(Math.round((+$('#pauseEvery').value || 1) * 2) / 2, 0.5, 12);
+function pausePct() { return segVal('#pauseSeg') === 'min' ? pauseMinVal() / (pauseEveryVal() * 60) * 100 : +$('#pause').value || 0; }
+function pauseTxt(o) { const pct = Math.round(o.pause);
+  return o.pauseMode === 'min' ? `${o.pauseMin} min toutes les ${String(o.pauseEvery).replace('.', ',')} h, soit +${pct} %` : `+${pct} %`; }
 function readOpt() {
   return { date: $('#date').value, time: $('#time').value || '08:00', speed: +$('#speed').value, vam: +$('#vam').value,
-    pause: +$('#pause').value, windOn: $('#windOn').checked,
+    pause: pausePct(), pauseMode: segVal('#pauseSeg'), pauseMin: pauseMinVal(), pauseEvery: pauseEveryVal(), windOn: $('#windOn').checked,
     poiRadius: +$('#poiRadius').value || 500,
     // page Ultra : planification journalière (nombre de jours, découpage, heures de départ des jours suivants)
     planDays: clamp(Math.round(+$('#planDays').value || 1), 1, 30), planSplit: segVal('#planSplitSeg'),
@@ -2561,9 +2576,9 @@ function handleFile(file) {
 // Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
 const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : S.mode === 'taf' ? 'pmr-opt-taf' : 'pmr-opt');
 const MODE_DEF = {
-  ride: { time: '08:00', speed: 25, vam: 700, pause: 10, windOn: true, poiRadius: 500, laps: 1, lapPause: 10 },
-  taf: { time: '07:45', speed: 20, vam: 600, pause: 5, windOn: true, poiRadius: 500, tafBack: '17:30', tafRet: '' },
-  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
+  ride: { time: '08:00', speed: 25, vam: 700, pause: 10, pauseMode: 'pct', pauseMin: 6, pauseEvery: 1, windOn: true, poiRadius: 500, laps: 1, lapPause: 10 },
+  taf: { time: '07:45', speed: 20, vam: 600, pause: 5, pauseMode: 'pct', pauseMin: 3, pauseEvery: 1, windOn: true, poiRadius: 500, tafBack: '17:30', tafRet: '' },
+  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, pauseMode: 'pct', pauseMin: 15, pauseEvery: 1, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
@@ -2583,7 +2598,10 @@ function initInputs() {
   $('#tafPerDay').checked = !!def.tafPerDay; TAF.days = def.tafDays && typeof def.tafDays === 'object' ? def.tafDays : {};
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
   tafPerDayUI();
-  $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = def.pause;
+  $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = clamp(Math.round(+def.pause || 0), 0, 40);
+  setSeg('#pauseSeg', def.pauseMode === 'min' ? 'min' : 'pct');
+  $('#pauseMin').value = isFinite(+def.pauseMin) && def.pauseMin !== '' && def.pauseMin != null ? clamp(Math.round(+def.pauseMin), 0, 120) : 10;
+  $('#pauseEvery').value = isFinite(+def.pauseEvery) && +def.pauseEvery > 0 ? clamp(Math.round(+def.pauseEvery * 2) / 2, 0.5, 12) : 1;
   $('#windOn').checked = !!def.windOn;
   $('#laps').value = clamp(Math.round(+def.laps || 1), 1, 50);
   $('#lapPause').value = isFinite(+def.lapPause) && def.lapPause !== '' && def.lapPause != null ? clamp(Math.round(+def.lapPause), 0, 240) : 10;
@@ -2629,6 +2647,11 @@ function syncOutputs() {
   $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h';
   $('#vamOut').textContent = $('#vam').value + ' m/h';
   $('#pauseOut').textContent = '+' + $('#pause').value + ' %';
+  const pm = segVal('#pauseSeg') === 'min';
+  $('#pausePctRow').hidden = pm; $('#pauseMinRow').hidden = !pm;
+  $('#pauseHint').textContent = pm
+    ? `Ravitos, photos, feux : ${pauseMinVal()} min toutes les ${String(pauseEveryVal()).replace('.', ',')} h de pédalage, soit +${Math.round(pausePct())} % au temps de roulage.`
+    : 'Ravitos, photos, feux : ajouté au temps de roulage.';
 }
 let deb;
 function schedule() { syncOutputs(); clearTimeout(deb); deb = setTimeout(run, 250); }
@@ -3060,7 +3083,7 @@ function daySummaries() {
     const ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km);
     d.dist = d.b.km - d.a.km; d.dplus = up[ib] - up[ia];
     // temps de la journée : pédalage et arrêts courts (réglage « Arrêts courts », en % du pédalage)
-    const elapsedH = (d.b.t - d.a.t) / 3600e3, k = 1 + (+$('#pause').value || 0) / 100;
+    const elapsedH = (d.b.t - d.a.t) / 3600e3, k = 1 + pausePct() / 100;
     d.rideH = elapsedH / k; d.pauseH = elapsedH - d.rideH;
     // météo du jour à partir des points d'échantillonnage
     let tmin = Infinity, tmax = -Infinity, rain = 0, headKm = 0, cov = 0, prev = null;
@@ -3385,7 +3408,7 @@ function renderPlan() {
   const sum = f => days.reduce((s, d) => s + f(d), 0);
   $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n0(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td><td class="num">${durShort(sum(d => d.night ? (d.night.to - d.night.from) / 3600e3 : 0))}</td></tr>` : '';
   $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? 'Étapes de même temps de pédalage.' : 'Étapes de même distance.') : 'D\'une traite.';
-  $('#planNote').innerHTML = `Fin de journée estimée avec ta vitesse sur le plat (${n1(opt.speed)} km/h), ta VAM (${opt.vam} m/h) et tes arrêts courts (+${opt.pause} %)${opt.windOn ? ', vent compris' : ''} : réglages ci-dessus.`
+  $('#planNote').innerHTML = `Fin de journée estimée avec ta vitesse sur le plat (${n1(opt.speed)} km/h), ta VAM (${opt.vam} m/h) et tes arrêts courts (${pauseTxt(opt)})${opt.windOn ? ', vent compris' : ''} : réglages ci-dessus.`
     + (late ? ` <span class="late">⚠ ${late > 1 ? late + ' étapes finissent' : 'Une étape finit'} après l'heure de départ du lendemain : allonge le découpage, avance une heure de fin ou retarde un départ.</span>` : '');
   $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
   $('#planReset').hidden = !(custom && opt.planDays > 1 && (PLAN.times.some(Boolean) || PLAN.ends.some(Boolean)));
@@ -3673,6 +3696,8 @@ $('#lapPause').addEventListener('input', () => { if ($('#lapPause').value !== ''
 
 // réglages de la planification : relancent le calcul ; date et heure du jour 1 synchronisées avec celles de gauche
 $('#planDays').addEventListener('input', () => { if (+$('#planDays').value >= 1) schedule(); });
+$('#pauseSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; setSeg('#pauseSeg', b.dataset.v); schedule(); });
+for (const id of ['#pauseMin', '#pauseEvery']) $(id).addEventListener('input', () => { if (+$(id).value > 0 || ($(id).value === '0' && id === '#pauseMin')) schedule(); });
 $('#planSplitSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; setSeg('#planSplitSeg', b.dataset.v); schedule(); });
 $('#planCustomOn').addEventListener('change', schedule);
 // réinitialiser les heures personnalisées (départs comme le jour 1, fins au km de coupe)
