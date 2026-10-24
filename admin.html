@@ -100,8 +100,24 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .leaflet-tooltip.gtip,.leaflet-popup-content{font-family:'Archivo',system-ui,sans-serif;font-size:13px;line-height:1.4}
 .gtip b,.leaflet-popup-content b{font-size:14px}
 .gtip .m,.leaflet-popup-content .m{color:#56635A}
-.rlist td.nm{white-space:normal;min-width:160px}
-.rlist .acts2{display:flex;gap:4px;justify-content:flex-end}
+.rlist{table-layout:auto}
+.rlist td{white-space:normal;vertical-align:middle}
+.rlist td.nm{min-width:140px;overflow-wrap:anywhere}
+.rlist td.acc{overflow-wrap:anywhere;max-width:190px}
+.rlist td.num,.rlist td.dt{white-space:nowrap}
+.rlist .acts2{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:150px}
+@media (max-width:700px){
+  .rlist thead{display:none}
+  .rlist tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .rlist td{border:0;padding:0 2px;max-width:none}
+  .rlist td.nm{grid-column:1 / -1;font-weight:700;min-width:0}
+  .rlist td.acc{grid-column:1 / -1}
+  .rlist td.num{display:inline;text-align:left}
+  .rlist td.num:nth-of-type(3)::after{content:' km'} .rlist td.num:nth-of-type(4)::before{content:'D+ '} .rlist td.num:nth-of-type(4)::after{content:' m'}
+  .rlist td.dt,.rlist td:nth-of-type(6){color:var(--muted);font-size:.82rem}
+  .rlist td:last-child{grid-column:1 / -1}
+  .rlist .acts2{justify-content:flex-start;min-width:0;margin-top:4px}
+}
 .rlist .btn{padding:.25rem .6rem;font-size:.8rem}
 .rlist .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
 .rlist th.sort{cursor:pointer;user-select:none}
@@ -484,9 +500,9 @@ function rRender(){
     if (on) th.setAttribute('aria-sort', k === 'km-asc' ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort'); }
   $('rN').textContent = list.length;
   $('rBody').innerHTML = list.map(r => '<tr data-k="'+esc(r.user_id+'|'+r.id)+'"><td class="nm">'+esc(r.name || 'Parcours')+'</td>'
-    + '<td><span class="dot" style="background:'+G.col[r.user_id]+'"></span>'+esc(uName(r.user_id))+'</td>'
+    + '<td class="acc"><span class="dot" style="background:'+G.col[r.user_id]+'"></span>'+esc(uName(r.user_id))+'</td>'
     + '<td class="num">'+(r.km ? Math.round(r.km) : '')+'</td><td class="num">'+(r.dplus ? nf.format(Math.round(r.dplus)) : '')+'</td>'
-    + '<td>'+dFmt.format(new Date(r.created_at))+'</td><td>'+esc(r.wx ? wxLabel(r.wx) : '–')+'</td>'
+    + '<td class="dt">'+dFmt.format(new Date(r.created_at))+'</td><td>'+esc(r.wx ? wxLabel(r.wx) : '–')+'</td>'
     + '<td><div class="acts2"><button class="btn" data-r="see">Voir</button><button class="btn" data-r="dl">GPX</button><button class="btn bad" data-r="del">Supprimer</button></div></td></tr>').join('')
     || '<tr><td colspan="7" class="empty">Aucun parcours.</td></tr>';
 }
