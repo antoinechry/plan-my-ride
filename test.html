@@ -318,25 +318,10 @@ dialog.help .ft label{font-size:13px;color:var(--muted);display:flex;gap:6px;ali
 .theme-seg button+button{border-left:1px solid var(--line)}
 .theme-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .helpbtn{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%;font-weight:700}
-dialog.stats{border:1px solid var(--line);border-radius:12px;padding:0;max-width:780px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);background:var(--panel);color:var(--ink)}
-dialog.stats[open]{display:flex;flex-direction:column}
-dialog.stats::backdrop{background:rgba(0,0,0,.4)}
-dialog.stats .bd{padding:4px 20px 18px;overflow:auto;flex:1 1 auto;min-height:0;font-size:14px}
-dialog.stats .stats-scroll{overflow-x:auto}
-dialog.stats .stats-geo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:560px){dialog.stats .stats-geo{grid-template-columns:1fr}}
-dialog.stats table{width:100%;min-width:0;border-collapse:collapse;font-variant-numeric:tabular-nums}
-dialog.stats thead th{white-space:normal}
-dialog.stats th,dialog.stats td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
-dialog.stats th:first-child,dialog.stats td:first-child{text-align:left}
-dialog.stats thead th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
-dialog.stats tbody td{font-size:15px}
-dialog.stats h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px}
 .sday{display:grid;grid-template-columns:88px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:13px;padding:2px 0}
 .sday .b{height:10px;border-radius:3px;background:var(--accent);min-width:2px}
 .sday .b.z{background:var(--line)}
 .sday span:last-child{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
-dialog.stats .hint{color:var(--muted);font-size:12.5px;margin:10px 0 0}
 /* Accès réservé (depuis le 21/10/2026) : écran de connexion / création de compte avant l'app */
 .gate{display:none;min-height:100vh;min-height:100dvh;padding:24px 16px;place-items:center;background:var(--bg)}
 body.gated .gate{display:grid}
@@ -798,7 +783,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     </div>
   </main>
 </div>
-<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink" hidden>Accès privé</a><a href="#" class="priv adm" id="statsLink">Fréquentation</a><span class="priv adm"> · </span><a href="admin.html" class="priv adm">Admin</a><span class="priv adm"> · </span><a href="#" class="priv" id="pwLink">Mon mot de passe</a><span class="priv"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
+<footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink" hidden>Accès privé</a><a href="admin.html" class="priv adm">Admin</a><span class="priv adm"> · </span><a href="#" class="priv" id="pwLink">Mon mot de passe</a><span class="priv"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
 <dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
   <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
   <div class="bd">
@@ -827,10 +812,6 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <p class="note">Météo au choix (« Source météo ») : AROME de Météo-France par défaut, très fin sur la France (4 jours), MET Norway (9 jours) ou Open-Meteo (16 jours) ; au-delà, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
-</dialog>
-<dialog class="stats" id="statsDlg" aria-labelledby="statsTitle">
-  <div class="hd" style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 8px"><h2 id="statsTitle" style="margin:0;font-size:19px">Fréquentation de la version publique</h2><button type="button" class="btn small" id="statsX">Fermer</button></div>
-  <div class="bd" id="statsBody"><p class="hint">Chargement…</p></div>
 </dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
@@ -3743,61 +3724,6 @@ function track(event, extra) {
 }
 try { if (!sessionStorage.getItem('pmr-visit') && hasSbToken()) { setTimeout(() => { if (document.body.classList.contains('gated') || !ACC.row) return; sessionStorage.setItem('pmr-visit', '1'); track('visit'); }, 2500); } } catch (e) {}
 
-// Fenêtre « Fréquentation » (connecté) : visiteurs uniques, visites et GPX importés par période, puis jour par jour.
-async function openStats() {
-  const body = $('#statsBody'); body.innerHTML = '<p class="hint">Chargement…</p>'; $('#statsDlg').showModal();
-  try {
-    const sb = await sbIfLogged(); if (!sb) throw new Error('connexion expirée, reconnecte-toi');
-    const { data, error } = await sb.from('pmr_visits').select('at,visitor,event,device,mode,km,country,region,dept,city').order('at', { ascending: false }).limit(5000);
-    if (error) throw error;
-    const rows = (data || []).map(r => ({ ...r, t: new Date(r.at) }));
-    const now = new Date(), day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const since = d => new Date(day0.getTime() - d * 864e5);
-    const per = [['Aujourd\'hui', day0], ['7 jours', since(6)], ['30 jours', since(29)], ['Depuis le début', new Date(0)]];
-    const agg = list => ({ u: new Set(list.filter(r => r.event === 'visit').map(r => r.visitor)).size,
-      v: list.filter(r => r.event === 'visit').length, g: list.filter(r => r.event === 'gpx').length,
-      gu: new Set(list.filter(r => r.event === 'gpx').map(r => r.visitor)).size,
-      // visites par page (Sortie / Ultra) et par appareil (téléphone / ordinateur)
-      ride: list.filter(r => r.event === 'visit' && r.mode !== 'ultra').length, ultra: list.filter(r => r.event === 'visit' && r.mode === 'ultra').length,
-      mob: list.filter(r => r.event === 'visit' && r.device === 'mobile').length, pc: list.filter(r => r.event === 'visit' && r.device !== 'mobile').length });
-    let h = '<div class="stats-scroll"><table><thead><tr><th>Période</th><th>Visiteurs</th><th>Visites</th><th title="Visites arrivées sur la page Sortie">Sortie</th><th title="Visites arrivées sur la page Ultra">Ultra</th><th title="Visites depuis un téléphone ou une tablette">📱 Mobile</th><th title="Visites depuis un ordinateur">💻 PC</th><th>GPX</th></tr></thead><tbody>';
-    for (const [lbl, from] of per) { const a = agg(rows.filter(r => r.t >= from)); h += `<tr><td>${lbl}</td><td><b>${a.u}</b></td><td>${a.v}</td><td>${a.ride}</td><td>${a.ultra}</td><td>${a.mob}</td><td>${a.pc}</td><td>${a.g}</td></tr>`; }
-    h += '</tbody></table></div>';
-    // 14 derniers jours : visiteurs uniques par jour
-    const days = [];
-    for (let i = 13; i >= 0; i--) { const d0 = since(i), d1 = new Date(d0.getTime() + 864e5); days.push([d0, agg(rows.filter(r => r.t >= d0 && r.t < d1))]); }
-    const mx = Math.max(1, ...days.map(d => d[1].u));
-    const fmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-    h += '<h3>Visiteurs par jour (14 jours)</h3>';
-    for (const [d, a] of days.reverse()) h += `<div class="sday"><span>${fmt.format(d)}</span><span><div class="b${a.u ? '' : ' z'}" style="width:${a.u ? Math.max(3, a.u / mx * 100) : 100}%"></div></span><span>${a.u} · ${a.g} gpx</span></div>`;
-    const vis = rows.filter(r => r.event === 'visit'), mob = vis.filter(r => r.device === 'mobile').length, ult = vis.filter(r => r.mode === 'ultra').length;
-    const kms = rows.filter(r => r.event === 'gpx' && r.km != null).map(r => r.km).sort((a, b) => a - b);
-    h += '<h3>Détails</h3><p style="margin:0">'
-      + (vis.length ? `${Math.round(mob / vis.length * 100)} % des visites sur téléphone · ${Math.round(ult / vis.length * 100)} % arrivées sur la page Ultra` : 'Aucune visite pour l\'instant.')
-      + (kms.length ? ` · parcours importés : ${kms[Math.floor(kms.length / 2)]} km en médiane (de ${kms[0]} à ${kms[kms.length - 1]} km)` : '') + '.</p>';
-    // provenance (déduite de l'adresse IP à la connexion, approximative ; l'IP n'est pas gardée)
-    const vrows = rows.filter(r => r.event === 'visit'), located = vrows.filter(r => r.country);
-    const top = (list, key, label) => {
-      const m = new Map();
-      for (const r of list) { const k = key(r); if (!k) continue; const e = m.get(k) || { label: label(r), u: new Set(), v: 0 }; e.u.add(r.visitor); e.v++; m.set(k, e); }
-      return [...m.values()].sort((a, b) => b.u.size - a.u.size || b.v - a.v).slice(0, 12);
-    };
-    const FR_NAME = c => c === 'FR' ? '' : ` (${c})`;
-    const depts = top(located, r => r.country === 'FR' ? (r.dept || r.region) : r.country, r => r.country === 'FR' ? (r.dept ? `${r.dept}${r.region ? ' · ' + r.region : ''}` : (r.region || 'France')) : (r.country === 'CH' ? 'Suisse' : r.country === 'BE' ? 'Belgique' : r.country === 'DE' ? 'Allemagne' : r.country));
-    const cities = top(located, r => r.city ? r.city + '|' + r.country : null, r => r.city + FR_NAME(r.country));
-    h += '<h3>Provenance des visites</h3>';
-    if (!located.length) h += '<p class="hint" style="margin:0">Pas encore de visite localisée (la localisation est enregistrée depuis le 13/10/2026).</p>';
-    else {
-      const tbl = (list, head) => `<table><thead><tr><th>${head}</th><th>Visiteurs</th><th>Visites</th></tr></thead><tbody>${list.map(e => `<tr><td>${escH(e.label)}</td><td><b>${e.u.size}</b></td><td>${e.v}</td></tr>`).join('')}</tbody></table>`;
-      h += `<div class="stats-geo"><div>${tbl(depts, 'Département / pays')}</div><div>${tbl(cities, 'Ville')}</div></div>`;
-      h += `<p class="hint">${located.length} visite${located.length > 1 ? 's' : ''} localisée${located.length > 1 ? 's' : ''} sur ${vrows.length}. Localisation approximative, déduite de l'adresse IP (souvent la ville de l'opérateur sur mobile) ; l'adresse IP n'est pas enregistrée.</p>`;
-    }
-    h += '<p class="hint">Visiteur = un navigateur (téléphone ou ordinateur). Visite = une ouverture de la page. Tes propres passages, connecté, ne sont pas comptés.</p>';
-    body.innerHTML = h;
-  } catch (err) { body.innerHTML = `<p class="hint">Impossible de lire les statistiques : ${String(err.message || err)}</p>`; }
-}
-$('#statsLink').addEventListener('click', e => { e.preventDefault(); openStats(); });
-$('#statsX').addEventListener('click', () => $('#statsDlg').close());
 
 // Mode d'emploi : bouton « ? » ; ouvert tout seul à l'arrivée d'un visiteur (mode public) tant qu'il n'a pas coché « Ne plus afficher ».
 const HELP_KEY = 'pmr-help-seen';
