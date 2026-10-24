@@ -164,6 +164,9 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .lib-rename input{flex:1;min-width:0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .stat{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+@media (max-width:560px){.stats:not(.duo-stats)>.stat.span{grid-column:1/-1}}
+#tafTimes>.field+.field{margin-top:12px}
+@media (pointer:coarse){input[type=checkbox]{width:22px;height:22px;flex:0 0 22px}#libRen,#libDel{display:inline-block;padding:10px 6px}}
 .stat .v{font-family:var(--f-display);font-size:23px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
 .stat .s{font-size:13px;color:var(--muted)}
 .stat .v small{font-size:15px;font-weight:500;color:var(--muted)}
@@ -846,7 +849,7 @@ const RAD = Math.PI / 180;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const hm = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const dayFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-const n0 = x => Math.round(x).toLocaleString('fr-FR');
+const n0 = x => (Math.round(x) + 0).toLocaleString('fr-FR'); // + 0 : jamais « -0 »
 const n1 = x => (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
@@ -1706,6 +1709,8 @@ function renderSummary(opt) {
   $('#stats').innerHTML = tiles.map(([l, v, s]) => l === 'Vent' && rs
     ? `<div class="stat wind" title="Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force"><canvas id="roseAll"></canvas><div class="wtxt"><span class="label">Vent ressenti</span><span class="s"><b>${Math.round(rs.face * 100)} %</b> de face</span><span class="s"><b>${Math.round(rs.cross * 100)} %</b> de travers</span><span class="s"><b>${Math.round(rs.tail * 100)} %</b> de dos</span>${rs.calm > 0.02 ? `<span class="s">${Math.round(rs.calm * 100)} % calme</span>` : ''}${st.hasGust ? `<span class="s">rafales ${n0(st.gust)} km/h</span>` : ''}</div></div>`
     : `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
+  { const small = [...$('#stats').children].filter(e => !e.classList.contains('wind')); // mobile : dernière tuile seule sur sa ligne = pleine largeur
+    if (small.length % 2) small[small.length - 1].classList.add('span'); }
   S.rose = rs; if (rs) roseCanvas($('#roseAll'), rs, 172, 96);
   // Vélotaf : résumé coupé en deux (Aller | Retour), une rose par trajet
   $('#stats').classList.toggle('duo-stats', !!tafSum); S.roses = null;
@@ -2525,7 +2530,7 @@ function renderOpts(opts, opt) {
     const q = ok && valid.length ? (hi - lo < 1e-6 ? 1 : clamp(1 - (o.sc - lo) / (hi - lo), 0, 1)) : 0;
     return `<button type="button" class="opt${o === mine ? ' sel' : ''}" data-time="${o.time}">
       <span class="h">${hLbl(o.time)}</span>
-      <span class="d">${pills} Arrivée <b>${whenTxt(o.r.end, o.r.start)}</b> · pluie <b>${n1(st.rain)} mm</b> · face <b>${Math.round(st.headKm / cov * 100)} %</b> · ${ok ? `${n0(st.amin)} à ${n0(st.amax)} °C ressentis` : 'prévision incomplète'}${st.nightH > 0.2 ? ` · ${durTxt(st.nightH)} de nuit` : ''}</span>
+      <span class="d">${pills} Arrivée <b>${whenTxt(o.r.end, o.r.start)}</b> · pluie <b>${n1(st.rain)} mm</b> · face <b>${Math.round(st.headKm / cov * 100)} %</b> · ${ok ? `${n0(st.amin)} à ${n0(st.amax)} °C ressentis` : 'prévision incomplète'}${st.nightH > 0.2 ? ` · ${durTxt(st.nightH).replace(/ /g, '\u00a0')}\u00a0de\u00a0nuit` : ''}</span>
       <span class="bar" aria-hidden="true"><span style="width:${Math.round(8 + q * 92)}%;opacity:${ok ? 1 : .3}"></span></span>
     </button>`;
   };
@@ -4098,7 +4103,7 @@ $('#revBtn').addEventListener('click', () => {
 $('#csv').addEventListener('click', exportCsv);
 // Feuille de route : on peut masquer toutes les lignes (choix mémorisé). L'export CSV reste complet.
 function applyRows() { $('#rowsWrap').hidden = !$('#rowsOn').checked; try { localStorage.setItem('pmr-rows', $('#rowsOn').checked ? '1' : '0'); } catch (e) {} }
-try { if (localStorage.getItem('pmr-rows') === '0') $('#rowsOn').checked = false; } catch (e) {}
+try { const r = localStorage.getItem('pmr-rows'); if (r === '0' || (r == null && matchMedia('(max-width:700px)').matches)) $('#rowsOn').checked = false; } catch (e) {} // repliée par défaut sur téléphone
 $('#rowsOn').addEventListener('change', applyRows);
 // liste des lieux de la page Ultra : repliable (les catégories et les marqueurs de la carte restent), choix mémorisé
 function applyPoiList() { $('#poiListWrap').hidden = !$('#poiListOn').checked; try { localStorage.setItem('pmr-poi-list', $('#poiListOn').checked ? '1' : '0'); } catch (e) {} }
