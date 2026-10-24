@@ -409,10 +409,12 @@ async function gLoad(){
   sel.innerHTML = '<option value="">Tous les comptes</option>' + ids.map(id => { const u = S.users.find(x => x.user_id === id); return '<option value="'+id+'">'+esc(u ? name(u) : id.slice(0, 8))+' ('+G.routes.filter(r => r.user_id === id).length+')</option>'; }).join('');
   gDraw();
 }
+function gOff(){ if (!G.cur) return; G.cur.hit.closeTooltip(); G.cur.line.setStyle({ weight: 4, opacity: .85 }); G.cur = null; }
 function gDraw(){
   if (!window.L){ $('gMsg').textContent = 'Carte indisponible (Leaflet non chargé).'; return; }
   if (!G.map){
     G.map = L.map('gmap', { zoomControl: true }).setView([48.3, 7.5], 8);
+    G.map.on('mouseout zoomstart movestart', gOff); // souris sortie de la carte, zoom ou déplacement : on referme
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(G.map);
   }
   for (const l of G.layers) l.remove(); G.layers = [];
@@ -424,11 +426,12 @@ function gDraw(){
     ll.push([pts[pts.length - 1][0], pts[pts.length - 1][1]]);
     const col = G.col[r.user_id];
     // trace large invisible par-dessus pour attraper le doigt ou la souris, trace fine visible dessous
-    const line = L.polyline(ll, { color: col, weight: 4, opacity: .85 }).addTo(G.map);
+    const line = L.polyline(ll, { color: col, weight: 4, opacity: .85, interactive: false }).addTo(G.map);
     const hit = L.polyline(ll, { color: col, weight: 18, opacity: 0 }).addTo(G.map);
     hit.bindTooltip(gInfo(r), { sticky: true, className: 'gtip', direction: 'top', offset: [0, -8] });
-    hit.on('mouseover', () => { line.setStyle({ weight: 7, opacity: 1 }); line.bringToFront(); hit.bringToFront(); });
-    hit.on('mouseout', () => line.setStyle({ weight: 4, opacity: .85 }));
+    // une seule infobulle à la fois ; pas de bringToFront ici (déplacer l'élément sous la souris fait perdre le mouseout)
+    hit.on('mouseover', () => { if (G.cur && G.cur.hit !== hit) gOff(); G.cur = { hit, line }; line.setStyle({ weight: 7, opacity: 1 }); });
+    hit.on('mouseout', () => { if (G.cur && G.cur.hit === hit) gOff(); });
     hit.on('click', e => {
       const box = document.createElement('div'); box.innerHTML = gInfo(r) + '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-g="dl">Télécharger le GPX</button><button class="btn" data-g="fit">Centrer</button></div>';
       box.querySelector('[data-g="dl"]').onclick = () => gpxDownload(r);
