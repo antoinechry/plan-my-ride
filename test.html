@@ -385,13 +385,16 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   .week-table{min-width:0}
   .week-table thead{display:none}
   .week-table,.week-table tbody{display:block;width:100%}
-  .week-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-bottom:1px solid var(--line)}
-  .week-table td{border-bottom:0;padding:6px 10px;white-space:normal;min-width:0}
-  .wk .t b{font-size:13px}
-  .week-table td:first-child,.week-table td.wkend-msg{grid-column:1 / -1;padding-top:10px}
-  .week-table td.wkend-msg{padding:2px 10px 10px}
-  .week-table td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+  .week-table tbody tr{display:block;border-bottom:1px solid var(--line);padding:4px 0 8px}
+  .week-table td{display:block;border-bottom:0;padding:4px 14px;white-space:normal;min-width:0}
+  .week-table td:first-child{padding-top:10px;font-size:15px}
+  .week-table td.wkend-msg{padding:2px 14px 6px;font-size:14px;line-height:1.5}
+  .week-table td[data-k]{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:start;gap:10px}
+  .week-table td[data-k]::before{content:attr(data-k) "\A" attr(data-h);white-space:pre;font-size:12.5px;line-height:1.35;color:var(--muted);font-family:var(--f-mono);padding-top:1px}
+  .week-table td[data-k] .wk-h{display:none}
   .wk{align-items:flex-start}
+  .wk .t b{font-size:14px;font-weight:600}
+  .wk .t span{font-size:12.5px}
 }
 .vdot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--line)}
 .vdot.l0{background:#2f9e44}.vdot.l1{background:#e8a200}.vdot.l2{background:#d6382e}.vdot.lx{background:var(--line)}
@@ -3747,9 +3750,9 @@ function renderWeek() {
   }
   $('#weekRows').innerHTML = rows.map(x => x.wkend
     ? `<tr class="wkend"><td><b>${x.wkend.length > 1 ? 'Week-end' : fmtD.format(new Date(x.wkend[0].date + 'T12:00'))}</b>${x.wkend.length > 1 ? `<br><span class="hint">${x.wkend.map(w => fmtW.format(new Date(w.date + 'T12:00'))).join(' et ')}</span>` : ''}</td>
-      <td colspan="2" class="wkend-msg">Une sortie entre ami·es ? Planifie-la avec nous → <a href="#" data-ride="${x.wkend[0].date}">onglet Sortie</a>
-      <br><span class="wkend-2">Bientôt les vacances ? Une envie d'ultra ? Trouve ton ultra sur <a href="https://ultraride.eu" target="_blank" rel="noopener">ultraride.eu</a> et planifie-le ici → <a href="#ultra">onglet Ultra</a></span></td></tr>`
-    : `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${x.arr ? 'départ ' + x.go : x.go}">${opt.tafPerDay || x.arr ? `<span class="wk-h">${x.arr ? `départ ${x.go} → ${x.arr}` : x.go}</span>` : ''}${cell(x.trips[0])}</td><td data-l="Retour ${x.back}">${opt.tafPerDay ? `<span class="wk-h">${x.back}</span>` : ''}${cell(x.trips[1])}</td></tr>`).join('');
+      <td colspan="2" class="wkend-msg">Une sortie entre ami·es ? <a href="#" data-ride="${x.wkend[0].date}">La planifier dans Sortie</a>
+      <br><span class="wkend-2">Une envie d'ultra ? Trouve-le sur <a href="https://ultraride.eu" target="_blank" rel="noopener">ultraride.eu</a>, puis <a href="#ultra">planifie-le dans Ultra</a>.</span></td></tr>`
+    : `<tr data-date="${x.date}" class="${x.date === sel ? 'sel' : ''}"><td><b>${fmtD.format(new Date(x.date + 'T12:00'))}</b></td><td data-l="Aller ${x.arr ? 'départ ' + x.go : x.go}" data-k="Aller" data-h="${x.go}">${opt.tafPerDay || x.arr ? `<span class="wk-h">${x.arr ? `départ ${x.go} → ${x.arr}` : x.go}</span>` : ''}${cell(x.trips[0])}</td><td data-l="Retour ${x.back}" data-k="Retour" data-h="${x.back}">${opt.tafPerDay ? `<span class="wk-h">${x.back}</span>` : ''}${cell(x.trips[1])}</td></tr>`).join('');
 }
 // lien du week-end : page Sortie, au jour du week-end (lu par initInputs)
 $('#weekRows').addEventListener('click', e => {
