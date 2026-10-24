@@ -448,6 +448,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .vlines li.rain svg{stroke:var(--rain)}
 .vlines b{font-weight:700}
 .chips,.tabbar,.sheet-head,.sheet-bg,#mapOptsBtn{display:none}
+.tabbar .rail-mode,.tabbar .rail-sep{display:none}
 /* ---- téléphone : écran façon application (essai du 24/10/2026) ---- */
 @media (max-width:700px){
   body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -563,6 +564,9 @@ body:not(.admin) .me-btns .adm{display:none}
   .tabbar{display:flex;flex-direction:column;align-items:stretch;gap:6px;position:fixed;left:0;top:0;bottom:0;width:96px;z-index:900;background:var(--panel);border-right:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 92px) 8px 20px}
   .tabbar a,.tabbar button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:var(--muted);text-decoration:none;font:600 11.5px/1.2 var(--f-body);cursor:pointer}
   .tabbar a,.tabbar button{flex:none;min-height:66px}
+  .tabbar .rail-mode{display:flex}
+  .tabbar .rail-sep{display:block;height:1px;background:var(--line);margin:8px 10px}
+  #tabMode,header.top .modes{display:none}
   .tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .tabbar .ic{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .15s}
   .tabbar [aria-current="page"] .ic{background:color-mix(in srgb,var(--accent) 16%,transparent)}
@@ -686,7 +690,7 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
     <div class="me-btns"><button type="button" class="btn small" id="meHelp">Mode d'emploi</button></div></div>
 </section>
-<nav class="tabbar" aria-label="Navigation"><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
+<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
@@ -2859,7 +2863,7 @@ function applyModeUI() {
   if (ultra) { $('#planStartSlot').append($('#startRow')); $('#planSpeedSlot').append($('#manualSettings'), $('#windField')); }
   else { $('#startHome').before($('#startRow')); $('#manualHome').before($('#manualSettings')); $('#windHome').before($('#windField')); }
   document.body.dataset.mode = S.mode; try { tabModeRender(); } catch (e) {}
-  for (const a of document.querySelectorAll('.modes a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
+  for (const a of document.querySelectorAll('.modes a, .tabbar a[data-mode]')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   const taf = S.mode === 'taf';
   $('#ultraSettings').hidden = !ultra; $('#lapField').hidden = S.mode !== 'ride'; $('#tafField').hidden = !taf; $('#tafTimes').hidden = !taf;
   // Vélotaf : vitesse moyenne seulement (pas de VAM, d'arrêts courts ni de calage)
@@ -4540,7 +4544,7 @@ $('#outTime').addEventListener('change', () => { if ($('#outTime').value) outRun
 $('#outPage').addEventListener('click', e => { const b = e.target.closest('button[data-go], button[data-ultra]'); if (b) outGo(b.dataset.go || b.dataset.ultra, b.dataset.ultra ? 'ultra' : 'ride'); });
 
 $('#libPageX').addEventListener('click', lpClose);
-for (const a of document.querySelectorAll('.modes a')) a.addEventListener('click', pageClose);
+for (const a of document.querySelectorAll('.modes a, .tabbar a[data-mode]')) a.addEventListener('click', pageClose);
 $('#lpQ').addEventListener('input', () => { LP.open = LP.ren = ''; lpRender(); });
 $('#lpSort').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.sort = b.dataset.v; setSeg('#lpSort', LP.sort); lpRender(); });
 $('#lpList').addEventListener('click', async e => {
