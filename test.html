@@ -139,8 +139,10 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .status.err{border-color:var(--head);color:var(--head)}
 .status.load{color:var(--muted)}
 
-.verdict{font-family:var(--f-display);font-size:21px;font-weight:500;line-height:1.3;max-width:62ch}
+.verdict{font-family:var(--f-display);font-size:24px;font-weight:700;line-height:1.3;max-width:62ch}
 .verdict b{font-weight:700}
+.verdict-more{margin:8px 0 0;font-size:15.5px;line-height:1.55;color:var(--muted);max-width:75ch}
+.verdict-more b{color:var(--ink);font-weight:600}
 .taf-warn{margin:-8px 0 0;max-width:70ch}
 .test-band{background:#fff3c4;color:#5a4300;border-bottom:1px solid #e9d27a;padding:8px 16px;font-size:14px;text-align:center}
 .test-band a{color:#1f4f8f;margin-left:6px}
@@ -632,6 +634,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
     <div id="results" hidden style="display:flex;flex-direction:column;gap:20px;min-width:0">
     <section aria-label="Résumé">
       <p class="verdict" id="verdict">Calcul en cours…</p>
+      <p class="verdict-more" id="verdictMore" hidden></p>
     </section>
     <div class="stats" id="stats"></div>
     <p class="hint taf-warn" id="tafWarn" hidden>Heure de départ conseillée, calculée selon la distance et votre vitesse. Prévoyez une marge selon les conditions de circulation et la météo.</p>
@@ -1722,15 +1725,53 @@ function renderSummary(opt) {
   }
 
 
-  let txt;
+  // Résumé : une phrase titre (synthèse) puis un texte plus développé (horaires, pluie, vent, températures, soleil / nuit)
+  let txt, more = '';
   const dep = `Départ ${dayFmt.format(new Date(tl.start))} à ${hm.format(new Date(tl.start))}`;
-  if (!has) txt = `${dep}, arrivée estimée ${whenTxt(tl.end, tl.start)}.`;
+  if (!has) { txt = `${dep}, arrivée estimée ${whenTxt(tl.end, tl.start)}`; more = 'Pas encore de prévision météo pour cette date : horaires calculés sans le vent.'; }
   else {
-    const rain = st.rain < 0.3 ? '<b>au sec</b>' : st.rain < 3 ? `avec <b>quelques gouttes</b> (${n1(st.rain)} mm)` : `<b>sous la pluie</b> (${n1(st.rain)} mm)`;
-    const avgHead = st.headSum / Math.max(covered, 0.1);
-    const wind = pct(st.headKm) >= 50 ? `<b>vent de face</b> sur ${pct(st.headKm)} % du parcours` : pct(st.tailKm) >= 50 ? `<b>poussé par le vent</b> sur ${pct(st.tailKm)} % du parcours` : Math.abs(avgHead) < 4 ? 'un vent <b>peu gênant</b>' : avgHead > 0 ? 'un vent <b>plutôt défavorable</b>' : 'un vent <b>plutôt favorable</b>';
-    const temp = st.amin < 3 ? `, <b>froid</b> au plus bas (${n0(st.amin)} °C ressentis)` : st.amax > 30 ? `, <b>chaleur</b> jusqu'à ${n0(st.amax)} °C` : `, ${n0(st.tmin)} à ${n0(st.tmax)} °C`;
-    txt = `${dep} : sortie ${rain}, ${wind}${temp}. Arrivée vers ${whenTxt(tl.end, tl.start)}.`;
+    const sunPct = st.rideH > 0 ? st.sunH / st.rideH * 100 : 0, avgHead = st.headSum / Math.max(covered, 0.1);
+    const headP = pct(st.headKm), tailP = pct(st.tailKm), headwind = headP >= 50 || avgHead >= 8, tailwind = !headwind && (tailP >= 50 || avgHead <= -8);
+    // titre : les points gênants d'abord, sinon les bons côtés
+    const neg = [], pos = [];
+    if (st.rain >= 10) neg.push('grosse pluie'); else if (st.rain >= 3) neg.push('pluie'); else if (st.rain >= 0.3) neg.push('quelques gouttes');
+    if (st.amin < 3) neg.push('froid'); else if (st.amin < 8) neg.push('fraîcheur'); else if (st.amax > 34) neg.push('canicule'); else if (st.amax > 30) neg.push('chaleur');
+    if (headwind) neg.push('vent de face');
+    if (st.hasGust && st.gust >= 50) neg.push(`rafales à ${n0(st.gust)} km/h`);
+    if (tailwind) pos.push('vent dans le dos');
+    if (sunPct >= 60) pos.push('soleil');
+    const list = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1];
+    const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+    const dry = st.rain < 0.3;
+    const posA = pos.map(x => x === 'soleil' ? 'ensoleillé' : x), posN = pos.map(x => x === 'soleil' ? 'du soleil' : x);
+    if (!neg.length) txt = `Belles conditions : ${list(['au sec', ...posA])}`;
+    else if (dry) txt = `Au sec, mais ${list(neg)}` + (posN.length ? `, avec ${list(posN)}` : '');
+    else txt = cap(list(neg)) + (posN.length ? `, mais ${list(posN)}` : '');
+    // détail : où et quand tombe la pluie, où souffle le vent de face (moitié du parcours)
+    let w0 = null, w1 = null, k0 = 0, k1 = 0, hA = 0, hB = 0, dA = 0, dB = 0;
+    for (let i = 1; i < P.n; i++) {
+      const dk = P.d[i] - P.d[i - 1]; if (dk <= 0) continue;
+      const t = tl.times[i], w = wxAt(sIdx(P.d[i]), t); if (!w) continue;
+      if (w.pr >= 0.2) { if (w0 == null) { w0 = t; k0 = P.d[i]; } w1 = t; k1 = P.d[i]; }
+      const head = w.ws * Math.cos((w.wd - P.b[i]) * RAD) > 5 ? dk : 0;
+      if (P.d[i] <= P.total / 2) { hA += head; dA += dk; } else { hB += head; dB += dk; }
+    }
+    const S1 = [], hh = t => hm.format(new Date(t)), deg = x => n0(Math.round(x) + 0), nb = x => x.replace(/ /g, '\u00a0'); // pas de « -0 », durées insécables
+    S1.push(`${dep}, arrivée vers <b>${whenTxt(tl.end, tl.start)}</b>, soit ${nb(durTxt(elapsed))} au total.`);
+    if (dry) S1.push(`Pas de pluie attendue${isFinite(st.prob) && st.prob > 0 ? ` (risque au plus ${n0(st.prob)} %)` : ''}.`);
+    else S1.push(`<b>${n1(st.rain)} mm</b> de pluie prévus${st.wetH > 0.05 ? `, soit ${nb(durTxt(st.wetH))} sous la pluie` : ''}`
+      + (w0 != null && w1 - w0 > 15 * 60e3 ? (tl.end - w1 < 10 * 60e3 ? `, de ${hh(w0)} jusqu'à l'arrivée (à partir du km ${n0(k0)})` : `, surtout entre ${hh(w0)} et ${hh(w1)} (km ${n0(k0)} à ${n0(k1)})`) : w0 != null ? `, vers ${hh(w0)} (km ${n0(k0)})` : '')
+      + (isFinite(st.prob) && st.prob > 0 ? `, risque jusqu'à ${n0(st.prob)} %` : '') + '.');
+    const fa = dA > 0 ? hA / dA : 0, fb = dB > 0 ? hB / dB : 0;
+    const where = headP >= 15 ? (fb - fa > 0.2 ? ', surtout en fin de parcours' : fa - fb > 0.2 ? ', surtout en début de parcours' : '') : '';
+    S1.push(`Vent de face sur <b>${headP} %</b> du parcours${where}, de dos sur ${tailP} %` + (st.hasGust ? `, rafales jusqu'à ${n0(st.gust)} km/h` : '')
+      + (Math.abs(avgHead) < 4 ? ' : peu d\'effet sur ta vitesse.' : avgHead > 0 ? ' : il te ralentira.' : ' : il t\'aidera.'));
+    S1.push((Math.round(st.tmin) === Math.round(st.tmax) ? `Température autour de ${deg(st.tmin)} °C` : `Températures de ${deg(st.tmin)} à ${deg(st.tmax)} °C`)
+      + (Math.round(st.amin) === Math.round(st.tmin) && Math.round(st.amax) === Math.round(st.tmax) ? '' : `, ressenti de ${deg(st.amin)} à ${deg(st.amax)} °C`)
+      + (st.amin < 3 ? ' : gants, couvre-chaussures et coupe-vent conseillés.' : st.amin < 8 ? ' : prévoir manchettes et coupe-vent.' : st.amax > 30 ? ' : pense à boire souvent.' : '.'));
+    const sky = sunPct < 5 ? 'Ciel couvert' : sunPct >= 95 ? 'Grand soleil' : `Soleil ${n0(sunPct)} % du temps en selle`;
+    S1.push(st.nightH > 0.1 ? `${sky}, et ${nb(durTxt(st.nightH))} de nuit : éclairage indispensable.` : `${sky}${sunPct < 5 || sunPct >= 95 ? ' tout du long' : ''}.`);
+    more = S1.join(' ');
   }
   if (tafSum) { // Vélotaf : une phrase par trajet
     const vs = tafSum.map(d => tripVerdict(d.wx));
@@ -1738,6 +1779,7 @@ function renderSummary(opt) {
     txt = `${dayFmt.format(new Date(tl.start))} : <b>aller</b> à ${hm.format(new Date(tafSum[0].a.t))}${arrT ? ` pour arriver à ${arrT}` : ''}, ${vs[0].txt}${tafSum[0].wx ? ` (${n0(tafSum[0].wx.tmin)} °C ressentis)` : ''} ; <b>retour</b> à ${hm.format(new Date(tafSum[1].a.t))}, ${vs[1].txt}${tafSum[1].wx ? ` (${n0(tafSum[1].wx.tmin)} °C ressentis)` : ''}.`;
   }
   $('#verdict').innerHTML = txt;
+  $('#verdictMore').innerHTML = tafSum ? '' : more; $('#verdictMore').hidden = !!tafSum || !more;
   $('#tafWarn').hidden = !tafSum; // Vélotaf : avertissement sous les blocs Aller / Retour
   $('#verdict').parentElement.hidden = !!tafSum; // Vélotaf : pas de phrase de résumé (déjà dans les blocs)
 }
@@ -2174,6 +2216,7 @@ async function exportImage() {
     const ultra = S.mode === 'ultra';
     const sub = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${durTxt((tl.end - tl.start) / 3600e3)} ${ultra ? 'au total' : 'de sortie'}`; // départ et arrivée sont dans la phrase de résumé
     const verdictLines = wrapText(meas, $('#verdict').innerText.trim(), MW);
+    meas.font = `14px ${body}`; const moreLines = $('#verdictMore').hidden ? [] : wrapText(meas, $('#verdictMore').innerText.trim(), MW); meas.font = `500 17px ${body}`;
     // page Ultra : jour par jour (2 lignes par jour)
     const days = ultra ? daySummaries() : [];
     const dayLines = days.map((d, k) => ({
@@ -2183,7 +2226,7 @@ async function exportImage() {
         + (d.night ? ` · nuit au km ${n0(d.b.km)}, ${hm.format(new Date(d.night.from))} → ${hm.format(new Date(d.night.to))}` : ''),
     }));
     const daysH = days.length > 1 ? 16 + 28 + dayLines.length * 46 : 0;
-    const headH = 34 + 24 + verdictLines.length * 23 + 14, legH = 40, keysH = 26, footH = 30;
+    const headH = 34 + 24 + verdictLines.length * 23 + (moreLines.length ? 6 + moreLines.length * 19 : 0) + 14, legH = 40, keysH = 26, footH = 30;
     const H = pad + headH + MH + legH + CH + keysH + daysH + footH + pad;
     const out = document.createElement('canvas'); out.width = W * s; out.height = H * s;
     const c = out.getContext('2d'); c.scale(s, s);
@@ -2191,7 +2234,8 @@ async function exportImage() {
     let y = pad;
     c.fillStyle = cssVar('--ink'); c.font = `700 28px ${disp}`; c.fillText(S.name || 'Ma sortie', pad, y + 26); y += 34;
     c.fillStyle = cssVar('--muted'); c.font = `500 15px ${body}`; c.fillText(sub, pad, y + 16); y += 24;
-    c.fillStyle = cssVar('--ink'); c.font = `500 17px ${body}`; for (const l of verdictLines) { c.fillText(l, pad, y + 17); y += 23; }
+    c.fillStyle = cssVar('--ink'); c.font = `700 17px ${body}`; for (const l of verdictLines) { c.fillText(l, pad, y + 17); y += 23; }
+    if (moreLines.length) { y += 6; c.fillStyle = cssVar('--muted'); c.font = `14px ${body}`; for (const l of moreLines) { c.fillText(l, pad, y + 14); y += 19; } }
     y += 14;
     const missing = await drawMapTo(c, pad, y, MW, MH); y += MH;
     // légende sous la carte
