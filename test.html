@@ -556,6 +556,53 @@ body.lib-open{overflow:hidden}
 .me-sel{width:100%;min-height:46px;margin-top:8px;font-size:16px}
 .me-theme button{min-height:44px}
 body:not(.admin) .me-btns .adm{display:none}
+
+/* ---- ordinateur et tablette : rail à gauche, réglages en tiroir, verdict et carte côte à côte (essai du 24/10/2026) ---- */
+@media (min-width:701px){
+  body{padding-left:calc(96px + 24px);padding-right:24px}
+  .tabbar{display:flex;flex-direction:column;align-items:stretch;gap:6px;position:fixed;left:0;top:0;bottom:0;width:96px;z-index:900;background:var(--panel);border-right:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 92px) 8px 20px}
+  .tabbar a,.tabbar button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:var(--muted);text-decoration:none;font:600 11.5px/1.2 var(--f-body);cursor:pointer}
+  .tabbar a,.tabbar button{flex:none;min-height:66px}
+  .tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar .ic{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .tabbar [aria-current="page"] .ic{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  .tabbar [aria-current="page"]{color:var(--accent)}
+  header.top .theme-seg{display:none}
+  .app{grid-template-columns:minmax(0,1fr)}
+  aside.settings{position:fixed;left:96px;top:0;bottom:0;width:min(400px,calc(100vw - 96px));max-height:none;overflow:auto;overscroll-behavior:contain;z-index:1000;border-radius:0 16px 16px 0;border-left:0;padding:0 22px 22px;transform:translateX(-110%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s;box-shadow:8px 0 30px rgba(0,0,0,.16)}
+  body.sheet-open aside.settings{transform:none;visibility:visible;transition:transform .25s ease}
+  .sheet-head{display:flex;position:sticky;top:0;z-index:2;background:var(--panel);align-items:center;justify-content:space-between;padding:16px 0 10px;margin-bottom:-6px}
+  .sheet-head{padding:20px 0 12px}
+  .sheet-head h2{margin:0;font-size:19px}
+  body.sheet-open .sheet-bg{display:block;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.38)}
+  body.sheet-open .sheet-bg{left:96px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:600 14px var(--f-body);cursor:pointer;max-width:70vw}
+  .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chip svg{flex:0 0 16px;width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .chip{min-height:44px;padding:0 16px;max-width:none}
+  .libpage{left:96px}
+  #libPageX,.pg-x{display:inline-flex}
+}
+@media (min-width:701px) and (prefers-reduced-motion:reduce){aside.settings{transition:none}}
+/* tablette : même ordre que le téléphone (pastilles, verdict, carte, tuiles) */
+@media (min-width:701px) and (max-width:1099px){
+  body:not([data-mode="taf"]) #results>*{order:5}
+  body:not([data-mode="taf"]) #results>#chips{order:0}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{order:1}
+  body:not([data-mode="taf"]) #results>#mapCard{order:2}
+  body:not([data-mode="taf"]) #results>#stats{order:3}
+}
+/* grand écran : verdict à gauche, carte à droite (pages Sortie et Ultra) */
+@media (min-width:1100px){
+  body:not([data-mode="taf"]) #results{display:grid!important;grid-template-columns:minmax(360px,500px) minmax(0,1fr);align-items:start}
+  body:not([data-mode="taf"]) #results>*{grid-column:1/-1}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{grid-column:1;grid-row:2}
+  body:not([data-mode="taf"]) #results>#mapCard{grid-column:2;grid-row:2}
+  body:not([data-mode="taf"]) #results>#chips{grid-row:1}
+  body:not([data-mode="taf"]) .verdict{font-size:48px;line-height:1.02;letter-spacing:-.02em}
+  body:not([data-mode="taf"]) #map{height:520px}
+}
 </style>
 </head>
 <body>
@@ -4279,7 +4326,6 @@ $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.ta
 // Téléphone (essai du 24/10/2026) : réglages dans un panneau qui monte du bas, pastilles de réglage rapide, onglets en bas.
 const isPhone = () => matchMedia('(max-width:700px)').matches;
 function sheetOpen(sel) {
-  if (!isPhone()) { const el = sel && $(sel); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   document.body.classList.add('sheet-open');
   const el = sel && $(sel); if (el && $('#settings').contains(el)) setTimeout(() => el.scrollIntoView({ block: 'center' }), 60); else $('#settings').scrollTop = 0;
 }
