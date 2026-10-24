@@ -481,6 +481,43 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   body.map-opts #mapOptsBtn{background:var(--accent-soft,var(--bg))}
 }
 @media (max-width:700px) and (prefers-reduced-motion:reduce){aside.settings{transition:none}}
+
+/* les commandes Leaflet (z-index 1000) restent dans leur carte : sinon elles passent au-dessus des onglets et du panneau */
+.leaflet-container{isolation:isolate;z-index:0}
+/* ---- page « Mes parcours » (essai du 24/10/2026) ---- */
+.libpage{position:fixed;inset:0;z-index:950;background:var(--bg);overflow:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 18px) 16px 40px}
+.libpage>*{max-width:720px;margin-inline:auto}
+body.lib-open{overflow:hidden}
+.lp-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.lp-head h2{margin:0;font-size:28px}
+.lp-count{margin:2px auto 0}
+.lp-imp{display:flex;justify-content:center;margin:16px auto 14px;min-height:48px;align-items:center}
+.lp-tools{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+#lpQ{width:100%;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:16px}
+.lp-sort{grid-template-columns:repeat(3,1fr)}
+.lp-sort button{min-height:40px}
+.lp-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
+.lp-item{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.lp-item.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.lp-open{display:flex;gap:14px;align-items:center;min-width:0;padding:12px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:14px}
+.lp-open:focus-visible,.lp-more:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.lp-thumb{flex:0 0 64px;width:64px;height:64px;border-radius:10px;background:var(--bg)}
+.lp-thumb path{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.lp-thumb circle{fill:var(--tail);stroke:var(--panel);stroke-width:1.5}
+.lp-thumb .ph{stroke:var(--line);stroke-dasharray:3 4}
+.lp-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.lp-txt b{font-family:var(--f-display);font-size:17px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp-txt span{font-size:13.5px;color:var(--muted)}
+.lp-txt .lp-cur{color:var(--accent);font-weight:700}
+.lp-more{width:48px;height:48px;margin-right:6px;border:0;border-radius:10px;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.lp-acts,.lp-ren{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;padding:0 12px 12px}
+.lp-acts .btn,.lp-ren .btn{min-height:40px}
+.lp-acts .btn.danger{background:var(--head);border-color:var(--head);color:#fff}
+.lp-ren input{flex:1;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:16px}
+.lp-empty{background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:22px;color:var(--muted);line-height:1.5}
+.lp-empty b{color:var(--ink)}
+#lpAll{margin-top:6px}
+@media (max-width:700px){.libpage{bottom:calc(61px + env(safe-area-inset-bottom,0px))}#libPageX{display:none}}
 </style>
 </head>
 <body>
@@ -531,6 +568,16 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
 </header>
 
+<section class="libpage" id="libPage" hidden aria-labelledby="libPageTitle">
+  <div class="lp-head"><h2 id="libPageTitle">Mes parcours</h2><button type="button" class="btn small" id="libPageX">Fermer</button></div>
+  <p class="hint lp-count" id="lpCount"></p>
+  <label class="btn primary lp-imp" for="file">Importer un GPX</label>
+  <div class="lp-tools">
+    <input type="search" id="lpQ" placeholder="Rechercher un parcours" autocomplete="off" aria-label="Rechercher un parcours">
+    <div class="seg2 lp-sort" id="lpSort" role="group" aria-label="Trier les parcours"><button type="button" data-v="recent" aria-pressed="true">Récents</button><button type="button" data-v="km" aria-pressed="false">Distance</button><button type="button" data-v="name" aria-pressed="false">Nom</button></div>
+  </div>
+  <ul class="lp-list" id="lpList"></ul>
+</section>
 <nav class="tabbar" aria-label="Pages"><a href="#" data-mode="ride"><svg viewBox="0 0 24 24"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8l3 8h5"/></svg>Sortie</a><a href="#ultra" data-mode="ultra"><svg viewBox="0 0 24 24"><path d="M3 19l6-10 4 6 3-4 5 8z"/></svg>Ultra</a><a href="#velotaf" data-mode="taf"><svg viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>Vélotaf</a><button type="button" id="tabLib"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/></svg>Parcours</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
@@ -560,6 +607,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
         <button type="button" class="btn small" id="libRenX">Annuler</button>
       </div>
       <p class="hint" id="libHint"></p>
+      <button type="button" class="btn small" id="lpAll">Voir tous mes parcours</button>
     </div>
 
     <div class="row2" id="startRow">
@@ -4088,6 +4136,7 @@ function libRender() {
   $('#libDel').disabled = $('#libRen').disabled = !LIB.current;
   const n = LIB.list.length;
   $('#libHint').textContent = `${n} parcours enregistré${n > 1 ? 's' : ''} ` + (hasSbToken() ? 'dans ton compte : tu les retrouves aussi sur tes autres appareils.' : 'sur ce navigateur.');
+  if (!$('#libPage').hidden) lpRender();
 }
 async function libOpen(id) {
   const m = LIB.list.find(x => x.id === id); if (!m) return;
@@ -4147,7 +4196,7 @@ $('#libDel').addEventListener('click', () => {
 
 /* ---------- événements ---------- */
 document.querySelectorAll('aside input').forEach(i => i.addEventListener(i.type === 'range' ? 'input' : 'change', schedule));
-$('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; sheetClose(); });
+$('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; sheetClose(); lpClose(); window.scrollTo(0, 0); });
 // Téléphone (essai du 24/10/2026) : réglages dans un panneau qui monte du bas, pastilles de réglage rapide, onglets en bas.
 const isPhone = () => matchMedia('(max-width:700px)').matches;
 function sheetOpen(sel) {
@@ -4159,7 +4208,86 @@ function sheetClose() { document.body.classList.remove('sheet-open'); }
 $('#sheetOk').addEventListener('click', sheetClose);
 $('#sheetBg').addEventListener('click', sheetClose);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('sheet-open')) sheetClose(); });
-$('#tabLib').addEventListener('click', () => sheetOpen($('#libBox').hidden ? '#routeCard' : '#libBox'));
+$('#tabLib').addEventListener('click', lpOpen);
+/* Page « Mes parcours » (essai du 24/10/2026) : liste des parcours en fiches (miniature du tracé, km, D+, dernière ouverture),
+   recherche, tri, ouvrir / renommer / supprimer. Onglet « Parcours » sur téléphone, bouton « Voir tous mes parcours » ailleurs. */
+const LP = { sort: 'recent', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false };
+function lpThumbs() { if (!LP.thumbs) { try { LP.thumbs = JSON.parse(localStorage.getItem('pmr-thumbs') || '{}') || {}; } catch (e) { LP.thumbs = {}; } } return LP.thumbs; }
+function thumbOf(pts) { // tracé ramené dans un carré de 64 (projection simple, ~90 points)
+  const step = Math.max(1, Math.floor(pts.length / 90)), q = []; for (let i = 0; i < pts.length; i += step) q.push(pts[i]); q.push(pts[pts.length - 1]);
+  const c = Math.cos(q.reduce((a, p) => a + p[0], 0) / q.length * RAD), xy = q.map(p => [p[1] * c, -p[0]]);
+  const xs = xy.map(p => p[0]), ys = xy.map(p => p[1]), x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0 || 1e-6, h = Math.max(...ys) - y0 || 1e-6;
+  const k = 50 / Math.max(w, h), ox = (64 - w * k) / 2, oy = (64 - h * k) / 2, f = v => Math.round(v * 10) / 10;
+  const P = xy.map(([x, y]) => [f(ox + (x - x0) * k), f(oy + (y - y0) * k)]);
+  return { d: 'M' + P.map(p => p.join(' ')).join('L'), s: P[0] };
+}
+function thumbSave(id, pts) { const t = lpThumbs(); t[id] = thumbOf(pts); try { localStorage.setItem('pmr-thumbs', JSON.stringify(t)); } catch (e) {} }
+async function lpFillThumbs() { // miniatures manquantes : depuis le navigateur, sinon depuis le compte (une requête)
+  if (LP.fetching) return; LP.fetching = true; const t = lpThumbs(); let changed = false; const miss = [];
+  for (const m of LIB.list) { if (t[m.id]) continue; let rec = null; try { rec = await idbRun('pts', 'readonly', st => st.get(m.id)); } catch (e) {}
+    if (rec && rec.pts && rec.pts.length > 1) { thumbSave(m.id, rec.pts); changed = true; } else if (m.remote) miss.push(m.id); }
+  if (miss.length) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('id,pts').in('id', miss.slice(0, 30)); for (const r of data || []) if (r.pts && r.pts.length > 1) { thumbSave(r.id, r.pts); changed = true; } } }
+  LP.fetching = false; if (changed && !$('#libPage').hidden) lpRender();
+}
+function lpRender() {
+  const t = lpThumbs(), n = LIB.list.length, q = fold($('#lpQ').value).trim().split(/\s+/).filter(Boolean);
+  $('#lpCount').textContent = n ? `${n} parcours ` + (hasSbToken() ? 'dans ton compte, sur tous tes appareils.' : 'sur ce navigateur.') : '';
+  let items = LIB.list.filter(r => q.every(w => fold(r.name).includes(w)));
+  if (LP.sort === 'km') items = items.slice().sort((a, b) => (b.km || 0) - (a.km || 0));
+  else if (LP.sort === 'name') items = items.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  if (!n) { $('#lpList').innerHTML = `<li class="lp-empty"><b>Aucun parcours pour l'instant.</b><br>Importe un GPX depuis Strava, Komoot ou Garmin : il est gardé ici${hasSbToken() ? ' et sur tes autres appareils' : ''}.</li>`; return; }
+  if (!items.length) { $('#lpList').innerHTML = `<li class="lp-empty">Aucun parcours ne correspond à « ${escH($('#lpQ').value)} ».</li>`; return; }
+  $('#lpList').innerHTML = items.map(r => {
+    const th = t[r.id], cur = r.id === LIB.current;
+    const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
+    return `<li class="lp-item${cur ? ' cur' : ''}" data-id="${r.id}">
+      <button type="button" class="lp-open" data-open="${r.id}"><svg class="lp-thumb" viewBox="0 0 64 64" aria-hidden="true">${svg}</svg>
+        <span class="lp-txt"><b>${escH(r.name)}</b><span>${n1(r.km || 0)} km · D+ ${n0(r.dplus || 0)} m</span><span>${cur ? '<span class="lp-cur">Parcours ouvert</span>' : escH(agoTxt(r.used_at))}</span></span></button>
+      <button type="button" class="lp-more" data-more="${r.id}" aria-expanded="${LP.open === r.id}" aria-label="Actions pour ${escH(r.name)}">⋯</button>
+      ${LP.ren === r.id ? `<div class="lp-ren"><input type="text" id="lpRenIn" value="${escH(r.name)}" aria-label="Nouveau nom"><button type="button" class="btn small primary" data-renok="${r.id}">Renommer</button><button type="button" class="btn small" data-renx="1">Annuler</button></div>`
+        : LP.open === r.id ? `<div class="lp-acts"><button type="button" class="btn small" data-ren="${r.id}">Renommer</button><button type="button" class="btn small${LP.del === r.id ? ' danger' : ''}" data-del="${r.id}">${LP.del === r.id ? 'Confirmer la suppression' : 'Supprimer'}</button></div>` : ''}
+    </li>`; }).join('');
+  if (LP.ren) { const i = $('#lpRenIn'); if (i) { i.focus(); i.select(); } }
+  lpFillThumbs();
+}
+function lpOpen() {
+  LP.open = LP.ren = LP.del = ''; $('#lpQ').value = ''; sheetClose();
+  $('#libPage').hidden = false; document.body.classList.add('lib-open'); $('#libPage').scrollTop = 0;
+  for (const a of document.querySelectorAll('.tabbar a')) a.removeAttribute('aria-current'); $('#tabLib').setAttribute('aria-current', 'page');
+  lpRender();
+}
+function lpClose() {
+  if ($('#libPage').hidden) return;
+  $('#libPage').hidden = true; document.body.classList.remove('lib-open'); $('#tabLib').removeAttribute('aria-current');
+  for (const a of document.querySelectorAll('.tabbar a')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); }
+}
+async function lpRename(id, name) {
+  const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
+  libUpsert({ id, name });
+  try { const meta = await idbRun('meta', 'readonly', st => st.get(id)); if (meta) await idbRun('meta', 'readwrite', st => st.put({ ...meta, name })); } catch (e) {}
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ name }).eq('id', id).then(() => {});
+  if (id === LIB.current) { S.baseName = name; S.name = S.rev ? `${name} (sens inverse)` : name; $('#routeName').textContent = name; try { chipsRender(); } catch (e) {} }
+  libRender();
+}
+$('#lpAll').addEventListener('click', lpOpen);
+$('#libPageX').addEventListener('click', lpClose);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#libPage').hidden && !LP.ren) lpClose(); });
+for (const a of document.querySelectorAll('.tabbar a, .modes a')) a.addEventListener('click', lpClose);
+$('#lpQ').addEventListener('input', () => { LP.open = LP.ren = ''; lpRender(); });
+$('#lpSort').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.sort = b.dataset.v; setSeg('#lpSort', LP.sort); lpRender(); });
+$('#lpList').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+  if (d.open) { lpClose(); window.scrollTo(0, 0); if (d.open !== LIB.current) await libOpen(d.open); return; }
+  if (d.more) { LP.open = LP.open === d.more ? '' : d.more; LP.ren = LP.del = ''; lpRender(); return; }
+  if (d.ren) { LP.ren = d.ren; lpRender(); return; }
+  if (d.renx) { LP.ren = ''; lpRender(); return; }
+  if (d.renok) { const v = $('#lpRenIn').value; LP.ren = LP.open = ''; await lpRename(d.renok, v); lpRender(); return; }
+  if (d.del) { if (LP.del !== d.del) { LP.del = d.del; clearTimeout(LP.delT); LP.delT = setTimeout(() => { LP.del = ''; if (!$('#libPage').hidden) lpRender(); }, 4000); lpRender(); return; }
+    clearTimeout(LP.delT); LP.del = LP.open = ''; const t = lpThumbs(); delete t[d.del]; try { localStorage.setItem('pmr-thumbs', JSON.stringify(t)); } catch (e) {} await libDelete(d.del); lpRender(); }
+});
+$('#lpList').addEventListener('keydown', e => { if (e.target.id !== 'lpRenIn') return;
+  if (e.key === 'Enter') { e.preventDefault(); const id = LP.ren; const v = e.target.value; LP.ren = LP.open = ''; lpRename(id, v).then(lpRender); }
+  else if (e.key === 'Escape') { LP.ren = ''; lpRender(); } });
 $('#mapOptsBtn').addEventListener('click', () => { const on = document.body.classList.toggle('map-opts'); $('#mapOptsBtn').setAttribute('aria-pressed', String(on)); });
 const CHIP_I = { route: '<path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/>', when: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   speed: '<path d="M4 16a8 8 0 0116 0M12 16l4-5"/>', set: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>' };
@@ -4168,12 +4296,12 @@ function chipsRender() {
   const d = $('#date').value ? new Date($('#date').value + 'T12:00') : null;
   const when = (d ? dayFmt.format(d) + ' · ' : '') + ($('#time').value || '');
   const c = (k, txt, target) => `<button type="button" class="chip" data-go="${target}"><svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg><span>${txt}</span></button>`;
-  box.innerHTML = c('route', S.name || 'Parcours', $('#libBox').hidden ? '#routeCard' : '#libBox')
+  box.innerHTML = c('route', S.name || 'Parcours', '@lib')
     + c('when', when, S.mode === 'ultra' ? '#planStartSlot' : '#startRow')
     + c('speed', n1(+$('#speed').value) + ' km/h', S.mode === 'ultra' ? '#planSpeedSlot' : '#speed')
     + c('set', 'Réglages', '');
 }
-$('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const t = b.dataset.go;
+$('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const t = b.dataset.go; if (t === '@lib') { lpOpen(); return; }
   if (t && !$('#settings').contains($(t))) { sheetClose(); $(t).scrollIntoView({ behavior: 'smooth', block: 'start' }); } else sheetOpen(t); });
 $('#revBtn').addEventListener('click', () => {
   if (!S.fwd) return;
