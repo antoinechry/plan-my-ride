@@ -448,7 +448,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .vlines li.rain svg{stroke:var(--rain)}
 .vlines b{font-weight:700}
 .chips,.tabbar,.sheet-head,.sheet-bg,#mapOptsBtn{display:none}
-.tabbar .rail-mode,.tabbar .rail-sep{display:none}
+.tabbar .rail-mode,.tabbar .rail-sep,.tabbar .rail-admin{display:none}
 /* ---- téléphone : écran façon application (essai du 24/10/2026) ---- */
 @media (max-width:700px){
   body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -565,6 +565,7 @@ body:not(.admin) .me-btns .adm{display:none}
   .tabbar a,.tabbar button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:var(--muted);text-decoration:none;font:600 11.5px/1.2 var(--f-body);cursor:pointer}
   .tabbar a,.tabbar button{flex:none;min-height:66px}
   .tabbar .rail-mode{display:flex}
+  body.admin .tabbar .rail-admin{display:flex;order:10;margin-top:auto}
   .tabbar .rail-sep{display:block;height:1px;background:var(--line);margin:8px 10px}
   #tabMode,header.top .modes{display:none}
   .tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -690,7 +691,7 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
     <div class="me-btns"><button type="button" class="btn small" id="meHelp">Mode d'emploi</button></div></div>
 </section>
-<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
+<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
@@ -2886,6 +2887,7 @@ function switchMode(m) {
   applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
   schedule();
   try { tafRouteSwitch(from, m); } catch (e) {}
+  logOnce('mode-' + m, 'mode');
 }
 /* Trajet de vélotaf par défaut (page Moi, localStorage pmr-taf-route) : ouvert en arrivant sur Vélotaf ; en repartant,
    le parcours d'avant revient. Le « dernier parcours ouvert » (pmr-last-route) reste celui des autres pages. */
@@ -4090,8 +4092,13 @@ async function logAct(event, extra) {
   if (!hasSbToken()) return;
   try {
     const sb = await sbClient();
-    await sb.from('activity_log').insert({ app: 'pmr', event, device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) });
+    await sb.from('activity_log').insert({ app: 'pmr', event, mode: S.mode, device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) });
   } catch (e) { /* le journal est un plus */ }
+}
+// Une fois par onglet et par clé (mode utilisé, source météo…) : pour l'onglet Analytics de la page Admin sans remplir le journal.
+function logOnce(key, event, extra) {
+  try { const k = 'pmr-act-' + key; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); } catch (e) {}
+  logAct(event, extra);
 }
 async function accessCheck() {
   if (!hasSbToken()) { gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
@@ -4109,7 +4116,7 @@ async function accessCheck() {
     document.body.classList.remove('gated');
     document.body.classList.toggle('admin', !!data.is_admin);
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
-    try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); logAct('open'); } } catch (e) {}
+    try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); sessionStorage.setItem('pmr-act-mode-' + S.mode, '1'); logAct('open'); } } catch (e) {}
     if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   } catch (e) { /* réseau : on laisse l'app, les fonctions serveur vérifient l'accès */ }
 }
@@ -4149,6 +4156,7 @@ accessCheck();
 function routeWxNote(used) {
   const id = typeof LIB !== 'undefined' && LIB.current; if (!id || !used || S._wxNoted === id + '|' + used) return;
   S._wxNoted = id + '|' + used;
+  logOnce('wx-' + S.mode + '-' + used, 'wx', { detail: String(used).slice(0, 40), route_id: id });
   sbIfLogged().then(sb => { if (sb) sb.from('routes').update({ wx: String(used).slice(0, 40), wx_at: new Date().toISOString() }).eq('id', id).then(() => {}, () => {}); }).catch(() => {});
 }
 async function sbIfLogged() {
@@ -4526,6 +4534,7 @@ function outRender(res, long) {
 }
 function outOpen() {
   pageOpen('outPage', '#tabOut');
+  logOnce('out', 'out');
   const o = outOpt(); if (!$('#outTime').value) $('#outTime').value = o.time || '08:00';
   outDaysRender(); outRun();
 }
