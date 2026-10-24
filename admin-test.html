@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<script>try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>🧪 Supervision · Plan My Ride</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9A%B4%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#e9edf0; --surface:#fff; --surface-2:#f6f8fa; --ink:#17212b; --muted:#5b6773; --line:#d6dde3; --line-2:#e3e8ec;
+  --accent:#1f4f8f; --accent-ink:#163a6a; --accent-soft:#dbe5f1; --bar-soft:#9db5d6; --on-accent:#fff;
+  --ok:#1f6b42; --ok-soft:#dff1e6; --warn:#9a6212; --warn-soft:#f6ead3; --bad:#b42318; --bad-line:#e6c3bf; --track:#e9edf0;
+  --f-display:'Bricolage Grotesque',system-ui,sans-serif; --f-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#10161c; --surface:#171f27; --surface-2:#1d2731; --ink:#e3e9ee; --muted:#9aa7b3; --line:#2b3742; --line-2:#24303a;
+    --accent:#7fa8e0; --accent-ink:#b9cff0; --accent-soft:#1f3350; --bar-soft:#36557f; --on-accent:#0d1620;
+    --ok:#6fcf97; --ok-soft:#173826; --warn:#e3b45c; --warn-soft:#3a2d14; --bad:#f08a80; --bad-line:#5a2a26; --track:#24303a; color-scheme:dark }
+}
+:root[data-theme="dark"]{ --bg:#10161c; --surface:#171f27; --surface-2:#1d2731; --ink:#e3e9ee; --muted:#9aa7b3; --line:#2b3742; --line-2:#24303a;
+  --accent:#7fa8e0; --accent-ink:#b9cff0; --accent-soft:#1f3350; --bar-soft:#36557f; --on-accent:#0d1620;
+  --ok:#6fcf97; --ok-soft:#173826; --warn:#e3b45c; --warn-soft:#3a2d14; --bad:#f08a80; --bad-line:#5a2a26; --track:#24303a; color-scheme:dark }
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.testband{background:#f5d547;color:#2b2300;font-weight:700;font-size:13px;text-align:center;padding:4px 10px}
+
+/* rail */
+.rail{position:fixed;left:0;top:0;bottom:0;width:96px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:20px 0;z-index:5}
+.rail .logo{font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--accent);letter-spacing:-.02em;margin-bottom:18px;text-decoration:none}
+.rail a.it{width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600}
+.rail .ic{width:56px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.rail svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rail a.it:hover{color:var(--ink)}
+.rail a[aria-current=page]{color:var(--accent);font-weight:700}
+.rail a[aria-current=page] .ic{background:var(--accent-soft)}
+.rail .sep{width:64px;height:1px;background:var(--line);margin:8px 0}
+.rail .bottom{margin-top:auto}
+.back{display:none}
+main{margin-left:96px;padding:32px 40px 56px;max-width:1440px;display:flex;flex-direction:column;gap:22px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:44px;letter-spacing:-.02em;line-height:1}
+.sub{margin:8px 0 0;font-size:15px;color:var(--muted)}
+.hbtns{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.b{min-height:44px;padding:0 18px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.b:hover{background:var(--surface-2)}
+.b.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.b.pri:hover{filter:brightness(1.08)}
+.b.sm{min-height:36px;padding:0 12px;font-size:13.5px;border-radius:8px;font-weight:600}
+.b.xs{min-height:30px;padding:0 10px;font-size:12.5px;border-radius:7px;font-weight:600}
+.b.bad{color:var(--bad);border-color:var(--bad-line)}
+.b[disabled]{opacity:.5;cursor:default}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs a{padding:10px 16px;font-weight:600;font-size:15px;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs a[aria-current=page]{font-weight:700;color:var(--accent);border-bottom-color:var(--accent)}
+
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.kpi .l{font-size:13px;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--f-display);font-weight:700;font-size:34px;margin-top:2px;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:16px;color:var(--muted);font-weight:600}
+.kpi .s{font-size:13px;color:var(--muted)}
+.kpi .s.good{color:var(--ok);font-weight:600}.kpi .s.warn{color:var(--warn);font-weight:600}
+.meter{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.meter i{display:block;height:6px;background:var(--accent);border-radius:3px}
+.kpi .meter{margin-top:10px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.card.pad{padding:16px 20px}
+.ch{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:-.01em}
+.card.pad h2{font-size:20px;margin-bottom:10px}
+.ch h2{flex:1;min-width:140px}
+.n{font-family:var(--f-body);font-size:13px;font-weight:700;color:var(--muted);background:var(--surface-2);border:1px solid var(--line-2);border-radius:999px;padding:0 .55em;margin-left:6px;vertical-align:middle}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);font-size:14.5px;margin:0}
+.msg{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+.msg.err{color:var(--bad)}
+.grid2{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.grid2>.main{flex:2 1 640px;min-width:0}
+.grid2>.side{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:22px}
+
+input.in,select.in{min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px}
+input.in[type=search]{width:220px;max-width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:4px;flex:none}
+
+/* comptes */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--muted);font-size:12.5px;font-weight:600;padding:10px 12px}
+td{padding:14px 12px;vertical-align:middle}
+th:first-child,td:first-child{padding-left:20px}
+th:last-child,td:last-child{padding-right:20px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.acc tbody tr.u{border-top:1px solid var(--line-2)}
+.acc tr.open,.acc tr.ux{background:var(--surface-2)}
+.who{display:flex;align-items:center;gap:12px;min-width:0}
+.av{width:36px;height:36px;border-radius:18px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.who b{display:block}
+.who .m{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12.5px;white-space:nowrap}
+.badge.admin{background:var(--accent-soft);color:var(--accent-ink)}
+.badge.active{background:var(--ok-soft);color:var(--ok)}
+.badge.pending{background:var(--warn-soft);color:var(--warn)}
+.badge.blocked{background:transparent;color:var(--bad);border:1px solid var(--bad-line)}
+.badge.noacc{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.mbcell{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.mbcell .meter{width:90px}
+.act b{display:block;white-space:nowrap}
+.act span{display:block;color:var(--muted);font-size:13px;white-space:nowrap}
+.act .old{color:var(--warn);font-weight:600}
+.more{width:40px;height:40px;border:0;background:transparent;border-radius:8px;font-size:20px;color:var(--muted);cursor:pointer;line-height:1}
+.more:hover,.more[aria-expanded=true]{background:var(--surface);color:var(--ink)}
+tr.ux td{padding:0 20px 16px 68px}
+.uxbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.qbox{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:13.5px;font-weight:600}
+.qbox input{width:4.2em;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);padding:.15rem .35rem;font-size:13.5px}
+.tgl{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:13.5px;font-weight:600;cursor:pointer}
+.tgl input{width:16px;height:16px;accent-color:var(--accent)}
+.detail{font-size:13px;color:var(--muted);margin-top:10px}
+.detail b{color:var(--ink)}
+.pwrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.pwrow input{flex:1 1 220px;min-width:0;font-family:var(--f-mono)}
+.saved{font-size:12.5px;color:var(--muted)}
+.saved b{font-family:var(--f-mono);color:var(--ink)}
+
+/* colonne de droite */
+.pend{display:flex;flex-direction:column;gap:10px}
+.pc{border:1px solid var(--line-2);border-left:3px solid var(--warn);border-radius:10px;padding:10px 12px}
+.pc b{display:block}.pc .m{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.pc .uxbtns{margin-top:8px}
+.lks{display:flex;flex-direction:column;gap:8px}
+.lk{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px;border:1px solid var(--line-2);border-radius:10px}
+.lk.off{opacity:.6}
+.lk .t{flex:1 1 160px;min-width:0}
+.lk .t b{display:block}
+.lk .t span{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.lk .uxbtns{gap:6px}
+.lk .saved{flex-basis:100%}
+.newlk{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.newlk input{flex:1 1 160px;min-width:0}
+ol.feed{list-style:none;margin:0;padding:0;font-size:14px}
+ol.feed li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line-2)}
+ol.feed .tm{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);flex:0 0 58px;padding-top:1px;white-space:nowrap}
+.hrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hrow h2{flex:1;margin:0!important}
+.link{background:none;border:0;padding:4px 0;color:var(--accent);font-weight:600;font-size:13.5px;cursor:pointer}
+.link:hover{text-decoration:underline}
+
+/* parcours */
+.gwrap{display:flex;flex-wrap:wrap}
+.gmap{flex:3 1 480px;min-width:0;height:440px;z-index:0;background:var(--surface-2)}
+.leaflet-container{isolation:isolate}
+.glist{flex:2 1 320px;min-width:0;list-style:none;margin:0;padding:0;border-left:1px solid var(--line);font-size:14px;max-height:440px;overflow:auto}
+.glist li{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line-2)}
+.glist li .t{flex:1;min-width:0}
+.glist li .t button{display:block;background:none;border:0;padding:0;font-weight:700;text-align:left;cursor:pointer;color:var(--ink);overflow-wrap:anywhere}
+.glist li .t button:hover{color:var(--accent)}
+.glist li .t span{color:var(--muted);font-size:13px}
+.glist li.all{display:block}
+.leaflet-tooltip.gtip,.leaflet-popup-content{font-family:var(--f-body);font-size:13px;line-height:1.4}
+.gtip b,.leaflet-popup-content b{font-size:14px}
+.gtip .m,.leaflet-popup-content .m{color:#5b6773}
+.rfull{border-top:1px solid var(--line)}
+.rfull .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 20px}
+.rlist td{padding:10px 12px;border-top:1px solid var(--line-2)}
+.rlist td.nm{font-weight:700;overflow-wrap:anywhere;min-width:140px}
+.rlist td.dt{white-space:nowrap;color:var(--muted)}
+.rlist .acts2{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.rlist th.sort{cursor:pointer;user-select:none}
+.rlist th.sort[aria-sort]::after{content:' ▾'}
+.rlist th.sort[aria-sort="ascending"]::after{content:' ▴'}
+
+/* journal */
+.ev td{padding:9px 12px;border-top:1px solid var(--line-2)}
+.ev .tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;background:var(--surface-2);color:var(--muted)}
+.ev .tag.gpx{background:var(--ok-soft);color:var(--ok)}
+.ev .tag.wx{background:var(--accent-soft);color:var(--accent-ink)}
+
+/* analytics */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.seg button{min-height:42px;padding:0 16px;border:0;background:transparent;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--on-accent)}
+.optadm{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);font-weight:600;cursor:pointer}
+.optadm input{width:16px;height:16px;accent-color:var(--accent)}
+figure.chart{margin:0;padding:18px 20px 12px}
+figure.chart figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;font-size:13.5px;color:var(--muted);margin-bottom:10px}
+figure.chart figcaption .t{font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--ink);margin-right:auto}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#chartSvg{display:block;width:100%;height:auto}
+#chartSvg text{font-size:12px;fill:var(--muted)}
+#chartSvg .mono{font-family:var(--f-mono)}
+.cnote{font-size:12.5px;color:var(--muted);margin-top:6px}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.hbar{display:flex;flex-direction:column;gap:12px}
+.hbar .r .lab{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-bottom:4px}
+.hbar .meter{height:10px;border-radius:5px}.hbar .meter i{height:10px;border-radius:5px}
+.hbar .foot{font-size:13px;color:var(--muted);margin-top:2px}
+ol.geo{list-style:none;margin:0;padding:0;font-size:14px}
+ol.geo li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line-2)}
+ol.geo li:first-child{border-top:0}
+.ret td{padding:12px;border-top:1px solid var(--line-2)}
+.ret svg{display:block}
+.ret .sq{fill:var(--track)}
+
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:22px 24px;width:min(520px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(10,16,22,.45)}
+dialog h2{margin-bottom:6px}
+.form{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.form label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+.form .in{width:100%}
+.pwbox{display:flex;gap:6px}.pwbox input{flex:1;min-width:0;font-family:var(--f-mono)}
+.dbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:6px}
+.done{border:1px solid var(--ok);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:14px}
+.done pre{font-family:var(--f-mono);font-size:13px;background:var(--surface-2);border-radius:7px;padding:.5rem .6rem;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+
+@media (max-width:1180px){ .kpis{grid-template-columns:repeat(3,minmax(0,1fr))} .cols3{grid-template-columns:1fr 1fr} }
+@media (max-width:700px){
+  .rail{display:none}
+  main{margin-left:0;padding:16px 16px 40px;gap:16px}
+  .back{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:4px}
+  h1{font-size:32px}
+  .hbtns{width:100%}.hbtns .b{flex:1 1 auto;justify-content:center}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{padding:12px 14px}.kpi .v{font-size:28px}
+  .cols3{grid-template-columns:1fr}
+  .grid2{flex-direction:column;align-items:stretch;gap:16px}.grid2>.side{display:contents}.grid2>.main{order:1}#pendSec{order:0}.grid2>.side>section:not(#pendSec){order:2}
+  .ch{padding:14px 16px}
+  input.in[type=search]{width:100%}
+  /* comptes en fiches */
+  .acc thead{display:none}
+  .acc tr.u{display:grid;grid-template-columns:1fr auto;gap:8px 10px;padding:12px 16px}
+  .acc tr.u td{padding:0}
+  .acc tr.u td.c-who{grid-column:1}.acc tr.u td.c-more{grid-column:2;grid-row:1}
+  .acc tr.u td.c-st,.acc tr.u td.c-mb,.acc tr.u td.c-act,.acc tr.u td.c-rt{grid-column:1 / -1}
+  .acc tr.u td.c-rt{text-align:left}.acc tr.u td.c-rt::after{content:' parcours';font-weight:400;color:var(--muted)}
+  .acc tr.ux{display:block}.acc tr.ux td{display:block;padding:0 16px 14px}
+  .gmap{height:320px;flex-basis:100%}
+  .glist{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .rlist thead{display:none}
+  .rlist tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 16px;border-top:1px solid var(--line-2)}
+  .rlist td{border:0!important;padding:0!important}
+  .rlist td.nm,.rlist td.acc2,.rlist td:last-child{grid-column:1 / -1}
+  .rlist .acts2{justify-content:flex-start;margin-top:4px}
+  .ev thead{display:none}
+  .ev tr{display:block;padding:8px 16px;border-top:1px solid var(--line-2)}
+  .ev td{display:inline;border:0;padding:0 6px 0 0}
+  .ret thead{display:none}
+  .ret tr{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;padding:10px 16px;border-top:1px solid var(--line-2)}
+  .ret td{padding:0!important;border:0}
+  .ret td.sqs{grid-column:1 / -1;overflow:hidden}
+  .ret td.pm{display:none}
+  .ret td.num:nth-child(3)::after{content:' j actifs';font-weight:400;color:var(--muted)}.ret td.num:nth-child(4)::after{content:' GPX';color:var(--muted)}
+  .seg{width:100%}.seg button{flex:1;padding:0 8px}
+}
+</style>
+</head>
+<body>
+<div class="testband">Version test de la supervision · l'ancienne page reste sur <a href="admin.html" style="color:inherit">admin.html</a></div>
+
+<nav class="rail" aria-label="Navigation">
+  <a class="logo" href="test.html" title="Plan My Ride">PMR</a>
+  <a class="it" href="test.html"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a>
+  <a class="it" href="test.html#ultra"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a>
+  <a class="it" href="test.html#velotaf"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a>
+  <span class="sep" aria-hidden="true"></span>
+  <a class="it bottom" href="admin-test.html" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a>
+</nav>
+
+<main>
+  <div>
+    <a class="back" href="test.html">← Plan My Ride</a>
+    <header class="top">
+      <div><h1>Supervision</h1><p class="sub" id="state">Connexion…</p></div>
+      <div class="hbtns" id="hOver" hidden>
+        <button type="button" class="b" id="openLink">Nouveau lien testeur</button>
+        <button type="button" class="b pri" id="openUser">Créer un compte</button>
+      </div>
+      <div class="hbtns" id="hAna" hidden>
+        <label class="optadm"><input type="checkbox" id="noAdm"> Sans les admins</label>
+        <div class="seg" role="group" aria-label="Période" id="period"><button type="button" data-p="7" aria-pressed="false">7 jours</button><button type="button" data-p="30" aria-pressed="true">30 jours</button><button type="button" data-p="0" aria-pressed="false">Depuis le début</button></div>
+      </div>
+    </header>
+  </div>
+
+  <div id="denied" hidden><div class="card pad"><p class="empty" id="deniedTxt"></p><p style="margin:12px 0 0"><a class="b pri" href="test.html">Se connecter</a></p></div></div>
+
+  <div id="app" hidden style="display:flex;flex-direction:column;gap:22px">
+    <nav class="tabs" aria-label="Sections de la supervision">
+      <a href="#" data-tab="over" aria-current="page">Vue d'ensemble</a>
+      <a href="#analytics" data-tab="ana">Analytics</a>
+    </nav>
+
+    <!-- ===== Vue d'ensemble ===== -->
+    <div id="over" style="display:flex;flex-direction:column;gap:22px">
+      <section class="kpis" aria-label="Chiffres clés" id="kpis"></section>
+
+      <div class="grid2">
+        <section class="card main" aria-labelledby="h-acc">
+          <div class="ch">
+            <h2 id="h-acc">Comptes<span class="n" id="allN">0</span></h2>
+            <div class="chips" id="filter" role="group" aria-label="Filtrer les comptes">
+              <button type="button" class="chip" data-f="all" aria-pressed="true">Tous</button><button type="button" class="chip" data-f="active" aria-pressed="false">Actifs</button><button type="button" class="chip" data-f="blocked" aria-pressed="false">Bloqués</button>
+            </div>
+            <label><span class="sr">Rechercher un compte</span><input type="search" class="in" id="q" placeholder="Rechercher un compte"></label>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="acc">
+              <thead><tr><th scope="col">Compte</th><th scope="col">Statut</th><th scope="col">meteoblue ce mois</th><th scope="col">Activité</th><th scope="col" class="num">Parcours</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+              <tbody id="users"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="side">
+          <section class="card pad" aria-labelledby="h-pend" id="pendSec">
+            <h2 id="h-pend">À valider<span class="n" id="pendN">0</span></h2>
+            <p class="empty" id="pendEmpty">Aucune demande en attente. Les inscriptions sans lien testeur arrivent ici.</p>
+            <div class="pend" id="pend"></div>
+          </section>
+          <section class="card pad" aria-labelledby="h-links">
+            <h2 id="h-links">Liens testeurs</h2>
+            <div class="lks" id="links"></div>
+          </section>
+          <section class="card pad" aria-labelledby="h-feed">
+            <div class="hrow"><h2 id="h-feed">Activité récente</h2><button type="button" class="link" id="feedAll">Tout voir</button></div>
+            <ol class="feed" id="feed"></ol>
+          </section>
+        </div>
+      </div>
+
+      <section class="card" aria-labelledby="h-gpx" id="gSec" style="overflow:hidden">
+        <div class="ch">
+          <h2 id="h-gpx">Parcours des utilisateurs</h2>
+          <div class="chips" id="gChips" role="group" aria-label="Filtrer par compte"></div>
+        </div>
+        <div class="gwrap">
+          <div class="gmap" id="gmap" role="region" aria-label="Carte des parcours, une couleur par compte"></div>
+          <ol class="glist" id="glist"><li class="muted" id="gMsg">Chargement des parcours…</li></ol>
+        </div>
+        <div class="rfull" id="rFull" hidden>
+          <div class="bar">
+            <b style="font-family:var(--f-display);font-size:18px;margin-right:auto">Tous les parcours<span class="n" id="rN">0</span></b>
+            <label><span class="sr">Trier par</span><select id="rSort" class="in">
+              <option value="date">Les plus récents d'abord</option>
+              <option value="user">Par compte</option>
+              <option value="km-desc">Distance, du plus long au plus court</option>
+              <option value="km-asc">Distance, du plus court au plus long</option>
+            </select></label>
+          </div>
+          <div style="overflow-x:auto"><table class="rlist"><thead><tr><th class="sort" data-s="name">Parcours</th><th class="sort" data-s="user">Compte</th><th class="sort num" data-s="km">km</th><th class="num">D+</th><th class="sort" data-s="date">Chargé le</th><th>Météo</th><th><span class="sr">Actions</span></th></tr></thead><tbody id="rBody"></tbody></table></div>
+          <p class="msg" style="padding:0 20px 16px">« Supprimer » retire le parcours du compte de la personne, de la carte et, à sa prochaine ouverture de Plan My Ride, de son navigateur. S'il est réimporté, il revient.</p>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-ev" id="journal" hidden>
+        <div class="ch">
+          <h2 id="h-ev">Journal des 30 derniers jours</h2>
+          <div class="chips" id="evFilter" role="group" aria-label="Type d'évènement"><button type="button" class="chip" data-e="all" aria-pressed="true">Tout</button><button type="button" class="chip" data-e="open" aria-pressed="false">Connexions</button><button type="button" class="chip" data-e="gpx" aria-pressed="false">GPX</button><button type="button" class="chip" data-e="other" aria-pressed="false">Modes, météo, sorties</button></div>
+          <label><span class="sr">Compte</span><select id="evUser" class="in"><option value="">Tous les comptes</option></select></label>
+        </div>
+        <div style="overflow-x:auto"><table class="ev"><thead><tr><th>Quand</th><th>Compte</th><th>Évènement</th><th class="num">km</th><th>Appareil</th></tr></thead><tbody id="evBody"></tbody></table></div>
+        <p class="msg" style="padding:0 20px 16px">Une connexion = une ouverture de l'app dans un onglet (journal tenu depuis le 23/10/2026 ; modes, sources météo et « Mes sorties » depuis le 24/10/2026, version test seulement pour l'instant).</p>
+      </section>
+    </div>
+
+    <!-- ===== Analytics ===== -->
+    <div id="ana" hidden style="display:flex;flex-direction:column;gap:22px">
+      <section class="kpis" aria-label="Chiffres de la période" id="aKpis"></section>
+      <section class="card">
+        <figure class="chart">
+          <figcaption><span class="t">Jour par jour</span><span><span class="sw" style="background:var(--bar-soft)"></span>Ouvertures</span><span><span class="sw" style="background:var(--accent)"></span>GPX chargés</span><span>▲ mise à jour de l'app</span></figcaption>
+          <svg id="chartSvg" viewBox="0 0 1200 230" role="img" aria-label="Ouvertures et GPX chargés par jour"></svg>
+          <div class="cnote" id="chartNote"></div>
+        </figure>
+      </section>
+      <div class="cols3">
+        <section class="card pad" aria-labelledby="h-modes"><h2 id="h-modes">Modes utilisés</h2><div class="hbar" id="aModes"></div></section>
+        <section class="card pad" aria-labelledby="h-wx"><h2 id="h-wx">Sources météo</h2><div class="hbar" id="aWx"></div></section>
+        <section class="card pad" aria-labelledby="h-geo"><h2 id="h-geo">D'où viennent les visites</h2><ol class="geo" id="aGeo"></ol><p class="msg" id="aGeoNote"></p></section>
+      </div>
+      <section class="card" aria-labelledby="h-ret">
+        <div class="ch"><h2 id="h-ret">Qui revient ?</h2><span class="muted" id="retSub" style="font-size:14px"></span></div>
+        <div style="overflow-x:auto"><table class="ret"><thead><tr><th>Compte</th><th id="retTh">30 derniers jours</th><th class="num">Jours actifs</th><th class="num">GPX</th><th class="pm">Mode préféré</th></tr></thead><tbody id="retBody"></tbody></table></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<dialog id="dUser" aria-labelledby="dUserH">
+  <h2 id="dUserH">Créer un compte</h2>
+  <p class="msg" style="margin:0">Le compte est actif tout de suite avec l'accès à Plan My Ride, sans e-mail de confirmation. Transmets ensuite l'e-mail et le mot de passe provisoire ; la personne pourra le changer dans Moi.</p>
+  <form class="form" id="newUser" autocomplete="off">
+    <label class="f">Prénom<input type="text" class="in" id="nuPrenom" maxlength="40"></label>
+    <label class="f">E-mail<input type="email" class="in" id="nuEmail" required maxlength="200"></label>
+    <label class="f">Mot de passe provisoire<span class="pwbox"><input type="text" class="in" id="nuPw" minlength="8" maxlength="200" required><button type="button" class="b sm" id="nuGen">Générer</button></span></label>
+    <p class="msg err" id="nuErr" hidden></p>
+    <div class="done" id="nuDone" hidden></div>
+    <div class="dbtns"><button type="button" class="b sm" data-close>Fermer</button><button class="b sm pri" id="nuGo" type="submit">Créer le compte</button></div>
+  </form>
+</dialog>
+
+<dialog id="dLink" aria-labelledby="dLinkH">
+  <h2 id="dLinkH">Nouveau lien testeur</h2>
+  <p class="msg" style="margin:0">Un compte créé avec un lien actif a tout de suite accès à Plan My Ride. Tu pourras désactiver le lien quand il ne doit plus servir.</p>
+  <form class="form" id="newLink" autocomplete="off">
+    <label class="f">Nom du lien<input class="in" id="newLabel" maxlength="60" placeholder="ex. Groupe WhatsApp testeurs"></label>
+    <p class="msg err" id="nlErr" hidden></p>
+    <div class="done" id="nlDone" hidden></div>
+    <div class="dbtns"><button type="button" class="b sm" data-close>Fermer</button><button class="b sm pri" id="newGo" type="submit">Créer le lien</button></div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+'use strict';
+// Supervision (version test de admin.html) : vue d'ensemble (comptes, demandes, liens testeurs, activité, parcours)
+// et onglet Analytics (activity_log, pmr_visits avant le 23/10/2026, routes, usage_log). Accès contrôlé par les politiques RLS.
+const SUPABASE_URL = 'https://bsypkdsnhiepvcnhmfsm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzeXBrZHNuaGllcHZjbmhtZnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDMwOTMsImV4cCI6MjEwODM3OTA5M30.tzanguKC0_oEOqfnrhJEzzNRbdDCxVUzhkLfqO5zthQ';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const dsFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+const dtFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const hmFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const nf = new Intl.NumberFormat('fr-FR');
+const nf1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+const DAY = 864e5;
+const LOG_START = '2026-10-23'; // début du journal activity_log : avant, on lit la mesure d'audience pmr_visits
+const MARKS = [{ d: '2026-10-13', t: 'testeurs' }, { d: '2026-10-17', t: 'mise en ligne' }, { d: '2026-10-24', t: 'refonte' }];
+const MODE_NAME = { ride: 'Sortie', ultra: 'Ultra', taf: 'Vélotaf' };
+const WX_NAME = { mb: 'meteoblue', arome: 'AROME (Météo-France)', met: 'MET Norway', om: 'Open-Meteo' };
+const WX_SHORT = { mb: 'meteoblue', arome: 'AROME', met: 'MET Norway', om: 'Open-Meteo' };
+const G_COL = ['#1f4f8f', '#2e8b57', '#b7791f', '#b2404d', '#7a4ba0', '#1f8a9a', '#c25e1f', '#4e7a1e', '#a03b7a', '#5a5a5a'];
+const DEPT = {'01':'Ain','02':'Aisne','03':'Allier','04':'Alpes-de-Haute-Provence','05':'Hautes-Alpes','06':'Alpes-Maritimes','07':'Ardèche','08':'Ardennes','09':'Ariège','10':'Aube','11':'Aude','12':'Aveyron','13':'Bouches-du-Rhône','14':'Calvados','15':'Cantal','16':'Charente','17':'Charente-Maritime','18':'Cher','19':'Corrèze','2A':'Corse-du-Sud','2B':'Haute-Corse','21':'Côte-d\'Or','22':'Côtes-d\'Armor','23':'Creuse','24':'Dordogne','25':'Doubs','26':'Drôme','27':'Eure','28':'Eure-et-Loir','29':'Finistère','30':'Gard','31':'Haute-Garonne','32':'Gers','33':'Gironde','34':'Hérault','35':'Ille-et-Vilaine','36':'Indre','37':'Indre-et-Loire','38':'Isère','39':'Jura','40':'Landes','41':'Loir-et-Cher','42':'Loire','43':'Haute-Loire','44':'Loire-Atlantique','45':'Loiret','46':'Lot','47':'Lot-et-Garonne','48':'Lozère','49':'Maine-et-Loire','50':'Manche','51':'Marne','52':'Haute-Marne','53':'Mayenne','54':'Meurthe-et-Moselle','55':'Meuse','56':'Morbihan','57':'Moselle','58':'Nièvre','59':'Nord','60':'Oise','61':'Orne','62':'Pas-de-Calais','63':'Puy-de-Dôme','64':'Pyrénées-Atlantiques','65':'Hautes-Pyrénées','66':'Pyrénées-Orientales','67':'Bas-Rhin','68':'Haut-Rhin','69':'Rhône','70':'Haute-Saône','71':'Saône-et-Loire','72':'Sarthe','73':'Savoie','74':'Haute-Savoie','75':'Paris','76':'Seine-Maritime','77':'Seine-et-Marne','78':'Yvelines','79':'Deux-Sèvres','80':'Somme','81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse','85':'Vendée','86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne','90':'Territoire de Belfort','91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne','95':'Val-d\'Oise'};
+const COUNTRY = new Intl.DisplayNames(['fr'], { type: 'region' });
+
+const S = { me: null, users: [], links: [], use: {}, auth: {}, evAll: [], ev: [], vis: [], useAll: [], col: {},
+  filter: 'all', q: '', open: null, pwOpen: null, evF: 'all', evU: '', period: 30, noAdm: false, mb: null, tab: 'over', loadedAt: null };
+let sb = null;
+const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+const linkUrl = code => base + 'index.html?invite=' + encodeURIComponent(code);
+const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const day0 = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const byId = id => S.users.find(u => u.user_id === id);
+const short = u => u ? (u.prenom || (u.email || '?').split('@')[0]) : '?';
+const uName = id => { const u = byId(id); return u ? short(u) : String(id).slice(0, 8); };
+const wxKey = w => String(w || '').split('+')[0];
+const wxLabel = w => { if (!w) return 'pas encore enregistrée'; const p = String(w).split('+').filter(k => WX_NAME[k]); return p.map((k, i) => WX_NAME[k] + (i ? ' (au-delà de son horizon)' : '')).join(' puis ') || w; };
+const ago = iso => { if (!iso) return 'jamais'; const m = (Date.now() - new Date(iso)) / 6e4;
+  if (m < 2) return 'à l\'instant'; if (m < 60) return 'il y a ' + Math.round(m) + ' min';
+  const dd = Math.round((day0(Date.now()) - day0(iso)) / DAY);
+  return dd === 0 ? 'aujourd\'hui' : dd === 1 ? 'hier' : dd < 30 ? 'il y a ' + dd + ' jours' : 'le ' + dFmt.format(new Date(iso)); };
+const when = iso => { const dd = Math.round((day0(Date.now()) - day0(iso)) / DAY); return dd === 0 ? hmFmt.format(new Date(iso)) : dd === 1 ? 'hier' : dsFmt.format(new Date(iso)); };
+const device = d => d === 'mobile' ? 'téléphone' : d === 'desktop' ? 'ordinateur' : '';
+const genPw = () => { const A = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from(crypto.getRandomValues(new Uint8Array(12)), b => A[b % A.length]).join(''); };
+const meter = (f, lab) => '<div class="meter" role="img" aria-label="' + esc(lab) + '"><i style="width:' + Math.max(0, Math.min(100, f * 100)).toFixed(1) + '%"></i></div>';
+
+/* ---------- chargement ---------- */
+async function load(){
+  const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+  const [u, l, g, ev, vis, au] = await Promise.all([
+    sb.from('app_users').select('*').order('created_at', { ascending: true }),
+    sb.from('tester_links').select('*').order('created_at', { ascending: false }),
+    sb.from('usage_log').select('user_id,at,kind,credits').order('at', { ascending: false }).limit(10000),
+    sb.from('activity_log').select('user_id,at,event,detail,km,device,mode,route_id').order('at', { ascending: false }).limit(10000),
+    sb.from('pmr_visits').select('at,visitor,event,mode,device,km,country,region,dept,city').order('at', { ascending: false }).limit(5000),
+    sb.functions.invoke('admin-users', { body: { action: 'list' } }).catch(e => ({ error: e }))
+  ]);
+  if (u.error) throw u.error;
+  S.users = u.data || []; S.links = l.data || []; S.evAll = ev.data || []; S.vis = vis.data || []; S.useAll = g.data || [];
+  S.col = {}; S.users.forEach((x, i) => S.col[x.user_id] = G_COL[i % G_COL.length]);
+  // les plus récents d'abord dans la liste des comptes (l'ordre de création fixe les couleurs)
+  S.users.sort((a, b) => a.created_at < b.created_at ? 1 : -1);
+  const d30 = Date.now() - 30 * DAY;
+  S.ev = S.evAll.filter(e => new Date(e.at) > d30);
+  S.auth = {}; for (const x of (au && au.data && au.data.users) || []) S.auth[x.id] = x;
+  S.use = {};
+  for (const r of S.useAll){ if (new Date(r.at) < m0) continue;
+    const x = S.use[r.user_id] || (S.use[r.user_id] = { mb: 0, cr: 0 }); x.mb++; x.cr += r.credits || 0; }
+  S.loadedAt = new Date();
+  $('state').textContent = 'Comptes, quotas et parcours de Plan My Ride · mis à jour à ' + hmFmt.format(S.loadedAt);
+  render();
+}
+
+/* ---------- vue d'ensemble ---------- */
+function lastSeen(id){
+  const a = S.auth[id] || {}, open = S.evAll.find(e => e.user_id === id);
+  return [a.last_sign_in_at, open && open.at].filter(Boolean).sort().pop() || null;
+}
+function renderKpis(){
+  const d7 = Date.now() - 7 * DAY, recent = e => new Date(e.at) > d7;
+  const act = S.users.filter(u => u.status === 'active');
+  const who7 = new Set(S.ev.filter(recent).map(e => e.user_id));
+  for (const [id, a] of Object.entries(S.auth)) if (a.last_sign_in_at && new Date(a.last_sign_in_at) > d7) who7.add(id);
+  const pend = S.users.filter(u => u.status === 'pending').length;
+  const opens = S.ev.filter(e => e.event === 'open'), gpx = S.ev.filter(e => e.event === 'gpx');
+  const routes = Object.values(S.auth).reduce((t, a) => t + (a.routes || 0), 0);
+  const k = (l, v, s, cls) => '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s ' + (cls || '') + '">' + s + '</div>' : '') + '</div>';
+  const mb = S.mb;
+  $('kpis').innerHTML = k('Comptes actifs', act.length, 'dont ' + act.filter(u => who7.has(u.user_id)).length + ' venus cette semaine')
+    + k('À valider', pend, pend ? 'demande à traiter' : 'rien en attente', pend ? 'warn' : 'good')
+    + k('Ouvertures', opens.filter(recent).length + ' <small>/ 7 j</small>', opens.length + ' sur 30 jours')
+    + k('GPX chargés', gpx.filter(recent).length + ' <small>/ 7 j</small>', routes + ' parcours en tout')
+    + (mb ? '<div class="kpi"><div class="l">Crédits meteoblue</div><div class="v">' + nf1.format(mb.remaining / 1e6) + ' <small>M restants</small></div>'
+        + meter(mb.remaining / mb.quota, Math.round(mb.remaining / mb.quota * 100) + ' % du forfait restant') + '</div>'
+      : k('Crédits meteoblue', '…', 'lecture du solde'));
+}
+function mbCell(u){
+  const used = (S.use[u.user_id] || {}).mb || 0;
+  if (u.quota_mb == null) return '<span class="muted">' + (used ? used + ' chargement' + (used > 1 ? 's' : '') + ' · ' : '') + 'sans quota</span>';
+  const q = u.quota_mb;
+  return '<div class="mbcell">' + meter(q ? used / q : 1, used + ' chargements sur ' + q) + '<span>' + used + ' / ' + q + '</span></div>';
+}
+function actCell(u){
+  const last = lastSeen(u.user_id), d7 = Date.now() - 7 * DAY;
+  const opens7 = S.ev.filter(e => e.user_id === u.user_id && e.event === 'open' && new Date(e.at) > d7).length;
+  const old = !last || new Date(last) < d7;
+  return '<div class="act"><b>' + ago(last) + '</b>' + (old && last ? '<span class="old">pas revenu·e cette semaine</span>'
+    : '<span>' + opens7 + ' ouverture' + (opens7 > 1 ? 's' : '') + ' en 7 j</span>') + '</div>';
+}
+function statusBadge(u){
+  if (u.status === 'blocked') return '<span class="badge blocked">Bloqué</span>';
+  if (u.status === 'pending') return '<span class="badge pending">En attente</span>';
+  if (!u.pmr) return '<span class="badge noacc">Sans accès</span>';
+  return u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge active">Actif</span>';
+}
+function userRows(u){
+  const self = u.user_id === S.me.id, open = S.open === u.user_id, a = S.auth[u.user_id] || {};
+  const sub = (u.email || '') ;
+  let h = '<tr class="u' + (open ? ' open' : '') + '" data-id="' + u.user_id + '">'
+    + '<td class="c-who"><div class="who"><span class="av" style="background:' + S.col[u.user_id] + '">' + esc(short(u).slice(0, 1).toUpperCase()) + '</span><span style="min-width:0"><b>' + esc(short(u)) + (self ? ' <span class="muted" style="font-weight:500">· toi</span>' : '') + '</b><span class="m">' + esc(sub) + (u.invite ? ' · testeur' : '') + '</span></span></div></td>'
+    + '<td class="c-st">' + statusBadge(u) + '</td>'
+    + '<td class="c-mb">' + mbCell(u) + '</td>'
+    + '<td class="c-act">' + actCell(u) + '</td>'
+    + '<td class="c-rt num"><b>' + (a.routes || 0) + '</b></td>'
+    + '<td class="c-more" style="text-align:right"><button type="button" class="more" data-a="more" aria-expanded="' + open + '" aria-label="Actions pour ' + esc(short(u)) + '">⋯</button></td></tr>';
+  if (!open) return h;
+  const mine = S.ev.filter(e => e.user_id === u.user_id), gpx = mine.filter(e => e.event === 'gpx'), use = S.use[u.user_id] || { mb: 0, cr: 0 };
+  h += '<tr class="ux" data-id="' + u.user_id + '"><td colspan="6"><div class="uxbtns">'
+    + (S.pwOpen === u.user_id ? '' : '<button type="button" class="b sm" data-a="pw">Changer le mot de passe</button>')
+    + '<span class="qbox">Quota meteoblue <input type="number" min="0" max="9999" data-q="quota_mb" value="' + (u.quota_mb == null ? '' : u.quota_mb) + '" placeholder="∞" aria-label="Quota meteoblue par mois"> / mois</span>'
+    + '<label class="tgl"><input type="checkbox" data-k="pmr"' + (u.pmr ? ' checked' : '') + '> Accès Plan My Ride</label>'
+    + (self ? '' : '<button type="button" class="b sm" data-a="admin">' + (u.is_admin ? 'Retirer admin' : 'Rendre admin') + '</button>')
+    + (u.status === 'blocked' ? '<button type="button" class="b sm" data-a="ok">Réactiver le compte</button>' : self ? '' : '<button type="button" class="b sm bad" data-a="block">Bloquer le compte</button>')
+    + '<span class="saved" data-s></span></div>'
+    + (S.pwOpen === u.user_id ? '<div class="pwrow"><input type="text" class="in" data-pw minlength="8" maxlength="200" placeholder="Nouveau mot de passe (8 caractères ou plus)" autocomplete="off"><button type="button" class="b sm" data-a="pwgen">Générer</button><button type="button" class="b sm pri" data-a="pwsave">Enregistrer</button><button type="button" class="b sm" data-a="pwcancel">Annuler</button></div>' : '')
+    + '<div class="detail">Inscrit le <b>' + dFmt.format(new Date(u.created_at)) + '</b>' + (u.invite ? ' par lien testeur' : '')
+    + ' · dernière connexion <b>' + ago(a.last_sign_in_at) + '</b>'
+    + ' · <b>' + gpx.length + '</b> GPX sur 30 j' + (gpx[0] ? ' (dernier : ' + esc(gpx[0].detail || '?') + (gpx[0].km ? ', ' + Math.round(gpx[0].km) + ' km' : '') + ')' : '')
+    + ' · meteoblue ce mois : <b>' + use.mb + '</b> chargement' + (use.mb > 1 ? 's' : '') + (use.cr ? ' (' + nf.format(use.cr) + ' crédits)' : '') + '</div>'
+    + '</td></tr>';
+  return h;
+}
+function renderUsers(){
+  const q = S.q.trim().toLowerCase();
+  const rest = S.users.filter(u => u.status !== 'pending' && (S.filter === 'all' || u.status === S.filter)
+    && (!q || (u.prenom || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)));
+  rest.sort((a, b) => (lastSeen(b.user_id) || '') < (lastSeen(a.user_id) || '') ? -1 : 1);
+  $('allN').textContent = S.users.filter(u => u.status !== 'pending').length;
+  $('users').innerHTML = rest.map(userRows).join('') || '<tr><td colspan="6" class="empty" style="padding:16px 20px">Aucun compte.</td></tr>';
+}
+function renderPend(){
+  const pend = S.users.filter(u => u.status === 'pending');
+  $('pendN').textContent = pend.length; $('pendEmpty').hidden = !!pend.length;
+  $('pend').innerHTML = pend.map(u => '<div class="pc" data-id="' + u.user_id + '"><b>' + esc(u.prenom || u.email) + '</b><span class="m">' + esc(u.email || '') + ' · inscrit ' + ago(u.created_at) + '</span>'
+    + '<div class="uxbtns"><button type="button" class="b sm pri" data-a="ok">Valider</button><button type="button" class="b sm bad" data-a="block">Refuser</button><span class="saved" data-s></span></div></div>').join('');
+}
+function renderLinks(){
+  $('links').innerHTML = S.links.map(l => '<div class="lk' + (l.active ? '' : ' off') + '" data-code="' + esc(l.code) + '"><span class="t"><b>' + esc(l.label || 'Lien testeur') + '</b>'
+    + '<span>?invite=' + esc(l.code) + ' · ' + l.uses + ' inscrit' + (l.uses > 1 ? 's' : '') + (l.active ? '' : ' · désactivé') + '</span></span>'
+    + '<span class="uxbtns">' + (l.active ? '<button type="button" class="b xs" data-l="copy">Copier</button>' + (navigator.share ? '<button type="button" class="b xs" data-l="share">Partager</button>' : '') : '')
+    + '<button type="button" class="b xs' + (l.active ? ' bad' : '') + '" data-l="toggle">' + (l.active ? 'Désactiver' : 'Réactiver') + '</button></span><span class="saved" data-s></span></div>').join('')
+    || '<p class="empty">Aucun lien. « Nouveau lien testeur » en haut de la page.</p>';
+}
+function evText(e){
+  const u = '<b>' + esc(uName(e.user_id)) + '</b>';
+  if (e.event === 'gpx') return u + ' a chargé <b>' + esc(e.detail || 'un GPX') + '</b>' + (e.km ? ' · ' + Math.round(e.km) + ' km' : '');
+  if (e.event === 'open') return u + ' · connexion' + (e.device ? ' sur ' + device(e.device) : '') + (e.mode && e.mode !== 'ride' ? ' (' + MODE_NAME[e.mode] + ')' : '');
+  if (e.event === 'mode') return u + ' · passe en ' + (MODE_NAME[e.mode] || '?');
+  if (e.event === 'out') return u + ' · ouvre Mes sorties';
+  if (e.event === 'wx') return u + ' · météo ' + esc(WX_SHORT[wxKey(e.detail)] || e.detail || '?');
+  return u + ' · ' + esc(e.event);
+}
+function renderFeed(){
+  const rows = S.evAll.slice(0, 7);
+  $('feed').innerHTML = rows.map(e => '<li><span class="tm">' + when(e.at) + '</span><span>' + evText(e) + '</span></li>').join('')
+    || '<li><span class="muted">Rien pour l\'instant.</span></li>';
+}
+function renderEvents(){
+  const sel = $('evUser'), cur = S.evU;
+  sel.innerHTML = '<option value="">Tous les comptes</option>' + S.users.map(u => '<option value="' + u.user_id + '"' + (u.user_id === cur ? ' selected' : '') + '>' + esc(short(u)) + '</option>').join('');
+  const okE = e => S.evF === 'all' || (S.evF === 'other' ? !['open', 'gpx'].includes(e.event) : e.event === S.evF);
+  const rows = S.ev.filter(e => okE(e) && (!S.evU || e.user_id === S.evU)).slice(0, 300);
+  const lab = e => e.event === 'gpx' ? '<span class="tag gpx">GPX</span>' + esc(e.detail || '')
+    : e.event === 'open' ? '<span class="tag">Connexion</span>' + (e.mode ? esc(MODE_NAME[e.mode]) : '')
+    : e.event === 'mode' ? '<span class="tag">Mode</span>' + esc(MODE_NAME[e.mode] || '')
+    : e.event === 'out' ? '<span class="tag">Mes sorties</span>'
+    : e.event === 'wx' ? '<span class="tag wx">Météo</span>' + esc(wxLabel(e.detail)) + (e.mode ? ' · ' + MODE_NAME[e.mode] : '') : esc(e.event);
+  $('evBody').innerHTML = rows.map(e => '<tr><td style="white-space:nowrap">' + dtFmt.format(new Date(e.at)) + '</td><td>' + esc(uName(e.user_id)) + '</td><td>' + lab(e) + '</td>'
+    + '<td class="num">' + (e.km ? Math.round(e.km) : '') + '</td><td>' + (e.device === 'mobile' ? 'Téléphone' : e.device === 'desktop' ? 'Ordinateur' : '') + '</td></tr>').join('')
+    || '<tr><td colspan="5" class="empty" style="padding:14px 20px">Rien sur cette période.</td></tr>';
+}
+function render(){
+  renderKpis(); renderUsers(); renderPend(); renderLinks(); renderFeed(); renderEvents();
+  if (S.tab === 'ana') renderAna();
+}
+
+/* ---------- actions sur les comptes ---------- */
+function savedEl(id){ return document.querySelector('tr.ux[data-id="' + id + '"] [data-s], .pc[data-id="' + id + '"] [data-s]'); }
+async function save(id, patch){
+  const s = savedEl(id); if (s) s.textContent = 'Enregistrement…';
+  const { error } = await sb.from('app_users').update(patch).eq('user_id', id);
+  if (error){ const s2 = savedEl(id); if (s2) s2.textContent = 'Échec : ' + error.message; return false; }
+  Object.assign(byId(id), patch);
+  return true;
+}
+const flash = (id, t) => { const s = savedEl(id); if (s) s.textContent = t; };
+async function onUsers(e){
+  const row = e.target.closest('[data-id]'); if (!row) return;
+  const id = row.dataset.id, u = byId(id), self = id === S.me.id;
+  const a = e.target.closest('[data-a]');
+  if (a && e.type === 'click'){
+    const k = a.dataset.a;
+    if (k === 'more'){ S.open = S.open === id ? null : id; S.pwOpen = null; renderUsers(); return; }
+    if (k === 'ok'){ if (await save(id, { status: 'active', pmr: true, validated_at: new Date().toISOString() })){ render(); flash(id, 'Compte ouvert'); } return; }
+    if (k === 'block' && !self){ if (await save(id, { status: 'blocked' })){ render(); flash(id, 'Compte bloqué'); } return; }
+    if (k === 'admin' && !self){ if (await save(id, { is_admin: !u.is_admin })){ renderUsers(); flash(id, u.is_admin ? 'Admin' : 'Admin retiré'); } return; }
+    if (k === 'pw'){ S.pwOpen = id; renderUsers(); const i = document.querySelector('tr.ux[data-id="' + id + '"] [data-pw]'); if (i) i.focus(); return; }
+    if (k === 'pwcancel'){ S.pwOpen = null; renderUsers(); return; }
+    if (k === 'pwgen'){ row.querySelector('[data-pw]').value = genPw(); return; }
+    if (k === 'pwsave') return setPassword(id, row, a);
+    return;
+  }
+  if (e.type !== 'change') return;
+  const kk = e.target.dataset.k, q = e.target.dataset.q;
+  if (kk && await save(id, { [kk]: e.target.checked })){ renderUsers(); flash(id, 'Enregistré'); }
+  if (q){ const v = e.target.value.trim(); if (await save(id, { [q]: v === '' ? null : Math.max(0, Math.round(Number(v))) })){ renderUsers(); flash(id, 'Quota enregistré'); } }
+}
+async function setPassword(id, row, btn){
+  const pw = row.querySelector('[data-pw]').value, s = row.querySelector('[data-s]');
+  if (pw.length < 8){ s.textContent = 'Au moins 8 caractères.'; return; }
+  btn.disabled = true; s.textContent = 'Enregistrement…';
+  const { data, error } = await sb.functions.invoke('admin-users', { body: { action: 'set_password', user_id: id, password: pw } });
+  btn.disabled = false;
+  if (error || !data || !data.ok){ s.textContent = 'Échec : ' + ((data && (data.detail || data.error)) || (error && error.message) || 'inconnu'); return; }
+  const u = byId(id); S.pwOpen = null; renderUsers();
+  const s2 = savedEl(id); if (s2) s2.innerHTML = 'Mot de passe changé : <b>' + esc(pw) + '</b> (à transmettre' + (u && u.email ? ' à ' + esc(u.email) : '') + ')';
+}
+for (const id of ['pend', 'users']){ $(id).addEventListener('click', onUsers); $(id).addEventListener('change', onUsers); }
+$('filter').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; S.filter = b.dataset.f; for (const x of $('filter').querySelectorAll('[data-f]')) x.setAttribute('aria-pressed', String(x === b)); renderUsers(); });
+$('q').addEventListener('input', e => { S.q = e.target.value; renderUsers(); });
+$('links').addEventListener('click', async e => {
+  const b = e.target.closest('[data-l]'); if (!b) return;
+  const box = b.closest('.lk'), code = box.dataset.code, l = S.links.find(x => x.code === code), s = box.querySelector('[data-s]');
+  if (b.dataset.l === 'copy'){ try { await navigator.clipboard.writeText(linkUrl(code)); s.textContent = 'Lien copié : ' + linkUrl(code); } catch(_){ s.textContent = linkUrl(code); } return; }
+  if (b.dataset.l === 'share'){ try { await navigator.share({ title: 'Plan My Ride', text: 'Crée ton compte testeur Plan My Ride :', url: linkUrl(code) }); } catch(_){} return; }
+  const { error } = await sb.from('tester_links').update({ active: !l.active }).eq('code', code);
+  if (error){ s.textContent = 'Échec : ' + error.message; return; }
+  l.active = !l.active; renderLinks();
+});
+$('feedAll').addEventListener('click', () => { $('journal').hidden = false; $('journal').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+$('evFilter').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; S.evF = b.dataset.e; for (const x of $('evFilter').querySelectorAll('[data-e]')) x.setAttribute('aria-pressed', String(x === b)); renderEvents(); });
+$('evUser').addEventListener('change', e => { S.evU = e.target.value; renderEvents(); });
+
+/* ---------- dialogues : créer un compte, nouveau lien ---------- */
+for (const d of document.querySelectorAll('dialog')) d.addEventListener('click', e => { if (e.target.closest('[data-close]') || e.target === d) d.close(); });
+$('openUser').addEventListener('click', () => { $('nuErr').hidden = true; $('nuDone').hidden = true; $('dUser').showModal(); $('nuPrenom').focus(); });
+$('openLink').addEventListener('click', () => { $('nlErr').hidden = true; $('nlDone').hidden = true; $('dLink').showModal(); $('newLabel').focus(); });
+$('nuGen').addEventListener('click', () => { $('nuPw').value = genPw(); });
+$('newUser').addEventListener('submit', async e => {
+  e.preventDefault(); $('nuErr').hidden = true; $('nuDone').hidden = true;
+  const email = $('nuEmail').value.trim(), password = $('nuPw').value, prenom = $('nuPrenom').value.trim();
+  const err = t => { $('nuErr').textContent = t; $('nuErr').hidden = false; };
+  if (password.length < 8) return err('Le mot de passe doit faire au moins 8 caractères.');
+  $('nuGo').disabled = true;
+  const { data, error } = await sb.functions.invoke('admin-users', { body: { action: 'create', email, password, prenom } });
+  $('nuGo').disabled = false;
+  if (error || !data || !data.ok){
+    const c = data && data.error;
+    return err(c === 'exists' ? 'Un compte existe déjà avec cet e-mail.' : c === 'email' ? 'E-mail invalide.' : 'Création impossible : ' + ((data && data.detail) || (error && error.message) || c || 'inconnu'));
+  }
+  const txt = 'Ton compte Plan My Ride est prêt.\nAdresse : ' + base + 'index.html' + '\nE-mail : ' + email + '\nMot de passe provisoire : ' + password;
+  $('nuDone').innerHTML = '<b>Compte créé' + (prenom ? ' pour ' + esc(prenom) : '') + '</b>' + (data.warn ? ' (accès à vérifier dans la liste)' : '') + '<pre>' + esc(txt) + '</pre><button class="b sm pri" type="button" id="nuCopy">Copier le message</button>' + (navigator.share ? ' <button class="b sm" type="button" id="nuShare">Partager</button>' : '');
+  $('nuDone').hidden = false;
+  $('nuCopy').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('nuCopy').textContent = 'Copié'; } catch(_){} };
+  if ($('nuShare')) $('nuShare').onclick = () => navigator.share({ text: txt }).catch(() => {});
+  $('nuPrenom').value = ''; $('nuEmail').value = ''; $('nuPw').value = '';
+  await load();
+});
+$('newLink').addEventListener('submit', async e => {
+  e.preventDefault(); $('nlErr').hidden = true;
+  const code = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('').slice(0, 10);
+  const label = $('newLabel').value.trim() || 'Lien testeur';
+  $('newGo').disabled = true;
+  const { error } = await sb.from('tester_links').insert({ code, label });
+  $('newGo').disabled = false;
+  if (error){ $('nlErr').textContent = 'Création impossible : ' + error.message; $('nlErr').hidden = false; return; }
+  $('nlDone').innerHTML = '<b>' + esc(label) + '</b><pre>' + esc(linkUrl(code)) + '</pre><button class="b sm pri" type="button" id="nlCopy">Copier le lien</button>' + (navigator.share ? ' <button class="b sm" type="button" id="nlShare">Partager</button>' : '');
+  $('nlDone').hidden = false; $('newLabel').value = '';
+  $('nlCopy').onclick = async () => { try { await navigator.clipboard.writeText(linkUrl(code)); $('nlCopy').textContent = 'Copié'; } catch(_){} };
+  if ($('nlShare')) $('nlShare').onclick = () => navigator.share({ title: 'Plan My Ride', text: 'Crée ton compte testeur Plan My Ride :', url: linkUrl(code) }).catch(() => {});
+  const r = await sb.from('tester_links').select('*').order('created_at', { ascending: false }); if (!r.error){ S.links = r.data || []; renderLinks(); }
+});
+
+/* ---------- parcours : carte + liste ---------- */
+const G = { map: null, routes: [], layers: [], byKey: {}, cur: null, f: '', full: false };
+function gpxText(r){
+  const pts = r.pts || [];
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Plan My Ride" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>' + esc(r.name || 'Parcours') + '</name><trkseg>\n'
+    + pts.map(q => '<trkpt lat="' + q[0] + '" lon="' + q[1] + '">' + (q[2] == null ? '' : '<ele>' + q[2] + '</ele>') + '</trkpt>').join('\n') + '\n</trkseg></trk></gpx>';
+}
+function gpxDownload(r){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([gpxText(r)], { type: 'application/gpx+xml' }));
+  a.download = (r.name || 'parcours').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80) + '.gpx'; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function gInfo(r){
+  return '<b>' + esc(r.name || 'Parcours') + '</b><br>'
+    + '<span class="m">' + (r.km ? Math.round(r.km) + ' km' : '') + (r.dplus ? ' · D+ ' + nf.format(Math.round(r.dplus)) + ' m' : '') + '</span><br>'
+    + 'Chargé par <b>' + esc(uName(r.user_id)) + '</b> le ' + dtFmt.format(new Date(r.created_at))
+    + (r.used_at && r.used_at !== r.created_at ? '<br><span class="m">ouvert pour la dernière fois ' + ago(r.used_at) + '</span>' : '') + '<br>'
+    + 'Météo : <b>' + esc(wxLabel(r.wx)) + '</b>' + (r.wx_at ? ' <span class="m">(' + dtFmt.format(new Date(r.wx_at)) + ')</span>' : '');
+}
+async function gLoad(){
+  const { data, error } = await sb.from('routes').select('user_id,id,name,km,dplus,pts,created_at,used_at,wx,wx_at').is('deleted_at', null).order('used_at', { ascending: false, nullsFirst: false }).limit(300);
+  if (error){ $('glist').innerHTML = '<li class="muted">Lecture impossible : ' + esc(error.message) + '</li>'; return; }
+  G.routes = data || [];
+  gDraw();
+  if (S.tab === 'ana') renderAna();
+}
+function gChips(){
+  const ids = [...new Set(G.routes.map(r => r.user_id))];
+  const chip = (id, lab, n) => '<button type="button" class="chip" data-u="' + id + '" aria-pressed="' + (G.f === id) + '">' + (id ? '<span class="dot" style="background:' + S.col[id] + '"></span>' : '') + esc(lab) + ' · ' + n + '</button>';
+  $('gChips').innerHTML = chip('', 'Tous', G.routes.length) + ids.map(id => chip(id, uName(id), G.routes.filter(r => r.user_id === id).length)).join('');
+}
+function gOff(){ if (!G.cur) return; G.cur.hit.closeTooltip(); G.cur.line.setStyle({ weight: 4, opacity: .85 }); G.cur = null; }
+const rTime = r => r.used_at || r.created_at || '';
+function gShown(){ return G.routes.filter(r => !G.f || r.user_id === G.f); }
+function gDraw(){
+  gChips();
+  const list = gShown();
+  if (window.L){
+    if (!G.map){
+      G.map = L.map('gmap', { zoomControl: true }).setView([46.6, 2.5], 6);
+      G.map.on('mouseout zoomstart movestart', gOff);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(G.map);
+    }
+    for (const l of G.layers) l.remove(); G.layers = []; G.byKey = {}; G.cur = null;
+    const bounds = [];
+    for (const r of list){
+      const pts = r.pts || []; if (pts.length < 2) continue;
+      const step = Math.max(1, Math.ceil(pts.length / 600)), ll = [];
+      for (let i = 0; i < pts.length; i += step) ll.push([pts[i][0], pts[i][1]]);
+      ll.push([pts[pts.length - 1][0], pts[pts.length - 1][1]]);
+      const col = S.col[r.user_id] || '#5a5a5a';
+      const line = L.polyline(ll, { color: col, weight: 4, opacity: .85, interactive: false }).addTo(G.map);
+      const hit = L.polyline(ll, { color: col, weight: 18, opacity: 0 }).addTo(G.map);
+      hit.bindTooltip(gInfo(r), { sticky: true, className: 'gtip', direction: 'top', offset: [0, -8] });
+      hit.on('mouseover', () => { if (G.cur && G.cur.hit !== hit) gOff(); G.cur = { hit, line }; line.setStyle({ weight: 7, opacity: 1 }); });
+      hit.on('mouseout', () => { if (G.cur && G.cur.hit === hit) gOff(); });
+      hit.on('click', e => {
+        const box = document.createElement('div'); box.innerHTML = gInfo(r) + '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="b xs" data-g="dl">Télécharger le GPX</button><button class="b xs" data-g="fit">Centrer</button></div>';
+        box.querySelector('[data-g="dl"]').onclick = () => gpxDownload(r);
+        box.querySelector('[data-g="fit"]').onclick = () => G.map.fitBounds(line.getBounds(), { padding: [20, 20] });
+        hit.closeTooltip(); L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(box).openOn(G.map);
+      });
+      G.layers.push(line, hit); bounds.push(...ll); G.byKey[r.user_id + '|' + r.id] = { line, hit, r };
+    }
+    if (bounds.length) G.map.fitBounds(bounds, { padding: [20, 20], maxZoom: 13 });
+    setTimeout(() => G.map.invalidateSize(), 50);
+  } else $('gmap').textContent = 'Carte indisponible (Leaflet non chargé).';
+  const top = list.slice().sort((a, b) => rTime(b) < rTime(a) ? -1 : 1).slice(0, 6);
+  $('glist').innerHTML = top.map(r => '<li data-k="' + esc(r.user_id + '|' + r.id) + '"><span class="dot" style="background:' + S.col[r.user_id] + '"></span><span class="t"><button type="button" data-r="see">' + esc(r.name || 'Parcours') + '</button>'
+    + '<span>' + esc(uName(r.user_id)) + (r.km ? ' · ' + nf.format(Math.round(r.km)) + ' km' : '') + (r.wx ? ' · ' + esc(WX_SHORT[wxKey(r.wx)] || r.wx) : '') + ' · ' + ago(rTime(r)) + '</span></span>'
+    + '<button type="button" class="link" data-r="dl">GPX</button></li>').join('')
+    + (list.length ? '<li class="all"><button type="button" class="link" id="gAll">' + (G.full ? 'Masquer la liste complète' : 'Voir les ' + list.length + ' parcours') + '</button></li>' : '<li class="muted">Aucun parcours enregistré.</li>');
+  $('rFull').hidden = !G.full;
+  if (G.full) rRender();
+}
+function rRender(){
+  const k = $('rSort').value, list = gShown().slice();
+  const cmp = { date: (a, b) => rTime(b) < rTime(a) ? -1 : 1, 'km-desc': (a, b) => (b.km || 0) - (a.km || 0), 'km-asc': (a, b) => (a.km || 0) - (b.km || 0),
+    user: (a, b) => uName(a.user_id).localeCompare(uName(b.user_id), 'fr') || (rTime(b) < rTime(a) ? -1 : 1) }[k];
+  list.sort(cmp);
+  for (const th of document.querySelectorAll('.rlist th.sort')){ const s2 = th.dataset.s;
+    const on = (s2 === 'date' && k === 'date') || (s2 === 'user' && k === 'user') || (s2 === 'km' && k.startsWith('km'));
+    if (on) th.setAttribute('aria-sort', k === 'km-asc' ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort'); }
+  $('rN').textContent = list.length;
+  $('rBody').innerHTML = list.map(r => '<tr data-k="' + esc(r.user_id + '|' + r.id) + '"><td class="nm">' + esc(r.name || 'Parcours') + '</td>'
+    + '<td class="acc2"><span class="dot" style="background:' + S.col[r.user_id] + ';margin-right:6px"></span>' + esc(uName(r.user_id)) + '</td>'
+    + '<td class="num">' + (r.km ? nf.format(Math.round(r.km)) + ' km' : '') + '</td><td class="num">' + (r.dplus ? nf.format(Math.round(r.dplus)) + ' m' : '') + '</td>'
+    + '<td class="dt">' + dFmt.format(new Date(r.created_at)) + '</td><td>' + esc(r.wx ? WX_SHORT[wxKey(r.wx)] || r.wx : '–') + '</td>'
+    + '<td><div class="acts2"><button type="button" class="b xs" data-r="see">Voir</button><button type="button" class="b xs" data-r="dl">GPX</button><button type="button" class="b xs bad" data-r="del">Supprimer</button></div></td></tr>').join('')
+    || '<tr><td colspan="7" class="empty" style="padding:14px 20px">Aucun parcours.</td></tr>';
+}
+$('gChips').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; G.f = b.dataset.u; gDraw(); });
+$('rSort').addEventListener('change', rRender);
+document.querySelector('.rlist thead').addEventListener('click', e => {
+  const th = e.target.closest('th.sort'); if (!th) return; const s2 = th.dataset.s, sel = $('rSort');
+  sel.value = s2 === 'km' ? (sel.value === 'km-desc' ? 'km-asc' : 'km-desc') : s2 === 'user' ? 'user' : 'date'; rRender();
+});
+async function onRoute(e){
+  if (e.target.id === 'gAll'){ G.full = !G.full; gDraw(); if (G.full) $('rFull').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  const b = e.target.closest('[data-r]'); if (!b) return;
+  const row = b.closest('[data-k]'), g = G.byKey[row.dataset.k], r = g ? g.r : G.routes.find(x => x.user_id + '|' + x.id === row.dataset.k); if (!r) return;
+  if (b.dataset.r === 'dl') return gpxDownload(r);
+  if (b.dataset.r === 'see'){ if (!g) return; $('gmap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    G.map.fitBounds(g.line.getBounds(), { padding: [20, 20] }); setTimeout(() => { g.line.setStyle({ weight: 8, opacity: 1 }); setTimeout(() => g.line.setStyle({ weight: 4, opacity: .85 }), 1800); }, 400); return; }
+  if (!b.dataset.arm){ b.dataset.arm = '1'; b.textContent = 'Confirmer ?'; setTimeout(() => { if (b.isConnected){ delete b.dataset.arm; b.textContent = 'Supprimer'; } }, 4000); return; }
+  b.disabled = true; b.textContent = 'Suppression…';
+  const { error } = await sb.from('routes').update({ deleted_at: new Date().toISOString() }).eq('user_id', r.user_id).eq('id', r.id);
+  if (error){ b.disabled = false; b.textContent = 'Échec'; alert('Suppression impossible : ' + error.message); return; }
+  G.routes = G.routes.filter(x => x !== r); gDraw();
+}
+$('glist').addEventListener('click', onRoute); $('rBody').addEventListener('click', onRoute);
+
+async function mbBalance(){
+  try {
+    const { data } = await sb.functions.invoke('meteoblue', { body: { usage: true } });
+    if (data && data.ok && isFinite(data.remaining) && data.quota){ S.mb = { remaining: data.remaining, quota: data.quota, today: data.today }; renderKpis(); if (S.tab === 'ana') renderAna(); }
+  } catch(_){}
+}
+
+/* ---------- Analytics ---------- */
+// Journal : activity_log à partir de LOG_START ; avant, la mesure d'audience anonyme pmr_visits (visit ≈ ouverture).
+function anaRange(){
+  const now = Date.now(), t1 = day0(now) + DAY;
+  if (S.period) return { t0: t1 - S.period * DAY, t1, days: S.period };
+  const first = Math.min(...[...S.evAll, ...S.vis].map(e => new Date(e.at).getTime()).filter(isFinite), now);
+  const t0 = day0(first); return { t0, t1, days: Math.max(1, Math.round((t1 - t0) / DAY)) };
+}
+function anaEvents(t0, t1){
+  // évènements unifiés { at, user, kind: open|gpx|mode|out|wx, device, km, mode, detail }
+  const adm = new Set(S.users.filter(u => u.is_admin).map(u => u.user_id));
+  const ls = new Date(LOG_START + 'T00:00:00').getTime();
+  const out = [];
+  for (const e of S.evAll){ const t = new Date(e.at).getTime(); if (t < t0 || t >= t1) continue; if (S.noAdm && adm.has(e.user_id)) continue;
+    out.push({ t, user: e.user_id, kind: e.event, device: e.device, km: e.km, mode: e.mode, detail: e.detail }); }
+  for (const v of S.vis){ const t = new Date(v.at).getTime(); if (t < t0 || t >= t1 || t >= ls) continue;
+    out.push({ t, user: null, kind: v.event === 'visit' ? 'open' : v.event, device: v.device, km: v.km, mode: v.mode, anon: true }); }
+  return out;
+}
+function median(a){ if (!a.length) return NaN; const s = a.slice().sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+function hbars(rows, total){
+  return rows.map(([lab, n]) => '<div class="r"><div class="lab"><span>' + esc(lab) + '</span><b>' + Math.round(n / total * 100) + ' %</b></div>' + meter(n / total, lab + ' : ' + Math.round(n / total * 100) + ' %') + '</div>').join('');
+}
+function renderAna(){
+  const { t0, t1, days } = anaRange();
+  const E = anaEvents(t0, t1), prev = S.period ? anaEvents(t0 - S.period * DAY, t0) : null;
+  const opens = E.filter(e => e.kind === 'open'), gpx = E.filter(e => e.kind === 'gpx');
+  const pLab = S.period ? S.period + ' jours d\'avant' : '';
+  const k = (l, v, s, cls) => '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s ' + (cls || '') + '">' + s + '</div></div>';
+  let d = '';
+  if (prev){ const dn = opens.length - prev.filter(e => e.kind === 'open').length; d = (dn > 0 ? '+' : dn < 0 ? '−' : '±') + Math.abs(dn) + ' par rapport aux ' + pLab; }
+  else d = 'depuis le ' + dFmt.format(new Date(t0));
+  const kmMed = median(gpx.map(e => e.km).filter(x => x > 0));
+  const testers = S.users.filter(u => u.status === 'active' && !u.is_admin);
+  const actDays = {}; for (const e of E) if (e.user){ (actDays[e.user] || (actDays[e.user] = new Set())).add(dayKey(e.t)); }
+  const back = testers.filter(u => (actDays[u.user_id] || new Set()).size >= 2).length;
+  const mob = opens.filter(e => e.device).length ? opens.filter(e => e.device === 'mobile').length / opens.filter(e => e.device).length : NaN;
+  const used = S.useAll.filter(r => { const t = new Date(r.at).getTime(); return t >= t0 && t < t1 && (!S.noAdm || !(byId(r.user_id) || {}).is_admin); });
+  const cr = used.reduce((t, r) => t + (r.credits || 0), 0);
+  let rhythm = used.length + ' chargement' + (used.length > 1 ? 's' : '');
+  if (S.mb && cr > 0){ const perDay = cr / days, left = S.mb.remaining / perDay; rhythm += ' · au rythme actuel : ' + (left > 730 ? Math.round(left / 365) + ' ans' : left > 60 ? Math.round(left / 30) + ' mois' : Math.round(left) + ' jours') + ' de forfait'; }
+  $('aKpis').innerHTML = k('Ouvertures', opens.length, d, prev && opens.length > prev.filter(e => e.kind === 'open').length ? 'good' : '')
+    + k('GPX chargés', gpx.length, isFinite(kmMed) ? 'km médian : ' + nf.format(Math.round(kmMed)) + ' km' : 'aucun sur la période')
+    + k('Testeurs qui reviennent', back + ' <small>sur ' + testers.length + '</small>', 'venus au moins 2 jours')
+    + k('Sur téléphone', isFinite(mob) ? Math.round(mob * 100) + ' <small>%</small>' : '–', 'des ouvertures')
+    + k('Crédits meteoblue', cr >= 1e5 ? nf1.format(cr / 1e6) + ' <small>M utilisés</small>' : nf.format(cr) + ' <small>utilisés</small>', rhythm);
+  renderChart(E, t0, days);
+  // modes : jours d'usage par compte et par mode (journal), à défaut visites par page
+  const mk = {}; let mN = 0;
+  for (const e of E) if (e.mode && MODE_NAME[e.mode] && ['open', 'mode', 'gpx', 'wx'].includes(e.kind)){ const key = (e.user || 'anon' + e.t) + '|' + dayKey(e.t) + '|' + e.mode; if (!mk[key]){ mk[key] = e.mode; mN++; } }
+  const mc = {}; for (const m of Object.values(mk)) mc[m] = (mc[m] || 0) + 1;
+  const outN = E.filter(e => e.kind === 'out').length;
+  $('aModes').innerHTML = (mN ? hbars(['ride', 'ultra', 'taf'].map(m => [MODE_NAME[m], mc[m] || 0]), mN) : '<p class="empty">Pas encore de données sur la période.</p>')
+    + '<div class="foot">Mes sorties ouverte <b>' + outN + '</b> fois' + (outN ? '' : ' (suivi depuis le 24 oct.)') + ' · part des jours d\'usage par mode</div>';
+  // sources météo : journal « wx » ; à défaut la dernière source de chaque parcours (routes.wx)
+  const wc = {}; let wN = 0, wFrom = 'journal';
+  for (const e of E) if (e.kind === 'wx'){ const kk = wxKey(e.detail); if (WX_SHORT[kk]){ wc[kk] = (wc[kk] || 0) + 1; wN++; } }
+  if (!wN){ wFrom = 'routes'; for (const r of G.routes){ const t = new Date(r.wx_at || 0).getTime(); if (!r.wx || t < t0 || t >= t1) continue; if (S.noAdm && (byId(r.user_id) || {}).is_admin) continue; const kk = wxKey(r.wx); if (WX_SHORT[kk]){ wc[kk] = (wc[kk] || 0) + 1; wN++; } } }
+  const wRows = Object.entries(wc).sort((a, b) => b[1] - a[1]).map(([kk, n]) => [WX_SHORT[kk], n]);
+  $('aWx').innerHTML = (wN ? hbars(wRows, wN) : '<p class="empty">Pas encore de données sur la période.</p>')
+    + '<div class="foot">' + (wFrom === 'journal' ? wN + ' chargement' + (wN > 1 ? 's' : '') + ' de météo par parcours et par onglet' : 'd\'après la dernière source de chaque parcours') + '</div>';
+  // provenance (mesure d'audience, hors admins)
+  const gc = {};
+  for (const v of S.vis){ const t = new Date(v.at).getTime(); if (t < t0 || t >= t1 || v.event !== 'visit') continue;
+    const lab = v.country === 'FR' ? (v.dept ? (DEPT[v.dept] || 'Dép.') + ' (' + v.dept + ')' : (v.region || 'France')) : v.country ? (() => { try { return COUNTRY.of(v.country); } catch(_){ return v.country; } })() : 'Inconnu';
+    gc[lab] = (gc[lab] || 0) + 1; }
+  const gl = Object.entries(gc).sort((a, b) => b[1] - a[1]); const top = gl.slice(0, 6), rest = gl.slice(6).reduce((t, x) => t + x[1], 0);
+  $('aGeo').innerHTML = top.map(([l, n]) => '<li><span>' + esc(l) + '</span><b>' + n + '</b></li>').join('') + (rest ? '<li><span>Autres</span><b>' + rest + '</b></li>' : '') || '<li><span class="muted">Pas de visite localisée sur la période.</span></li>';
+  $('aGeoNote').textContent = 'Visites des comptes non admins, localisées d\'après le réseau (sans garder l\'adresse IP).';
+  renderRet(t1, days);
+}
+function renderChart(E, t0, days){
+  const svg = $('chartSvg'), W = Math.max(340, Math.round(svg.clientWidth || 1200)), H = 230;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  const top = 34, bot = 190, n = days, slot = W / n;
+  const o = new Array(n).fill(0), g = new Array(n).fill(0);
+  for (const e of E){ const i = Math.floor((day0(e.t) - t0) / DAY); if (i < 0 || i >= n) continue; if (e.kind === 'open') o[i]++; else if (e.kind === 'gpx') g[i]++; }
+  const max = Math.max(1, ...o, ...g), step = max <= 5 ? 1 : max <= 12 ? 2 : max <= 30 ? 5 : Math.ceil(max / 5 / 5) * 5, ymax = Math.ceil(max / step) * step;
+  const y = v => bot - v / ymax * (bot - top);
+  let s = '';
+  for (let v = 0; v <= ymax; v += step) s += '<line x1="28" x2="' + W + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line-2)"/><text x="0" y="' + (y(v) + 4) + '" class="mono">' + v + '</text>';
+  const x0 = 28, sw = (W - x0) / n, bw = Math.max(2, Math.min(28, sw * .7)), gw = Math.max(1.5, bw * .5);
+  for (let i = 0; i < n; i++){
+    const cx = x0 + sw * i + sw / 2, dd = new Date(t0 + i * DAY + DAY / 2), lab = dsFmt.format(dd);
+    s += '<g><title>' + lab + ' : ' + o[i] + ' ouverture' + (o[i] > 1 ? 's' : '') + ', ' + g[i] + ' GPX</title>'
+      + '<rect x="' + (cx - sw / 2) + '" y="' + top + '" width="' + sw + '" height="' + (bot - top) + '" fill="transparent"/>'
+      + (o[i] ? '<rect x="' + (cx - bw / 2) + '" y="' + y(o[i]) + '" width="' + bw + '" height="' + (bot - y(o[i])) + '" rx="' + Math.min(3, bw / 4) + '" fill="var(--bar-soft)"/>' : '')
+      + (g[i] ? '<rect x="' + (cx - gw / 2) + '" y="' + y(g[i]) + '" width="' + gw + '" height="' + (bot - y(g[i])) + '" rx="' + Math.min(2, gw / 4) + '" fill="var(--accent)"/>' : '') + '</g>';
+  }
+  // étiquettes de dates : début, fin, repères, et quelques-unes entre si la place le permet
+  const labs = new Map(); labs.set(0, 'start'); labs.set(n - 1, 'end');
+  const every = Math.ceil(n / Math.max(2, Math.floor(W / 110)));
+  for (let i = every; i < n - every / 2; i += every) labs.set(i, '');
+  let lastX = -999;
+  for (const i of [...labs.keys()].sort((a, b) => a - b)){
+    const cx = x0 + sw * i + sw / 2, anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+    if (i !== n - 1 && (cx - lastX < 70 || W - cx < 110)) continue; lastX = cx;
+    s += '<text x="' + (i === 0 ? x0 : i === n - 1 ? W : cx) + '" y="' + (H - 12) + '" text-anchor="' + anchor + '" class="mono">' + (i === n - 1 ? 'aujourd\'hui' : dsFmt.format(new Date(t0 + i * DAY + DAY / 2))) + '</text>';
+  }
+  let lastM = -999;
+  for (const m of MARKS){ const i = Math.round((day0(new Date(m.d + 'T12:00:00')) - t0) / DAY); if (i < 0 || i >= n) continue;
+    const cx = x0 + sw * i + sw / 2, room = cx - lastM > 100;
+    s += '<line x1="' + cx + '" x2="' + cx + '" y1="' + (top - 6) + '" y2="' + bot + '" stroke="var(--muted)" stroke-dasharray="2 4" opacity=".6"><title>' + esc(m.t) + ' · ' + dsFmt.format(new Date(m.d + 'T12:00:00')) + '</title></line>'
+      + (room ? '<text x="' + cx + '" y="' + (top - 12) + '" text-anchor="' + (i < 3 ? 'start' : i > n - 4 ? 'end' : 'middle') + '">▲ ' + esc(m.t) + '</text>' : '');
+    if (room) lastM = cx; }
+  $('chartSvg').innerHTML = s;
+  const ls = new Date(LOG_START + 'T00:00:00').getTime();
+  $('chartNote').textContent = (t0 < ls ? 'Avant le 23 oct. : mesure d\'audience anonyme (comptes non admins). Depuis : journal des comptes. ' : '') + 'Survole une barre pour le détail du jour.';
+}
+function renderRet(t1, days){
+  const N = Math.min(days, 60), r0 = t1 - N * DAY, sq = N > 40 ? 8 : 10, gap = 2, w = N * (sq + gap);
+  $('retTh').textContent = N + ' derniers jours';
+  $('retSub').textContent = 'Un carré par jour où le compte a ouvert l\'app ou chargé un GPX.';
+  const list = S.users.filter(u => u.status !== 'pending' && u.status !== 'blocked' && (!S.noAdm || !u.is_admin));
+  const rows = list.map(u => {
+    const ev = S.evAll.filter(e => e.user_id === u.user_id && new Date(e.at).getTime() >= r0 && new Date(e.at).getTime() < t1);
+    const a = S.auth[u.user_id] || {};
+    const on = new Set(ev.map(e => Math.floor((day0(e.at) - r0) / DAY)));
+    if (a.last_sign_in_at){ const i = Math.floor((day0(a.last_sign_in_at) - r0) / DAY); if (i >= 0 && i < N) on.add(i); }
+    const mc = {}; for (const e of ev) if (e.mode) mc[e.mode] = (mc[e.mode] || 0) + 1;
+    const fav = Object.entries(mc).sort((x, y) => y[1] - x[1])[0];
+    let svg = '<svg width="' + w + '" height="14" viewBox="0 0 ' + w + ' 14" role="img" aria-label="Actif ' + on.size + ' jours sur ' + N + '">';
+    for (let i = 0; i < N; i++) svg += '<rect x="' + i * (sq + gap) + '" width="' + sq + '" height="14" rx="2" ' + (on.has(i) ? 'fill="' + S.col[u.user_id] + '"' : 'class="sq"') + '><title>' + dsFmt.format(new Date(r0 + i * DAY + DAY / 2)) + '</title></rect>';
+    svg += '</svg>';
+    return { u, on: on.size, gpx: ev.filter(e => e.event === 'gpx').length, fav: fav ? MODE_NAME[fav[0]] : '–', svg };
+  }).sort((a, b) => b.on - a.on);
+  $('retBody').innerHTML = rows.map(r => '<tr><td><div class="who"><span class="av" style="background:' + S.col[r.u.user_id] + ';width:28px;height:28px;font-size:13px">' + esc(short(r.u).slice(0, 1).toUpperCase()) + '</span><b>' + esc(short(r.u)) + '</b></div></td>'
+    + '<td class="sqs">' + r.svg + '</td><td class="num"><b>' + r.on + '</b></td><td class="num">' + r.gpx + '</td><td class="pm">' + r.fav + '</td></tr>').join('')
+    || '<tr><td colspan="5" class="empty" style="padding:14px 20px">Aucun compte.</td></tr>';
+}
+$('period').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; S.period = +b.dataset.p; for (const x of $('period').querySelectorAll('[data-p]')) x.setAttribute('aria-pressed', String(x === b)); renderAna(); });
+let rzT = 0; addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => { if (S.tab === 'ana' && S.me) renderAna(); }, 200); });
+$('noAdm').addEventListener('change', e => { S.noAdm = e.target.checked; renderAna(); });
+
+/* ---------- onglets ---------- */
+function setTab(t){
+  S.tab = t;
+  $('over').hidden = t !== 'over'; $('ana').hidden = t !== 'ana';
+  $('hOver').hidden = t !== 'over'; $('hAna').hidden = t !== 'ana';
+  for (const a of document.querySelectorAll('.tabs a')) if (a.dataset.tab === t) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  if (t === 'ana' && S.me) renderAna();
+  if (t === 'over' && G.map) setTimeout(() => G.map.invalidateSize(), 30);
+}
+addEventListener('hashchange', () => setTab(location.hash === '#analytics' ? 'ana' : 'over'));
+document.querySelector('.tabs').addEventListener('click', e => { const a = e.target.closest('[data-tab]'); if (!a) return; e.preventDefault();
+  history.replaceState(null, '', a.dataset.tab === 'ana' ? '#analytics' : location.pathname + location.search); setTab(a.dataset.tab); });
+
+async function init(){
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+  const { data: { session } } = await sb.auth.getSession();
+  const deny = t => { $('denied').hidden = false; $('deniedTxt').textContent = t; $('state').textContent = ''; };
+  if (!session){ deny('Connecte-toi avec un compte administrateur (depuis Plan My Ride), puis reviens ici.'); return; }
+  S.me = session.user;
+  const { data: me } = await sb.from('app_users').select('is_admin,status').eq('user_id', S.me.id).maybeSingle();
+  if (!me || !me.is_admin || me.status !== 'active'){ deny('Cette page est réservée aux administrateurs.'); return; }
+  $('app').hidden = false;
+  setTab(location.hash === '#analytics' ? 'ana' : 'over');
+  try { await load(); } catch(e){ $('users').innerHTML = '<tr><td colspan="6" class="msg err" style="padding:14px 20px">Lecture impossible : ' + esc(e.message || e) + '</td></tr>'; }
+  gLoad().catch(e => { $('glist').innerHTML = '<li class="muted">Carte : ' + esc(e.message || e) + '</li>'; });
+  mbBalance();
+}
+init();
+})();
+</script>
+</body>
+</html>
