@@ -551,6 +551,7 @@ body.lib-open{overflow:hidden}
 .me-row output{font-family:var(--f-mono);font-size:14px;min-width:84px;text-align:right}
 .me-row input[type=range]{grid-column:1/-1;width:100%}
 .me-theme{grid-template-columns:repeat(3,1fr);margin-top:8px}
+.me-sel{width:100%;min-height:46px;margin-top:8px;font-size:16px}
 .me-theme button{min-height:44px}
 body:not(.admin) .me-btns .adm{display:none}
 </style>
@@ -629,6 +630,8 @@ body:not(.admin) .me-btns .adm{display:none}
   <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
   <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
     <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div></div>
+  <div class="me-card"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
+    <select id="meTaf" class="me-sel" aria-label="Trajet de vélotaf par défaut"></select></div>
   <div class="me-card"><h3>Mes réglages par mode</h3><p class="hint">Utilisés pour calculer tes horaires de passage. Chaque mode garde les siens.</p><div id="meModes"></div></div>
   <div class="me-card"><h3>Affichage</h3>
     <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
@@ -2826,9 +2829,24 @@ function applyModeUI() {
 function switchMode(m) {
   if (m === S.mode) return;
   saveOpt(readOpt()); // réglages de la page qu'on quitte
-  S.mode = m;
+  const from = S.mode; S.mode = m;
   applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
   schedule();
+  try { tafRouteSwitch(from, m); } catch (e) {}
+}
+/* Trajet de vélotaf par défaut (page Moi, localStorage pmr-taf-route) : ouvert en arrivant sur Vélotaf ; en repartant,
+   le parcours d'avant revient. Le « dernier parcours ouvert » (pmr-last-route) reste celui des autres pages. */
+const tafDefault = () => { let id = ''; try { id = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {} return LIB.list.some(x => x.id === id) ? id : ''; };
+async function tafOpenDefault() {
+  const def = tafDefault(); if (!def || def === LIB.current) return;
+  let keep = ''; try { keep = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
+  if (LIB.current) S.tafPrev = LIB.current;
+  await libOpen(def);
+  try { if (keep) localStorage.setItem('pmr-last-route', keep); } catch (e) {}
+}
+function tafRouteSwitch(from, to) {
+  if (to === 'taf') tafOpenDefault();
+  else if (from === 'taf' && S.tafPrev && LIB.current === tafDefault() && S.tafPrev !== LIB.current) { const id = S.tafPrev; S.tafPrev = ''; libOpen(id); }
 }
 window.addEventListener('hashchange', () => switchMode(hashMode(location.hash)));
 function syncOutputs() {
@@ -4205,7 +4223,7 @@ async function libOpen(id) {
     if (rec) { try { await idbRun('pts', 'readwrite', st => st.put(rec)); await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at })); libUpsert({ id, local: true }); } catch (e) {} }
   }
   if (!rec) { setStatus('Ce parcours n\'est plus disponible.', 'err'); return; }
-  LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {}
+  LIB.current = id; try { if (!(S.mode === 'taf' && localStorage.getItem('pmr-taf-route') === id)) localStorage.setItem('pmr-last-route', id); } catch (e) {} // le trajet de vélotaf ne remplace pas le dernier parcours des autres pages
   try { loadRoute(unpackPts(rec.pts), m.name, revGet(id)); } catch (e) { setStatus(e.message, 'err'); return; }
   const now = new Date().toISOString(); libUpsert({ id, used_at: now }); libRender();
   try { await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: now })); } catch (e) {}
@@ -4222,6 +4240,8 @@ async function libDelete(id) {
 async function libInit() {
   try { for (const m of await idbRun('meta', 'readonly', st => st.getAll())) libUpsert({ ...m, local: true }); } catch (e) {}
   let last = ''; try { last = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
+  let tafDef = ''; try { tafDef = S.mode === 'taf' ? localStorage.getItem('pmr-taf-route') || '' : ''; } catch (e) {} // Vélotaf : trajet par défaut
+  if (tafDef) { S.tafPrev = last; last = tafDef; }
   libRender();
   if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
   // Compte : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
@@ -4590,6 +4610,8 @@ function meRender() {
       + row(m, 'speed', m === 'taf' ? 'Vitesse moyenne' : 'Vitesse sur le plat', 12, 40, 0.5, g.speed, kmh)
       + (m === 'taf' ? '' : row(m, 'vam', 'Vitesse de montée (VAM)', 300, 1400, 50, g.vam, mh) + row(m, 'pmin', 'Arrêts par heure de pédalage', 0, 30, 1, g.pmin, mn))
       + '</div>'; }).join('');
+  const td = tafDefault(), opts = LIB.list.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  $('#meTaf').innerHTML = '<option value="">Aucun : le parcours ouvert</option>' + opts.map(r => `<option value="${r.id}"${r.id === td ? ' selected' : ''}>${escH(r.name)} · ${n1(r.km || 0)} km</option>`).join('');
   const th = document.documentElement.dataset.theme || 'auto';
   for (const b of document.querySelectorAll('#meTheme button')) b.setAttribute('aria-pressed', String(b.dataset.t === th));
 }
@@ -4598,6 +4620,7 @@ $('#meModes').addEventListener('input', e => { const i = e.target.closest('input
   $('#' + i.id + '-o').textContent = k === 'speed' ? n1(v) + ' km/h' : k === 'vam' ? v + ' m/h' : v + ' min / h'; meSet(i.dataset.m, k, v); });
 $('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); });
 $('#meHelp').addEventListener('click', () => $('#helpBtn').click());
+$('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
 
