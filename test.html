@@ -1288,6 +1288,17 @@ function omFill(wx, alt) {
   });
   return wx.length ? filled / wx.length : 0;
 }
+// Rafales d'une source qui n'en donne pas (meteoblue) : reprises d'Open-Meteo aux mêmes points et aux mêmes heures.
+// Rend vrai si au moins une valeur a été ajoutée.
+function gustFill(wx, alt) {
+  let any = false;
+  wx.forEach((L, i) => {
+    const B = alt[i]; if (!B || !L.gust || !B.gust) return;
+    const off = Math.round((L.t0 - B.t0) / 3600);
+    for (let j = 0; j < L.n; j++) if (isNaN(L.gust[j]) && j + off >= 0 && j + off < B.n && !isNaN(B.gust[j + off])) { L.gust[j] = B.gust[j + off]; any = true; }
+  });
+  return any;
+}
 // Points sans température sur la fenêtre demandée (zone non couverte) ?
 const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if (isNaN(L.temp[j])) n++; return n > 0; });
 const MB_PENDING = new Map();
@@ -1539,6 +1550,10 @@ async function getWeather(src, from, to, today) {
       const b = alt || await om().catch(() => null);
       if (b){ part = omFill(r.wx, b); if (part && !alt) alt = b; }
     }
+    // meteoblue sans rafales : reprises d'Open-Meteo (gratuit, mêmes points)
+    let gustOm = false;
+    if (src === 'mb') { const b = alt || await om().catch(() => null); if (b) gustOm = gustFill(r.wx, b); }
+    if (gustOm && r.wx) r.gustOm = true;
     return { wx: r.wx, alt, used: alt ? src + '+om' : src, info: OM_MODELS[src] ? (part ? { outside: part } : null) : r };
   } catch (err) {
     const wx = await om();
@@ -1571,7 +1586,7 @@ function renderWxSrc() {
     if (S.wxFallback === 'horizon') h = 'meteoblue ne prévoit que 7 jours : prévisions Open-Meteo pour cette date';
     else if (S.wxFallback === 'error') h = 'meteoblue n\'a pas répondu : prévisions Open-Meteo pour l\'instant';
     else if (I) h += ` · ${I.points} points du parcours, prévision de ${hm.format(new Date(I.at))}`;
-    h += '. Vent à 10 m' + (!S.wxFallback && S.wxUsed ? ', sans rafales.' : '.');
+    h += '. Vent à 10 m' + (!S.wxFallback && S.wxUsed ? (I && I.gustOm ? ', rafales d\'Open-Meteo.' : ', sans rafales.') : '.');
   } else if (src === 'om') h = 'Prévisions Open-Meteo (meilleurs modèles selon la zone : AROME, ICON, GFS…), jusqu\'à 16 jours. Vent à 10 m.';
   else {
     h = OM_MODELS[src] ? OM_MODELS[src].hint
@@ -1869,7 +1884,9 @@ function setStatus(msg, kind) {
 
 /* ---------- couleurs ---------- */
 function hexToRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
-const WP_CHART = 70; // hauteur du panneau vent du profil (= WP)
+const WP_CHART = 82; // hauteur du panneau vent du profil (= WP) : bande des rafales (GS) puis barres du vent
+// Rafales : signalées à partir de GUST_SHOW km/h (profil), gênantes à GUST_WARN (orange), dangereuses à GUST_DANGER (rouge)
+const GUST_SHOW = 35, GUST_WARN = 50, GUST_DANGER = 70;
 const CC_OVER = '#8d98a4'; // nuages du profil (légende)
 // Nuages du profil : une strate grise en haut du graphique, d'autant plus foncée que le ciel est couvert
 // (transparente par ciel dégagé), fondue vers le bas. Dessinée à part puis posée, pour le fondu.
@@ -2033,7 +2050,7 @@ function renderSummary(opt) {
     if (st.rain >= 10) neg.push('grosse pluie'); else if (st.rain >= 3) neg.push('pluie'); else if (st.rain >= 0.3) neg.push('quelques gouttes');
     if (st.amin < 3) neg.push('froid'); else if (st.amin < 8) neg.push('fraîcheur'); else if (st.amax > 34) neg.push('canicule'); else if (st.amax > 30) neg.push('chaleur');
     if (headwind) neg.push('vent de face');
-    if (st.hasGust && st.gust >= 50) neg.push(`rafales à ${n0(st.gust)} km/h`);
+    if (st.hasGust && st.gust >= GUST_WARN) neg.push(`rafales à ${n0(st.gust)} km/h`);
     if (tailwind) pos.push('vent dans le dos');
     if (sunPct >= 60) pos.push('soleil');
     const list = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1];
@@ -2600,11 +2617,11 @@ function renderChart() {
   cv.style.height = H + 'px'; cv.width = W * dpr; cv.height = H * dpr;
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
   const P = S.P, tl = S.tl;
-  const pad = { l: 44, r: 40, t: 64, b: 30 }, band = 0, SKY = 16, ARW = 15, WP = 70, WG = 18; // en haut : heures, ciel, puis sens du vent
+  const pad = { l: 44, r: 40, t: 64, b: 30 }, band = 0, SKY = 16, ARW = 15, WP = WP_CHART, GS = 12, WG = 18; // en haut : heures, ciel, puis sens du vent
   // couverture nuageuse dessinée en nuages en haut du graphique (seulement si la source la donne)
   const hasCc = !!S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))), cband = 0, cgap = 0;
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b - WP - WG - cband - cgap;
-  const wy0 = pad.t + ph + WG, wyz = wy0 + WP / 2; // panneau vent sous le profil : haut, ligne zéro
+  const wy0 = pad.t + ph + WG, wyz = wy0 + GS + (WP - GS) / 2; // panneau vent sous le profil : haut (bande des rafales au-dessus des barres), ligne zéro
   const X = km => pad.l + km / P.total * pw;
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line');
   const font = n => `${n}px ${cssVar('--f-mono').split(',')[0]}, monospace`;
@@ -2685,23 +2702,34 @@ function renderChart() {
     for (let h0 = Math.floor(tl.start / 3600e3) * 3600e3; h0 < tl.end; h0 += 3600e3) {
       const ta = Math.max(tl.start, h0), tb = Math.min(tl.end, h0 + 3600e3), ka = kmAtT(ta), kb = kmAtT(tb);
       if (kb - ka <= 0) continue;
-      let s = 0, n = 0;
+      let s = 0, n = 0, g = NaN;
       for (let j = 0; j < 6; j++) { const t = ta + (tb - ta) * (j + .5) / 6, km = kmAtT(t), w = wxAt(sIdx(km), t);
-        if (w) { s += w.ws * Math.cos((w.wd - P.b[idxAtKm(km)]) * RAD); n++; } }
-      if (n) wbars.push({ x: X(ka), x2: X(kb), v: s / n });
+        if (w) { s += w.ws * Math.cos((w.wd - P.b[idxAtKm(km)]) * RAD); n++; if (isFinite(w.gust)) g = isFinite(g) ? Math.max(g, w.gust) : w.gust; } }
+      if (n) wbars.push({ x: X(ka), x2: X(kb), v: s / n, g });
     }
     c.strokeStyle = line; c.lineWidth = 1; c.beginPath(); c.moveTo(pad.l, wyz); c.lineTo(pad.l + pw, wyz); c.stroke();
     c.font = font(9.5); c.fillStyle = muted; c.textAlign = 'right'; c.textBaseline = 'middle';
-    c.fillText('face ↑', pad.l - 4, wy0 + 6); c.fillText('0', pad.l - 4, wyz); c.fillText('dos ↓', pad.l - 4, wy0 + WP - 6);
-    c.textAlign = 'left'; c.textBaseline = 'bottom'; c.fillText('Vent ressenti par heure (km/h) : ↑ de face · ↓ de dos · gris = travers ou faible', pad.l, wy0 - 1);
+    c.fillText('face ↑', pad.l - 4, wy0 + GS + 6); c.fillText('0', pad.l - 4, wyz); c.fillText('dos ↓', pad.l - 4, wy0 + WP - 6);
+    c.textAlign = 'left'; c.textBaseline = 'bottom'; c.fillText(pw < 560 ? 'Vent ressenti par heure (km/h) · ▾ rafales' : 'Vent ressenti par heure (km/h) : ↑ de face · ↓ de dos · gris = travers ou faible · ▾ rafales', pad.l, wy0 - 1);
     if (wbars.length) {
-      const vMax = Math.max(20, ...wbars.map(b => Math.abs(b.v))), sc = (WP / 2 - 11) / vMax;
+      const vMax = Math.max(20, ...wbars.map(b => Math.abs(b.v))), sc = ((WP - GS) / 2 - 11) / vMax;
       c.textAlign = 'center'; c.font = font(9);
       for (const b of wbars) {
         const bw = Math.max(2, b.x2 - b.x - 1.5), bx = b.x + .75, hh = Math.max(1.5, Math.abs(b.v) * sc);
         const col = Math.abs(b.v) < 4 ? cssVar('--cross') : b.v > 0 ? cssVar('--head') : cssVar('--tail');
         c.fillStyle = col; c.fillRect(bx, b.v > 0 ? wyz - hh : wyz, bw, hh);
         if (bw >= 16 && Math.abs(b.v) >= 6) { c.textBaseline = b.v > 0 ? 'bottom' : 'top'; c.fillText(n0(Math.abs(b.v)), bx + bw / 2, b.v > 0 ? wyz - hh - 1 : wyz + hh + 1); }
+      }
+      // rafales de l'heure (à partir de GUST_SHOW km/h) : bande en haut du panneau, orange, puis rouge à GUST_WARN
+      c.font = font(8.5); c.textBaseline = 'middle'; c.textAlign = 'left';
+      let lastG = -99;
+      for (const b of wbars) {
+        if (!(b.g >= GUST_SHOW)) continue;
+        const bw = Math.max(2, b.x2 - b.x - 1.5), cx = b.x + .75 + bw / 2, col = b.g >= GUST_WARN ? cssVar('--head') : cssVar('--warm'), y = wy0 + GS / 2;
+        const txt = (bw >= 44 ? 'rafales ' : '') + n0(b.g), tw = c.measureText(txt).width, x0 = cx - (tw + 9) / 2;
+        if (bw < 14 || x0 < lastG + 4) { c.fillStyle = col; c.beginPath(); c.moveTo(cx - 3, y - 2); c.lineTo(cx + 3, y - 2); c.lineTo(cx, y + 2.5); c.closePath(); c.fill(); continue; }
+        c.fillStyle = col; c.beginPath(); c.moveTo(x0, y - 2); c.lineTo(x0 + 6, y - 2); c.lineTo(x0 + 3, y + 2.5); c.closePath(); c.fill();
+        c.fillText(txt, x0 + 9, y); lastG = x0 + tw + 9;
       }
     }
 
@@ -3874,6 +3902,7 @@ function tripVerdict(wx) {
   const out = []; let lvl = 0; const up = l => { lvl = Math.max(lvl, l); };
   if (wx.rain >= 1) { up(2); out.push('pluie, prends la veste'); } else if (wx.rain >= 0.2) { up(1); out.push('quelques gouttes'); } else if (wx.prob >= 70) { up(1); out.push('risque d\'averse'); }
   if (wx.headAvg >= 20) { up(2); out.push('gros vent de face'); } else if (wx.headAvg >= 12) { up(1); out.push('vent de face'); } else if (wx.headAvg <= -12) out.push('vent dans le dos');
+  if (wx.gust >= GUST_DANGER) { up(2); out.push(`rafales à ${n0(wx.gust)} km/h`); } else if (wx.gust >= GUST_WARN) { up(1); out.push(`rafales à ${n0(wx.gust)} km/h`); }
   if (wx.tmin < 0) { up(1); out.push('gel possible'); } else if (wx.tmin < 4) { up(1); out.push('froid, gants'); } else if (wx.tmax > 30) { up(1); out.push('chaud'); }
   if (wx.dark > 0.3) out.push('de nuit, lumières');
   if (!out.length) out.push(wx.rain < 0.05 ? 'au sec, beau trajet' : 'au sec');
@@ -4512,7 +4541,8 @@ function outOpt() {
 function outScore(st, rideH, total) { // pluie (mm/h et part du temps mouillé) d'abord, puis froid, nuit et vent ; par heure de selle
   const h = Math.max(0.5, rideH), cover = 1 - st.missKm / total, amin = isFinite(st.amin) ? st.amin : 10;
   return st.rain / h * 20 + st.wetH / h * 10 + st.coldH / h * 6 + Math.max(0, 5 - amin) * 0.5 + st.nightH / h * 5
-    + (st.headKm / total) * 10 - (st.tailKm / total) * 5 + (st.amax > 30 ? (st.amax - 30) * 1.5 : 0) + (1 - cover) * 200;
+    + (st.headKm / total) * 10 - (st.tailKm / total) * 5 + (st.amax > 30 ? (st.amax - 30) * 1.5 : 0) + (1 - cover) * 200
+    + (st.hasGust && st.gust > 40 ? (st.gust - 40) * 0.3 : 0);
 }
 function outHead(st, total) {
   const cov = Math.max(0.1, total - st.missKm), pct = x => Math.round(x / cov * 100), avgHead = st.headSum / cov;
@@ -4521,12 +4551,14 @@ function outHead(st, total) {
   if (st.rain >= 10) neg.push('grosse pluie'); else if (st.rain >= 3) neg.push('pluie'); else if (st.rain >= 0.3) neg.push('quelques gouttes');
   if (st.amin < 3) neg.push('froid'); else if (st.amin < 8) neg.push('fraîcheur'); else if (st.amax > 34) neg.push('canicule'); else if (st.amax > 30) neg.push('chaleur');
   if (headwind) neg.push('vent de face');
+  const gust = st.hasGust ? st.gust : 0;
+  if (gust >= GUST_WARN) neg.push(`rafales à ${Math.round(gust)} km/h`);
   if (tailwind) pos.push('vent dans le dos'); if (sunPct >= 60) pos.push('soleil');
   const list = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1], cap = x => x.charAt(0).toUpperCase() + x.slice(1);
   const dry = st.rain < 0.3;
   const txt = !neg.length ? `Belles conditions : ${list(['au sec', ...pos.map(x => x === 'soleil' ? 'ensoleillé' : x)])}`
     : dry ? `Au sec, mais ${list(neg)}` : cap(list(neg)) + (pos.length ? `, mais ${list(pos.map(x => x === 'soleil' ? 'du soleil' : x))}` : '');
-  const lvl = st.rain >= 3 || pct(st.headKm) >= 60 || st.amin < 0 ? 'r' : st.rain >= 0.3 || st.amin < 5 || headwind || st.amax > 30 ? 'o' : 'g';
+  const lvl = st.rain >= 3 || pct(st.headKm) >= 60 || st.amin < 0 || gust >= GUST_DANGER ? 'r' : st.rain >= 0.3 || st.amin < 5 || headwind || st.amax > 30 || gust >= GUST_WARN ? 'o' : 'g';
   return { txt, lvl, head: pct(st.headKm) };
 }
 function withRoute(R, fn) { // simulation sur un autre parcours que celui ouvert (S remis en place ensuite)
