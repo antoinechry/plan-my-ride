@@ -817,7 +817,16 @@ body:not(.admin) .me-btns .adm{display:none}
         <option value="mb">meteoblue</option>
         <option value="arome">AROME (Météo-France)</option>
         <option value="met">MET Norway</option>
-        <option value="om">Open-Meteo</option>
+        <option value="om">Open-Meteo (automatique)</option>
+        <optgroup label="Autres modèles nationaux">
+          <option value="icon">ICON · DWD (Allemagne)</option>
+          <option value="ch">ICON-CH · MeteoSwiss (Suisse)</option>
+          <option value="it">ICON-2I · ItaliaMeteo (Italie)</option>
+          <option value="knmi">HARMONIE · KNMI (Pays-Bas, Belgique)</option>
+          <option value="dmi">HARMONIE · DMI (Danemark, nord de l'Europe)</option>
+          <option value="ukmo">Met Office (Royaume-Uni)</option>
+          <option value="ecmwf">ECMWF (centre européen)</option>
+        </optgroup>
       </select>
       <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Plan My Ride est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
       <p class="hint" id="wxSrcHint"></p>
@@ -1216,10 +1225,59 @@ async function fetchOM(from, to, model, smp = wxSmp()) { // smp : points demand�
 // ensoleillement du paquet clouds-3h (pas de 3 h ramené à l'heure par la fonction), à défaut déduits du pictogramme.
 const MB_DAYS = 7, MB_KM = 20, MB_MAX = 8, MB_TTL = 2 * 3600e3, MB_CACHE = 'pmr-mb-pts2', MB_CREDITS = 16000, MB_PKG = 'basic-1h_clouds-3h';
 // Sources météo du menu « Source météo ». meteoblue : compte du propriétaire seulement (cadenas en public).
+// Modèles nationaux servis par Open-Meteo (gratuits, CC BY 4.0) : `models` = identifiants essayés dans l'ordre
+// (le premier refusé par Open-Meteo passe au suivant), `days` = horizon, `area` = zone couverte en haute résolution.
+// Hors de la zone (valeurs vides), chaque point et chaque heure manquants sont complétés par Open-Meteo automatique (omFill).
+const OM_MODELS = {
+  arome: { name: 'AROME (Météo-France)', models: [AROME_MODEL], days: 4, org: 'Météo-France', url: 'https://meteofrance.com', mdl: 'AROME, ARPEGE',
+    hint: 'Modèles de Météo-France : AROME (maille de 1,3 km, France et pays voisins) sur 2 jours, puis ARPEGE jusqu\'à 4 jours' },
+  icon: { name: 'ICON (DWD)', models: ['dwd_icon_seamless', 'icon_seamless'], days: 7, org: 'DWD', url: 'https://www.dwd.de', mdl: 'ICON',
+    hint: 'Service météo allemand : ICON-D2 (2 km : Allemagne, Suisse, Autriche, Alsace, Benelux) sur 2 jours, ICON-EU (7 km, Europe) jusqu\'à 5 jours, puis ICON mondial jusqu\'à 7 jours' },
+  ch: { name: 'ICON-CH (MeteoSwiss)', models: ['meteoswiss_icon_seamless'], days: 5, org: 'MeteoSwiss', url: 'https://www.meteoswiss.admin.ch', mdl: 'ICON-CH',
+    hint: 'Service météo suisse : ICON-CH1 (1 km) sur 33 h puis ICON-CH2 (2 km) jusqu\'à 5 jours, Suisse et régions voisines (Alpes, Jura, Alsace du Sud, Savoie, Lombardie)' },
+  it: { name: 'ICON-2I (ItaliaMeteo)', models: ['italia_meteo_arpae_icon_2i'], days: 3, org: 'ItaliaMeteo ARPAE', url: 'https://www.meteo.it', mdl: 'ICON-2I',
+    hint: 'Service météo italien : ICON-2I (2 km), Italie et Europe du Sud, 3 jours' },
+  knmi: { name: 'HARMONIE (KNMI)', models: ['knmi_seamless'], days: 10, org: 'KNMI', url: 'https://www.knmi.nl', mdl: 'HARMONIE-AROME',
+    hint: 'Service météo néerlandais : HARMONIE (2 km, Pays-Bas et Belgique) sur 2 jours et demi, puis ECMWF' },
+  dmi: { name: 'HARMONIE (DMI)', models: ['dmi_seamless'], days: 10, org: 'DMI', url: 'https://www.dmi.dk', mdl: 'HARMONIE-AROME',
+    hint: 'Service météo danois : HARMONIE (2 km, Europe centrale et du Nord jusqu\'à l\'Islande) sur 2 jours et demi, puis ECMWF' },
+  ukmo: { name: 'Met Office (Royaume-Uni)', models: ['ukmo_seamless'], days: 7, org: 'Met Office', url: 'https://www.metoffice.gov.uk', mdl: 'UKV, global',
+    hint: 'Service météo britannique : UKV (2 km, Royaume-Uni, Irlande, nord de la France) sur 2 jours, puis modèle mondial (10 km) jusqu\'à 7 jours. Publié avec 4 h de décalage' },
+  ecmwf: { name: 'ECMWF', models: ['ecmwf_ifs', 'ecmwf_ifs025'], days: 15, org: 'ECMWF', url: 'https://www.ecmwf.int', mdl: 'IFS',
+    hint: 'Centre européen de prévision (référence mondiale à moyenne échéance, maille de 9 à 25 km), jusqu\'à 15 jours : moins fin en montagne, utile au-delà de 4–5 jours' },
+};
 const WX_SRC = { mb: 'meteoblue', arome: 'AROME (Météo-France)', met: 'MET Norway', om: 'Open-Meteo' };
+for (const [k, m] of Object.entries(OM_MODELS)) WX_SRC[k] = m.name;
 const WX_KEYS = Object.keys(WX_SRC);
 // Horizon de chaque source (jours à partir d'aujourd'hui) : au-delà, Open-Meteo prend le relais.
-const WX_DAYS = { mb: MB_DAYS, arome: 4, met: 9 };
+const WX_DAYS = { mb: MB_DAYS, met: 9 };
+for (const [k, m] of Object.entries(OM_MODELS)) WX_DAYS[k] = m.days;
+// Modèle Open-Meteo d'une source : essaie les identifiants dans l'ordre (un identifiant inconnu est refusé tout de suite).
+async function fetchOMModel(src, from, to, smp) {
+  const ids = OM_MODELS[src].models; let last;
+  for (const id of ids) {
+    try { return await fetchOM(from, to, id, smp); }
+    catch (e) { last = e; if (!/model|invalid|unknown|variant|not .*valid/i.test(String(e.message))) throw e; }
+  }
+  throw last;
+}
+// Complète un modèle régional par Open-Meteo automatique là où il n'a pas de valeur (hors de sa zone, fin d'échéance).
+// Rend la part des points complétés (0 à 1).
+function omFill(wx, alt) {
+  let filled = 0;
+  wx.forEach((L, i) => {
+    const B = alt[i]; if (!B) return; let any = false;
+    const off = Math.round((L.t0 - B.t0) / 3600);
+    for (const k of ['temp', 'app', 'pr', 'code', 'cc', 'ws', 'wd', 'gust', 'day', 'sun']) {
+      const a = L[k], b = B[k]; if (!a || !b) continue;
+      for (let j = 0; j < L.n; j++) if (isNaN(a[j]) && j + off >= 0 && j + off < B.n && !isNaN(b[j + off])) { a[j] = b[j + off]; if (k === 'temp') any = true; }
+    }
+    if (any) filled++;
+  });
+  return wx.length ? filled / wx.length : 0;
+}
+// Points sans température sur la fenêtre demandée (zone non couverte) ?
+const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if (isNaN(L.temp[j])) n++; return n > 0; });
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
@@ -1460,11 +1518,16 @@ async function getWeather(src, from, to, today) {
   if (from > end) return { wx: await om(), used: 'om', fallback: 'horizon' };
   try {
     const r = src === 'mb' ? await fetchMB() : src === 'met' ? await fetchMET()
-      : { wx: await fetchOM(ymd(from), ymd(to < end ? to : end), AROME_MODEL) };
+      : { wx: await fetchOMModel(src, ymd(from), ymd(to < end ? to : end)) };
     // le dernier jour d'AROME / MET peut être incomplet : relais dès que la fenêtre l'atteint
     const needAlt = src === 'mb' ? to > end : to >= end;
-    const alt = needAlt ? await om().catch(() => null) : null;
-    return { wx: r.wx, alt, used: alt ? src + '+om' : src, info: src === 'arome' ? null : r };
+    let alt = needAlt ? await om().catch(() => null) : null, part = 0;
+    // modèle régional : trous comblés par Open-Meteo automatique (parcours hors de la zone du modèle)
+    if (OM_MODELS[src] && omGaps(r.wx)) {
+      const b = alt || await om().catch(() => null);
+      if (b){ part = omFill(r.wx, b); if (part && !alt) alt = b; }
+    }
+    return { wx: r.wx, alt, used: alt ? src + '+om' : src, info: OM_MODELS[src] ? (part ? { outside: part } : null) : r };
   } catch (err) {
     const wx = await om();
     return { wx, used: 'om', fallback: 'error', note: WX_SRC[src] + ' indisponible (' + String(err.message || err).replace(/\.$/, '') + ') : prévisions Open-Meteo.' };
@@ -1476,8 +1539,12 @@ const WX_LINK = { mb: MB_LINK, om: OM_LINK,
   arome: '<a href="https://meteofrance.com" target="_blank" rel="noopener">Météo-France</a> (AROME, ARPEGE) via ' + OM_LINK,
   met: '<a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (CC BY 4.0)' };
 const WX_TXT = { mb: 'meteoblue', om: 'Open-Meteo.com (CC BY 4.0)', arome: 'Météo-France (AROME, ARPEGE) via Open-Meteo.com (CC BY 4.0)', met: 'MET Norway (CC BY 4.0)' };
-// sources réellement utilisées (« arome+om » : la mention d'Open-Meteo est déjà dans celle d'AROME)
-const wxParts = used => { const p = String(used || 'om').split('+').filter(k => WX_TXT[k]); return p.includes('arome') ? p.filter(k => k !== 'om') : p; };
+for (const [k, m] of Object.entries(OM_MODELS)) if (k !== 'arome') {
+  WX_TXT[k] = m.org + ' (' + m.mdl + ') via Open-Meteo.com (CC BY 4.0)';
+  WX_LINK[k] = '<a href="' + m.url + '" target="_blank" rel="noopener">' + m.org + '</a> (' + m.mdl + ') via ' + OM_LINK;
+}
+// sources réellement utilisées (« arome+om » : la mention d'Open-Meteo est déjà dans celle d'AROME et des autres modèles nationaux)
+const wxParts = used => { const p = String(used || 'om').split('+').filter(k => WX_TXT[k]); return p.some(k => OM_MODELS[k]) ? p.filter(k => k !== 'om') : p; };
 function wxCreditTxt() { return 'Météo ' + wxParts(S.wxUsed).map(k => WX_TXT[k]).join(' et '); }
 function renderWxSrc() {
   const src = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
@@ -1495,14 +1562,15 @@ function renderWxSrc() {
     h += '. Vent à 10 m' + (!S.wxFallback && S.wxUsed ? ', sans rafales.' : '.');
   } else if (src === 'om') h = 'Prévisions Open-Meteo (meilleurs modèles selon la zone : AROME, ICON, GFS…), jusqu\'à 16 jours. Vent à 10 m.';
   else {
-    h = src === 'arome'
-      ? 'Modèles de Météo-France : AROME (maille de 1,3 km, France et pays voisins) sur 2 jours, puis ARPEGE jusqu\'à 4 jours'
+    h = OM_MODELS[src] ? OM_MODELS[src].hint
       : 'Prévisions de l\'institut météo norvégien (modèle nordique en Scandinavie, ECMWF ailleurs), à l\'altitude du parcours, heure par heure sur 2–3 jours puis par pas de 6 h jusqu\'à 9 jours';
     if (S.wxFallback === 'horizon') h = `${name} ne prévoit que ${WX_DAYS[src]} jours : prévisions Open-Meteo pour cette date`;
     else if (S.wxFallback === 'error') h = `${name} n'a pas répondu : prévisions Open-Meteo pour l'instant`;
     else {
       if (used === src + '+om') h += ' ; au-delà, Open-Meteo prend le relais';
       if (src === 'met' && I && I.points) h += ` · ${I.points} points du parcours`;
+      if (OM_MODELS[src] && I && I.outside) h += I.outside >= .99 ? ' · ⚠ parcours hors de la zone de ce modèle : prévisions Open-Meteo automatiques'
+        : ` · ⚠ ${Math.round(I.outside * 100)} % du parcours hors de la zone de ce modèle, complété par Open-Meteo automatique`;
     }
     h += '. Vent à 10 m.';
   }
