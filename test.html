@@ -2766,12 +2766,12 @@ function renderChart() {
         c.fillStyle = col; c.fillRect(bx, b.v > 0 ? wyz - hh : wyz, bw, hh);
         if (bw >= 16 && Math.abs(b.v) >= 6) { c.textBaseline = b.v > 0 ? 'bottom' : 'top'; c.fillText(n0(Math.abs(b.v)), bx + bw / 2, b.v > 0 ? wyz - hh - 1 : wyz + hh + 1); }
       }
-      // rafales de l'heure (à partir de GUST_SHOW km/h) : bande en haut du panneau, orange, puis rouge à GUST_WARN
+      // rafales de chaque heure : bande en haut du panneau, grises, orange à partir de GUST_SHOW, rouges à partir de GUST_WARN
       c.font = font(8.5); c.textBaseline = 'middle'; c.textAlign = 'left';
       let lastG = -99;
       for (const b of wbars) {
-        if (!(b.g >= GUST_SHOW)) continue;
-        const bw = Math.max(2, b.x2 - b.x - 1.5), cx = b.x + .75 + bw / 2, col = b.g >= GUST_WARN ? cssVar('--head') : cssVar('--warm'), y = wy0 + GS / 2;
+        if (!isFinite(b.g)) continue;
+        const bw = Math.max(2, b.x2 - b.x - 1.5), cx = b.x + .75 + bw / 2, col = b.g >= GUST_WARN ? cssVar('--head') : b.g >= GUST_SHOW ? cssVar('--warm') : muted, y = wy0 + GS / 2;
         const txt = (bw >= 44 ? 'rafales ' : '') + n0(b.g), tw = c.measureText(txt).width, x0 = cx - (tw + 9) / 2;
         if (bw < 14 || x0 < lastG + 4) { c.fillStyle = col; c.beginPath(); c.moveTo(cx - 3, y - 2); c.lineTo(cx + 3, y - 2); c.lineTo(cx, y + 2.5); c.closePath(); c.fill(); continue; }
         c.fillStyle = col; c.beginPath(); c.moveTo(x0, y - 2); c.lineTo(x0 + 6, y - 2); c.lineTo(x0 + 3, y + 2.5); c.closePath(); c.fill();
