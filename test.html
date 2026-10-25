@@ -818,7 +818,7 @@ body:not(.admin) .me-btns .adm{display:none}
         <option value="arome">AROME (Météo-France)</option>
         <option value="met">MET Norway</option>
         <option value="om">Open-Meteo (automatique)</option>
-        <optgroup label="Autres modèles nationaux">
+        <optgroup label="Europe : modèles nationaux">
           <option value="icon">ICON · DWD (Allemagne)</option>
           <option value="ch">ICON-CH · MeteoSwiss (Suisse)</option>
           <option value="it">ICON-2I · ItaliaMeteo (Italie)</option>
@@ -826,6 +826,11 @@ body:not(.admin) .me-btns .adm{display:none}
           <option value="dmi">HARMONIE · DMI (Danemark, nord de l'Europe)</option>
           <option value="ukmo">Met Office (Royaume-Uni)</option>
           <option value="ecmwf">ECMWF (centre européen)</option>
+        </optgroup>
+        <optgroup label="Amérique du Nord">
+          <option value="gfs">GFS + HRRR · NOAA (États-Unis)</option>
+          <option value="nbm">NBM · NOAA (États-Unis, risque de pluie)</option>
+          <option value="gem">GEM · Environnement Canada</option>
         </optgroup>
       </select>
       <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Plan My Ride est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
@@ -1197,7 +1202,7 @@ const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '
 // (AROME_MODEL pour la source AROME : AROME France puis ARPEGE, 4 jours, sans probabilité de pluie).
 const AROME_MODEL = 'meteofrance_seamless';
 async function fetchOM(from, to, model, smp = wxSmp()) { // smp : points demandés (par défaut ceux du parcours ouvert)
-  const vars = model ? VARS.filter(v => v !== 'precipitation_probability') : VARS;
+  const vars = model && !(typeof OM_PROB !== 'undefined' && OM_PROB.has(model)) ? VARS.filter(v => v !== 'precipitation_probability') : VARS;
   const lat = smp.map(s => s.lat.toFixed(4)).join(',');
   const lon = smp.map(s => s.lon.toFixed(4)).join(',');
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars.join(',')}${model ? '&models=' + model : ''}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
@@ -1245,7 +1250,14 @@ const OM_MODELS = {
     hint: 'Service météo britannique : UKV (2 km, Royaume-Uni, Irlande, nord de la France) sur 2 jours, puis modèle mondial (10 km) jusqu\'à 7 jours. Publié avec 4 h de décalage' },
   ecmwf: { name: 'ECMWF', models: ['ecmwf_ifs', 'ecmwf_ifs025'], days: 15, org: 'ECMWF', url: 'https://www.ecmwf.int', mdl: 'IFS',
     hint: 'Centre européen de prévision (référence mondiale à moyenne échéance, maille de 9 à 25 km), jusqu\'à 15 jours : moins fin en montagne, utile au-delà de 4–5 jours' },
+  gfs: { name: 'GFS + HRRR (NOAA)', models: ['ncep_gfs_seamless', 'gfs_seamless'], days: 16, org: 'NOAA', url: 'https://www.noaa.gov', mdl: 'GFS, HRRR',
+    hint: 'Service météo américain : HRRR (3 km, États-Unis et sud du Canada, mis à jour toutes les heures) sur 18 à 48 h, puis GFS mondial (13 km) jusqu\'à 16 jours' },
+  nbm: { name: 'NBM (NOAA)', models: ['ncep_nbm_conus'], days: 11, prob: true, org: 'NOAA', url: 'https://www.noaa.gov', mdl: 'National Blend of Models',
+    hint: 'National Blend of Models du service météo américain : synthèse corrigée de plusieurs modèles (2,5 km, États-Unis contigus, mise à jour toutes les heures), avec risque de pluie, jusqu\'à 11 jours' },
+  gem: { name: 'GEM (Environnement Canada)', models: ['gem_seamless', 'cmc_gem_seamless'], days: 10, org: 'Environnement et Changement climatique Canada', url: 'https://meteo.gc.ca', mdl: 'GEM HRDPS, RDPS, global',
+    hint: 'Service météo canadien : HRDPS (2,5 km, Canada et nord des États-Unis) sur 2 jours, RDPS (10 km, Amérique du Nord) jusqu\'à 3 jours et demi, puis GEM mondial (15 km) jusqu\'à 10 jours' },
 };
+const OM_PROB = new Set(Object.values(OM_MODELS).filter(m => m.prob).flatMap(m => m.models)); // modèles qui donnent le risque de pluie
 const WX_SRC = { mb: 'meteoblue', arome: 'AROME (Météo-France)', met: 'MET Norway', om: 'Open-Meteo' };
 for (const [k, m] of Object.entries(OM_MODELS)) WX_SRC[k] = m.name;
 const WX_KEYS = Object.keys(WX_SRC);
