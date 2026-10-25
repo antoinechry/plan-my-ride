@@ -6,6 +6,13 @@
 <script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 
 <title>Plan My Ride</title>
+<link rel="manifest" href="manifest-test.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="theme-color" content="#1f4f8f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plan My Ride">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -555,6 +562,19 @@ body.lib-open{overflow:hidden}
 .me-row input[type=range]{grid-column:1/-1;width:100%}
 .me-theme{grid-template-columns:repeat(3,1fr);margin-top:8px}
 .me-sel{width:100%;min-height:46px;margin-top:8px;font-size:16px}
+/* alertes météo (essai du 25/10/2026) */
+.al-l{display:block;margin-top:12px;font-size:13px;color:var(--muted)}
+.al-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.al-grid .me-sel{box-sizing:border-box}
+.al-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px}
+.al-days button{min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.al-days button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.al-dev{align-items:center}
+.al-state{font-size:14px;color:var(--muted)}
+.al-state.on{color:var(--tail);font-weight:600}
+.al-why{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14px;line-height:1.45}
+.al-msg:empty{display:none}
+#alBox.off .al-l,#alBox.off select,#alBox.off input,#alBox.off .al-days,#alBox.off #alTest,#alBox.off #alOff{opacity:.55}
 .me-theme button{min-height:44px}
 body:not(.admin) .me-btns .adm{display:none}
 
@@ -686,6 +706,22 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin-test.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div></div>
   <div class="me-card"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
     <select id="meTaf" class="me-sel" aria-label="Trajet de vélotaf par défaut"></select></div>
+  <div class="me-card" id="alCard"><h3>Alertes météo</h3>
+    <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
+    <p class="al-why" id="alWhy" hidden></p>
+    <div id="alBox">
+      <div class="me-btns al-dev"><button type="button" class="btn small primary" id="alOn">Activer sur cet appareil</button><span class="al-state" id="alState"></span></div>
+      <label class="al-l" for="alRoute">Parcours</label>
+      <select id="alRoute" class="me-sel"></select>
+      <div class="al-grid">
+        <div><label class="al-l" for="alTime">Départ</label><input type="time" id="alTime" step="900" class="me-sel"></div>
+        <div><label class="al-l" for="alWhen">Prévenir</label><select id="alWhen" class="me-sel"><option value="eve">La veille, 20 h</option><option value="morn">Le matin, 7 h</option></select></div>
+      </div>
+      <span class="al-l">Jours de sortie</span>
+      <div class="al-days" id="alDays" role="group" aria-label="Jours de sortie"></div>
+      <div class="me-btns"><button type="button" class="btn small" id="alTest">Envoyer l'alerte maintenant</button><button type="button" class="btn small" id="alOff">Couper les alertes</button></div>
+      <p class="hint al-msg" id="alMsg" aria-live="polite"></p>
+    </div></div>
   <div class="me-card"><h3>Mes réglages par mode</h3><p class="hint">Utilisés pour calculer tes horaires de passage. Chaque mode garde les siens.</p><div id="meModes"></div></div>
   <div class="me-card"><h3>Affichage</h3>
     <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
@@ -1081,6 +1117,16 @@ const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(
 /* ---------- état ---------- */
 // pages : Sortie (#), Ultra (#ultra), Vélotaf (#velotaf)
 function hashMode(hs) { return hs === '#ultra' ? 'ultra' : hs === '#velotaf' ? 'taf' : 'ride'; }
+// Lien d'une alerte météo (?route=ID&date=AAAA-MM-JJ&time=HH:MM) : ce parcours en page Sortie, à ce jour et cette heure.
+(() => { try {
+  const q = new URLSearchParams(location.search), r = q.get('route'); if (!r) return;
+  localStorage.setItem('pmr-last-route', r);
+  const d = q.get('date') || '', t = q.get('time') || '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) sessionStorage.setItem('pmr-ride-date', d);
+  if (/^\d{2}:\d{2}$/.test(t)) sessionStorage.setItem('pmr-ride-time', t);
+  for (const k of ['route', 'date', 'time']) q.delete(k);
+  history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
+} catch (e) {} })();
 const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '', mode: hashMode(location.hash), trip: 0 };
 
 /* ---------- géométrie ---------- */
@@ -2950,7 +2996,9 @@ function initInputs() {
   $('#tafPerDay').checked = !!def.tafPerDay; TAF.days = def.tafDays && typeof def.tafDays === 'object' ? def.tafDays : {};
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
   tafPerDayUI();
-  $('#time').value = def.time; $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = clamp(Math.round(+def.pause || 0), 0, 40);
+  $('#time').value = def.time;
+  if (S.mode === 'ride') { let rt = ''; try { rt = sessionStorage.getItem('pmr-ride-time') || ''; sessionStorage.removeItem('pmr-ride-time'); } catch (e) {} if (rt) $('#time').value = rt; }
+  $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = clamp(Math.round(+def.pause || 0), 0, 40);
   setSeg('#pauseSeg', def.pauseMode === 'min' ? 'min' : 'pct');
   $('#pauseMin').value = isFinite(+def.pauseMin) && def.pauseMin !== '' && def.pauseMin != null ? clamp(Math.round(+def.pauseMin), 0, 120) : 10;
   $('#pauseEvery').value = isFinite(+def.pauseEvery) && +def.pauseEvery > 0 ? clamp(Math.round(+def.pauseEvery * 2) / 2, 0.5, 12) : 1;
@@ -4788,7 +4836,7 @@ function meRender() {
   const th = document.documentElement.dataset.theme || 'auto';
   for (const b of document.querySelectorAll('#meTheme button')) b.setAttribute('aria-pressed', String(b.dataset.t === th));
 }
-function meOpen() { pageOpen('mePage', '#tabMe'); meRender(); }
+function meOpen() { pageOpen('mePage', '#tabMe'); meRender(); alRender(); alLoad(); }
 $('#meModes').addEventListener('input', e => { const i = e.target.closest('input[data-k]'); if (!i) return; const v = +i.value, k = i.dataset.k;
   $('#' + i.id + '-o').textContent = k === 'speed' ? n1(v) + ' km/h' : k === 'vam' ? v + ' m/h' : v + ' min / h'; meSet(i.dataset.m, k, v); });
 $('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); });
@@ -4796,6 +4844,109 @@ $('#meHelp').addEventListener('click', () => $('#helpBtn').click());
 $('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
+/* Alertes météo (essai du 25/10/2026) : notifications Web Push. Le service worker sw.js affiche les notifications ;
+   la fonction edge push-alerts garde les abonnements (push_subs) et envoie chaque soir à 20 h (ou matin à 7 h)
+   l'alerte du parcours choisi (réglages dans push_alerts, une ligne par compte, écrite ici). */
+const AL = { row: null, sub: null, loaded: false };
+const AL_DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const alCan = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const alIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const alStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function alKeyBytes(b64) { const t = b64.replace(/-/g, '+').replace(/_/g, '/'), p = t + '='.repeat((4 - t.length % 4) % 4); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); }
+async function alReg() { return navigator.serviceWorker.register('sw.js', { scope: './' }); }
+async function alFn(action, extra) {
+  const sb = await sbIfLogged(); if (!sb) throw new Error('connecte-toi d\'abord.');
+  const { data, error } = await sb.functions.invoke('push-alerts', { body: { action, ...(extra || {}) } });
+  if (error) { let d = ''; try { const j = await error.context.json(); d = j.detail || j.error || ''; } catch (e) {} throw new Error(d || error.message); }
+  return data;
+}
+function alMsg(t) { $('#alMsg').textContent = t || ''; }
+async function alLoad() {
+  if (AL.loaded) return; AL.loaded = true;
+  try { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('push_alerts').select('*').maybeSingle(); AL.row = data || null; } } catch (e) {}
+  try { if (alCan()) { const r = await navigator.serviceWorker.getRegistration('./'); AL.sub = r ? await r.pushManager.getSubscription() : null; } } catch (e) {}
+  alRender();
+}
+function alDefaults() {
+  let ride = {}; try { ride = JSON.parse(localStorage.getItem('pmr-opt') || '{}') || {}; } catch (e) {}
+  const rem = LIB.list.filter(x => x.remote), cur = rem.find(x => x.id === LIB.current) || rem[0];
+  return { route_id: cur ? cur.id : null, route_name: cur ? cur.name : null, dep_time: ride.time || '09:00', notify: 'eve', days: [1, 2, 3, 4, 5, 6, 7], enabled: false };
+}
+function alRender() {
+  if (!$('#alCard')) return;
+  const why = $('#alWhy'), r = AL.row || alDefaults(), on = !!(AL.row && AL.row.enabled), dev = !!AL.sub && typeof Notification !== 'undefined' && (AL.perm === 'granted' || Notification.permission === 'granted');
+  if (!alCan()) {
+    why.hidden = false;
+    why.innerHTML = alIos() && !alStandalone()
+      ? 'Sur iPhone, les alertes passent par l\'app installée : touche <b>Partager</b> puis <b>Sur l\'écran d\'accueil</b>, ouvre Plan My Ride depuis cette icône, puis reviens ici (iOS 16.4 ou plus).'
+      : 'Ce navigateur ne reçoit pas les notifications. Essaie avec Chrome, Edge, Firefox ou Safari à jour.';
+  } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied' && AL.perm !== 'granted') {
+    why.hidden = false; why.textContent = 'Les notifications sont bloquées pour Plan My Ride : autorise-les dans les réglages du navigateur (ou de l\'app), puis reviens ici.';
+  } else why.hidden = true;
+  $('#alOn').hidden = !alCan() || dev;
+  $('#alState').textContent = dev ? (on ? '✓ Alertes actives sur cet appareil' : '✓ Cet appareil peut recevoir les alertes') : '';
+  $('#alState').classList.toggle('on', dev && on);
+  const rem = LIB.list.filter(x => x.remote).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  $('#alRoute').innerHTML = (rem.length ? '' : '<option value="">Aucun parcours dans ton compte</option>')
+    + rem.map(x => `<option value="${escH(x.id)}"${x.id === r.route_id ? ' selected' : ''}>${escH(x.name)} · ${n1(x.km || 0)} km</option>`).join('');
+  if (r.route_id && !rem.some(x => x.id === r.route_id)) $('#alRoute').insertAdjacentHTML('afterbegin', `<option value="${escH(r.route_id)}" selected>${escH(r.route_name || 'Parcours')}</option>`);
+  $('#alTime').value = r.dep_time || '09:00'; $('#alWhen').value = r.notify || 'eve';
+  const days = new Set(r.days || []);
+  $('#alDays').innerHTML = AL_DAYS.map((l, i) => `<button type="button" data-d="${i + 1}" aria-pressed="${days.has(i + 1)}" title="${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'][i]}">${l}</button>`).join('');
+  $('#alBox').classList.toggle('off', !on);
+  $('#alOff').hidden = !on; $('#alTest').hidden = !dev;
+}
+async function alSave(patch) {
+  const sb = await sbIfLogged(); if (!sb) { alMsg('Connecte-toi pour régler les alertes.'); return false; }
+  const { data: { session } } = await sb.auth.getSession(); if (!session) return false;
+  const cur = AL.row || alDefaults(), g = meGet('ride'), opt = $('#alRoute').selectedOptions[0];
+  const row = { ...cur, ...patch, user_id: session.user.id, route_id: $('#alRoute').value || null, route_name: opt ? opt.textContent.replace(/ · [\d,]+ km$/, '') : null,
+    dep_time: $('#alTime').value || '09:00', notify: $('#alWhen').value, days: [...document.querySelectorAll('#alDays button[aria-pressed="true"]')].map(b => +b.dataset.d),
+    speed: g.speed, vam: g.vam, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris', page: location.origin + location.pathname, updated_at: new Date().toISOString() };
+  delete row.last_sent;
+  const { data, error } = await sb.from('push_alerts').upsert(row, { onConflict: 'user_id' }).select().maybeSingle();
+  if (error) { alMsg('Réglages non enregistrés : ' + error.message); return false; }
+  AL.row = data || row; return true;
+}
+$('#alOn').addEventListener('click', async () => {
+  const b = $('#alOn'); b.disabled = true; alMsg('');
+  try {
+    AL.perm = await Notification.requestPermission();
+    if (AL.perm !== 'granted') { alRender(); alMsg('Notifications refusées : rien ne sera envoyé.'); return; }
+    const reg = await alReg(); await navigator.serviceWorker.ready;
+    const { key } = await alFn('key');
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey) { const k = new Uint8Array(sub.options.applicationServerKey), w = alKeyBytes(key); if (k.length !== w.length || k.some((x, i) => x !== w[i])) { await sub.unsubscribe(); sub = null; } }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: alKeyBytes(key) });
+    await alFn('subscribe', { sub: sub.toJSON(), ua: navigator.userAgent.slice(0, 200) });
+    AL.sub = sub;
+    if (await alSave({ enabled: true })) alMsg(`C'est prêt : tu recevras la météo de « ${AL.row.route_name || 'ton parcours'} » ${AL.row.notify === 'morn' ? 'le matin à 7 h' : 'la veille à 20 h'}. « Envoyer l'alerte maintenant » pour voir à quoi elle ressemble.`);
+  } catch (e) { alMsg('Activation impossible : ' + String(e.message || e)); }
+  finally { b.disabled = false; alRender(); }
+});
+for (const id of ['#alRoute', '#alTime', '#alWhen']) $(id).addEventListener('change', async () => { if (await alSave({})) { alMsg('Enregistré.'); alRender(); } });
+$('#alDays').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-d]'); if (!b) return;
+  b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+  if (await alSave({})) { alMsg(AL.row.days.length ? 'Enregistré.' : 'Aucun jour choisi : pas d\'alerte.'); }
+});
+$('#alTest').addEventListener('click', async () => {
+  const b = $('#alTest'); b.disabled = true; alMsg('Envoi…');
+  try {
+    if (AL.row && AL.row.enabled) await alSave({});
+    const r = await alFn('test');
+    alMsg(r.sent ? `Envoyée à ${r.sent} appareil${r.sent > 1 ? 's' : ''} : « ${r.title} ».` : 'Aucun appareil n\'a reçu l\'alerte : réactive-les sur cet appareil.');
+  } catch (e) { alMsg('Envoi impossible : ' + String(e.message || e)); }
+  finally { b.disabled = false; }
+});
+$('#alOff').addEventListener('click', async () => {
+  alMsg('');
+  try { if (AL.sub) { await alFn('unsubscribe', { endpoint: AL.sub.endpoint }).catch(() => {}); await AL.sub.unsubscribe().catch(() => {}); AL.sub = null; }
+    if (await alSave({ enabled: false })) alMsg('Alertes coupées. Tes réglages sont gardés.'); }
+  finally { alRender(); }
+});
+// déjà abonné : le service worker reste enregistré (une mise à jour de sw.js est prise au chargement)
+try { if (alCan() && hasSbToken()) navigator.serviceWorker.getRegistration('./').then(r => { if (r) r.update().catch(() => {}); }).catch(() => {}); } catch (e) {}
 
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (!document.documentElement.dataset.theme) redrawTheme(); });
 
