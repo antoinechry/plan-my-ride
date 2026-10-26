@@ -77,17 +77,34 @@ export function ride(R: ReturnType<typeof route>, wx: Series[], startMs: number,
   return { rain, head: hs / tot, headPct: Math.round(headKm / tot * 100), tailPct: Math.round(tailKm / tot * 100), gust, amin, amax,
     rideH: (t - startMs) / 3600e3, endMs: t, wet: rain >= 0.3, miss };
 }
-export function verdict(s: Stats) {
+// Textes des alertes : français (clé) → autres langues ; {0} = valeur
+export const LANGS = ['fr', 'en'];
+const EN: Record<string, string> = {
+  'grosse pluie ({0} mm)': 'heavy rain ({0} mm)', 'pluie ({0} mm)': 'rain ({0} mm)', 'quelques gouttes': 'a few drops',
+  'vent de face ({0} km/h en moyenne)': 'headwind ({0} km/h on average)', 'vent dans le dos': 'tailwind', 'rafales à {0} km/h': 'gusts of {0} km/h',
+  'froid': 'cold', 'fraîcheur': 'chilly', 'canicule': 'heatwave', 'chaleur': 'heat', ' et ': ' and ', 'au sec': 'dry',
+  'Belles conditions : {0}': 'Great conditions: {0}', 'Au sec, mais {0}': 'Dry, but {0}', ', mais {0}': ', but {0}',
+  "Aujourd'hui": 'Today', 'Demain': 'Tomorrow', 'Ton parcours': 'Your route', 'ressenti {0} °C': 'feels like {0} °C',
+  'ressenti {0} à {1} °C': 'feels like {0} to {1} °C', 'Prévision incomplète pour ce parcours.': 'Incomplete forecast for this route.',
+  'arrivée vers {0}': 'finish around {0}', 'Mieux à {0} ({1})': 'Better at {0} ({1})', 'Alerte de test (météo indisponible : {0}).': 'Test alert (weather unavailable: {0}).',
+  'Les alertes fonctionnent sur cet appareil. Choisis un parcours pour recevoir sa météo.': 'Alerts work on this device. Choose a route to get its weather.',
+};
+export function tr(lang: string, k: string, a: (string | number)[] = []) {
+  const r = lang === 'en' && EN[k] != null ? EN[k] : k;
+  return r.replace(/\{(\d+)\}/g, (_m, i) => String(a[+i]));
+}
+export function verdict(s: Stats, lang = 'fr') {
+  const T = (k: string, a?: (string | number)[]) => tr(lang, k, a);
   const neg: string[] = [], pos: string[] = [];
-  if (s.rain >= 10) neg.push(`grosse pluie (${Math.round(s.rain)} mm)`); else if (s.rain >= 3) neg.push(`pluie (${Math.round(s.rain)} mm)`); else if (s.rain >= 0.3) neg.push('quelques gouttes');
-  if (s.head >= 8 || s.headPct >= 50) neg.push(`vent de face (${Math.round(Math.max(0, s.head))} km/h en moyenne)`);
-  else if (s.head <= -8 || s.tailPct >= 50) pos.push('vent dans le dos');
-  if (s.gust >= GUST_WARN) neg.push(`rafales à ${Math.round(s.gust)} km/h`);
-  if (s.amin < 3) neg.push('froid'); else if (s.amin < 8) neg.push('fraîcheur'); else if (s.amax > 34) neg.push('canicule'); else if (s.amax > 30) neg.push('chaleur');
-  const list = (a: string[]) => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1];
+  if (s.rain >= 10) neg.push(T('grosse pluie ({0} mm)', [Math.round(s.rain)])); else if (s.rain >= 3) neg.push(T('pluie ({0} mm)', [Math.round(s.rain)])); else if (s.rain >= 0.3) neg.push(T('quelques gouttes'));
+  if (s.head >= 8 || s.headPct >= 50) neg.push(T('vent de face ({0} km/h en moyenne)', [Math.round(Math.max(0, s.head))]));
+  else if (s.head <= -8 || s.tailPct >= 50) pos.push(T('vent dans le dos'));
+  if (s.gust >= GUST_WARN) neg.push(T('rafales à {0} km/h', [Math.round(s.gust)]));
+  if (s.amin < 3) neg.push(T('froid')); else if (s.amin < 8) neg.push(T('fraîcheur')); else if (s.amax > 34) neg.push(T('canicule')); else if (s.amax > 30) neg.push(T('chaleur'));
+  const list = (a: string[]) => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + T(' et ') + a[a.length - 1];
   const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
   const dry = s.rain < 0.3;
-  const txt = !neg.length ? `Belles conditions : ${list(['au sec', ...pos])}` : dry ? `Au sec, mais ${list(neg)}` : cap(list(neg)) + (pos.length ? `, mais ${list(pos)}` : '');
+  const txt = !neg.length ? T('Belles conditions : {0}', [list([T('au sec'), ...pos])]) : dry ? T('Au sec, mais {0}', [list(neg)]) : cap(list(neg)) + (pos.length ? T(', mais {0}', [list(pos)]) : '');
   const lvl = s.rain >= 3 || s.head >= 20 || s.gust >= GUST_DANGER || s.amin < 0 ? 2 : s.rain >= 0.3 || s.head >= 12 || s.gust >= GUST_WARN || s.amin < 5 || s.amax > 30 ? 1 : 0;
   return { lvl, txt };
 }
