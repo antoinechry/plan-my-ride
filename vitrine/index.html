@@ -83,6 +83,7 @@ a{color:#23629A}a:hover{color:#14201B}
 </a>
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 22px; font-size: 15px; font-weight: 600">
 <a class="sl-navlink" href="#ecrans" style="text-decoration: none; color: #14201B">L'app</a>
+<a class="sl-navlink" href="#sortie" style="text-decoration: none; color: #14201B">Sortie</a>
 <a class="sl-navlink" href="#ultra" style="text-decoration: none; color: #14201B">Ultra</a>
 <a class="sl-navlink" href="#velotaf" style="text-decoration: none; color: #14201B">Vélotaf</a>
 <a class="sl-navlink" href="#modeles" style="text-decoration: none; color: #14201B">Modèles météo</a>
@@ -317,21 +318,68 @@ a{color:#23629A}a:hover{color:#14201B}
 </div>
 </section>
 
-<!-- FONCTIONS -->
-<section id="fonctions" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 96px">
-<h2 class="sl-rv" style="margin: 0; font-weight: 800; font-size: clamp(36px, 4.6vw, 64px); line-height: 1; letter-spacing: -0.03em; max-width: 860px">La météo de ton parcours, pas celle de ta ville.</h2>
-<div style="margin-top: 48px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px">
+<!-- SORTIE -->
+<section id="sortie" style="max-width: 1200px; margin: 0 auto; padding: 112px 24px 96px">
+<p class="sl-rv" style="margin: 0 0 14px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; color: #23629A">Mode Sortie · ta boucle du jour</p>
+<h2 class="sl-rv" style="margin: 0; font-weight: 800; font-size: clamp(40px, 5.4vw, 80px); line-height: 0.96; letter-spacing: -0.035em; max-width: 900px">Ta sortie, au bon moment.</h2>
+<p class="sl-rv" style="margin: 24px 0 0; font-size: 20px; line-height: 1.55; color: #4C5852; max-width: 780px">La météo de ton parcours, pas celle de ta ville. Tu choisis le jour et l'heure : Sillage simule ta sortie kilomètre par kilomètre, à ta vitesse et avec ton dénivelé, puis compare tous les départs de la journée.</p>
+
+<div style="margin-top: 56px; display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+<div class="sl-rv" style="flex: 1 1 380px; min-width: 0; background: #F1F3F0; border: 1px solid #CDD4CE; border-radius: 24px; padding: 28px; box-sizing: border-box">
+<p style="margin: 0 0 14px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; color: #4C5852">Meilleure heure de départ</p>
+<h3 style="margin: 0; font-size: 24px; font-weight: 800; line-height: 1.2">Tour du lac Annecy avec Col du Marais</h3>
+<p style="margin: 6px 0 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #4C5852">64,7 km · 514 m D+ · 25 km/h sur le plat</p>
+<div style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 12px; align-items: flex-start; background: #FFFFFF; border: 1px solid #CDD4CE; border-radius: 14px; padding: 12px 14px"><span style="flex: none; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; background: #B5491F"></span><div><div style="font-weight: 700">Ton départ · 09:00 → 11:55</div><div style="font-size: 14px; line-height: 1.5; color: #4C5852">Beau au départ, mais l'orage te rattrape au col vers 11 h · 8 mm</div></div></div>
+<div style="display: flex; gap: 12px; align-items: flex-start; background: #FFFFFF; border: 2px solid #2E7D4F; border-radius: 14px; padding: 12px 14px"><span style="flex: none; margin-top: 3px; width: 12px; height: 12px; border-radius: 50%; background: #2E7D4F"></span><div><div style="font-weight: 700">Le meilleur · 15:00 → 18:05</div><div style="font-size: 14px; line-height: 1.5; color: #4C5852">Au sec et ensoleillé, vent dans le dos le long du lac</div></div></div>
+</div>
+<div style="margin-top: 24px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4C5852"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #B5491F"></span><span>9h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #B5491F"></span><span>10h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #B5491F"></span><span>11h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #B5491F"></span><span>12h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #E0A21B"></span><span>13h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #E0A21B"></span><span>14h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #2E7D4F; outline: 2px solid #14201B; outline-offset: 2px"></span><span>15h</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 100%; height: 10px; border-radius: 5px; background: #E0A21B"></span><span>16h</span></div></div>
+<p style="margin: 12px 0 0; font-size: 13px; color: #4C5852"><span style="color: #2E7D4F; font-weight: 700">●</span> au sec &nbsp; <span style="color: #8A5A00; font-weight: 700">●</span> routes mouillées ou arrivée de nuit &nbsp; <span style="color: #B5491F; font-weight: 700">●</span> orage</p>
+</div>
+<figure class="sl-rv" style="flex: 1 1 520px; min-width: 0; margin: 0; background: #FFFFFF; border: 1px solid #CDD4CE; border-radius: 24px; padding: 20px 20px 12px; box-sizing: border-box">
+<figcaption style="margin: 0 0 8px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; color: #4C5852">Départ 15:00 · toute la sortie sur un profil</figcaption>
+<svg viewBox="0 0 620 300" style="width: 100%; display: block" role="img" aria-label="Profil du Tour du lac d'Annecy avec le col du Marais, départ 15 h : soleil toute la sortie, col à 832 m au km 29, vent dans le dos sauf une heure de léger vent de face dans la montée">
+<g font-family="IBM Plex Mono, monospace" font-size="11" fill="#4C5852"><text x="48.0" y="22" text-anchor="middle">15:00</text><g transform="translate(48.0 44)"><circle r="5" fill="#E0A21B"></circle><path d="M0 -9v2M0 7v2M-9 0h2M7 0h2M-6.4 -6.4l1.4 1.4M5 5l1.4 1.4M-6.4 6.4l1.4-1.4M5 -5l1.4-1.4" stroke="#E0A21B" stroke-width="1.8" stroke-linecap="round"></path></g><line x1="48.0" y1="58" x2="48.0" y2="196" stroke="#CDD4CE" stroke-dasharray="3 4"></line><text x="224.6" y="22" text-anchor="middle">16:00</text><g transform="translate(224.6 44)"><circle r="5" fill="#E0A21B"></circle><path d="M0 -9v2M0 7v2M-9 0h2M7 0h2M-6.4 -6.4l1.4 1.4M5 5l1.4 1.4M-6.4 6.4l1.4-1.4M5 -5l1.4-1.4" stroke="#E0A21B" stroke-width="1.8" stroke-linecap="round"></path></g><line x1="224.6" y1="58" x2="224.6" y2="196" stroke="#CDD4CE" stroke-dasharray="3 4"></line><text x="384.3" y="22" text-anchor="middle">17:00</text><g transform="translate(384.3 44)"><circle r="5" fill="#E0A21B"></circle><path d="M0 -9v2M0 7v2M-9 0h2M7 0h2M-6.4 -6.4l1.4 1.4M5 5l1.4 1.4M-6.4 6.4l1.4-1.4M5 -5l1.4-1.4" stroke="#E0A21B" stroke-width="1.8" stroke-linecap="round"></path></g><line x1="384.3" y1="58" x2="384.3" y2="196" stroke="#CDD4CE" stroke-dasharray="3 4"></line><text x="569.3" y="22" text-anchor="middle">18:00</text><g transform="translate(569.3 44)"><circle r="5" fill="#E0A21B"></circle><path d="M0 -9v2M0 7v2M-9 0h2M7 0h2M-6.4 -6.4l1.4 1.4M5 5l1.4 1.4M-6.4 6.4l1.4-1.4M5 -5l1.4-1.4" stroke="#E0A21B" stroke-width="1.8" stroke-linecap="round"></path></g><line x1="569.3" y1="58" x2="569.3" y2="196" stroke="#CDD4CE" stroke-dasharray="3 4"></line></g>
+<path d="M48.0 193.8 L56.4 193.5 L64.8 194.0 L73.2 194.0 L81.6 194.3 L90.0 192.0 L98.4 188.8 L106.9 184.4 L115.3 176.2 L123.7 168.5 L132.1 157.6 L140.5 148.5 L148.9 150.9 L157.3 157.1 L165.7 161.3 L174.1 165.5 L182.5 165.8 L190.9 161.8 L199.3 160.3 L207.8 158.9 L216.2 156.1 L224.6 152.2 L233.0 150.4 L241.4 146.5 L249.8 139.5 L258.2 129.6 L266.6 119.7 L275.0 110.3 L283.4 101.4 L291.8 98.9 L300.2 107.6 L308.6 114.5 L317.1 116.3 L325.5 123.2 L333.9 125.7 L342.3 134.3 L350.7 150.4 L359.1 162.3 L367.5 175.4 L375.9 180.2 L384.3 181.1 L392.7 181.1 L401.1 183.6 L409.5 186.3 L418.0 187.1 L426.4 190.8 L434.8 189.6 L443.2 190.8 L451.6 190.8 L460.0 192.3 L468.4 193.3 L476.8 190.6 L485.2 189.8 L493.6 191.5 L502.0 190.8 L510.4 192.0 L518.9 191.5 L527.3 191.3 L535.7 193.0 L544.1 193.3 L552.5 193.8 L560.9 194.0 L569.3 193.8 L577.7 193.0 L586.1 193.0 L592.0 194.0 L592.0 196 L48 196 Z" fill="#DDE6DF"></path>
+<path class="sl-rvdraw" pathLength="1000" d="M48.0 193.8 L56.4 193.5 L64.8 194.0 L73.2 194.0 L81.6 194.3 L90.0 192.0 L98.4 188.8 L106.9 184.4 L115.3 176.2 L123.7 168.5 L132.1 157.6 L140.5 148.5 L148.9 150.9 L157.3 157.1 L165.7 161.3 L174.1 165.5 L182.5 165.8 L190.9 161.8 L199.3 160.3 L207.8 158.9 L216.2 156.1 L224.6 152.2 L233.0 150.4 L241.4 146.5 L249.8 139.5 L258.2 129.6 L266.6 119.7 L275.0 110.3 L283.4 101.4 L291.8 98.9 L300.2 107.6 L308.6 114.5 L317.1 116.3 L325.5 123.2 L333.9 125.7 L342.3 134.3 L350.7 150.4 L359.1 162.3 L367.5 175.4 L375.9 180.2 L384.3 181.1 L392.7 181.1 L401.1 183.6 L409.5 186.3 L418.0 187.1 L426.4 190.8 L434.8 189.6 L443.2 190.8 L451.6 190.8 L460.0 192.3 L468.4 193.3 L476.8 190.6 L485.2 189.8 L493.6 191.5 L502.0 190.8 L510.4 192.0 L518.9 191.5 L527.3 191.3 L535.7 193.0 L544.1 193.3 L552.5 193.8 L560.9 194.0 L569.3 193.8 L577.7 193.0 L586.1 193.0 L592.0 194.0" fill="none" stroke="#14201B" stroke-width="2" stroke-linejoin="round"></path>
+<line x1="48" y1="246" x2="592" y2="246" stroke="#A3AEA8"></line>
+<g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="500"><rect x="54.0" y="246" width="164.6" height="28.8" rx="3" fill="#2E7D4F"></rect><text x="136.3" y="288.8" text-anchor="middle" fill="#2E7D4F">↓ 12 km/h</text><rect x="230.6" y="234.0" width="147.8" height="12.0" rx="3" fill="#B5491F"></rect><text x="304.4" y="228.0" text-anchor="middle" fill="#B5491F">↑ 5 km/h</text><rect x="390.3" y="246" width="173.0" height="24.0" rx="3" fill="#2E7D4F"></rect><text x="476.8" y="284.0" text-anchor="middle" fill="#2E7D4F">↓ 10 km/h</text></g>
+<g font-family="IBM Plex Mono, monospace" font-size="11" fill="#4C5852">
+<text x="42" y="197.8" text-anchor="end">447</text><text x="42" y="102.9" text-anchor="end">832</text>
+<text x="291.8" y="88.9" text-anchor="middle" fill="#14201B" font-weight="600">Col du Marais</text>
+<text x="42" y="238" text-anchor="end" fill="#B5491F">face</text><text x="42" y="262" text-anchor="end" fill="#2E7D4F">dos</text>
+<text x="48" y="212">km 0</text><text x="291.8" y="212" text-anchor="middle">29</text><text x="592" y="212" text-anchor="end">64,7</text>
+</g>
+<circle cx="291.8" cy="98.9" r="4" fill="#14201B"></circle>
+</svg>
+<p style="margin: 6px 0 0; font-size: 13px; color: #4C5852">Relief, ciel heure par heure et vent ressenti : <span style="color: #2E7D4F; font-weight: 600">de dos</span> vers le bas, <span style="color: #B5491F; font-weight: 600">de face</span> vers le haut.</p>
+</figure>
+</div>
+
+<div style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px">
 <article class="sl-rv" style="background: #F1F3F0; border-radius: 24px; padding: 28px; border: 1px solid #CDD4CE">
 <h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">Le vent, tronçon par tronçon</h3>
 <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Des flèches tout au long de la trace : <span style="color: #2E7D4F; font-weight: 600">↓ de dos</span>, <span style="color: #8A5A00; font-weight: 600">→ de travers</span>, <span style="color: #B5491F; font-weight: 600">↑ de face</span>, avec les rafales en km/h.</p>
 </article>
 <article class="sl-rv" style="background: #F1F3F0; border-radius: 24px; padding: 28px; border: 1px solid #CDD4CE">
-<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">La meilleure heure pour partir</h3>
-<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Sillage compare les créneaux et te le dit en une ligne : « Pars à 13 h ».</p>
+<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">La bonne tenue</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Températures et ressenti du départ à l'arrivée, avec un conseil : manchettes, coupe-vent ou gants longs.</p>
 </article>
 <article class="sl-rv" style="background: #F1F3F0; border-radius: 24px; padding: 28px; border: 1px solid #CDD4CE">
-<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">Toute la journée sur un profil</h3>
-<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Relief, nuages, pluie heure par heure, ressenti, lever et coucher du soleil, lune.</p>
+<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">Des tours de boucle</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Un circuit de 10 km à enchaîner ? Dis combien de tours et ta pause : Sillage te donne la météo tour par tour.</p>
+</article>
+<article class="sl-rv" style="background: #F1F3F0; border-radius: 24px; padding: 28px; border: 1px solid #CDD4CE">
+<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">Mes sorties</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Tous tes parcours classés selon la météo du jour : celui qui reste au sec arrive en tête.</p>
+</article>
+<article class="sl-rv" style="background: #F1F3F0; border-radius: 24px; padding: 28px; border: 1px solid #CDD4CE">
+<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">L'alerte de la veille</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">À 20 h, une notification : le verdict de demain et l'heure à viser.</p>
+</article>
+<article class="sl-rv" style="background: #F1F3F0; border-radius: 24px; padding: 28px; border: 1px solid #CDD4CE">
+<h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">Une image à partager</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4C5852">Exporte ta sortie en image, en story ou en grand format, pour le groupe WhatsApp du club.</p>
 </article>
 </div>
 </section>
