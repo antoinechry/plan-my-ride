@@ -42,6 +42,20 @@ a{color:#23629A}a:hover{color:#14201B}
 .sl-soon>a{opacity:.5;filter:saturate(.6);pointer-events:none}
 .sl-stamp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-9deg);padding:6px 18px;border:3px double #B5491F;border-radius:10px;background:rgba(255,255,255,0.88);color:#B5491F;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:20px;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;pointer-events:none;box-shadow:0 2px 10px rgba(20,32,27,0.12);animation:sl-stamp .5s cubic-bezier(.2,1.6,.4,1) .8s both}
 @keyframes sl-stamp{from{opacity:0;transform:translate(-50%,-50%) rotate(-9deg) scale(1.8)}to{opacity:1;transform:translate(-50%,-50%) rotate(-9deg) scale(1)}}
+.sl-nl input[type=text],.sl-nl input[type=email],.sl-nl select{width:100%;box-sizing:border-box;min-height:48px;padding:12px 14px;border:1px solid #CDD4CE;border-radius:12px;background:#FFFFFF;color:#14201B;font:inherit;font-size:16px}
+.sl-nl input:focus,.sl-nl select:focus{outline:3px solid #8CC3EC;outline-offset:1px;border-color:#23629A}
+.sl-nl label.sl-f{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700}
+.sl-nl .sl-opt{font-weight:500;color:#4C5852}
+.sl-nlseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:#F1F3F0;border-radius:14px}
+.sl-nlseg label{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;min-height:44px;padding:8px 10px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#4C5852}
+.sl-nlseg input{position:absolute;opacity:0;pointer-events:none}
+.sl-nlseg label:has(input:checked){background:#14201B;color:#FFFFFF}
+.sl-nlseg label:has(input:focus-visible){outline:3px solid #8CC3EC}
+.sl-nl:not(.is-org) [data-org]{display:none !important}
+.sl-nl.is-org [data-rider]{display:none !important}
+.sl-nl [hidden]{display:none !important}
+.sl-nl button[type=submit]{min-height:52px;border:0;border-radius:999px;background:#14201B;color:#FFFFFF;font:inherit;font-weight:800;font-size:17px;cursor:pointer}
+.sl-nl button[type=submit]:hover{background:#23629A}
 @keyframes sl-fade{from{opacity:0}to{opacity:1}}
 @media (max-width: 760px){
 .sl-stage{display:flex;flex-direction:column}
@@ -56,6 +70,7 @@ a{color:#23629A}a:hover{color:#14201B}
 .sl-attr{bottom:6px !important}
 .sl-days{grid-template-columns:repeat(5,minmax(112px,1fr)) !important;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
 .sl-navlink{display:none}
+.sl-nlwind{display:none}
 .sl-seg span{padding:6px 8px !important;font-size:12px !important}
 .sl-hour{font-size:24px !important}
 .sl-scrollimg img{min-width:720px}
@@ -88,7 +103,7 @@ a{color:#23629A}a:hover{color:#14201B}
 <a class="sl-navlink" href="#ultra" style="text-decoration: none; color: #14201B">Ultra</a>
 <a class="sl-navlink" href="#velotaf" style="text-decoration: none; color: #14201B">Vélotaf</a>
 <a class="sl-navlink" href="#modeles" style="text-decoration: none; color: #14201B">Modèles météo</a>
-<a href="#telecharger" style="text-decoration: none; background: #E0A21B; color: #14201B; padding: 11px 20px; border-radius: 999px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; font-weight: 700">Télécharger</a>
+<a href="#newsletter" style="text-decoration: none; background: #E0A21B; color: #14201B; padding: 11px 20px; border-radius: 999px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; font-weight: 700">Me prévenir</a>
 </div>
 </nav>
 </header>
@@ -622,15 +637,40 @@ a{color:#23629A}a:hover{color:#14201B}
 </div>
 </section>
 
-<!-- CTA -->
-<section style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 112px">
-<div class="sl-rv" style="position: relative; overflow: hidden; background: #E0A21B; color: #14201B; border-radius: 24px; padding: clamp(40px, 6vw, 80px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px">
-<svg viewBox="0 0 400 200" style="position: absolute; right: -40px; top: -20px; width: 460px; opacity: 0.35" aria-hidden="true"><g stroke="#14201B" stroke-width="3" stroke-linecap="round" fill="none"><path class="sl-windline" d="M0 40 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -1s" d="M120 100 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -2s" d="M40 160 q 100 -18 200 0"></path></g></svg>
-<h2 style="position: relative; margin: 0; font-weight: 800; font-size: clamp(36px, 4.6vw, 64px); line-height: 1; letter-spacing: -0.03em; max-width: 640px">Ta prochaine sortie mérite le bon départ.</h2>
-<div class="sl-soon">
-<a href="#" style="display: inline-flex; align-items: center; background: #14201B; color: #F1F3F0; text-decoration: none; padding: 16px 26px; border-radius: 999px; font-weight: 700; font-size: 17px; min-height: 56px; box-sizing: border-box">App Store</a>
-<a href="#" style="display: inline-flex; align-items: center; background: #14201B; color: #F1F3F0; text-decoration: none; padding: 16px 26px; border-radius: 999px; font-weight: 700; font-size: 17px; min-height: 56px; box-sizing: border-box">Google Play</a>
-<span class="sl-stamp" style="background: rgba(255,248,232,0.92)">Bientôt dispo</span>
+<!-- CTA : NEWSLETTER -->
+<section id="newsletter" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 112px">
+<div class="sl-rv" style="position: relative; overflow: hidden; background: #E0A21B; color: #14201B; border-radius: 24px; padding: clamp(28px, 6vw, 72px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 40px">
+<svg class="sl-nlwind" viewBox="0 0 400 200" style="position: absolute; right: -40px; top: -20px; width: 460px; opacity: 0.35" aria-hidden="true"><g stroke="#14201B" stroke-width="3" stroke-linecap="round" fill="none"><path class="sl-windline" d="M0 40 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -1s" d="M120 100 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -2s" d="M40 160 q 100 -18 200 0"></path></g></svg>
+<div style="position: relative; flex: 1 1 360px; min-width: 0">
+<p style="margin: 0 0 14px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase">Bientôt sur iPhone et Android</p>
+<h2 style="margin: 0; font-weight: 800; font-size: clamp(36px, 4.6vw, 64px); line-height: 1; letter-spacing: -0.03em; max-width: 600px">Ta prochaine sortie mérite le bon départ.</h2>
+<p style="margin: 20px 0 0; font-size: 19px; line-height: 1.55; max-width: 520px">Laisse ton e-mail : tu seras prévenu·e avant tout le monde de la sortie de Sillage, et tu pourras le tester en avant-première.</p>
+</div>
+<div data-ref="nlRef" class="sl-nl" style="position: relative; flex: 1 1 380px; max-width: 460px; min-width: 0; background: #FFFFFF; border-radius: 20px; padding: 24px; box-sizing: border-box; box-shadow: 0 20px 50px -24px rgba(20,32,27,0.5)">
+<form novalidate style="display: flex; flex-direction: column; gap: 16px">
+<fieldset style="margin: 0; padding: 0; border: 0">
+<legend style="margin-bottom: 8px; font-size: 14px; font-weight: 700">Tu es…</legend>
+<div class="sl-nlseg">
+<label><input type="radio" name="profil" value="cycliste" checked>Je roule</label>
+<label><input type="radio" name="profil" value="organisateur">J'organise des événements</label>
+</div>
+</fieldset>
+<p data-rider style="display: flex; margin: 0; font-size: 14px; line-height: 1.5; color: #4C5852">Sorties, ultras, vélotaf : on te prévient le jour de la sortie, avec un accès anticipé pour tester l'app.</p>
+<p data-org style="margin: 0; font-size: 14px; line-height: 1.5; color: #4C5852">Course, brevet, ultra ou sortie de club : Sillage peut donner la météo de ton parcours à tes participant·es. On revient vers toi pour en parler.</p>
+<label class="sl-f"><span>Prénom <span class="sl-opt">(facultatif)</span></span><input type="text" name="prenom" autocomplete="given-name"></label>
+<label class="sl-f">E-mail<input type="email" name="email" autocomplete="email" required placeholder="toi@exemple.fr"></label>
+<label class="sl-f" data-org>Ton événement ou ton club<input type="text" name="evenement" placeholder="ex. Beyond Borders 2027"></label>
+<label class="sl-f" data-org>Type d'événement<select name="type"><option value="">Choisis…</option><option>Ultra / bikepacking</option><option>Brevet / randonnée</option><option>Cyclosportive / course</option><option>Sorties de club</option><option>Autre</option></select></label>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: #4C5852"><input type="checkbox" name="consent" required style="margin-top: 2px; width: 18px; height: 18px; flex: none; accent-color: #14201B">J'accepte de recevoir les e-mails de Sillage. Désinscription en un clic, à tout moment.</label>
+<p class="sl-nl-err" role="alert" style="margin: 0; font-size: 14px; font-weight: 700; color: #B5491F"></p>
+<button type="submit">Me prévenir</button>
+<p style="margin: 0; font-size: 12px; color: #4C5852; text-align: center">Pas de spam : un e-mail à la sortie, et quelques nouvelles d'ici là.</p>
+</form>
+<div class="sl-nl-ok" role="status" hidden style="text-align: center; padding: 24px 8px">
+<div style="width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; background: #2E7D4F; display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+<p style="margin: 16px 0 0; font-weight: 800; font-size: 22px">C'est noté !</p>
+<p class="sl-nl-okmsg" style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #4C5852">On te prévient avant tout le monde.</p>
+</div>
 </div>
 </div>
 </section>
@@ -688,6 +728,7 @@ class Component extends DCLogic {
     var self = this;
     this.setWind = function (el) { self.cv = el; };
     this.setSmap = function (el) { self.smap = el; };
+    this.setNl = function (el) { self.nl = el; };
   }
   hours() {
     var G = '#2E7D4F', T = '#8A5A00', R = '#B5491F', B = '#23629A';
@@ -725,6 +766,7 @@ class Component extends DCLogic {
     }
     this.startWind(reduce);
     this.startSortie(reduce);
+    this.startNewsletter();
   }
   componentWillUnmount() {
     this.stopped = true;
@@ -733,6 +775,21 @@ class Component extends DCLogic {
     if (this.raf2) cancelAnimationFrame(this.raf2);
     if (this.ro2) this.ro2.disconnect();
     if (this.ro) this.ro.disconnect();
+  }
+  startNewsletter() {
+    var el = this.nl; if (!el || el._nl) return; el._nl = true;
+    var form = el.querySelector('form'), err = el.querySelector('.sl-nl-err'), ok = el.querySelector('.sl-nl-ok'), okMsg = el.querySelector('.sl-nl-okmsg');
+    function kind() { var r = form.querySelector('input[name=profil]:checked'); return r ? r.value : 'cycliste'; }
+    form.addEventListener('change', function () { el.classList.toggle('is-org', kind() === 'organisateur'); err.textContent = ''; });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = form.email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = 'Indique une adresse e-mail valide.'; form.email.focus(); return; }
+      if (!form.consent.checked) { err.textContent = 'Coche la case pour accepter de recevoir nos e-mails.'; return; }
+      // Branchement Brevo à venir : liste « cyclistes » ou « organisateurs » selon kind().
+      okMsg.textContent = kind() === 'organisateur' ? 'On te prévient avant tout le monde, et on revient vers toi pour parler de ton événement.' : 'On te prévient avant tout le monde, avec un accès pour tester l\u2019app en avant-première.';
+      form.hidden = true; ok.hidden = false;
+    });
   }
   startSortie(reduce) {
     var el = this.smap; if (!el) return;
@@ -917,7 +974,7 @@ class Component extends DCLogic {
       };
     });
     return {
-      arrows: arrows, slots: slots, windRef: this.setWind, smapRef: this.setSmap, dayTabs: dayTabs, dayImg: DAYS[ud].img, dayAlt: DAYS[ud].alt,
+      arrows: arrows, slots: slots, windRef: this.setWind, smapRef: this.setSmap, nlRef: this.setNl, dayTabs: dayTabs, dayImg: DAYS[ud].img, dayAlt: DAYS[ud].alt,
       hourLabel: d.label, skyLabel: SKY[d.sky] + ' · ' + d.t + ' °C',
       skyCloud: 'position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(38,48,58,0.8), rgba(38,48,58,0.45)); opacity: ' + (d.cloud * 0.55) + '; transition: opacity 1.6s ease',
       skySun: 'position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 88% 6%, rgba(255,205,110,0.55), rgba(255,205,110,0) 55%); opacity: ' + (d.sky === 'sun' ? 1 : d.sky === 'part' ? 0.5 : 0) + '; transition: opacity 1.6s ease',
