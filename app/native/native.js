@@ -24,6 +24,8 @@
     'html.native,html.native body{overflow-x:hidden;overscroll-behavior-x:none}' +
     'html.native body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:2147483000;pointer-events:none}';
   document.head.appendChild(css);
+  // et si quelque chose décale malgré tout la page de côté, on la remet en place
+  window.addEventListener('scroll', function () { if (window.scrollX) window.scrollTo(0, window.scrollY); }, { passive: true });
 
   // ---- Fichiers : export image, CSV, GPX -----------------------------------
   // La WebView ne sait ni télécharger (<a download>) ni partager des fichiers (navigator.share

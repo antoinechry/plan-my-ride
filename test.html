@@ -669,6 +669,9 @@ body:not(.admin) .me-btns .adm{display:none}
 #chips.qs .qs-cell{display:flex;flex-direction:column;gap:1px;padding:9px 14px 10px;border-right:1px solid var(--line);min-width:0}
 #chips.qs .qs-cell small{font:600 11px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #chips.qs .qs-cell b{font:600 15px var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* panneau des réglages : rien de plus large que lui (sinon il glisse de côté) */
+aside.settings>*,aside.settings input,aside.settings select{min-width:0;max-width:100%}
+aside.settings #startRow>*{min-width:0;flex:1 1 0}
 #chips.qs .qs-cell .qs-num{font-family:var(--f-mono);font-weight:500}
 @media (max-width:360px){#chips.qs .qs-cell{padding-inline:10px}#chips.qs .qs-set{padding:0 12px}}
 @media (min-width:701px){#chips.qs{max-width:560px}}
@@ -5047,8 +5050,12 @@ $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.ta
 const isPhone = () => matchMedia('(max-width:700px)').matches;
 function sheetOpen(sel) {
   document.body.classList.add('sheet-open');
-  const el = sel && $(sel); if (el && $('#settings').contains(el)) setTimeout(() => el.scrollIntoView({ block: 'center' }), 60); else $('#settings').scrollTop = 0;
+  // défilement vertical seulement : scrollIntoView décalait aussi le panneau de côté (sur iPhone, impossible de revenir)
+  const st = $('#settings'), el = sel && $(sel); st.scrollLeft = 0;
+  if (el && st.contains(el)) setTimeout(() => { const r = el.getBoundingClientRect(), sr = st.getBoundingClientRect(); st.scrollTop += r.top - sr.top - (sr.height - r.height) / 2; st.scrollLeft = 0; }, 60);
+  else st.scrollTop = 0;
 }
+$('#settings').addEventListener('scroll', e => { if (e.currentTarget.scrollLeft) e.currentTarget.scrollLeft = 0; }, { passive: true });
 function sheetClose() { document.body.classList.remove('sheet-open'); }
 $('#sheetOk').addEventListener('click', sheetClose);
 $('#sheetBg').addEventListener('click', sheetClose);
