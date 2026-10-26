@@ -11,6 +11,8 @@
 		<string>fr</string>
 		<string>en</string>
 	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Sillage enregistre dans ta photothèque les images de tes sorties que tu exportes.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>CFBundleDisplayName</key>
