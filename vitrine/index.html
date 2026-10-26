@@ -39,13 +39,6 @@ a{color:#23629A}a:hover{color:#14201B}
 .sl-float{animation:sl-float 3.6s ease-in-out infinite alternate}
 .sl-glow{animation:sl-glow 3s ease-in-out infinite}
 @keyframes sl-fade{from{opacity:0}to{opacity:1}}
-@supports (animation-timeline: view()){
-.sl-zone{animation:sl-fade linear both;animation-timeline:view();animation-range:entry 10% cover 45%}
-.sl-rv{animation:sl-rise linear both;animation-timeline:view();animation-range:entry 0% cover 28%}
-.sl-rvbar{transform-origin:left;animation:sl-bar linear both;animation-timeline:view();animation-range:entry 10% cover 40%}
-.sl-rvpop{animation:sl-pop linear both;animation-timeline:view();animation-range:entry 0% cover 30%}
-.sl-rvdraw{stroke-dasharray:1000;animation:sl-draw linear both;animation-timeline:view();animation-range:entry 0% cover 55%}
-}
 @media (max-width: 760px){
 .sl-stage{display:flex;flex-direction:column}
 .sl-mapbox{order:1}
