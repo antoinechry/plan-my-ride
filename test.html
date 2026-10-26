@@ -5,45 +5,50 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 
-<title>Plan My Ride</title>
+<title>Sillage</title>
 <link rel="manifest" href="manifest-test.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<meta name="theme-color" content="#1f4f8f">
+<link rel="apple-touch-icon" href="icons/sillage-apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/sillage-192.png">
+<link rel="icon" type="image/svg+xml" href="icons/sillage.svg">
+<meta name="theme-color" content="#14201b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Plan My Ride">
+<meta name="apple-mobile-web-app-title" content="Sillage">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 /* Layout : poste de pilotage — réglages à gauche, feuille de route à droite (carte, profil météo, cue sheet) */
 :root{
-  --bg:#eaeef1; --panel:#ffffff; --ink:#15202a; --muted:#5a6976; --line:#d3dbe1;
-  --accent:#1f4f8f; --accent-ink:#ffffff;
-  --sun:#d9930b; --rain:#2f7fd0; --warm:#d4521c;
-  --head:#c3302f; --tail:#2c8a46; --cross:#8b97a2;
-  --night:rgba(21,32,42,.07); --elev:#c9d3db; --elev-line:#7d8d9a;
-  --f-display:"Bricolage Grotesque",system-ui,sans-serif;
-  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* charte Sillage (26/10/2026) : fond gris-vert, encre, soleil (marque), pluie (liens, sélection), rouille (vent de face) */
+  --bg:#f1f3f0; --panel:#ffffff; --ink:#14201b; --muted:#4c5852; --line:#cdd4ce;
+  --accent:#23629a; --accent-ink:#ffffff;
+  --brand:#e0a21b; --brand-ink:#14201b;
+  --sun:#e0a21b; --rain:#3e86c0; --warm:#b5491f;
+  --head:#b5491f; --tail:#2e7d4f; --cross:#8f9a94;
+  --night:rgba(20,32,27,.07); --elev:#cfd7d1; --elev-line:#7c8a83;
+  --f-display:"Archivo",system-ui,sans-serif;
+  --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e141a; --panel:#161f28; --ink:#e2e8ed; --muted:#93a2ae; --line:#28343f;
-  --accent:#7aaeff; --accent-ink:#0e141a;
-  --sun:#f2b33d; --rain:#5aa2ea; --warm:#f07a43;
-  --head:#ef5d5b; --tail:#4cc06c; --cross:#7b8894;
-  --night:rgba(0,0,0,.28); --elev:#2a3846; --elev-line:#6f8394; color-scheme:dark}}
+  --bg:#121b17; --panel:#1b2621; --ink:#eef1ec; --muted:#a3aea8; --line:#33433b;
+  --accent:#8cc3ec; --accent-ink:#121b17;
+  --brand:#e0a21b; --brand-ink:#14201b;
+  --sun:#e0a21b; --rain:#5ba3da; --warm:#d9673a;
+  --head:#f08a5d; --tail:#6fcf97; --cross:#7d8a83;
+  --night:rgba(0,0,0,.28); --elev:#2c3a33; --elev-line:#6f8178; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0e141a; --panel:#161f28; --ink:#e2e8ed; --muted:#93a2ae; --line:#28343f;
-  --accent:#7aaeff; --accent-ink:#0e141a;
-  --sun:#f2b33d; --rain:#5aa2ea; --warm:#f07a43;
-  --head:#ef5d5b; --tail:#4cc06c; --cross:#7b8894;
-  --night:rgba(0,0,0,.28); --elev:#2a3846; --elev-line:#6f8394; color-scheme:dark}
+  --bg:#121b17; --panel:#1b2621; --ink:#eef1ec; --muted:#a3aea8; --line:#33433b;
+  --accent:#8cc3ec; --accent-ink:#121b17;
+  --brand:#e0a21b; --brand-ink:#14201b;
+  --sun:#e0a21b; --rain:#5ba3da; --warm:#d9673a;
+  --head:#f08a5d; --tail:#6fcf97; --cross:#7d8a83;
+  --night:rgba(0,0,0,.28); --elev:#2c3a33; --elev-line:#6f8178; color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -56,13 +61,18 @@ button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:18px 14px;max-width:1440px;margin-inline:auto}
-.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-right:auto}
-.brand h1{font-size:26px;font-weight:800;text-transform:uppercase;letter-spacing:.01em}
-.brand h1 span{color:var(--accent)}
+.brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-right:auto}
+.brand h1{display:flex;align-items:center;gap:10px;font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.mark{display:block;flex:none;overflow:visible}
+.mark .mk-ink{fill:currentColor}
+.mark .mk-ring{fill:none;stroke:currentColor;stroke-width:8}
+.mark .mk-ray{fill:none;stroke:var(--brand);stroke-width:3.5;stroke-linecap:round}
+.mark .mk-sun{fill:var(--brand)}
+.mark .mk-rain{fill:none;stroke:var(--rain);stroke-width:5;stroke-linecap:round}
 .brand p{margin:0;color:var(--muted);font-size:14px}
 .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--accent)}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:700}
 .btn.small{padding:5px 10px;font-size:13px}
 .modes{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
 .modes a{padding:8px 14px;text-decoration:none;color:var(--muted);font-weight:700;font-family:var(--f-display);font-size:14px;letter-spacing:.03em;text-transform:uppercase}
@@ -152,7 +162,7 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .verdict-more b{color:var(--ink);font-weight:600}
 .taf-warn{margin:-8px 0 0;max-width:70ch}
 .test-band{background:#fff3c4;color:#5a4300;border-bottom:1px solid #e9d27a;padding:8px 16px;font-size:14px;text-align:center}
-.test-band a{color:#1f4f8f;margin-left:6px}
+.test-band a{color:#23629a;margin-left:6px}
 .lib-search{position:relative;min-width:0}
 .lib-acts{display:flex;gap:14px;margin-top:4px}
 .lib-acts .linkbtn.danger{color:var(--head);font-weight:600}
@@ -290,7 +300,7 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .arrows-toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
 .arrows-toggle input{accent-color:var(--accent)}
 
-.drop-overlay{position:fixed;inset:0;background:rgba(31,79,143,.18);border:3px dashed var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-size:30px;color:var(--accent);z-index:2000;pointer-events:none}
+.drop-overlay{position:fixed;inset:0;background:rgba(62,134,192,.18);border:3px dashed var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-size:30px;color:var(--accent);z-index:2000;pointer-events:none}
 .empty{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;display:flex;flex-direction:column;gap:18px}
 .empty h2{font-size:30px;font-weight:700}
 .empty p{margin:0;color:var(--muted);max-width:60ch}
@@ -339,7 +349,7 @@ dialog.help .ft label{font-size:13px;color:var(--muted);display:flex;gap:6px;ali
 body.gated .gate{display:grid}
 body.gated > :not(.gate):not(script):not(dialog){display:none!important}
 .gate-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 22px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
-.gate-logo{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:-.01em;margin:0 0 4px}
+.gate-logo{display:flex;align-items:center;gap:12px;font-family:var(--f-display);font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:1;margin:0 0 10px}
 .gate-sub{margin:0 0 16px;color:var(--muted);font-size:14px}
 .gate-lang{margin:-4px 0 12px;display:flex;justify-content:flex-end}
 .gate-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-bottom:14px}
@@ -635,7 +645,7 @@ body:not(.admin) .me-btns .adm{display:none}
 <script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
 <div class="gate" id="gate">
   <div class="gate-card">
-    <p class="gate-logo">Plan My Ride</p>
+    <p class="gate-logo"><svg class="mark" width="50" height="45" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
     <p class="gate-sub" id="gateSub">La météo sur ta trace, heure par heure. Accès réservé aux comptes autorisés.</p>
     <p class="gate-lang"><button type="button" class="lnk" id="gateLang" data-l="en" lang="en">English</button></p>
     <div id="gateWait" hidden>
@@ -664,7 +674,7 @@ body:not(.admin) .me-btns .adm{display:none}
 <div class="test-band" id="testBand" hidden>🧪 <b>Version test</b> : nouveautés en essai avant la mise en ligne. Mêmes parcours et réglages que la version normale. <a href="./">Revenir à la version normale</a></div>
 <header class="top">
   <div class="brand">
-    <h1>Plan <span>My Ride</span></h1>
+    <h1><svg class="mark" width="40" height="36" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkTop"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkTop)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</h1>
     <p id="brandSub">Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.</p>
   </div>
   <nav class="modes" aria-label="Page">
@@ -873,7 +883,7 @@ body:not(.admin) .me-btns .adm{display:none}
           <option value="gem">GEM · Environnement Canada</option>
         </optgroup>
       </select>
-      <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Plan My Ride est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
+      <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Sillage est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
       <p class="hint" id="wxSrcHint"></p>
       <div class="wxuse priv" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
@@ -884,7 +894,7 @@ body:not(.admin) .me-btns .adm{display:none}
 
     <section class="empty" id="empty">
       <h2>Importez votre trace GPX</h2>
-      <p>Plan My Ride calcule votre heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là : vent de face ou de dos, pluie, température, soleil.</p>
+      <p>Sillage calcule votre heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là : vent de face ou de dos, pluie, température, soleil.</p>
       <label class="dropzone" for="file">
         <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 36c6-2 9-10 15-10s7 7 12 7 7-5 9-8"/><circle cx="6" cy="36" r="3"/><circle cx="42" cy="25" r="3"/><path d="M24 4v14M18 12l6 6 6-6"/></svg>
         <strong>Déposez un fichier .gpx ici</strong>
@@ -1058,7 +1068,7 @@ body:not(.admin) .me-btns .adm{display:none}
 <dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
   <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
   <div class="bd">
-    <p>Plan My Ride calcule ton heure de passage à chaque point d'un parcours et te donne la météo prévue à cet endroit, à ce moment-là. Trois modes selon ta sortie, et ton espace pour le reste&nbsp;:</p>
+    <p>Sillage calcule ton heure de passage à chaque point d'un parcours et te donne la météo prévue à cet endroit, à ce moment-là. Trois modes selon ta sortie, et ton espace pour le reste&nbsp;:</p>
     <div class="seg2 help-tabs" role="tablist" aria-label="Pages">
       <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Vélotaf</button><button type="button" role="tab" data-h="more">Et aussi</button>
     </div>
@@ -2678,7 +2688,7 @@ async function exportImage() {
       }
     }
     c.font = `11.5px ${body}`; c.fillStyle = cssVar('--muted');
-    c.fillText(T("Plan My Ride · {0} · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri{1} · Horaires estimés", [wxCreditTxt(), missing ? T(" (fond partiel)") : '']), pad, y + 18);
+    c.fillText(T("Sillage · {0} · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri{1} · Horaires estimés", [wxCreditTxt(), missing ? T(" (fond partiel)") : '']), pad, y + 18);
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
     const fname = `${(S.name || (ultra ? 'ultra' : T('sortie'))).replace(/[^\w\-]+/g, '_')}_${ymd(new Date(tl.start))}.png`;
     const file = new File([blob], fname, { type: 'image/png' });
@@ -3063,7 +3073,7 @@ function applyModeUI() {
   if (!taf) { $('#weekCard').hidden = true; }
   tafPerDayUI();
   $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Vélotaf : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
-  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Plan My Ride · Ultra' : taf ? T("Plan My Ride · Vélotaf") : 'Plan My Ride');
+  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Vélotaf") : 'Sillage');
 }
 function switchMode(m) {
   if (m === S.mode) return;
@@ -4235,7 +4245,7 @@ $('#logoutLink').addEventListener('click', async e => {
   location.reload();
 });
 // Accès réservé (depuis le 21/10/2026) : sans session, écran #gate (connexion ou création de compte) ; avec une
-// session, la ligne de app_users décide (compte actif + accès Plan My Ride). Un lien testeur (?invite=CODE, table
+// session, la ligne de app_users décide (compte actif + accès Sillage). Un lien testeur (?invite=CODE, table
 // tester_links) donne l'accès dès la création du compte ; sinon le compte attend la validation d'un administrateur.
 const ACC = { row: null };
 let INVITE = ''; try { INVITE = localStorage.getItem('pmr-invite') || ''; } catch (e) {}
@@ -4275,7 +4285,7 @@ async function accessCheck() {
     ACC.row = data || null;
     if (!data || data.status !== 'active' || !data.pmr) {
       gateShow('wait', data && data.status === 'blocked' ? T("Ton compte est suspendu. Contacte l'administrateur.")
-        : data && data.status === 'active' ? T("Ton compte n'a pas encore accès à Plan My Ride. L'administrateur peut l'ouvrir depuis sa page Admin.")
+        : data && data.status === 'active' ? T("Ton compte n'a pas encore accès à Sillage. L'administrateur peut l'ouvrir depuis sa page Admin.")
         : T("Merci {0} ! Ton compte est créé et attend la validation de l'administrateur. Réessaie un peu plus tard.", [(data && data.prenom) || '']));
       return;
     }
@@ -4883,10 +4893,10 @@ function alRender() {
   if (!alCan()) {
     why.hidden = false;
     why.innerHTML = alIos() && !alStandalone()
-      ? T("Sur iPhone, les alertes passent par l'app installée : touche <b>Partager</b> puis <b>Sur l'écran d'accueil</b>, ouvre Plan My Ride depuis cette icône, puis reviens ici (iOS 16.4 ou plus).")
+      ? T("Sur iPhone, les alertes passent par l'app installée : touche <b>Partager</b> puis <b>Sur l'écran d'accueil</b>, ouvre Sillage depuis cette icône, puis reviens ici (iOS 16.4 ou plus).")
       : T("Ce navigateur ne reçoit pas les notifications. Essaie avec Chrome, Edge, Firefox ou Safari à jour.");
   } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied' && AL.perm !== 'granted') {
-    why.hidden = false; why.textContent = T("Les notifications sont bloquées pour Plan My Ride : autorise-les dans les réglages du navigateur (ou de l'app), puis reviens ici.");
+    why.hidden = false; why.textContent = T("Les notifications sont bloquées pour Sillage : autorise-les dans les réglages du navigateur (ou de l'app), puis reviens ici.");
   } else why.hidden = true;
   $('#alOn').hidden = !alCan() || dev;
   $('#alState').textContent = dev ? (on ? T("✓ Alertes actives sur cet appareil") : T("✓ Cet appareil peut recevoir les alertes")) : '';
