@@ -2120,10 +2120,10 @@ async function run() {
     } catch (err) {
       if (id !== runId) return;
       S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
-      note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.")
-        : /daily api request limit/i.test(err.message) ? T("Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway ou meteoblue dans « Source météo ».")
-        : /minutely|hourly api request limit|limit exceeded/i.test(err.message) ? T("Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute.")
-        : err.message]);
+      // limite d'Open-Meteo : message à part (sans répéter « essaie une autre source »)
+      if (/daily api request limit/i.test(err.message)) note = T("Météo indisponible : Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway ou meteoblue dans « Source météo ». Les horaires restent calculés.");
+      else if (/minutely|hourly api request limit|limit exceeded/i.test(err.message)) note = T("Météo indisponible : Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute. Les horaires restent calculés.");
+      else note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.") : err.message]);
     }
   }
   if (id !== runId) return;
