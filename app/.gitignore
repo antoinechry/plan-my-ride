@@ -1,0 +1,12 @@
+node_modules/
+# reconstruit par « npm run build » à partir de ../index.html
+www/
+# clés de signature et fichiers de compte : jamais dans ce dépôt public
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+keystore.properties
+google-services.json
+GoogleService-Info.plist

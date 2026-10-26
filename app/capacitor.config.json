@@ -1,0 +1,25 @@
+{
+  "appId": "cc.sillage.app",
+  "appName": "Sillage",
+  "webDir": "www",
+  "server": {
+    "hostname": "app.sillage-ride.eu",
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
+  },
+  "android": {
+    "backgroundColor": "#14201b"
+  },
+  "ios": {
+    "backgroundColor": "#14201b",
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#14201b",
+      "showSpinner": false
+    }
+  }
+}
