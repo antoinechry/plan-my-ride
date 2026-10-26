@@ -310,8 +310,11 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .dropzone strong{font-family:var(--f-display);font-size:20px;font-weight:600}
 .dropzone span{color:var(--muted);font-size:14px}
 .dz-touch{display:none}
-/* pas de plein écran de la carte sur écran tactile (téléphone, tablette, app) */
-@media (pointer:coarse){#fsBtn,.leaflet-bar:has(> .fs-btn){display:none!important}}
+/* écran tactile : plein écran par le bouton ⛶ sous le zoom seulement ; en plein écran, bouton « Fermer » bien visible en haut à droite */
+@media (pointer:coarse){#fsBtn{display:none!important}}
+.fs-close{display:none!important}
+#mapCard.map-fs .fs-close{display:inline-flex!important;align-items:center;gap:6px;height:40px;padding:0 14px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font:700 15px var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer}
+#mapCard.map-fs .fs-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
 @media (pointer:coarse){.dz-desk{display:none}.dz-touch{display:inline}}
 .empty ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
 .empty ul b{color:var(--ink);font-weight:600}
@@ -2392,7 +2395,7 @@ const MAP_TOUCH = matchMedia('(pointer: coarse)').matches;
 function initMap() {
   if (typeof L === 'undefined') { $('#map').innerHTML = T("<p class=\"hint\" style=\"padding:16px\">La carte n'a pas pu se charger (connexion requise).</p>"); return; }
   // Sur écran tactile (téléphone, tablette, app) : la carte ne capte plus le défilement de la page.
-  // Un doigt fait défiler la page ; zoom au pincement ou avec + / − ; déplacement à deux doigts (pas de plein écran sur tactile).
+  // Un doigt fait défiler la page ; zoom au pincement ou avec + / − ; déplacement à deux doigts, ou à un doigt en plein écran (bouton ⛶, setMapFs).
   map = L.map('map', { zoomControl: true, attributionControl: true, scrollWheelZoom: !MAP_TOUCH, dragging: !MAP_TOUCH });
   // Fonds de carte sans clé d'API. OSM standard exige un Referer : il ne marche qu'une fois l'app servie en http(s).
   const osmAttr = T('© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>');
@@ -2416,6 +2419,14 @@ function initMap() {
     L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); toggleMapFs(); });
     return d; } });
   map.addControl(new Fs());
+  // « Fermer » du plein écran : en haut à droite, au-dessus du choix du fond ; visible seulement en plein écran
+  const FsX = L.Control.extend({ options: { position: 'topright' }, onAdd() {
+    const b = L.DomUtil.create('button', 'fs-close'); b.type = 'button';
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' + T("Fermer");
+    L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, 'click', e => { L.DomEvent.preventDefault(e); setMapFs(false); });
+    return b; } });
+  const fsx = new FsX(); map.addControl(fsx);
+  const cor = fsx.getContainer().parentNode; cor.insertBefore(fsx.getContainer(), cor.firstChild);
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
 }
 function sampleValue(k) {
