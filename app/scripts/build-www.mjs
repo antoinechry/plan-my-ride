@@ -61,6 +61,9 @@ const swapRe = (what, re, to) => { if (!re.test(h)) die(`« ${what} » introuvab
 
 // pont natif, avant tout autre script
 swap('balise viewport', '<meta name="viewport"', '<script src="native.js"></script>\n<meta name="viewport"');
+// app : largeur d'affichage figée sur celle de l'écran, sans zoom de la page (sinon iOS élargit toute la zone
+// d'affichage dès qu'un élément dépasse, et les panneaux fixes se retrouvent coupés à droite)
+swapRe('contenu de la balise viewport', /<meta name="viewport" content="[^"]*">/, '<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">');
 // plus de manifeste ni de service worker web : l'app est déjà installée
 swapRe('lien du manifeste', /<link rel="manifest" href="[^"]+">\n?/, '');
 // polices et Leaflet en local
