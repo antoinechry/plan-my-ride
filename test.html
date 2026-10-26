@@ -2371,7 +2371,9 @@ function setMapFs(on) {
   $('#fsBtn').textContent = on ? T("Quitter le plein écran") : T("Plein écran");
   const a = document.querySelector('.fs-btn');
   if (a) { a.innerHTML = on ? FS_ICON_OUT : FS_ICON_IN; a.title = on ? T("Quitter le plein écran (Échap)") : T("Plein écran"); }
-  if (on) { const rq = card.requestFullscreen || card.webkitRequestFullscreen; if (rq) try { const r = rq.call(card); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  // écran tactile : plein écran « maison » seulement (la classe suffit) ; le plein écran du système
+  // ajoutait sur iPhone son propre bandeau « Balayez vers le bas pour quitter » et coupait la carte
+  if (on && !MAP_TOUCH) { const rq = card.requestFullscreen || card.webkitRequestFullscreen; if (rq) try { const r = rq.call(card); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
   else if (fsEl()) { const ex = document.exitFullscreen || document.webkitExitFullscreen; try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
   if (map && MAP_TOUCH) { if (on) map.dragging.enable(); else map.dragging.disable(); }
   if (map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 60);

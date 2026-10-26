@@ -22,6 +22,8 @@
     'html.native body{padding-top:env(safe-area-inset-top,0px)}' +
     // pas de défilement de côté : la page et les panneaux ne bougent que de haut en bas
     'html.native,html.native body{overflow-x:hidden;overscroll-behavior-x:none}' +
+    // pas d'effet élastique en haut et en bas : il faisait apparaître le fond sombre de l'app derrière la page
+    'html.native{overscroll-behavior-y:none;background:var(--bg)}' +
     'html.native body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:2147483000;pointer-events:none}';
   document.head.appendChild(css);
   // et si quelque chose décale malgré tout la page de côté, on la remet en place
