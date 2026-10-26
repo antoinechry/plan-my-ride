@@ -720,13 +720,34 @@ const SL = {
     return tpl.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (m, p) => SL.esc(SL.get(scope, p)));
   },
   cache: {},
+  // met à jour les éléments en place (sans les recréer) pour que les clics ne se perdent pas
+  patch(el, html) {
+    const t = document.createElement(el.namespaceURI === 'http://www.w3.org/2000/svg' ? 'div' : 'template');
+    let fresh;
+    if (el.namespaceURI === 'http://www.w3.org/2000/svg') { t.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + html + '</svg>'; fresh = t.firstChild; }
+    else { t.innerHTML = html; fresh = t.content; }
+    SL.morph(el, fresh);
+  },
+  morph(a, b) {
+    const ac = Array.from(a.childNodes), bc = Array.from(b.childNodes);
+    for (let i = 0; i < bc.length; i++) {
+      const x = ac[i], y = bc[i];
+      if (!x) { a.appendChild(y.cloneNode(true)); continue; }
+      if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName) { a.replaceChild(y.cloneNode(true), x); continue; }
+      if (x.nodeType === 3 || x.nodeType === 8) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; continue; }
+      for (const n of x.getAttributeNames()) if (!y.hasAttribute(n)) x.removeAttribute(n);
+      for (const n of y.getAttributeNames()) { const v = y.getAttribute(n); if (x.getAttribute(n) !== v) x.setAttribute(n, v); }
+      SL.morph(x, y);
+    }
+    for (let i = ac.length - 1; i >= bc.length; i--) a.removeChild(ac[i]);
+  },
   render() {
     const v = SL.c.renderVals();
     SL.fns = [];
     document.querySelectorAll('[data-for]').forEach((el) => {
       const t = SL.T[el.dataset.for], list = SL.get(v, t.list) || [];
       const html = list.map((it) => SL.fill(t.html, Object.assign({}, v, { [t.as]: it }))).join('');
-      if (SL.cache[el.dataset.for] !== html) { el.innerHTML = html; SL.cache[el.dataset.for] = html; }
+      if (SL.cache[el.dataset.for] !== html) { SL.patch(el, html); SL.cache[el.dataset.for] = html; }
     });
     document.querySelectorAll('[data-t]').forEach((el) => { const x = SL.get(v, el.dataset.t); if (el.textContent !== String(x)) el.textContent = x; });
     document.querySelectorAll('*').forEach((el) => {
