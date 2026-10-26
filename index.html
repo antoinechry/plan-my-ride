@@ -2596,11 +2596,13 @@ async function drawMapTo(c, x0, y0, W, H, o = {}) { // o : { m: carte Leaflet, r
   let tl = null; m.eachLayer(l => { if (l instanceof L.TileLayer) tl = l; });
   let missing = 0;
   if (tl) {
-    const z = m.getZoom(), ts = tl.getTileSize().x, org = m.containerPointToLayerPoint([0, 0]).add(m.getPixelOrigin()), n = 2 ** z, jobs = [];
-    for (let tx = Math.floor(org.x / ts); tx * ts < org.x + W; tx++) for (let ty = Math.floor(org.y / ts); ty * ts < org.y + H; ty++) {
+    // zoom fractionnaire possible (carte de l'export) : tuiles du zoom entier le plus proche, mises à l'échelle
+    const zf = m.getZoom(), z = Math.round(zf), sc = 2 ** (zf - z), ts = tl.getTileSize().x, n = 2 ** z, jobs = [];
+    const org = m.containerPointToLayerPoint([0, 0]).add(m.getPixelOrigin()).divideBy(sc), tw = ts * sc;
+    for (let tx = Math.floor(org.x / ts); tx * ts < org.x + W / sc; tx++) for (let ty = Math.floor(org.y / ts); ty * ts < org.y + H / sc; ty++) {
       if (ty < 0 || ty >= n) continue;
       const cc = L.point(((tx % n) + n) % n, ty); cc.z = z;
-      jobs.push(loadImg(tl.getTileUrl(cc)).then(im => { if (im) c.drawImage(im, x0 + tx * ts - org.x, y0 + ty * ts - org.y, ts, ts); else missing++; }));
+      jobs.push(loadImg(tl.getTileUrl(cc)).then(im => { if (im) c.drawImage(im, x0 + (tx * ts - org.x) * sc, y0 + (ty * ts - org.y) * sc, tw + 0.5, tw + 0.5); else missing++; }));
     }
     await Promise.all(jobs);
   }
@@ -2702,6 +2704,7 @@ function xR(c, x, y, w, h, r, fill, stroke) { c.beginPath(); c.roundRect(x, y, w
 function xFit(c, s, maxW) { if (c.measureText(s).width <= maxW) return s; while (s.length > 1 && c.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s.trim() + '…'; }
 function xLines(c, s, font, maxW, max) { c.font = font; const L = wrapText(c, s, maxW); if (L.length > max) { L.length = max; L[max - 1] = xFit(c, L[max - 1] + ' …', maxW); } return L; }
 function xDraw(c, src, x, y, w, h, mode, r) { // image dans une boîte : 'cover' (rogne) ou 'contain' (entière)
+  if (src && src.slot) { src.w = Math.round(w); src.h = Math.round(h); return; }
   if (!src || !src.width) return; const k = mode === 'cover' ? Math.max(w / src.width, h / src.height) : Math.min(w / src.width, h / src.height);
   const dw = src.width * k, dh = src.height * k; c.save(); if (r) { c.beginPath(); c.roundRect(x, y, w, h, r); c.clip(); }
   c.drawImage(src, x + (w - dw) / 2, y + (mode === 'cover' ? (h - dh) / 2 : 0), dw, dh); c.restore();
@@ -2794,23 +2797,46 @@ function expModel() {
 
 /* images utilisées : carte(s) rendue(s) hors écran à la taille de la carte affichée, profil et graphes du jour
    redessinés en thème clair le temps de les recopier */
-async function expMapShot(o) {
-  const m = o.m || map; if (!m) return null; const sz = m.getSize(); if (!sz.x || !sz.y) return null;
-  const cv = document.createElement('canvas'); cv.width = sz.x * 2; cv.height = sz.y * 2;
-  const c = cv.getContext('2d'); c.scale(2, 2); const missing = await drawMapTo(c, 0, 0, sz.x, sz.y, { ...o, bare: true });
-  cv.missing = missing; return cv;
+async function expMapShot(o) { // o : { m (carte d'origine, pour le fond), rg, w, h, arrows, sky }
+  const src = o.m || map; if (!src || !S.P) return null; const w = Math.max(80, o.w | 0), h = Math.max(80, o.h | 0);
+  // carte Leaflet temporaire hors écran à la taille de la boîte de l'image, cadrée sur toute la trace (ou le trajet)
+  const div = document.createElement('div'); div.style.cssText = `position:fixed;left:-20000px;top:0;width:${w}px;height:${h}px`; document.body.appendChild(div);
+  let tmp = null;
+  try {
+    tmp = L.map(div, { zoomControl: false, attributionControl: false, zoomSnap: 0, fadeAnimation: false, zoomAnimation: false, markerZoomAnimation: false, inertia: false });
+    let tl = null; src.eachLayer(l => { if (l instanceof L.TileLayer) tl = l; });
+    if (tl) L.tileLayer(tl._url, tl.options).addTo(tmp);
+    const P = S.P, r = o.rg || tripRange() || [0, P.n - 1], ll = [];
+    for (let i = r[0]; i <= r[1]; i++) ll.push([P.pts[i].lat, P.pts[i].lon]);
+    const pad = Math.round(Math.min(w, h) * 0.08) + 14;
+    tmp.fitBounds(L.latLngBounds(ll), { padding: [pad, pad], maxZoom: 16, animate: false });
+    const cv = document.createElement('canvas'); cv.width = w * 2; cv.height = h * 2;
+    const c = cv.getContext('2d'); c.scale(2, 2);
+    const { w: _w, h: _h, ...rest } = o;
+    cv.missing = await drawMapTo(c, 0, 0, w, h, { ...rest, m: tmp, bare: true });
+    return cv;
+  } finally { if (tmp) tmp.remove(); div.remove(); }
+}
+// emplacement de carte : la mise en page y note la taille de sa boîte (xDraw), la carte est rendue ensuite à cette taille
+const expSlot = o => ({ slot: true, o });
+async function expFillMaps(A) {
+  const fill = async s => { if (!s || !s.slot) return s; if (!s.w) return null; const cv = await expMapShot({ ...s.o, w: s.w, h: s.h }); if (cv && cv.missing) A.missing += cv.missing; return cv; };
+  if (A.maps) for (let k = 0; k < A.maps.length; k++) A.maps[k] = await fill(A.maps[k]);
+  A.map = await fill(A.map);
 }
 async function expAssets(M, fmt) {
   const A = { missing: 0 };
-  if (M.mode === 'taf') { A.maps = []; for (let k = 0; k < 2; k++) A.maps[k] = DUO.maps[k] ? await expMapShot({ m: DUO.maps[k], rg: duoRange(k), arrows: false, sky: true }) : null; }
-  else A.map = await expMapShot({});
-  for (const cv of [A.map, ...(A.maps || [])]) if (cv && cv.missing) A.missing += cv.missing;
+  if (M.mode === 'taf') { A.maps = []; for (let k = 0; k < 2; k++) A.maps[k] = DUO.maps[k] ? expSlot({ m: DUO.maps[k], rg: duoRange(k), arrows: false, sky: true }) : null; }
+  else A.map = expSlot({});
   if (fmt === 'story') return A;
   const snap = cv => { if (!cv || !cv.width) return null; const o = document.createElement('canvas'); o.width = cv.width; o.height = cv.height; o.getContext('2d').drawImage(cv, 0, 0); return o; };
   const html = document.documentElement, prev = html.dataset.theme;
   html.dataset.theme = 'light';
   try {
-    if (M.mode !== 'taf') { renderChart(); A.chart = snap($('#chart')); }
+    if (M.mode !== 'taf') { // profil redessiné à la largeur de sa boîte dans l'image (sur téléphone, il est étroit)
+      const wr = $('#chartWrap'), ws = wr.style.cssText; wr.style.width = (fmt === 'wide' ? 964 : 1068) + 'px'; wr.style.maxWidth = 'none';
+      try { renderChart(); A.chart = snap($('#chart')); } finally { wr.style.cssText = ws; }
+    }
     drawPlanWx();
     if (M.mode === 'ultra') { // graphes du jour à la largeur de l'image (sur la page, ils suivent la largeur du tableau)
       const gw = fmt === 'wide' ? 296 : 1056, box = document.createElement('div');
@@ -3093,11 +3119,13 @@ async function exportImage(fmt = 'full') {
     try { await Promise.all([document.fonts.load(xF(800, 20, fd)), document.fonts.load(xF(700, 20, fd)), document.fonts.load(xF(400, 20, fd)), document.fonts.load(xF(500, 20, fm))]); await document.fonts.ready; } catch (e) {}
     const M = expModel(), A = await expAssets(M, fmt), s = 2;
     let W, H;
-    if (fmt === 'wide') { W = 1600; H = 900; } else if (fmt === 'story') { W = 540; H = 960; }
-    else { W = 1200; const probe = document.createElement('canvas'); probe.width = probe.height = 1; H = Math.ceil(expFull(probe.getContext('2d'), M, A)); }
+    const lay = fmt === 'wide' ? expWide : fmt === 'story' ? expStory : expFull;
+    if (fmt === 'wide') { W = 1600; H = 900; } else if (fmt === 'story') { W = 540; H = 960; } else W = 1200;
+    { const probe = document.createElement('canvas'); probe.width = probe.height = 1; const hh = lay(probe.getContext('2d'), M, A); if (fmt === 'full') H = Math.ceil(hh); }
+    await expFillMaps(A);
     const out = document.createElement('canvas'); out.width = W * s; out.height = H * s;
     const c = out.getContext('2d'); c.scale(s, s);
-    if (fmt === 'wide') expWide(c, M, A); else if (fmt === 'story') expStory(c, M, A); else expFull(c, M, A);
+    lay(c, M, A);
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
     const base = (S.name || (M.mode === 'ultra' ? 'ultra' : M.mode === 'taf' ? 'velotaf' : T('sortie'))).replace(/[^\w\-]+/g, '_');
     const fname = `Sillage_${base}_${ymd(new Date(S.tl.start))}${fmt === 'full' ? '' : '_' + fmt}.png`;
