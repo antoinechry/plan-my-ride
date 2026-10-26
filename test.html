@@ -715,7 +715,7 @@ body:not(.admin) .me-btns .adm{display:none}
 </section>
 <section class="libpage" id="outPage" hidden aria-labelledby="outTitle">
   <div class="lp-head"><h2 id="outTitle">Mes sorties</h2><button type="button" class="btn small pg-x">Fermer</button></div>
-  <p class="hint lp-count">Tes parcours classés du plus au moins favorable selon la météo AROME (Météo-France).</p>
+  <p class="hint lp-count">Tes parcours classés du plus au moins favorable selon la météo, avec pour chacun le modèle le plus précis à cet endroit.</p>
   <div class="lp-tools">
     <div class="seg2 out-days" id="outDays" role="group" aria-label="Jour de la sortie"></div>
     <label class="out-when">Départ à <input type="time" id="outTime" step="900"> <span id="outPace"></span></label>
@@ -723,7 +723,7 @@ body:not(.admin) .me-btns .adm{display:none}
   <p class="out-prog" id="outProg" aria-live="polite"></p>
   <ol class="lp-list" id="outList"></ol>
   <div id="outLong"></div>
-  <p class="hint out-note">AROME : modèle fin de Météo-France sur 2 jours, puis ARPEGE jusqu'à 4 jours. Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
+  <p class="hint out-note">Météo : le modèle le plus précis à l'endroit de chaque parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, ECMWF hors des zones couvertes…). Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
 </section>
 <section class="libpage" id="mePage" hidden aria-labelledby="meTitle">
   <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
@@ -881,6 +881,7 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="field">
       <label class="label" for="wxSrcSel">Source météo</label>
       <select id="wxSrcSel">
+        <option value="loc">📍 Le plus précis selon le lieu</option>
         <option value="mb">meteoblue</option>
         <option value="arome">AROME (Météo-France)</option>
         <option value="met">MET Norway</option>
@@ -1124,7 +1125,7 @@ body:not(.admin) .me-btns .adm{display:none}
       <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
       <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet de vélotaf, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
     </ol>
-    <p class="note">Météo au choix («&nbsp;Source météo&nbsp;»)&nbsp;: meteoblue, la plus précise (quelques chargements par mois), AROME de Météo-France, très fin sur la France (4 jours), les modèles nationaux voisins (Allemagne, Suisse, Italie, Benelux, Royaume-Uni…), ECMWF, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
+    <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix meteoblue, la plus précise (quelques chargements par mois), une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
 </dialog>
@@ -1452,7 +1453,7 @@ const OM_MODELS = {
     hint: T("Modèle d'intelligence artificielle du service météo américain (25 km), jusqu'à 16 jours. Sans rafales, ressenti ni ensoleillement : repris d'Open-Meteo") },
 };
 const OM_PROB = new Set(Object.values(OM_MODELS).filter(m => m.prob).flatMap(m => m.models)); // modèles qui donnent le risque de pluie
-const WX_SRC = { mb: 'meteoblue', arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
+const WX_SRC = { loc: T("Le plus précis selon le lieu"), mb: 'meteoblue', arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
 for (const [k, m] of Object.entries(OM_MODELS)) WX_SRC[k] = m.name;
 const WX_KEYS = Object.keys(WX_SRC);
 // Horizon de chaque source (jours à partir d'aujourd'hui) : au-delà, Open-Meteo prend le relais.
@@ -1493,6 +1494,36 @@ function gustFill(wx, alt) {
   });
   return any;
 }
+// Source « Le plus précis selon le lieu » (`loc`, par défaut depuis le 26/10/2026) : pour chaque point du parcours, le modèle
+// gratuit le plus fin à cet endroit (zones approximatives, des plus petites aux plus grandes), puis celui de la majorité des points.
+// Hors des zones couvertes par un modèle régional (Amérique latine, Afrique, Moyen-Orient, Asie hors Japon, Océanie) : ECMWF.
+function locKey(la, lo) {
+  if (la > 41.3 && la < 43.1 && lo > 8.5 && lo < 9.6) return 'arome';                              // Corse
+  if (la > 45.8 && la < 47.85 && lo > 5.9 && lo < 10.5 && !(la < 46.5 && lo < 7)) return 'ch';   // Suisse et abords (Alpes françaises : AROME)
+  if (la > 46.35 && la < 49.05 && lo > 9.5 && lo < 17.2 && !(la > 47.6 && lo < 12.9)) return 'geo'; // Autriche, Alpes de l'Est (Bavière : ICON)
+  if (la > 48.55 && la < 51.06 && lo > 12.1 && lo < 18.9) return 'chmi';                           // Tchéquie
+  if (la > 35.5 && la < 47.1 && lo > 7.5 && lo < 18.6 && !(la > 43.5 && lo < 7.7)) return 'it';    // Italie, Slovénie, Istrie
+  if (la > 50 && la < 61 && lo > -11 && lo < 1.5 && !(la < 51 && lo > 1)) return 'ukmo';           // Royaume-Uni, Irlande
+  if (la > 41.3 && la < 51.2 && lo > -5.2 && lo < 9.6) return 'arome';                             // France et abords
+  if (la >= 51.2 && la < 53.7 && lo > 2.5 && lo < 7.3) return 'knmi';                              // Belgique du Nord, Pays-Bas
+  if (la > 63 && la < 67 && lo > -25 && lo < -13) return 'dmi';                                    // Islande
+  if (la > 54.4 && la < 72 && lo > 4 && lo < 32) return 'met';                                     // Scandinavie, Danemark, pays baltes
+  if (la > 34 && la < 72 && lo > -11 && lo < 45) return 'icon';                                    // reste de l'Europe (ICON-EU)
+  if (la > 24 && la < 46 && lo > 122 && lo < 146) return 'jma';                                    // Japon
+  if (lo > -141 && lo < -52 && ((la >= 49 && lo < -95) || (la >= 47.5 && lo >= -95))) return 'gem'; // Canada
+  if ((la > 24 && la < 50 && lo > -125 && lo < -66) || (la > 51 && la < 72 && lo > -170 && lo < -129) || (la > 18 && la < 23 && lo > -161 && lo < -154)) return 'gfs'; // États-Unis
+  return 'ecmwf';
+}
+// Choix pour des points et une date de départ : au-delà de l'horizon du modèle régional, ECMWF (15 jours), puis Open-Meteo.
+function locPick(smp, from, today) {
+  const n = {}; let k = 'ecmwf', best = 0;
+  for (const p of smp) { const c = locKey(p.lat, p.lon); n[c] = (n[c] || 0) + 1; if (n[c] > best) { best = n[c]; k = c; } }
+  const days = from && today ? Math.round((new Date(from).setHours(12, 0, 0, 0) - new Date(today).setHours(12, 0, 0, 0)) / 864e5) : 0;
+  if (days >= WX_DAYS[k]) k = days < WX_DAYS.ecmwf ? 'ecmwf' : 'om';
+  return k;
+}
+// Identifiant Open-Meteo du choix (Mes sorties : un seul appel Open-Meteo par parcours ; MET Norway → son modèle nordique)
+const locModel = k => k === 'met' ? 'metno_seamless' : OM_MODELS[k] ? OM_MODELS[k].models[0] : null;
 // Points sans température sur la fenêtre demandée (zone non couverte) ?
 const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if (isNaN(L.temp[j])) n++; return n > 0; });
 const MB_PENDING = new Map();
@@ -1501,7 +1532,7 @@ function wxSrc() {
   const logged = hasSbToken();
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
   if (WX_KEYS.includes(v) && (v !== 'mb' || logged)) return v;
-  return logged ? 'mb' : 'arome';
+  return 'loc';
 }
 // Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
 const MB_PICTO = [null, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 1, 1, 45, 45, 45, 3, 3, 3, 3, 61, 71, 65, 75, 95, 95, 75, 95, 80, 85, 61, 71, 67];
@@ -1768,8 +1799,9 @@ for (const [k, m] of Object.entries(OM_MODELS)) if (k !== 'arome') {
 const wxParts = used => { const p = String(used || 'om').split('+').filter(k => WX_TXT[k]); return p.some(k => OM_MODELS[k]) ? p.filter(k => k !== 'om') : p; };
 function wxCreditTxt() { return T("Météo {0}", [wxParts(S.wxUsed).map(k => WX_TXT[k]).join(T(" et "))]); }
 function renderWxSrc() {
-  const src = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
-  sel.value = src;
+  const src0 = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
+  const src = src0 === 'loc' ? (S.wxPick || (S.P && wxSmp().length ? locPick(wxSmp()) : 'om')) : src0;
+  sel.value = src0;
   sel.querySelector('option[value="mb"]').textContent = logged ? 'meteoblue' : '🔒 meteoblue';
   if (logged) $('#wxLock').hidden = true;
   const used = S.wxUsed || src, I = S.wxInfo, name = WX_SRC[src];
@@ -1795,6 +1827,8 @@ function renderWxSrc() {
     }
     h += T(". Vent à 10 m.");
   }
+  if (src0 === 'loc') h = S.P ? T("📍 Pour ce parcours : {0}. {1}", [WX_SRC[src], h])
+    : T("Choisit tout seul le modèle gratuit le plus précis à l'endroit du parcours : AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, ECMWF hors des zones couvertes…");
   $('#wxSrcHint').textContent = h;
   $('#wxCredit').innerHTML = wxParts(used).map(k => WX_LINK[k]).join(T(" et "));
   renderWxUse(src, logged, S.wxFallback ? null : I);
@@ -2031,7 +2065,8 @@ async function run() {
   for (const d of week.filter(isWorkDay)) { const o = tafSolve(tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), false); endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
-  const src = wxSrc();
+  const src0 = wxSrc(), src = src0 === 'loc' ? locPick(wxSmp(), from, today) : src0;
+  S.wxPick = src0 === 'loc' ? src : '';
   const key = src + ':' + wxSmp().length + ':' + wxSmp()[0].lat + ':' + wxTrk().total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to) + ':' + ymd(today);
   let note = '';
   if (from > maxDay) {
@@ -5115,7 +5150,12 @@ async function outFetch(id, date, to, smp) { // limite par minute d'Open-Meteo :
   for (let k = 0; ; k++) {
     if (OUT.waitUntil > Date.now()) await new Promise(r => setTimeout(r, OUT.waitUntil - Date.now()));
     if (id !== OUT.run) throw new Error(T("annulé"));
-    try { return await fetchOM(date, to, AROME_MODEL, smp); }
+    try {
+      // modèle le plus précis à l'endroit du parcours ; trous (hors zone, fin d'horizon) comblés par Open-Meteo automatique
+      const k = locPick(smp, date, new Date()), model = locModel(k), wx = await fetchOM(date, to, model, smp);
+      if (model && omGaps(wx)) { const b = await fetchOM(date, to, null, smp).catch(() => null); if (b) omFill(wx, b); }
+      return wx;
+    }
     catch (e) {
       if (k < 2 && /limit|429/i.test(String(e.message))) {
         OUT.waitUntil = Math.max(OUT.waitUntil || 0, Date.now() + 62e3);
