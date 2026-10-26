@@ -309,6 +309,8 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .dropzone svg{width:46px;height:46px;color:var(--accent)}
 .dropzone strong{font-family:var(--f-display);font-size:20px;font-weight:600}
 .dropzone span{color:var(--muted);font-size:14px}
+.dz-touch{display:none}
+@media (pointer:coarse){.dz-desk{display:none}.dz-touch{display:inline}}
 .empty ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
 .empty ul b{color:var(--ink);font-weight:600}
 footer{max-width:1440px;margin:24px auto 0;font-size:12.5px;color:var(--muted)}
@@ -922,17 +924,19 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="status load" id="status" hidden></div>
 
     <section class="empty" id="empty">
-      <h2>Importez votre trace GPX</h2>
-      <p>Sillage calcule votre heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là : vent de face ou de dos, pluie, température, soleil.</p>
+      <h2>Importe ta trace GPX</h2>
+      <p>Sillage calcule ton heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là&nbsp;: vent de face ou de dos, pluie, température, soleil.</p>
       <label class="dropzone" for="file">
         <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 36c6-2 9-10 15-10s7 7 12 7 7-5 9-8"/><circle cx="6" cy="36" r="3"/><circle cx="42" cy="25" r="3"/><path d="M24 4v14M18 12l6 6 6-6"/></svg>
-        <strong>Déposez un fichier .gpx ici</strong>
-        <span>ou cliquez pour le choisir sur votre ordinateur</span>
+        <strong class="dz-desk">Dépose un fichier .gpx ici</strong>
+        <span class="dz-desk">ou clique pour le choisir sur ton ordinateur</span>
+        <strong class="dz-touch">Choisir un fichier .gpx</strong>
+        <span class="dz-touch">dans tes fichiers, iCloud Drive, Google Drive…</span>
       </label>
       <ul>
         <li><b>Strava</b> : itinéraire → Exporter le GPX</li>
         <li><b>Komoot</b> : tour → Télécharger → Fichier GPX</li>
-        <li><b>Garmin Connect, RideWithGPS, Openrunner</b> : exportez le parcours au format GPX</li>
+        <li><b>Garmin Connect, RideWithGPS, Openrunner</b> : exporte le parcours au format GPX</li>
       </ul>
     </section>
 
