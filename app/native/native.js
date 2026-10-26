@@ -13,6 +13,16 @@
   window.SILLAGE_WEB = 'https://antoinechry.github.io/plan-my-ride/index.html';
   document.documentElement.classList.add('native', 'native-' + platform);
 
+  // ---- Encoche / îlot et barre d'état -----------------------------------------
+  // Dans Safari, la barre d'adresse réserve le haut de l'écran ; dans l'app, la page commence
+  // sous l'heure et l'îlot. On décale la page et on pose un bandeau de la couleur du fond
+  // derrière la barre d'état, pour que rien ne défile dessous.
+  var css = document.createElement('style');
+  css.textContent =
+    'html.native body{padding-top:env(safe-area-inset-top,0px)}' +
+    'html.native body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:2147483000;pointer-events:none}';
+  document.head.appendChild(css);
+
   // ---- Fichiers : export image, CSV, GPX -----------------------------------
   // La WebView ne sait ni télécharger (<a download>) ni partager des fichiers (navigator.share
   // absent sur Android) : on écrit le fichier dans le cache de l'app puis on ouvre la feuille
