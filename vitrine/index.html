@@ -49,7 +49,10 @@ a{color:#23629A}a:hover{color:#14201B}
 @media (max-width: 760px){
 .sl-stage{display:flex;flex-direction:column}
 .sl-mapbox{order:1}
-.sl-tl{order:2;position:static !important;margin:8px;grid-template-columns:repeat(9,64px) !important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sl-tl{order:2;position:static !important;margin:8px;padding:4px !important;gap:2px !important;grid-template-columns:repeat(9,minmax(0,1fr)) !important;overflow:hidden !important}
+.sl-tl button{min-width:0 !important;border-radius:8px !important}
+.sl-tl button span{font-size:11px !important;letter-spacing:-0.02em}
+.sl-tl button svg{width:18px;height:18px}
 .sl-verdict{order:3}
 .sl-hnotif{order:4}
 .sl-hc{position:static !important;width:auto !important;margin:0 8px 8px}
