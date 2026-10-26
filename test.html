@@ -97,8 +97,9 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 #planSpeedSlot #manualSettings > .priv{grid-column:1 / -1;order:2}
 #planSpeedSlot #windField{order:1}
 #planSpeedSlot output{white-space:nowrap}
+#planSpeedSlot>*,#planSpeedSlot #manualSettings>*,#planSpeedSlot input[type=range]{min-width:0;max-width:100%}
 @media (max-width:900px){#planSpeedSlot{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:560px){#planSpeedSlot{grid-template-columns:1fr}}
+@media (max-width:560px){#planSpeedSlot{grid-template-columns:minmax(0,1fr)}}
 .plan-note{padding:0 14px;margin:0 0 10px}
 .plan-scroll{overflow-x:auto}
 .plan-table{min-width:700px}
@@ -2119,7 +2120,10 @@ async function run() {
     } catch (err) {
       if (id !== runId) return;
       S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
-      note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.") : err.message]);
+      note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.")
+        : /daily api request limit/i.test(err.message) ? T("Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway ou meteoblue dans « Source météo ».")
+        : /minutely|hourly api request limit|limit exceeded/i.test(err.message) ? T("Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute.")
+        : err.message]);
     }
   }
   if (id !== runId) return;

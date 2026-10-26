@@ -412,6 +412,8 @@ window.PMR_I18N = {
     "Météo du retour": "Return weather",
     "Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.": "Weather unavailable: {0} Times are still calculated. You can also try another weather source.",
     "Météo indisponible pour l'instant.": "Weather unavailable for now.",
+    "Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway ou meteoblue dans « Source météo ».": "Open-Meteo has reached its daily request limit for your connection; it resets tomorrow. Meanwhile, pick MET Norway or meteoblue under “Weather source”.",
+    "Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute.": "Open-Meteo is getting too many requests right now; try again in a minute.",
     "Météo tour par tour": "Weather lap by lap",
     "Météo {0}": "Weather {0}",
     "Même distance": "Same distance",
