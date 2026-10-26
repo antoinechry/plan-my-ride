@@ -310,6 +310,8 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .dropzone strong{font-family:var(--f-display);font-size:20px;font-weight:600}
 .dropzone span{color:var(--muted);font-size:14px}
 .dz-touch{display:none}
+/* pas de plein écran de la carte sur écran tactile (téléphone, tablette, app) */
+@media (pointer:coarse){#fsBtn,.leaflet-bar:has(> .fs-btn){display:none!important}}
 @media (pointer:coarse){.dz-desk{display:none}.dz-touch{display:inline}}
 .empty ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
 .empty ul b{color:var(--ink);font-weight:600}
@@ -2369,7 +2371,7 @@ const MAP_TOUCH = matchMedia('(pointer: coarse)').matches;
 function initMap() {
   if (typeof L === 'undefined') { $('#map').innerHTML = T("<p class=\"hint\" style=\"padding:16px\">La carte n'a pas pu se charger (connexion requise).</p>"); return; }
   // Sur écran tactile (téléphone, tablette, app) : la carte ne capte plus le défilement de la page.
-  // Un doigt fait défiler la page ; zoom au pincement ou avec + / − ; déplacement à deux doigts, ou à un doigt en plein écran (setMapFs).
+  // Un doigt fait défiler la page ; zoom au pincement ou avec + / − ; déplacement à deux doigts (pas de plein écran sur tactile).
   map = L.map('map', { zoomControl: true, attributionControl: true, scrollWheelZoom: !MAP_TOUCH, dragging: !MAP_TOUCH });
   // Fonds de carte sans clé d'API. OSM standard exige un Referer : il ne marche qu'une fois l'app servie en http(s).
   const osmAttr = T('© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>');
