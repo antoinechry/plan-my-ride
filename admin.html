@@ -5,27 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <script>try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
-<title>Supervision · Plan My Ride</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9A%B4%3C/text%3E%3C/svg%3E">
+<title>Supervision · Sillage</title>
+<link rel="icon" type="image/svg+xml" href="icons/sillage.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
 :root{
-  --bg:#e9edf0; --surface:#fff; --surface-2:#f6f8fa; --ink:#17212b; --muted:#5b6773; --line:#d6dde3; --line-2:#e3e8ec;
-  --accent:#1f4f8f; --accent-ink:#163a6a; --accent-soft:#dbe5f1; --bar-soft:#9db5d6; --on-accent:#fff;
-  --ok:#1f6b42; --ok-soft:#dff1e6; --warn:#9a6212; --warn-soft:#f6ead3; --bad:#b42318; --bad-line:#e6c3bf; --track:#e9edf0;
-  --f-display:'Bricolage Grotesque',system-ui,sans-serif; --f-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  /* charte Sillage (26/10/2026) */
+  --bg:#f1f3f0; --surface:#fff; --surface-2:#f6f7f5; --ink:#14201b; --muted:#4c5852; --line:#cdd4ce; --line-2:#e0e5e1;
+  --accent:#23629a; --accent-ink:#184a75; --accent-soft:#dce9f4; --bar-soft:#9fc1de; --on-accent:#fff;
+  --brand:#e0a21b; --rain:#3e86c0;
+  --ok:#2e7d4f; --ok-soft:#e0f0e6; --warn:#8a5a00; --warn-soft:#f6ead0; --bad:#b5491f; --bad-line:#e8c9bb; --track:#e4e8e3;
+  --f-display:'Archivo',system-ui,sans-serif; --f-body:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#10161c; --surface:#171f27; --surface-2:#1d2731; --ink:#e3e9ee; --muted:#9aa7b3; --line:#2b3742; --line-2:#24303a;
-    --accent:#7fa8e0; --accent-ink:#b9cff0; --accent-soft:#1f3350; --bar-soft:#36557f; --on-accent:#0d1620;
-    --ok:#6fcf97; --ok-soft:#173826; --warn:#e3b45c; --warn-soft:#3a2d14; --bad:#f08a80; --bad-line:#5a2a26; --track:#24303a; color-scheme:dark }
+  :root:not([data-theme="light"]){ --bg:#121b17; --surface:#1b2621; --surface-2:#212e28; --ink:#eef1ec; --muted:#a3aea8; --line:#33433b; --line-2:#2a3832;
+    --accent:#8cc3ec; --accent-ink:#b8daf3; --accent-soft:#1d3446; --bar-soft:#3a6386; --on-accent:#121b17; --rain:#5ba3da;
+    --ok:#6fcf97; --ok-soft:#173826; --warn:#f2c25a; --warn-soft:#3a2d14; --bad:#f08a5d; --bad-line:#5a3326; --track:#2a3832; color-scheme:dark }
 }
-:root[data-theme="dark"]{ --bg:#10161c; --surface:#171f27; --surface-2:#1d2731; --ink:#e3e9ee; --muted:#9aa7b3; --line:#2b3742; --line-2:#24303a;
-  --accent:#7fa8e0; --accent-ink:#b9cff0; --accent-soft:#1f3350; --bar-soft:#36557f; --on-accent:#0d1620;
-  --ok:#6fcf97; --ok-soft:#173826; --warn:#e3b45c; --warn-soft:#3a2d14; --bad:#f08a80; --bad-line:#5a2a26; --track:#24303a; color-scheme:dark }
+:root[data-theme="dark"]{ --bg:#121b17; --surface:#1b2621; --surface-2:#212e28; --ink:#eef1ec; --muted:#a3aea8; --line:#33433b; --line-2:#2a3832;
+  --accent:#8cc3ec; --accent-ink:#b8daf3; --accent-soft:#1d3446; --bar-soft:#3a6386; --on-accent:#121b17; --rain:#5ba3da;
+  --ok:#6fcf97; --ok-soft:#173826; --warn:#f2c25a; --warn-soft:#3a2d14; --bad:#f08a5d; --bad-line:#5a3326; --track:#2a3832; color-scheme:dark }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
@@ -38,7 +40,9 @@ a{color:var(--accent)}
 
 /* rail */
 .rail{position:fixed;left:0;top:0;bottom:0;width:96px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:20px 0;z-index:5}
-.rail .logo{font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--accent);letter-spacing:-.02em;margin-bottom:18px;text-decoration:none}
+.rail .logo{display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--ink);letter-spacing:-.02em;margin-bottom:18px;text-decoration:none}
+.rail .logo svg.mark{width:46px;height:42px;fill:none;stroke:none}
+.mark{display:block;overflow:visible}.mark .mk-ink{fill:currentColor}.mark .mk-ring{fill:none;stroke:currentColor;stroke-width:8}.mark .mk-ray{fill:none;stroke:var(--brand);stroke-width:3.5;stroke-linecap:round}.mark .mk-sun{fill:var(--brand)}.mark .mk-rain{fill:none;stroke:var(--rain);stroke-width:5;stroke-linecap:round}
 .rail a.it{width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600}
 .rail .ic{width:56px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
 .rail svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -274,7 +278,7 @@ dialog h2{margin-bottom:6px}
 <body>
 
 <nav class="rail" aria-label="Navigation">
-  <a class="logo" href="index.html" title="Plan My Ride">PMR</a>
+  <a class="logo" href="index.html" title="Sillage"><svg class="mark" width="46" height="42" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkRail"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkRail)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</a>
   <a class="it" href="index.html"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a>
   <a class="it" href="index.html#ultra"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a>
   <a class="it" href="index.html#velotaf"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a>
@@ -284,7 +288,7 @@ dialog h2{margin-bottom:6px}
 
 <main>
   <div>
-    <a class="back" href="index.html">← Plan My Ride</a>
+    <a class="back" href="index.html">← Sillage</a>
     <header class="top">
       <div><h1>Supervision</h1><p class="sub" id="state">Connexion…</p></div>
       <div class="hbtns" id="hOver" hidden>
@@ -364,7 +368,7 @@ dialog h2{margin-bottom:6px}
             </select></label>
           </div>
           <div style="overflow-x:auto"><table class="rlist"><thead><tr><th class="sort" data-s="name">Parcours</th><th class="sort" data-s="user">Compte</th><th class="sort num" data-s="km">km</th><th class="num">D+</th><th class="sort" data-s="date">Chargé le</th><th>Météo</th><th><span class="sr">Actions</span></th></tr></thead><tbody id="rBody"></tbody></table></div>
-          <p class="msg" style="padding:0 20px 16px">« Supprimer » retire le parcours du compte de la personne, de la carte et, à sa prochaine ouverture de Plan My Ride, de son navigateur. S'il est réimporté, il revient.</p>
+          <p class="msg" style="padding:0 20px 16px">« Supprimer » retire le parcours du compte de la personne, de la carte et, à sa prochaine ouverture de Sillage, de son navigateur. S'il est réimporté, il revient.</p>
         </div>
       </section>
 
@@ -375,7 +379,7 @@ dialog h2{margin-bottom:6px}
           <label><span class="sr">Compte</span><select id="evUser" class="in"><option value="">Tous les comptes</option></select></label>
         </div>
         <div style="overflow-x:auto"><table class="ev"><thead><tr><th>Quand</th><th>Compte</th><th>Évènement</th><th class="num">km</th><th>Appareil</th></tr></thead><tbody id="evBody"></tbody></table></div>
-        <p class="msg" style="padding:0 20px 16px">Une connexion = une ouverture de l'app dans un onglet (journal tenu depuis le 23/10/2026 ; modes, sources météo et « Mes sorties » depuis le 24/10/2026).</p>
+        <p class="msg" style="padding:0 20px 16px">Une connexion = une ouverture de l'app dans un onglet (journal tenu depuis le 23/10/2026 ; modes, sources météo et « Mes sorties » depuis le 24/10/2026, version test seulement pour l'instant).</p>
       </section>
     </div>
 
@@ -404,7 +408,7 @@ dialog h2{margin-bottom:6px}
 
 <dialog id="dUser" aria-labelledby="dUserH">
   <h2 id="dUserH">Créer un compte</h2>
-  <p class="msg" style="margin:0">Le compte est actif tout de suite avec l'accès à Plan My Ride, sans e-mail de confirmation. Transmets ensuite l'e-mail et le mot de passe provisoire ; la personne pourra le changer dans Moi.</p>
+  <p class="msg" style="margin:0">Le compte est actif tout de suite avec l'accès à Sillage, sans e-mail de confirmation. Transmets ensuite l'e-mail et le mot de passe provisoire ; la personne pourra le changer dans Moi.</p>
   <form class="form" id="newUser" autocomplete="off">
     <label class="f">Prénom<input type="text" class="in" id="nuPrenom" maxlength="40"></label>
     <label class="f">E-mail<input type="email" class="in" id="nuEmail" required maxlength="200"></label>
@@ -417,7 +421,7 @@ dialog h2{margin-bottom:6px}
 
 <dialog id="dLink" aria-labelledby="dLinkH">
   <h2 id="dLinkH">Nouveau lien testeur</h2>
-  <p class="msg" style="margin:0">Un compte créé avec un lien actif a tout de suite accès à Plan My Ride. Tu pourras désactiver le lien quand il ne doit plus servir.</p>
+  <p class="msg" style="margin:0">Un compte créé avec un lien actif a tout de suite accès à Sillage. Tu pourras désactiver le lien quand il ne doit plus servir.</p>
   <form class="form" id="newLink" autocomplete="off">
     <label class="f">Nom du lien<input class="in" id="newLabel" maxlength="60" placeholder="ex. Groupe WhatsApp testeurs"></label>
     <p class="msg err" id="nlErr" hidden></p>
@@ -431,7 +435,7 @@ dialog h2{margin-bottom:6px}
 <script>
 (function(){
 'use strict';
-// Supervision : vue d'ensemble (comptes, demandes, liens testeurs, activité, parcours)
+// Supervision (version test de admin.html) : vue d'ensemble (comptes, demandes, liens testeurs, activité, parcours)
 // et onglet Analytics (activity_log, pmr_visits avant le 23/10/2026, routes, usage_log). Accès contrôlé par les politiques RLS.
 const SUPABASE_URL = 'https://bsypkdsnhiepvcnhmfsm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzeXBrZHNuaGllcHZjbmhtZnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDMwOTMsImV4cCI6MjEwODM3OTA5M30.tzanguKC0_oEOqfnrhJEzzNRbdDCxVUzhkLfqO5zthQ';
@@ -497,7 +501,7 @@ async function load(){
   for (const r of S.useAll){ if (new Date(r.at) < m0) continue;
     const x = S.use[r.user_id] || (S.use[r.user_id] = { mb: 0, cr: 0 }); x.mb++; x.cr += r.credits || 0; }
   S.loadedAt = new Date();
-  $('state').textContent = 'Comptes, quotas et parcours de Plan My Ride · mis à jour à ' + hmFmt.format(S.loadedAt);
+  $('state').textContent = 'Comptes, quotas et parcours de Sillage · mis à jour à ' + hmFmt.format(S.loadedAt);
   render();
 }
 
@@ -558,7 +562,7 @@ function userRows(u){
   h += '<tr class="ux" data-id="' + u.user_id + '"><td colspan="6"><div class="uxbtns">'
     + (S.pwOpen === u.user_id ? '' : '<button type="button" class="b sm" data-a="pw">Changer le mot de passe</button>')
     + '<span class="qbox">Quota meteoblue <input type="number" min="0" max="9999" data-q="quota_mb" value="' + (u.quota_mb == null ? '' : u.quota_mb) + '" placeholder="∞" aria-label="Quota meteoblue par mois"> / mois</span>'
-    + '<label class="tgl"><input type="checkbox" data-k="pmr"' + (u.pmr ? ' checked' : '') + '> Accès Plan My Ride</label>'
+    + '<label class="tgl"><input type="checkbox" data-k="pmr"' + (u.pmr ? ' checked' : '') + '> Accès Sillage</label>'
     + (self ? '' : '<button type="button" class="b sm" data-a="admin">' + (u.is_admin ? 'Retirer admin' : 'Rendre admin') + '</button>')
     + (u.status === 'blocked' ? '<button type="button" class="b sm" data-a="ok">Réactiver le compte</button>' : self ? '' : '<button type="button" class="b sm bad" data-a="block">Bloquer le compte</button>')
     + '<span class="saved" data-s></span></div>'
@@ -672,7 +676,7 @@ $('links').addEventListener('click', async e => {
   const b = e.target.closest('[data-l]'); if (!b) return;
   const box = b.closest('.lk'), code = box.dataset.code, l = S.links.find(x => x.code === code), s = box.querySelector('[data-s]');
   if (b.dataset.l === 'copy'){ try { await navigator.clipboard.writeText(linkUrl(code)); s.textContent = 'Lien copié : ' + linkUrl(code); } catch(_){ s.textContent = linkUrl(code); } return; }
-  if (b.dataset.l === 'share'){ try { await navigator.share({ title: 'Plan My Ride', text: 'Crée ton compte testeur Plan My Ride :', url: linkUrl(code) }); } catch(_){} return; }
+  if (b.dataset.l === 'share'){ try { await navigator.share({ title: 'Sillage', text: 'Crée ton compte testeur Sillage :', url: linkUrl(code) }); } catch(_){} return; }
   const { error } = await sb.from('tester_links').update({ active: !l.active }).eq('code', code);
   if (error){ s.textContent = 'Échec : ' + error.message; return; }
   l.active = !l.active; renderLinks();
@@ -698,7 +702,7 @@ $('newUser').addEventListener('submit', async e => {
     const c = data && data.error;
     return err(c === 'exists' ? 'Un compte existe déjà avec cet e-mail.' : c === 'email' ? 'E-mail invalide.' : 'Création impossible : ' + ((data && data.detail) || (error && error.message) || c || 'inconnu'));
   }
-  const txt = 'Ton compte Plan My Ride est prêt.\nAdresse : ' + base + 'index.html' + '\nE-mail : ' + email + '\nMot de passe provisoire : ' + password;
+  const txt = 'Ton compte Sillage est prêt.\nAdresse : ' + base + 'index.html' + '\nE-mail : ' + email + '\nMot de passe provisoire : ' + password;
   $('nuDone').innerHTML = '<b>Compte créé' + (prenom ? ' pour ' + esc(prenom) : '') + '</b>' + (data.warn ? ' (accès à vérifier dans la liste)' : '') + '<pre>' + esc(txt) + '</pre><button class="b sm pri" type="button" id="nuCopy">Copier le message</button>' + (navigator.share ? ' <button class="b sm" type="button" id="nuShare">Partager</button>' : '');
   $('nuDone').hidden = false;
   $('nuCopy').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('nuCopy').textContent = 'Copié'; } catch(_){} };
@@ -717,7 +721,7 @@ $('newLink').addEventListener('submit', async e => {
   $('nlDone').innerHTML = '<b>' + esc(label) + '</b><pre>' + esc(linkUrl(code)) + '</pre><button class="b sm pri" type="button" id="nlCopy">Copier le lien</button>' + (navigator.share ? ' <button class="b sm" type="button" id="nlShare">Partager</button>' : '');
   $('nlDone').hidden = false; $('newLabel').value = '';
   $('nlCopy').onclick = async () => { try { await navigator.clipboard.writeText(linkUrl(code)); $('nlCopy').textContent = 'Copié'; } catch(_){} };
-  if ($('nlShare')) $('nlShare').onclick = () => navigator.share({ title: 'Plan My Ride', text: 'Crée ton compte testeur Plan My Ride :', url: linkUrl(code) }).catch(() => {});
+  if ($('nlShare')) $('nlShare').onclick = () => navigator.share({ title: 'Sillage', text: 'Crée ton compte testeur Sillage :', url: linkUrl(code) }).catch(() => {});
   const r = await sb.from('tester_links').select('*').order('created_at', { ascending: false }); if (!r.error){ S.links = r.data || []; renderLinks(); }
 });
 
@@ -725,7 +729,7 @@ $('newLink').addEventListener('submit', async e => {
 const G = { map: null, routes: [], layers: [], byKey: {}, cur: null, f: '', full: false };
 function gpxText(r){
   const pts = r.pts || [];
-  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Plan My Ride" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>' + esc(r.name || 'Parcours') + '</name><trkseg>\n'
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Sillage" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>' + esc(r.name || 'Parcours') + '</name><trkseg>\n'
     + pts.map(q => '<trkpt lat="' + q[0] + '" lon="' + q[1] + '">' + (q[2] == null ? '' : '<ele>' + q[2] + '</ele>') + '</trkpt>').join('\n') + '\n</trkseg></trk></gpx>';
 }
 function gpxDownload(r){
@@ -990,7 +994,7 @@ async function init(){
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   const { data: { session } } = await sb.auth.getSession();
   const deny = t => { $('denied').hidden = false; $('deniedTxt').textContent = t; $('state').textContent = ''; };
-  if (!session){ deny('Connecte-toi avec un compte administrateur (depuis Plan My Ride), puis reviens ici.'); return; }
+  if (!session){ deny('Connecte-toi avec un compte administrateur (depuis Sillage), puis reviens ici.'); return; }
   S.me = session.user;
   const { data: me } = await sb.from('app_users').select('is_admin,status').eq('user_id', S.me.id).maybeSingle();
   if (!me || !me.is_admin || me.status !== 'active'){ deny('Cette page est réservée aux administrateurs.'); return; }
