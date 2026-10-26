@@ -656,6 +656,24 @@ body:not(.admin) .me-btns .adm{display:none}
   body:not([data-mode="taf"]) #map{height:520px}
 }
 #meLang,#meDist,#meTemp{grid-template-columns:1fr 1fr}
+/* réglages rapides en carte (maquette A, 26/10/2026) : parcours en titre, puis départ | vitesse | réglages ; rien ne déborde */
+#chips.qs{flex-direction:column;flex-wrap:nowrap;gap:0;overflow:hidden;margin:0;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+#chips.qs .chip{all:unset;box-sizing:border-box;cursor:pointer;color:var(--ink);-webkit-tap-highlight-color:transparent}
+#chips.qs .chip:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#chips.qs .chip:active{background:var(--bg)}
+#chips.qs svg{flex:none;width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#chips.qs .qs-route{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line);font:700 16px var(--f-display)}
+#chips.qs .qs-route span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chips.qs .qs-chev{color:var(--muted)}
+#chips.qs .qs-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto}
+#chips.qs .qs-cell{display:flex;flex-direction:column;gap:1px;padding:9px 14px 10px;border-right:1px solid var(--line);min-width:0}
+#chips.qs .qs-cell small{font:600 11px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#chips.qs .qs-cell b{font:600 15px var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chips.qs .qs-cell .qs-num{font-family:var(--f-mono);font-weight:500}
+@media (max-width:360px){#chips.qs .qs-cell{padding-inline:10px}#chips.qs .qs-set{padding:0 12px}}
+@media (min-width:701px){#chips.qs{max-width:560px}}
+#chips.qs .qs-set{display:flex;align-items:center;justify-content:center;padding:0 18px;color:var(--accent)}
+#chips.qs .qs-set svg{width:22px;height:22px}
 </style>
 </head>
 <body>
@@ -5263,14 +5281,19 @@ $('#mapOptsBtn').addEventListener('click', () => { const on = document.body.clas
 const CHIP_I = { route: '<path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/>', when: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   speed: '<path d="M4 16a8 8 0 0116 0M12 16l4-5"/>', set: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>' };
 function chipsRender() {
+  // carte « réglages rapides » (maquette A, 26/10/2026) : parcours en titre, puis départ | vitesse | réglages
   const box = $('#chips'); if (!box) return;
+  box.classList.add('qs');
   const d = $('#date').value ? new Date($('#date').value + 'T12:00') : null;
-  const when = (d ? dayFmt.format(d) + ' · ' : '') + ($('#time').value || '');
-  const c = (k, txt, target) => `<button type="button" class="chip" data-go="${target}"><svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg><span>${txt}</span></button>`;
-  box.innerHTML = c('route', S.name || T("Parcours"), '@lib')
-    + c('when', when, S.mode === 'ultra' ? '#planStartSlot' : '#startRow')
-    + c('speed', fV(+$('#speed').value, 1) + ' ' + UL.kmh, S.mode === 'ultra' ? '#planSpeedSlot' : '#speed')
-    + c('set', T("Réglages"), '');
+  const tm = $('#time').value || '';
+  const esc = v => String(v).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg>`;
+  box.innerHTML = `<button type="button" class="chip qs-route" data-go="@lib">${ico('route')}<span>${esc(S.name || T("Parcours"))}</span><svg class="qs-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`
+    + `<div class="qs-row">`
+    + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planStartSlot' : '#startRow'}"><small>${S.mode === 'taf' ? T("Aller") : T("Départ")}</small><b>${d ? esc(dayFmt.format(d)) + ' · ' : ''}<span class="qs-num">${esc(tm)}</span></b></button>`
+    + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planSpeedSlot' : '#speed'}"><small>${T("Vitesse")}</small><b class="qs-num">${fV(+$('#speed').value, 1)} ${UL.kmh}</b></button>`
+    + `<button type="button" class="chip qs-set" data-go="" aria-label="${T("Réglages")}" title="${T("Réglages")}">${ico('set')}</button>`
+    + `</div>`;
 }
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const t = b.dataset.go; if (t === '@lib') { lpOpen(); return; }
   if (t && !$('#settings').contains($(t))) { sheetClose(); $(t).scrollIntoView({ behavior: 'smooth', block: 'start' }); } else sheetOpen(t); });

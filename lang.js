@@ -234,6 +234,7 @@ window.PMR_I18N = {
     "Durée": "Duration",
     "Découpage": "Split",
     "Départ": "Start",
+    "Vitesse": "Speed",
     "Départ de l'aller": "Outward departure",
     "Départ de l'aller le jeudi": "Outward departure on Thursday",
     "Départ de l'aller le lundi": "Outward departure on Monday",
