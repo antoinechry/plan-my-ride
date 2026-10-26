@@ -320,6 +320,18 @@ dialog.login{border:1px solid var(--line);border-radius:10px;padding:20px;max-wi
 dialog.help{border:1px solid var(--line);border-radius:12px;padding:0;max-width:600px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);background:var(--panel);color:var(--ink)}
 dialog.help[open]{display:flex;flex-direction:column}
 dialog.help::backdrop{background:rgba(0,0,0,.4)}
+/* choix du format de l'export image */
+dialog.exp-dlg{border:1px solid var(--line);border-radius:16px;padding:20px;max-width:420px;width:calc(100% - 32px);background:var(--panel);color:var(--ink)}
+dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
+.exp-dlg h2{font-size:20px;font-weight:800}
+.exp-dlg .hint{margin:4px 0 14px}
+.exp-opts{display:grid;gap:8px}
+.exp-opts button{display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;min-height:56px}
+.exp-opts button:hover,.exp-opts button.def{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.exp-opts .r{grid-row:span 2;justify-self:center;border:2px solid currentColor;border-radius:3px;color:var(--muted)}
+.exp-opts .r.full{width:22px;height:30px}.exp-opts .r.wide{width:34px;height:19px}.exp-opts .r.story{width:17px;height:30px}
+.exp-opts b{font-size:15px}.exp-opts span{font-size:13px;color:var(--muted)}
+.exp-foot{display:flex;justify-content:flex-end;margin-top:14px}
 dialog.help .hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 6px}
 dialog.help h2{margin:0;font-size:19px}
 dialog.help .x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px}
@@ -989,7 +1001,7 @@ body:not(.admin) .me-btns .adm{display:none}
     </section>
 
     <section class="card" id="tafDuo" hidden>
-      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><span class="hint" id="duoHint"></span><label class="arrows-toggle"><input type="checkbox" id="flowOn2"> Vent animé</label></div>
+      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><span class="hint" id="duoHint"></span><label class="arrows-toggle"><input type="checkbox" id="flowOn2"> Vent animé</label><button class="btn small" id="exportImg2" type="button" title="Image PNG de l'aller, du retour et des deux semaines">Exporter l'image</button></div>
       <div class="duo">
         <div class="duo-col"><div class="duo-head" id="duoHead0"></div><div class="duo-map" id="duoMap0"></div><canvas data-wx="0" aria-label="Météo de l'aller"></canvas></div>
         <div class="duo-col"><div class="duo-head" id="duoHead1"></div><div class="duo-map" id="duoMap1"></div><canvas data-wx="1" aria-label="Météo du retour"></canvas></div>
@@ -1104,6 +1116,16 @@ body:not(.admin) .me-btns .adm{display:none}
     <p class="note">Météo au choix («&nbsp;Source météo&nbsp;»)&nbsp;: meteoblue, la plus précise (quelques chargements par mois), AROME de Météo-France, très fin sur la France (4 jours), les modèles nationaux voisins (Allemagne, Suisse, Italie, Benelux, Royaume-Uni…), ECMWF, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
+</dialog>
+<dialog class="exp-dlg" id="expDlg" aria-labelledby="expTitle">
+  <h2 id="expTitle">Exporter l'image</h2>
+  <p class="hint">Choisis le format de l'image.</p>
+  <div class="exp-opts">
+    <button type="button" data-fmt="full"><i class="r full" aria-hidden="true"></i><b>Image complète</b><span>Tout le détail, pour garder ou imprimer</span></button>
+    <button type="button" data-fmt="wide"><i class="r wide" aria-hidden="true"></i><b>Écran 16:9</b><span>Tout sur un écran d'ordinateur</span></button>
+    <button type="button" data-fmt="story"><i class="r story" aria-hidden="true"></i><b>Story 9:16</b><span>Pour partager depuis le téléphone</span></button>
+  </div>
+  <form method="dialog" class="exp-foot"><button class="btn" value="cancel">Annuler</button></form>
 </dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
@@ -2226,6 +2248,8 @@ function renderSummary(opt) {
     const VI = { clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', rain: '<path d="M7 15a4 4 0 010-8 5 5 0 019.6 1.5A3.5 3.5 0 0117 15zM9 18l-1 3M13 18l-1 3M17 18l-1 3"/>',
       wind: '<path d="M3 9h11a3 3 0 10-3-3M3 15h15a3 3 0 11-3 3"/>', temp: '<path d="M10 14V5a2 2 0 014 0v9a4 4 0 11-4 0z"/>', sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>' };
     const keys = ['clock', 'rain', 'wind', 'temp', 'sun'];
+    S.sumLvl = !neg.length ? 0 : (st.rain >= 3 || st.amin < 3 || (st.hasGust && st.gust >= GUST_DANGER)) ? 2 : 1; // niveau pour l'export image
+    S.sumLines = S1.map(x => xPlain(x));
     more = `<ul class="vlines">${S1.map((x, k) => `<li class="${keys[k]}${k === 1 && !dry ? '' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${VI[keys[k]]}</svg><span>${x}</span></li>`).join('')}</ul>`;
   }
   if (tafSum) { // Vélotaf : une phrase par trajet
@@ -2319,8 +2343,9 @@ function tripRange() {
   if (S.laps.taf) { const k = S.trip ? 1 : 0; return k ? [S.laps.start[1], S.P.n - 1] : [0, S.laps.start[1] - 1]; }
   return null;
 }
-function sampleRange() {
-  const r = tripRange() || [0, S.laps.start[1]], s = S.samples;
+function sampleRange() { return sampleRangeOf(tripRange() || [0, S.laps.start[1]]); }
+function sampleRangeOf(r) {
+  const s = S.samples;
   let k0 = s.findIndex(x => x.i >= r[0]), k1 = -1; for (let k = s.length - 1; k >= 0; k--) if (s[k].i <= r[1]) { k1 = k; break; }
   if (k0 < 0) k0 = 0; if (k1 <= k0) k1 = Math.min(s.length - 1, k0 + 1);
   return [k0, k1];
@@ -2563,14 +2588,15 @@ function loadImg(src) {
   return new Promise(ok => { const im = new Image(); im.crossOrigin = 'anonymous'; const t = setTimeout(() => ok(null), 10000);
     im.onload = () => { clearTimeout(t); ok(im); }; im.onerror = () => { clearTimeout(t); ok(null); }; im.src = src; });
 }
-async function drawMapTo(c, x0, y0, W, H) {
+async function drawMapTo(c, x0, y0, W, H, o = {}) { // o : { m: carte Leaflet, rg: plage de points, arrows, sky, bare }
+  const m = o.m || map;
   c.save(); c.beginPath(); c.rect(x0, y0, W, H); c.clip();
   c.fillStyle = cssVar('--bg'); c.fillRect(x0, y0, W, H);
   // fond de carte
-  let tl = null; map.eachLayer(l => { if (l instanceof L.TileLayer) tl = l; });
+  let tl = null; m.eachLayer(l => { if (l instanceof L.TileLayer) tl = l; });
   let missing = 0;
   if (tl) {
-    const z = map.getZoom(), ts = tl.getTileSize().x, org = map.containerPointToLayerPoint([0, 0]).add(map.getPixelOrigin()), n = 2 ** z, jobs = [];
+    const z = m.getZoom(), ts = tl.getTileSize().x, org = m.containerPointToLayerPoint([0, 0]).add(m.getPixelOrigin()), n = 2 ** z, jobs = [];
     for (let tx = Math.floor(org.x / ts); tx * ts < org.x + W; tx++) for (let ty = Math.floor(org.y / ts); ty * ts < org.y + H; ty++) {
       if (ty < 0 || ty >= n) continue;
       const cc = L.point(((tx % n) + n) % n, ty); cc.z = z;
@@ -2578,21 +2604,21 @@ async function drawMapTo(c, x0, y0, W, H) {
     }
     await Promise.all(jobs);
   }
-  const pt = (lat, lon) => { const q = map.latLngToContainerPoint([lat, lon]); return [x0 + q.x, y0 + q.y]; };
+  const pt = (lat, lon) => { const q = m.latLngToContainerPoint([lat, lon]); return [x0 + q.x, y0 + q.y]; };
   // trace : liseré blanc puis couleur selon la métrique choisie
   const P = S.P;
   c.lineJoin = c.lineCap = 'round';
   c.beginPath(); P.pts.forEach((p, i) => { const [x, y] = pt(p.lat, p.lon); i ? c.lineTo(x, y) : c.moveTo(x, y); });
   c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 9; c.stroke();
-  const [sk0, sk1] = sampleRange();
+  const [sk0, sk1] = o.rg ? sampleRangeOf(o.rg) : sampleRange();
   for (let k = sk0; k < sk1; k++) {
     const a = S.samples[k].i, b = S.samples[k + 1].i, sv = S.svs ? (S.svs[k + 1] || S.svs[k]) : null;
     c.beginPath(); for (let i = a; i <= b; i++) { const [x, y] = pt(P.pts[i].lat, P.pts[i].lon); i === a ? c.moveTo(x, y) : c.lineTo(x, y); }
     c.strokeStyle = metricColor(sv); c.lineWidth = 5; c.stroke();
   }
   // flèches de vent (même placement qu'à l'écran)
-  const exA = $('#arrowsOn').checked, exS = $('#skyOn').checked;
-  const rgx = tripRange();
+  const exA = o.arrows ?? $('#arrowsOn').checked, exS = o.sky ?? $('#skyOn').checked;
+  const rgx = o.rg || tripRange();
   if (S.wx && rgx && (exA || exS)) {
     const arrow = new Path2D(WARROW), shown = [], box = badgeBox(exA, exS);
     let run = ARROW_GAP / 2, prev = null;
@@ -2635,7 +2661,7 @@ async function drawMapTo(c, x0, y0, W, H) {
     }
   }
   // lieux le long de la trace (page Ultra), comme les marqueurs de la carte
-  if (S.mode === 'ultra' && POI.shown && POI.shown.length) {
+  if (!o.rg && S.mode === 'ultra' && POI.shown && POI.shown.length) {
     for (const p of POI.shown) {
       const [x, y] = pt(p.lat, p.lon); if (x < x0 - 8 || y < y0 - 8 || x > x0 + W + 8 || y > y0 + H + 8) continue;
       const closed = p.st && p.st.cls === 'closed';
@@ -2644,11 +2670,11 @@ async function drawMapTo(c, x0, y0, W, H) {
     }
   }
   // départ / arrivée
-  for (const [p, col] of [[P.pts[0], cssVar('--tail')], [P.pts[P.n - 1], cssVar('--head')]]) {
+  for (const [p, col] of [[P.pts[o.rg ? o.rg[0] : 0], cssVar('--tail')], [P.pts[o.rg ? o.rg[1] : P.n - 1], cssVar('--head')]]) {
     const [x, y] = pt(p.lat, p.lon); c.beginPath(); c.arc(x, y, 7, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke();
   }
   c.restore();
-  c.strokeStyle = cssVar('--line'); c.lineWidth = 1; c.strokeRect(x0 + 0.5, y0 + 0.5, W - 1, H - 1);
+  if (!o.bare) { c.strokeStyle = cssVar('--line'); c.lineWidth = 1; c.strokeRect(x0 + 0.5, y0 + 0.5, W - 1, H - 1); }
   return missing;
 }
 function wrapText(c, text, maxW) {
@@ -2656,85 +2682,425 @@ function wrapText(c, text, maxW) {
   for (const w of text.split(/\s+/)) { const t = line ? line + ' ' + w : w; if (c.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }
   if (line) out.push(line); return out;
 }
-async function exportImage() {
-  if (!S.P || !S.tl || !map) return;
-  const btn = $('#exportImg'), label = btn.textContent;
+/* ---------- Export image, charte Sillage (essai du 26/10/2026) ----------
+   Trois formats au choix (#expDlg) : 'full' = image complète (1200 px de large, hauteur selon le contenu),
+   'wide' = écran 16:9 (1600 × 900), 'story' = 9:16 (540 × 960, en sombre). Pages Sortie, Ultra et Vélotaf.
+   Étapes : expModel (données) → expAssets (carte(s) rendue(s) hors écran, profil et graphes du jour recopiés
+   en thème clair) → expFull / expWide / expStory (dessin synchrone ; l'image complète est d'abord mise en page
+   sur un canvas de 1 px pour connaître sa hauteur). PNG ×2, partage natif sur téléphone, sinon téléchargement. */
+const EXP_LV = [T("Belles conditions"), T("À surveiller"), T("Conditions difficiles")];
+function expPal(dark) {
+  const fd = cssVar('--f-display'), fm = cssVar('--f-mono');
+  if (dark) return { dark: true, fd, fm, bg: '#14201b', card: '#1b2621', ink: '#f1f3f0', muted: '#a3aea8', line: '#33433b', band: '#1b2621', bandInk: '#f1f3f0', bandMuted: '#a3aea8',
+    brand: '#e0a21b', rain: '#5ba3da', rainTxt: '#8cc3ec', head: '#f08a5d', tail: '#6fcf97', lv: [['#173826', '#6fcf97'], ['#3a2d14', '#f2c25a'], ['#3d2219', '#f08a5d']] };
+  return { dark: false, fd, fm, bg: '#f1f3f0', card: '#ffffff', ink: '#14201b', muted: '#4c5852', line: '#cdd4ce', band: '#14201b', bandInk: '#f1f3f0', bandMuted: '#a3aea8',
+    brand: '#e0a21b', rain: '#3e86c0', rainTxt: '#23629a', head: '#b5491f', tail: '#2e7d4f', lv: [['#e0f0e6', '#2e7d4f'], ['#f6ead0', '#8a5a00'], ['#f6e1d8', '#b5491f']] };
+}
+const xF = (w, s, fam) => `${w} ${s}px ${fam}`;
+function xT(c, s, x, y, font, col, al = 'left') { c.font = font; c.fillStyle = col; c.textAlign = al; c.textBaseline = 'alphabetic'; c.fillText(s, x, y); const w = c.measureText(s).width; c.textAlign = 'left'; return w; }
+function xR(c, x, y, w, h, r, fill, stroke) { c.beginPath(); c.roundRect(x, y, w, h, r); if (fill) { c.fillStyle = fill; c.fill(); } if (stroke) { c.strokeStyle = stroke; c.lineWidth = 1; c.stroke(); } }
+function xFit(c, s, maxW) { if (c.measureText(s).width <= maxW) return s; while (s.length > 1 && c.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s.trim() + '…'; }
+function xLines(c, s, font, maxW, max) { c.font = font; const L = wrapText(c, s, maxW); if (L.length > max) { L.length = max; L[max - 1] = xFit(c, L[max - 1] + ' …', maxW); } return L; }
+function xDraw(c, src, x, y, w, h, mode, r) { // image dans une boîte : 'cover' (rogne) ou 'contain' (entière)
+  if (!src || !src.width) return; const k = mode === 'cover' ? Math.max(w / src.width, h / src.height) : Math.min(w / src.width, h / src.height);
+  const dw = src.width * k, dh = src.height * k; c.save(); if (r) { c.beginPath(); c.roundRect(x, y, w, h, r); c.clip(); }
+  c.drawImage(src, x + (w - dw) / 2, y + (mode === 'cover' ? (h - dh) / 2 : 0), dw, dh); c.restore();
+}
+function xPill(c, x, y, label, lv, P, size = 14) { // y = haut ; renvoie la largeur
+  const [bg, fg] = lv < 0 ? [P.line, P.muted] : P.lv[lv]; c.font = xF(700, size, P.fd);
+  const w = c.measureText(label).width + size * 2.3, h = Math.round(size * 1.9);
+  xR(c, x, y, w, h, h / 2, bg); c.fillStyle = fg; c.beginPath(); c.arc(x + size * 0.85, y + h / 2, size * 0.33, 0, 7); c.fill();
+  c.textBaseline = 'middle'; c.fillText(label, x + size * 1.45, y + h / 2 + 1); c.textBaseline = 'alphabetic'; return w;
+}
+function xDot(c, x, y, r, lv, P) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fillStyle = lv < 0 ? P.line : P.lv[lv][1]; c.fill(); }
+// symbole « nuage roulant » (boîte 110 × 100) ; (x, y) = coin haut gauche, h = hauteur
+function xMark(c, x, y, h, P, ground) {
+  const k = h / 100; c.save(); c.translate(x, y); c.scale(k, k); c.lineCap = 'round';
+  c.fillStyle = P.ink; c.beginPath(); c.arc(44, 56, 15, 0, 7); c.fill(); c.beginPath(); c.roundRect(18, 58, 56, 16, 8); c.fill();
+  c.fillStyle = ground; c.beginPath(); c.arc(70, 48, 31, 0, 7); c.fill();
+  c.strokeStyle = P.ink; c.lineWidth = 8; c.beginPath(); c.arc(70, 48, 26, 0, 7); c.stroke();
+  c.strokeStyle = P.brand; c.lineWidth = 3.5; c.stroke(new Path2D('M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36'));
+  c.fillStyle = P.brand; c.beginPath(); c.arc(70, 48, 8, 0, 7); c.fill();
+  c.strokeStyle = P.rain; c.lineWidth = 5; c.stroke(new Path2D('M28 82l-3 9M41 82l-3 9M54 82l-3 9'));
+  c.restore();
+}
+function xPlain(h) { const d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent.replace(/\s+/g, ' ').trim(); }
+const xCap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+/* données de l'image, prises dans ce qui est déjà calculé pour la page */
+function expModel() {
+  const P = S.P, tl = S.tl, st = tl.st, mode = S.mode, has = !!S.wx && st.missKm < P.total;
+  const fmtL = new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' });
+  const M = { mode, has, name: S.name || T("Ma sortie"), when: fmtL.format(new Date(tl.start)), credit: wxCreditTxt(),
+    modeLbl: mode === 'ultra' ? 'ULTRA' : mode === 'taf' ? T("VÉLOTAF") : T("SORTIE") };
+  if (mode === 'taf' && S.laps && S.laps.taf) {
+    const L = lapSummaries();
+    M.sub = T("{0} km à l'aller · {1} km au retour", [fD(L[0].dist), fD(L[1].dist)]);
+    M.trips = L.map((d, k) => {
+      const v = tripVerdict(d.wx), w = d.wx, ha = w ? w.headAvg : 0;
+      return { name: k ? T("RETOUR") : T("ALLER"), dep: hm.format(new Date(d.a.t)), arr: hm.format(new Date(d.b.t)), lvl: v.lvl, short: xCap(v.txt.split(' · ')[0]), txt: xCap(v.txt),
+        sub: k ? T("Départ du travail à {0}", [hm.format(new Date(d.a.t))]) : T("Au travail à {0}", [hm.format(new Date(d.b.t))]),
+        temp: w ? `${fT(w.tmin)}${Math.round(w.tmax) !== Math.round(w.tmin) ? ' → ' + fT(w.tmax) : ''} °` : '–',
+        rain: w ? `${fR(w.rain)} ${UL.mm}` : '–', rainWet: !!w && w.rain >= 0.1,
+        wind: !w ? ['–', 0] : ha >= 4 ? [T("↑ face {0}", [fV(ha)]), 1] : ha <= -4 ? [T("↓ dos {0}", [fV(-ha)]), -1] : [T("faible"), 0] };
+    });
+    // deux semaines : une ligne par semaine (lundi → vendredi, puis le week-end)
+    const fD2 = new Intl.DateTimeFormat(LOC, { day: 'numeric' }), fWd = new Intl.DateTimeFormat(LOC, { weekday: 'short' });
+    const cellOf = d => { const g = d.trips && d.trips[0], r = d.trips && d.trips[1];
+      return { day: fD2.format(new Date(d.date + 'T12:00')), wd: fWd.format(new Date(d.date + 'T12:00')), sel: d.date === (TAF.sel || readOpt().date),
+        g: g && g.wx ? [tripVerdict(g.wx).lvl, fT(g.wx.tmin)] : [-1, ''], r: r && r.wx ? [tripVerdict(r.wx).lvl, fT(r.wx.tmin)] : [-1, ''] }; };
+    const weeks = []; let cur = null;
+    for (const d of TAF.week || []) {
+      const dt = new Date(d.date + 'T12:00'), wd = (dt.getDay() + 6) % 7, mon = new Date(dt); mon.setDate(dt.getDate() - wd);
+      const key = ymd(mon); if (!cur || cur.key !== key) { cur = { key, cells: [null, null, null, null, null, null] }; weeks.push(cur); }
+      if (d.weekend) cur.cells[5] = { wkend: true }; else cur.cells[wd] = cellOf(d);
+    }
+    M.weeks = weeks; M.days5 = (TAF.week || []).filter(d => !d.weekend).map(cellOf);
+    { const i = M.days5.findIndex(x => x.sel); M.days5 = M.days5.slice(Math.max(0, i), Math.max(0, i) + 5); }
+    return M;
+  }
+  M.sub = `${fD(P.total)} ${UL.km} · D+ ${fE(P.up)} ${UL.m}`;
+  M.lvl = has ? (S.sumLvl ?? 0) : -1;
+  M.lvlLbl = M.lvl < 0 ? T("Sans prévision") : EXP_LV[M.lvl];
+  M.title = xPlain($('#verdict').innerHTML); if (M.lvl === 0) M.title = xCap(M.title.replace(/^[^:]+:\s*/, ''));
+  const L1 = S.sumLines || []; M.advice = [L1[2], L1[3]].filter(Boolean).join(' ');
+  M.dep = hm.format(new Date(tl.start)); M.arr = whenTxt(tl.end, tl.start); M.dur = durTxt((tl.end - tl.start) / 3600e3);
+  M.kpis = [];
+  if (has) {
+    const covered = P.total - st.missKm, pct = x => covered > 0 ? Math.round(x / covered * 100) : 0, sunPct = st.rideH > 0 ? st.sunH / st.rideH * 100 : 0;
+    M.kpis = [
+      [T("VENT"), T("face {0} %", [pct(st.headKm)]), T("dos {0} %", [pct(st.tailKm)]) + (st.hasGust ? T(" · rafales {0} km/h", [fV(st.gust)]) : '')],
+      [T("RESSENTI"), `${fT(st.amin)} → ${fT(st.amax)} ${UL.C}`, T("air de {0} à {1} °C", [fT(st.tmin), fT(st.tmax)])],
+      [T("PLUIE"), `${fR(st.rain)} ${UL.mm}`, st.wetH > 0.05 ? T("{0} sous la pluie", [durTxt(st.wetH)]) : T("aucune averse prévue")],
+      [T("SOLEIL"), `${n0(sunPct)} %`, st.nightH > 0.1 ? T("{0} de nuit", [durTxt(st.nightH)]) : T("du temps en selle")]];
+  }
+  if (mode === 'ultra') {
+    const days = daySummaries();
+    M.days = days.map((d, k) => {
+      const w = d.wx; let lvl = -1, lbl = T("Sans prévision");
+      if (w) { lvl = 0; lbl = T("Au sec");
+        if (w.rain >= 3) { lvl = 2; lbl = T("Pluie {0} mm", [fR(w.rain)]); } else if (w.rain >= 0.3) { lvl = 1; lbl = T("Quelques gouttes"); }
+        else if (w.tmin < 3) { lvl = 1; lbl = T("Froid"); } else if (w.head >= 50) { lvl = 1; lbl = T("Vent de face"); } }
+      return { n: k + 1, date: dayFmt.format(new Date(d.a.t)), times: `${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)}`,
+        km: `km ${fD(d.a.km, 0)} → ${fD(d.b.km, 0)} · D+ ${fE(d.dplus)} ${UL.m}`, ride: T("{0} de selle · {1} de pauses", [durShort(d.rideH), durShort(d.pauseH)]),
+        temp: w ? T("ressenti {0} → {1} °C", [fT(w.tmin), fT(w.tmax)]) : '', lvl, lbl };
+    });
+    M.rideH = days.reduce((s, d) => s + d.rideH, 0); M.nights = days.length - 1;
+    const wdS = new Intl.DateTimeFormat(LOC, { weekday: 'short' });
+    M.depFull = `${wdS.format(new Date(tl.start))} ${M.dep}`; M.arrFull = `${wdS.format(new Date(tl.end))} ${hm.format(new Date(tl.end))}`;
+  }
+  return M;
+}
+
+/* images utilisées : carte(s) rendue(s) hors écran à la taille de la carte affichée, profil et graphes du jour
+   redessinés en thème clair le temps de les recopier */
+async function expMapShot(o) {
+  const m = o.m || map; if (!m) return null; const sz = m.getSize(); if (!sz.x || !sz.y) return null;
+  const cv = document.createElement('canvas'); cv.width = sz.x * 2; cv.height = sz.y * 2;
+  const c = cv.getContext('2d'); c.scale(2, 2); const missing = await drawMapTo(c, 0, 0, sz.x, sz.y, { ...o, bare: true });
+  cv.missing = missing; return cv;
+}
+async function expAssets(M, fmt) {
+  const A = { missing: 0 };
+  if (M.mode === 'taf') { A.maps = []; for (let k = 0; k < 2; k++) A.maps[k] = DUO.maps[k] ? await expMapShot({ m: DUO.maps[k], rg: duoRange(k), arrows: false, sky: true }) : null; }
+  else A.map = await expMapShot({});
+  for (const cv of [A.map, ...(A.maps || [])]) if (cv && cv.missing) A.missing += cv.missing;
+  if (fmt === 'story') return A;
+  const snap = cv => { if (!cv || !cv.width) return null; const o = document.createElement('canvas'); o.width = cv.width; o.height = cv.height; o.getContext('2d').drawImage(cv, 0, 0); return o; };
+  const html = document.documentElement, prev = html.dataset.theme;
+  html.dataset.theme = 'light';
+  try {
+    if (M.mode !== 'taf') { renderChart(); A.chart = snap($('#chart')); }
+    drawPlanWx();
+    if (M.mode === 'ultra') { // graphes du jour à la largeur de l'image (sur la page, ils suivent la largeur du tableau)
+      const gw = fmt === 'wide' ? 296 : 1056, box = document.createElement('div');
+      box.style.cssText = `position:absolute;left:-10000px;top:0;width:${gw}px`; document.body.appendChild(box);
+      A.days = (M.days || []).map((d, k) => { const cv = document.createElement('canvas'); cv.dataset.wx = k; box.appendChild(cv); try { drawDayWx(cv); } catch (e) { return null; } return snap(cv); });
+      box.remove();
+    } else A.days = [...document.querySelectorAll('#tafDuo canvas[data-wx]')].map(snap);
+  } finally {
+    if (prev) html.dataset.theme = prev; else delete html.dataset.theme;
+    if (M.mode !== 'taf') renderChart(); drawPlanWx();
+  }
+  return A;
+}
+
+/* morceaux communs */
+function xHead(c, M, P, x, y, w, ground, big = true) {
+  const h = big ? 40 : 34; xMark(c, x, y, h, P, ground);
+  xT(c, 'Sillage', x + h * 1.18, y + h * 0.72, xF(800, big ? 24 : 20, P.fd), P.ink);
+  xT(c, `${M.modeLbl} · ${M.when.toUpperCase()}`, x + w, y + h * 0.68, xF(500, big ? 13 : 11, P.fm), P.muted, 'right');
+  return y + h;
+}
+function xTitle(c, M, P, x, y, w, size) {
+  c.font = xF(800, size, P.fd); xT(c, xFit(c, M.name, w), x, y + size * 0.9, xF(800, size, P.fd), P.ink);
+  y += size * 1.1 + 6; c.font = xF(400, Math.round(size * 0.36), P.fm); xT(c, xFit(c, M.sub + (M.mode === 'taf' ? '' : ' · ' + M.credit.replace(/^[^ ]+ /, '')), w), x, y + 15, c.font, P.muted);
+  return y + 24;
+}
+function xFoot(c, M, P, A, x, y, w, small) {
+  const right = T("Prévu avec Sillage"); const rw = xT(c, right, x + w, y, xF(800, small ? 13 : 14, P.fd), P.dark ? P.brand : P.ink, 'right');
+  c.font = xF(400, small ? 10 : 12, P.fm);
+  xT(c, xFit(c, `${M.credit} · © OpenStreetMap${A.missing ? T(" (fond partiel)") : ''} · ${T("horaires estimés")}`, w - rw - 24), x, y, c.font, P.muted);
+}
+function xLegend(c, P, x, y, w) {
+  let lx = x; const it = (col, txt) => { xR(c, lx, y - 8, 26, 8, 4, col); lx += 34; lx += xT(c, txt, lx, y, xF(400, 14, P.fd), P.muted) + 22; };
+  if (S.metric === 'wind') { it(P.head, T("Vent de face")); it('#8f9a94', T("Travers ou faible")); it(P.tail, T("Vent de dos")); }
+  else if (S.metric === 'temp') it(tempColor(15), T("Couleur : température ressentie"));
+  else if (S.metric === 'rain') it(rainColor(2), T("Couleur : pluie"));
+  else it(P.brand, T("Couleur : ensoleillement"));
+  const r = T("Flèche : sens du vent · pastille : ciel, température, vent"); c.font = xF(400, 14, P.fd);
+  if (lx + c.measureText(r).width < x + w) xT(c, r, x + w, y, c.font, P.muted, 'right');
+}
+function xTile(c, P, x, y, w, h, lbl, v, s, vs = 24, vcol) {
+  xR(c, x, y, w, h, 16, P.card, P.line);
+  xT(c, lbl, x + 20, y + 30, xF(500, 12, P.fm), P.muted);
+  c.font = xF(500, vs, P.fm); xT(c, xFit(c, v, w - 40), x + 20, y + 30 + vs + 8, c.font, vcol || P.ink);
+  if (s) { c.font = xF(400, 14, P.fd); xT(c, xFit(c, s, w - 40), x + 20, y + 30 + vs + 32, c.font, P.muted); }
+}
+// bloc sombre des horaires
+function xTimes(c, M, P, x, y, w, h, size = 40) {
+  xR(c, x, y, w, h, 16, P.band);
+  if (M.mode === 'ultra') {
+    const cells = [[T("DÉPART"), M.depFull], [T("ARRIVÉE"), M.arrFull], [T("EN SELLE"), durTxt(M.rideH)], [T("NUITS"), String(M.nights)]];
+    const cw = (w - 48 - 16) / 2, vs = Math.round(size * 0.65), rh = (h - 48) / 2;
+    cells.forEach(([l, v], k) => { const cx = x + 24 + (k % 2) * (cw + 16), cy = y + 24 + Math.floor(k / 2) * rh + (rh - vs - 22) / 2;
+      xT(c, l, cx, cy + 12, xF(500, 12, P.fm), P.bandMuted); c.font = xF(500, vs, P.fm); xT(c, xFit(c, v, cw), cx, cy + 18 + vs, c.font, P.bandInk); });
+    return;
+  }
+  xT(c, T("DÉPART"), x + 24, y + 38, xF(500, 12, P.fm), P.bandMuted); xT(c, T("ARRIVÉE"), x + w - 24, y + 38, xF(500, 12, P.fm), P.bandMuted, 'right');
+  xT(c, M.dep, x + 24, y + 38 + size + 4, xF(500, size, P.fm), P.bandInk);
+  c.font = xF(500, size, P.fm); xT(c, xFit(c, '≈ ' + M.arr, w / 2), x + w - 24, y + 38 + size + 4, c.font, P.bandInk, 'right');
+  const ly = y + 38 + size + 30; c.lineCap = 'round'; c.lineWidth = 4; c.strokeStyle = P.brand; c.beginPath(); c.moveTo(x + 30, ly); c.lineTo(x + w - 30, ly); c.stroke();
+  c.fillStyle = P.brand; c.beginPath(); c.arc(x + 30, ly, 6, 0, 7); c.fill(); c.fillStyle = P.bandInk; c.beginPath(); c.arc(x + w - 30, ly, 6, 0, 7); c.fill();
+  xT(c, T("{0} de sortie, arrêts compris", [M.dur]), x + 24, ly + 34, xF(400, 16, P.fd), P.bandMuted);
+}
+// carte du verdict : pastille, titre, conseil
+function xVerdict(c, M, P, x, y, w, h, ts = 30, as = 16, maxT = 2, maxA = 3) {
+  xR(c, x, y, w, h, 16, P.card, P.line);
+  xPill(c, x + 24, y + 24, M.lvlLbl, M.lvl, P, 14);
+  let yy = y + 24 + 27 + 16 + ts;
+  for (const l of xLines(c, M.title, xF(800, ts, P.fd), w - 48, maxT)) { xT(c, l, x + 24, yy, xF(800, ts, P.fd), P.ink); yy += ts * 1.15; }
+  yy += 4; for (const l of xLines(c, M.advice || '', xF(400, as, P.fd), w - 48, maxA)) { xT(c, l, x + 24, yy, xF(400, as, P.fd), P.muted); yy += as * 1.5; }
+}
+function xMapCard(c, src, P, x, y, w, h, r = 16) { if (src) xDraw(c, src, x, y, w, h, 'cover', r); else xR(c, x, y, w, h, r, P.line); }
+// une journée d'ultra en ligne compacte
+function xDayRow(c, d, P, x, y, w, h) {
+  xR(c, x, y, w, h, 12, P.card, P.line);
+  xT(c, `J${d.n}`, x + 16, y + h / 2 - 2, xF(800, 17, P.fd), P.ink); xT(c, d.date, x + 16, y + h / 2 + 16, xF(400, 12, P.fd), P.muted);
+  xT(c, d.times, x + 92, y + h / 2 - 2, xF(500, 15, P.fm), P.ink);
+  c.font = xF(400, 12, P.fm); xT(c, xFit(c, d.km, w - 92 - 170), x + 92, y + h / 2 + 16, c.font, P.muted);
+  c.font = xF(700, 12, P.fd); const pw = c.measureText(d.lbl).width + 28; xPill(c, x + w - 16 - pw, y + h / 2 - 12, d.lbl, d.lvl, P, 12);
+}
+// trajet de vélotaf (bloc aller ou retour)
+function xTrip(c, t, map, P, x, y, w, mapH, big) {
+  const head = big ? 150 : 130, foot = 70, h = head + mapH + foot; xR(c, x, y, w, h, 16, P.card, P.line);
+  xT(c, t.name, x + 24, y + 36, xF(500, 13, P.fm), P.muted);
+  c.font = xF(700, 13, P.fd); const pw = c.measureText(t.short).width + 30; xPill(c, x + w - 24 - pw, y + 18, t.short, t.lvl, P, 13);
+  xT(c, `${t.dep} → ${t.arr}`, x + 24, y + 36 + (big ? 50 : 42), xF(500, big ? 40 : 34, P.fm), P.ink);
+  c.font = xF(400, 15, P.fd); xT(c, xFit(c, `${t.sub}. ${t.txt}.`, w - 48), x + 24, y + head - 18, c.font, P.muted);
+  c.save(); c.beginPath(); c.rect(x, y + head, w, mapH); c.clip(); if (map) xDraw(c, map, x, y + head, w, mapH, 'cover'); else { c.fillStyle = P.line; c.fillRect(x, y + head, w, mapH); } c.restore();
+  const cw = w / 3, fy = y + head + mapH; c.strokeStyle = P.line; c.lineWidth = 1; c.beginPath(); c.moveTo(x, fy); c.lineTo(x + w, fy); c.moveTo(x + cw, fy); c.lineTo(x + cw, fy + foot); c.moveTo(x + 2 * cw, fy); c.lineTo(x + 2 * cw, fy + foot); c.stroke();
+  [[T("RESSENTI"), t.temp, P.ink], [T("PLUIE"), t.rain, t.rainWet ? P.rainTxt : P.ink], [T("VENT"), t.wind[0], t.wind[1] > 0 ? P.head : t.wind[1] < 0 ? P.tail : P.ink]].forEach(([l, v, col], k) => {
+    xT(c, l, x + k * cw + 18, fy + 26, xF(500, 11, P.fm), P.muted); c.font = xF(500, 19, P.fm); xT(c, xFit(c, v, cw - 30), x + k * cw + 18, fy + 54, c.font, col); });
+  return y + h;
+}
+
+/* format « image complète » : 1200 px de large ; renvoie la hauteur utilisée */
+function expFull(c, M, A) {
+  const P = expPal(false), W = 1200, x = 48, w = W - 96; let y = 48;
+  c.fillStyle = P.bg; c.fillRect(0, 0, W, 20000);
+  y = xHead(c, M, P, x, y, w, P.bg) + 24; y = xTitle(c, M, P, x, y, w, 44) + 12;
+  if (M.mode === 'taf') {
+    const tw = (w - 16) / 2; let yy = y;
+    M.trips.forEach((t, k) => { yy = xTrip(c, t, A.maps[k], P, x + k * (tw + 16), y, tw, 250, true); });
+    y = yy + 24;
+    // deux semaines
+    const rows = M.weeks.length, cellH = 74, h = 70 + 24 + rows * (cellH + 8) + 40;
+    xR(c, x, y, w, h, 16, P.card, P.line); xT(c, T("Deux semaines de vélotaf"), x + 24, y + 40, xF(800, 22, P.fd), P.ink);
+    xT(c, T("ressenti à l'aller / au retour"), x + w - 24, y + 40, xF(400, 14, P.fd), P.muted, 'right');
+    const cw = (w - 48 - 5 * 8) / 6, fWd = new Intl.DateTimeFormat(LOC, { weekday: 'short' }), mon = new Date(2024, 0, 1);
+    for (let k = 0; k < 6; k++) { const lbl = k < 5 ? fWd.format(new Date(mon.getTime() + k * 864e5)).toUpperCase() : T("WEEK-END"); xT(c, lbl, x + 24 + k * (cw + 8), y + 76, xF(500, 11, P.fm), P.muted); }
+    M.weeks.forEach((wk, r) => wk.cells.forEach((cl, k) => {
+      if (!cl) return; const cx = x + 24 + k * (cw + 8), cy = y + 88 + r * (cellH + 8);
+      if (cl.wkend) { xR(c, cx, cy, cw, cellH, 12, P.bg); xT(c, T("Une sortie ?"), cx + 12, cy + 28, xF(700, 14, P.fd), P.ink); xT(c, T("Planifie-la dans Sortie"), cx + 12, cy + 50, xF(400, 12, P.fd), P.muted); return; }
+      xR(c, cx, cy, cw, cellH, 12, null); c.lineWidth = cl.sel ? 2 : 1; c.strokeStyle = cl.sel ? P.ink : P.line; c.stroke();
+      xT(c, cl.sel ? `${cl.day} · ${T("ce jour")}` : cl.day, cx + 12, cy + 26, xF(700, 15, P.fd), P.ink);
+      xDot(c, cx + 17, cy + 50, 5, cl.g[0], P); let tx = cx + 27 + xT(c, cl.g[1] ? cl.g[1] + '°' : '–', cx + 27, cy + 54, xF(500, 12, P.fm), P.ink) + 10;
+      xDot(c, tx + 5, cy + 50, 5, cl.r[0], P); xT(c, cl.r[1] ? cl.r[1] + '°' : '–', tx + 15, cy + 54, xF(500, 12, P.fm), P.ink);
+    }));
+    let lx = x + 24; const ly = y + h - 20;
+    [[0, T("bonnes conditions")], [1, T("à surveiller")], [2, T("pluie ou fort vent de face")]].forEach(([lv, t]) => { xDot(c, lx + 5, ly - 4, 5, lv, P); lx += 16 + xT(c, t, lx + 16, ly, xF(400, 13, P.fd), P.muted) + 20; });
+    xT(c, T("1re pastille : aller · 2e : retour"), lx, ly, xF(400, 13, P.fd), P.muted);
+    y += h + 28;
+    xFoot(c, M, P, A, x, y, w); return y + 40;
+  }
+  // verdict + horaires
+  c.font = xF(800, 30, P.fd); const tL = Math.min(2, wrapText(c, M.title, w * 3 / 5 - 64).length);
+  c.font = xF(400, 16, P.fd); const aL = Math.min(3, wrapText(c, M.advice || '', w * 3 / 5 - 64).length);
+  const vh = Math.max(M.mode === 'ultra' ? 210 : 200, 24 + 27 + 16 + tL * 34.5 + 6 + aL * 24 + 20), vw = (w - 16) * 3 / 5;
+  xVerdict(c, M, P, x, y, vw, vh); xTimes(c, M, P, x + vw + 16, y, w - vw - 16, vh); y += vh + 16;
+  if (M.mode !== 'ultra' && M.kpis.length) { const kw = (w - 48) / 4; M.kpis.forEach((k, i) => xTile(c, P, x + i * (kw + 16), y, kw, 120, ...k)); y += 120 + 16; }
+  // carte
+  const mh = 560; xR(c, x, y, w, mh + 52, 16, P.card, P.line);
+  c.save(); c.beginPath(); c.roundRect(x, y, w, mh, [16, 16, 0, 0]); c.clip(); if (A.map) xDraw(c, A.map, x, y, w, mh, 'cover'); c.restore();
+  xLegend(c, P, x + 20, y + mh + 32, w - 40); y += mh + 52 + 16;
+  if (M.mode === 'ultra') {
+    xT(c, T("Jour par jour"), x, y + 26, xF(800, 24, P.fd), P.ink); y += 44;
+    M.days.forEach((d, k) => {
+      const g = A.days && A.days[k], gh = g ? Math.round(g.height / g.width * (w - 48)) : 0, h = 112 + (gh ? gh + 16 : 0);
+      xR(c, x, y, w, h, 16, P.card, P.line);
+      const jw = xT(c, T("Jour {0}", [d.n]), x + 24, y + 40, xF(800, 22, P.fd), P.ink); xT(c, d.date, x + 24 + jw + 12, y + 40, xF(400, 15, P.fd), P.muted);
+      c.font = xF(700, 13, P.fd); const pw = c.measureText(d.lbl).width + 30; xPill(c, x + w - 24 - pw, y + 18, d.lbl, d.lvl, P, 13);
+      const tw = xT(c, d.times, x + 24, y + 76, xF(500, 21, P.fm), P.ink);
+      c.font = xF(400, 14, P.fm); xT(c, xFit(c, d.km, w - 48 - tw - 24), x + 24 + tw + 24, y + 76, c.font, P.muted);
+      c.font = xF(400, 14, P.fd); xT(c, xFit(c, d.ride + (d.temp ? ' · ' + d.temp : ''), w - 48), x + 24, y + 100, c.font, P.muted);
+      if (g) xDraw(c, g, x + 24, y + 112, w - 48, gh, 'contain');
+      y += h + 12;
+    });
+    y += 12;
+  } else if (A.chart) {
+    const iw = w - 48, ih = Math.round(A.chart.height / A.chart.width * iw), h = ih + 70;
+    xR(c, x, y, w, h, 16, P.card, P.line);
+    xT(c, T("Au fil du parcours"), x + 24, y + 36, xF(700, 20, P.fd), P.ink);
+    xDraw(c, A.chart, x + 24, y + 54, iw, ih, 'contain'); y += h + 24;
+  }
+  xFoot(c, M, P, A, x, y + 10, w); return y + 50;
+}
+
+/* format écran 16:9 : 1600 × 900 */
+function expWide(c, M, A) {
+  const P = expPal(false), W = 1600, H = 900, x = 40; c.fillStyle = P.bg; c.fillRect(0, 0, W, H);
+  if (M.mode === 'taf') {
+    xMark(c, x, 40, 44, P, P.bg);
+    c.font = xF(800, 30, P.fd); xT(c, xFit(c, `${M.name} · ${M.when}`, 1100), x + 60, 66, c.font, P.ink);
+    xT(c, M.sub, x + 60, 92, xF(400, 14, P.fm), P.muted); xT(c, T("Prévu avec Sillage"), W - x, 66, xF(800, 14, P.fd), P.ink, 'right');
+    const cw = (W - 80 - 32) / 3, y0 = 124;
+    M.trips.forEach((t, k) => xTrip(c, t, A.maps[k], P, x + k * (cw + 16), y0, cw, H - 40 - y0 - 150 - 70, false));
+    const lx = x + 2 * (cw + 16), lh = H - 40 - y0; xR(c, lx, y0, cw, lh, 16, P.card, P.line);
+    xT(c, T("Deux semaines"), lx + 20, y0 + 34, xF(800, 18, P.fd), P.ink); xT(c, T("aller · retour"), lx + cw - 20, y0 + 34, xF(400, 12, P.fd), P.muted, 'right');
+    let ry = y0 + 56; const rh = 40;
+    for (const wk of M.weeks) for (const cl of wk.cells) {
+      if (!cl || ry + rh > y0 + lh - 30) continue;
+      c.strokeStyle = cl.sel ? P.ink : P.line; c.lineWidth = cl.sel ? 2 : 1; c.beginPath(); c.moveTo(lx + 20, ry); c.lineTo(lx + cw - 20, ry); c.stroke();
+      if (cl.wkend) { xT(c, T("week-end"), lx + 20, ry + 26, xF(600, 14, P.fd), P.muted); ry += rh; continue; }
+      xT(c, `${cl.wd} ${cl.day}`, lx + 20, ry + 26, xF(cl.sel ? 800 : 600, 14, P.fd), P.ink);
+      xDot(c, lx + 130, ry + 21, 5, cl.g[0], P); xT(c, cl.g[1] ? cl.g[1] + '°' : '–', lx + 142, ry + 26, xF(500, 14, P.fm), P.ink);
+      xDot(c, lx + 230, ry + 21, 5, cl.r[0], P); xT(c, cl.r[1] ? cl.r[1] + '°' : '–', lx + 242, ry + 26, xF(500, 14, P.fm), P.ink);
+      ry += rh;
+    }
+    c.font = xF(400, 11, P.fm); xT(c, xFit(c, `${M.credit} · © OpenStreetMap`, cw - 40), lx + 20, y0 + lh - 16, c.font, P.muted);
+    return;
+  }
+  const lw = 520, rx = x + lw + 24, rw = W - rx - 40;
+  let y = xHead(c, M, P, x, 40, lw, P.bg, false) + 16;
+  c.font = xF(800, 34, P.fd); xT(c, xFit(c, M.name, lw), x, y + 30, c.font, P.ink); y += 40;
+  xT(c, M.sub, x, y + 16, xF(400, 14, P.fm), P.muted); y += 32;
+  c.font = xF(800, 24, P.fd); const tL = Math.min(3, wrapText(c, M.title, lw - 48).length); c.font = xF(400, 15, P.fd); const aL = Math.min(M.mode === 'ultra' ? 2 : 3, wrapText(c, M.advice || '', lw - 48).length);
+  const vh = 24 + 27 + 16 + tL * 27.6 + 6 + aL * 22.5 + 14; xVerdict(c, M, P, x, y, lw, vh, 24, 15, 3, M.mode === 'ultra' ? 2 : 3); y += vh + 14;
+  if (M.mode === 'ultra') {
+    const n = Math.min(M.days.length, 4); M.days.slice(0, n).forEach(d => { xDayRow(c, d, P, x, y, lw, 60); y += 68; });
+    if (M.days.length > n) { xT(c, T("+ {0} jours", [M.days.length - n]), x, y + 14, xF(400, 13, P.fd), P.muted); y += 22; }
+    xTimes(c, M, P, x, y, lw, 150, 30);
+  } else {
+    xTimes(c, M, P, x, y, lw, 150, 34); y += 164;
+    const kw = (lw - 12) / 2; M.kpis.forEach((k, i) => xTile(c, P, x + (i % 2) * (kw + 12), y + Math.floor(i / 2) * 112, kw, 100, ...k.slice(0, 3), 20));
+  }
+  xFoot(c, M, P, A, x, H - 40, lw, true);
+  // à droite : carte puis profil (Sortie) ou graphes du jour (Ultra)
+  const mh = M.mode === 'ultra' ? 600 : 455; xMapCard(c, A.map, P, rx, 40, rw, mh); c.strokeStyle = P.line; c.beginPath(); c.roundRect(rx + .5, 40.5, rw - 1, mh - 1, 16); c.stroke();
+  const by = 40 + mh + 16, bh = H - 40 - by;
+  if (M.mode === 'ultra') {
+    const n = Math.min(3, (A.days || []).length), gw = n ? (rw - (n - 1) * 12) / n : 0;
+    for (let k = 0; k < n; k++) { const gx = rx + k * (gw + 12); xR(c, gx, by, gw, bh, 14, P.card, P.line);
+      const d = M.days[k]; c.font = xF(700, 14, P.fd); xT(c, xFit(c, `${T("Jour {0}", [d.n])} · ${d.lbl}`, gw - 28), gx + 14, by + 26, c.font, P.ink);
+      xDraw(c, A.days[k], gx + 10, by + 38, gw - 20, bh - 48, 'contain'); }
+  } else if (A.chart) {
+    xR(c, rx, by, rw, bh, 16, P.card, P.line); xT(c, T("Au fil du parcours"), rx + 16, by + 26, xF(700, 16, P.fd), P.ink);
+    xDraw(c, A.chart, rx + 12, by + 36, rw - 24, bh - 44, 'contain');
+  }
+}
+
+/* format story 9:16 : 540 × 960, en sombre */
+function expStory(c, M, A) {
+  const P = expPal(true), W = 540, H = 960, x = 28, w = W - 56; c.fillStyle = P.bg; c.fillRect(0, 0, W, H);
+  let y = xHead(c, M, P, x, 32, w, P.bg, false) + 18;
+  c.font = xF(800, 30, P.fd); for (const l of xLines(c, M.name, c.font, w, 2)) { xT(c, l, x, y + 28, xF(800, 30, P.fd), P.ink); y += 33; }
+  xT(c, M.sub, x, y + 14, xF(400, 13, P.fm), P.muted); y += 30;
+  if (M.mode === 'taf') {
+    for (const t of M.trips) {
+      const h = 150; xR(c, x, y, w, h, 16, P.card);
+      xT(c, t.name, x + 18, y + 28, xF(500, 11, P.fm), P.muted);
+      c.font = xF(700, 12, P.fd); const pw = c.measureText(t.short).width + 28; xPill(c, x + w - 18 - pw, y + 12, t.short, t.lvl, P, 12);
+      xT(c, `${t.dep} → ${t.arr}`, x + 18, y + 70, xF(500, 32, P.fm), P.ink);
+      [[t.temp, P.ink], [t.rain, t.rainWet ? P.rainTxt : P.ink], [t.wind[0], t.wind[1] > 0 ? P.head : t.wind[1] < 0 ? P.tail : P.ink]].forEach(([v, col], k) => xT(c, v, x + 18 + k * (w - 36) / 3, y + 102, xF(500, 14, P.fm), col));
+      c.font = xF(400, 13, P.fd); xT(c, xFit(c, t.txt, w - 36), x + 18, y + 130, c.font, P.muted);
+      y += h + 14;
+    }
+    xT(c, T("La semaine"), x, y + 22, xF(800, 16, P.fd), P.ink); y += 36;
+    const cw = (w - 4 * 8) / 5;
+    M.days5.forEach((d, k) => { const cx = x + k * (cw + 8);
+      xR(c, cx, y, cw, 76, 12, d.sel ? null : P.card); if (d.sel) { c.strokeStyle = P.brand; c.lineWidth = 2; c.stroke(); }
+      xT(c, d.wd, cx + cw / 2, y + 22, xF(700, 12, P.fd), P.ink, 'center');
+      xDot(c, cx + cw / 2 - 8, y + 40, 5, d.g[0], P); xDot(c, cx + cw / 2 + 8, y + 40, 5, d.r[0], P);
+      xT(c, `${d.g[1] || '–'}°/${d.r[1] || '–'}°`, cx + cw / 2, y + 64, xF(400, 11, P.fm), P.muted, 'center'); });
+    y += 92; c.font = xF(400, 12, P.fd); for (const l of wrapText(c, T("1re pastille aller, 2e retour · vert : bon · doré : à surveiller · rouille : pluie ou fort vent de face"), w)) { xT(c, l, x, y, c.font, P.muted); y += 17; }
+  } else {
+    xPill(c, x, y, M.lvlLbl, M.lvl, P, 13); y += 34;
+    c.font = xF(700, 22, P.fd); for (const l of xLines(c, M.title, c.font, w, 2)) { xT(c, l, x, y + 22, xF(700, 22, P.fd), P.ink); y += 27; }
+    y += 12;
+    if (M.mode !== 'ultra') {
+      c.strokeStyle = P.line; c.lineWidth = 1; c.beginPath(); c.moveTo(x, y); c.lineTo(x + w, y); c.moveTo(x, y + 74); c.lineTo(x + w, y + 74); c.stroke();
+      xT(c, T("DÉPART"), x, y + 26, xF(500, 11, P.fm), P.muted); xT(c, M.dep, x, y + 62, xF(500, 34, P.fm), P.ink);
+      xT(c, `— ${M.dur} —`, x + w / 2, y + 56, xF(500, 13, P.fm), P.brand, 'center');
+      xT(c, T("ARRIVÉE"), x + w, y + 26, xF(500, 11, P.fm), P.muted, 'right'); c.font = xF(500, 34, P.fm); xT(c, xFit(c, M.arr, w / 3), x + w, y + 62, c.font, P.ink, 'right');
+      y += 90;
+    }
+    const nD = M.mode === 'ultra' ? Math.min(M.days.length, 5) : 0, mh = Math.max(260, H - 60 - y - 14 - (M.mode === 'ultra' ? nD * 60 : 98)); xMapCard(c, A.map, P, x, y, w, mh); y += mh + 14;
+    if (M.mode === 'ultra') {
+      const n = Math.min(nD, Math.floor((H - 60 - y) / 60));
+      M.days.slice(0, n).forEach(d => { xR(c, x, y, w, 52, 12, P.card);
+        xT(c, `J${d.n}`, x + 14, y + 32, xF(800, 17, P.fd), P.ink); xT(c, d.times, x + 58, y + 24, xF(500, 15, P.fm), P.ink);
+        c.font = xF(400, 12, P.fd); xT(c, xFit(c, `${d.km}`, w - 58 - 130), x + 58, y + 42, c.font, P.muted);
+        c.font = xF(700, 12, P.fd); xT(c, xFit(c, d.lbl, 120), x + w - 14, y + 32, c.font, d.lvl < 0 ? P.muted : P.lv[d.lvl][1], 'right'); y += 60; });
+    } else {
+      const tw = (w - 20) / 3; M.kpis.slice(0, 3).forEach((k, i) => { const tx = x + i * (tw + 10); xR(c, tx, y, tw, 84, 12, P.card);
+        xT(c, k[0], tx + 12, y + 22, xF(500, 10, P.fm), P.muted); c.font = xF(500, 17, P.fm); xT(c, xFit(c, k[1], tw - 24), tx + 12, y + 48, c.font, P.ink);
+        c.font = xF(400, 12, P.fd); xT(c, xFit(c, k[2], tw - 24), tx + 12, y + 70, c.font, P.muted); });
+    }
+  }
+  xFoot(c, M, P, A, x, H - 30, w, true);
+}
+
+/* choix du format puis export */
+const EXP = { fmt: null, btn: null };
+function expDefault() { let f = null; try { f = localStorage.getItem('pmr-exp-fmt'); } catch (e) {} return ['full', 'wide', 'story'].includes(f) ? f : (matchMedia('(pointer: coarse)').matches ? 'story' : 'full'); }
+function expOpen(btn) {
+  if (!S.P || !S.tl) return; EXP.btn = btn; const d = $('#expDlg'), def = expDefault();
+  for (const b of d.querySelectorAll('[data-fmt]')) b.classList.toggle('def', b.dataset.fmt === def);
+  d.showModal(); const f = d.querySelector(`[data-fmt="${def}"]`); if (f) f.focus();
+}
+$('#expDlg').addEventListener('click', e => {
+  const b = e.target.closest('[data-fmt]'); if (!b) return;
+  try { localStorage.setItem('pmr-exp-fmt', b.dataset.fmt); } catch (err) {}
+  $('#expDlg').close(); exportImage(b.dataset.fmt);
+});
+async function exportImage(fmt = 'full') {
+  if (!S.P || !S.tl) return;
+  const btn = EXP.btn || $('#exportImg'), label = btn.textContent;
   btn.disabled = true; btn.textContent = T("Préparation…");
   try {
-    try { await document.fonts.ready; } catch (e) {}
-    renderChart(); // graphique propre (sans le curseur de survol)
-    const mapEl = $('#map'), MW = mapEl.clientWidth, MH = mapEl.clientHeight, cv = $('#chart');
-    const CH = Math.round(cv.height / cv.width * MW), pad = 24, W = MW + pad * 2, s = 2;
-    const disp = T("{0}, sans-serif", [cssVar('--f-display').split(',')[0]]), body = T("{0}, sans-serif", [cssVar('--f-body').split(',')[0]]);
-    const meas = document.createElement('canvas').getContext('2d'); meas.font = `500 17px ${body}`;
-    const tl = S.tl, P = S.P;
-    const ultra = S.mode === 'ultra';
-    const sub = `${fD(P.total)} ${UL.km} · D+ ${fE(P.up)} ${UL.m} · ${durTxt((tl.end - tl.start) / 3600e3)} ${ultra ? T("au total") : T("de sortie")}`; // départ et arrivée sont dans la phrase de résumé
-    const verdictLines = wrapText(meas, $('#verdict').innerText.trim(), MW);
-    meas.font = `14px ${body}`; const moreLines = $('#verdictMore').hidden ? [] : wrapText(meas, $('#verdictMore').innerText.replace(/\s*\n\s*/g, ' ').trim(), MW); meas.font = `500 17px ${body}`;
-    // page Ultra : jour par jour (2 lignes par jour)
-    const days = ultra ? daySummaries() : [];
-    const dayLines = days.map((d, k) => ({
-      head: T("Jour {0} · {1}", [k + 1, dayFmt.format(new Date(d.a.t))]),
-      main: T("{0} → {1} · km {2} → {3} · {4} km · D+ {5} m · pédalage {6} · pauses {7}", [hm.format(new Date(d.a.t)), whenTxt(d.b.t, d.a.t), fD(d.a.km, 0), fD(d.b.km, 0), fD(d.dist, 0), fE(d.dplus), durShort(d.rideH), durShort(d.pauseH)]),
-      sub: (d.wx ? T("{0} à {1} °C ressentis · pluie {2} mm · vent de face {3} %", [fT(d.wx.tmin), fT(d.wx.tmax), fR(d.wx.rain), d.wx.head]) : T("Pas encore de prévision météo pour ce jour"))
-        + (d.night ? T(" · nuit au km {0}, {1} → {2}", [fD(d.b.km, 0), hm.format(new Date(d.night.from)), hm.format(new Date(d.night.to))]) : ''),
-    }));
-    const daysH = days.length > 1 ? 16 + 28 + dayLines.length * 46 : 0;
-    const headH = 34 + 24 + verdictLines.length * 23 + (moreLines.length ? 6 + moreLines.length * 19 : 0) + 14, legH = 40, keysH = 26, footH = 30;
-    const H = pad + headH + MH + legH + CH + keysH + daysH + footH + pad;
+    const fd = cssVar('--f-display'), fm = cssVar('--f-mono');
+    try { await Promise.all([document.fonts.load(xF(800, 20, fd)), document.fonts.load(xF(700, 20, fd)), document.fonts.load(xF(400, 20, fd)), document.fonts.load(xF(500, 20, fm))]); await document.fonts.ready; } catch (e) {}
+    const M = expModel(), A = await expAssets(M, fmt), s = 2;
+    let W, H;
+    if (fmt === 'wide') { W = 1600; H = 900; } else if (fmt === 'story') { W = 540; H = 960; }
+    else { W = 1200; const probe = document.createElement('canvas'); probe.width = probe.height = 1; H = Math.ceil(expFull(probe.getContext('2d'), M, A)); }
     const out = document.createElement('canvas'); out.width = W * s; out.height = H * s;
     const c = out.getContext('2d'); c.scale(s, s);
-    c.fillStyle = cssVar('--panel'); c.fillRect(0, 0, W, H);
-    let y = pad;
-    c.fillStyle = cssVar('--ink'); c.font = `700 28px ${disp}`; c.fillText(S.name || T("Ma sortie"), pad, y + 26); y += 34;
-    c.fillStyle = cssVar('--muted'); c.font = `500 15px ${body}`; c.fillText(sub, pad, y + 16); y += 24;
-    c.fillStyle = cssVar('--ink'); c.font = `700 17px ${body}`; for (const l of verdictLines) { c.fillText(l, pad, y + 17); y += 23; }
-    if (moreLines.length) { y += 6; c.fillStyle = cssVar('--muted'); c.font = `14px ${body}`; for (const l of moreLines) { c.fillText(l, pad, y + 14); y += 19; } }
-    y += 14;
-    const missing = await drawMapTo(c, pad, y, MW, MH); y += MH;
-    // légende sous la carte
-    c.font = `13px ${body}`; let lx = pad; const ly = y + 24;
-    const dot = (col, txt) => { c.fillStyle = col; c.beginPath(); c.roundRect(lx, ly - 7, 18, 5, 3); c.fill(); lx += 24; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ly); lx += c.measureText(txt).width + 16; };
-    if (S.metric === 'wind') { dot(cssVar('--head'), T("Vent de face")); dot(cssVar('--cross'), T("Travers ou faible")); dot(cssVar('--tail'), T("Vent de dos")); }
-    else if (S.metric === 'temp') dot(tempColor(15), T("Couleur : température ressentie"));
-    else if (S.metric === 'rain') dot(rainColor(2), T("Couleur : pluie"));
-    else dot(cssVar('--sun'), T("Couleur : ensoleillement"));
-    if (S.wx && $('#arrowsOn').checked) {
-      c.fillStyle = cssVar('--muted'); c.fillText(T("Flèches : sens du vent · pastille : ciel, temp., vent"), lx, ly); lx += c.measureText(T("Flèches : sens du vent · pastille : ciel, temp., vent")).width + 10;
-      for (const w of WIND_SCALE) { c.fillStyle = w[1]; c.beginPath(); c.roundRect(lx, ly - 10, 14, 12, 3); c.fill(); lx += 18; }
-    }
-    if (ultra && POI.shown && POI.shown.length) {
-      // une pastille par catégorie de lieux affichée, puis le libellé
-      const groups = [...new Set(POI.shown.map(p => p.g))], txt = T("Lieux (couleur de leur catégorie)");
-      lx += 14;
-      if (lx + groups.length * 12 + 6 + c.measureText(txt).width < pad + MW) {
-        for (const g of groups) { c.fillStyle = POI_GROUPS[g].col; c.beginPath(); c.arc(lx + 5, ly - 4, 5, 0, 7); c.fill(); lx += 12; }
-        lx += 6; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ly);
-      }
-    }
-    y += legH;
-    c.drawImage(cv, pad, y, MW, CH); y += CH;
-    // légende du graphique
-    c.font = `12.5px ${body}`; lx = pad; const ky = y + 18;
-    for (const [col, txt] of [[cssVar('--elev-line'), 'Altitude'], [cssVar('--warm'), T("Température ressentie")], [cssVar('--rain'), T("Pluie (mm/h)")], [cssVar('--head'), T("Vent de face (barre vers le haut)")], [cssVar('--tail'), T("Vent de dos (vers le bas)")], [cssVar('--cross'), T("Travers ou faible")], ...(S.wx && S.wx.some(L => L && L.cc && L.cc.some(v => isFinite(v))) ? [[CC_OVER, T("Nuages : strate grise en haut")]] : []), [cssVar('--elev'), T("Nuit")]]) {
-      c.fillStyle = col; c.fillRect(lx, ky - 5, 14, 3); lx += 20; c.fillStyle = cssVar('--muted'); c.fillText(txt, lx, ky); lx += c.measureText(txt).width + 16;
-    }
-    y += keysH;
-    if (daysH) {
-      y += 16; c.fillStyle = cssVar('--ink'); c.font = `700 18px ${disp}`; c.fillText(T("Planification journalière"), pad, y + 18); y += 28;
-      for (const l of dayLines) {
-        c.font = `700 14.5px ${body}`; c.fillStyle = cssVar('--ink'); c.fillText(l.head, pad, y + 15);
-        const hw = c.measureText(l.head).width + 12;
-        c.font = `500 14.5px ${body}`; c.fillText(l.main, pad + hw, y + 15);
-        c.font = `13px ${body}`; c.fillStyle = cssVar('--muted'); c.fillText(l.sub, pad, y + 35);
-        y += 46;
-      }
-    }
-    c.font = `11.5px ${body}`; c.fillStyle = cssVar('--muted');
-    c.fillText(T("Sillage · {0} · Fond de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri{1} · Horaires estimés", [wxCreditTxt(), missing ? T(" (fond partiel)") : '']), pad, y + 18);
+    if (fmt === 'wide') expWide(c, M, A); else if (fmt === 'story') expStory(c, M, A); else expFull(c, M, A);
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
-    const fname = `${(S.name || (ultra ? 'ultra' : T('sortie'))).replace(/[^\w\-]+/g, '_')}_${ymd(new Date(tl.start))}.png`;
+    const base = (S.name || (M.mode === 'ultra' ? 'ultra' : M.mode === 'taf' ? 'velotaf' : T('sortie'))).replace(/[^\w\-]+/g, '_');
+    const fname = `Sillage_${base}_${ymd(new Date(S.tl.start))}${fmt === 'full' ? '' : '_' + fmt}.png`;
     const file = new File([blob], fname, { type: 'image/png' });
     if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: S.name || T("Ma sortie") }); return; } catch (e) { if (e.name === 'AbortError') return; }
@@ -2742,9 +3108,10 @@ async function exportImage() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   } catch (e) { setStatus(T("Export impossible : {0}", [e.message]), 'err'); }
-  finally { btn.disabled = false; btn.textContent = label; }
+  finally { btn.disabled = false; btn.textContent = label; EXP.btn = null; }
 }
-$('#exportImg').addEventListener('click', exportImage);
+$('#exportImg').addEventListener('click', e => expOpen(e.currentTarget));
+$('#exportImg2').addEventListener('click', e => expOpen(e.currentTarget));
 
 function idxAtKm(km) { const d = S.P.d; let lo = 0, hi = S.P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (d[m] < km) lo = m + 1; else hi = m; } return lo; }
 
