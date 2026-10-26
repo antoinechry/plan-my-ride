@@ -38,6 +38,10 @@ a{color:#23629A}a:hover{color:#14201B}
 .sl-cta{animation:sl-pulse 2.4s ease-in-out infinite}
 .sl-float{animation:sl-float 3.6s ease-in-out infinite alternate}
 .sl-glow{animation:sl-glow 3s ease-in-out infinite}
+.sl-soon{position:relative;display:flex;flex-wrap:wrap;gap:12px}
+.sl-soon>a{opacity:.5;filter:saturate(.6);pointer-events:none}
+.sl-stamp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-9deg);padding:6px 18px;border:3px double #B5491F;border-radius:10px;background:rgba(255,255,255,0.88);color:#B5491F;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:20px;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;pointer-events:none;box-shadow:0 2px 10px rgba(20,32,27,0.12);animation:sl-stamp .5s cubic-bezier(.2,1.6,.4,1) .8s both}
+@keyframes sl-stamp{from{opacity:0;transform:translate(-50%,-50%) rotate(-9deg) scale(1.8)}to{opacity:1;transform:translate(-50%,-50%) rotate(-9deg) scale(1)}}
 @keyframes sl-fade{from{opacity:0}to{opacity:1}}
 @media (max-width: 760px){
 .sl-stage{display:flex;flex-direction:column}
@@ -94,9 +98,10 @@ a{color:#23629A}a:hover{color:#14201B}
 <h1 class="sl-in" style="animation-delay: .1s; margin: 0; font-weight: 800; font-size: clamp(52px, 8.4vw, 124px); line-height: 0.92; letter-spacing: -0.04em; max-width: 1050px">La météo sur ta trace.</h1>
 <div style="margin-top: 28px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px">
 <p class="sl-in" style="animation-delay: .2s; margin: 0; font-size: 20px; line-height: 1.55; color: #4C5852; max-width: 560px">Importe ton GPX. Sillage te dit quel temps tu auras, kilomètre par kilomètre, et à quelle heure partir pour garder le vent dans le dos.</p>
-<div id="telecharger" class="sl-in" style="animation-delay: .3s; display: flex; flex-wrap: wrap; gap: 12px">
+<div id="telecharger" class="sl-in sl-soon" style="animation-delay: .3s">
 <a href="#" class="sl-cta" style="display: inline-flex; flex-direction: column; justify-content: center; background: #E0A21B; color: #14201B; text-decoration: none; padding: 10px 24px; border-radius: 999px; min-height: 56px; box-sizing: border-box; line-height: 1.15"><span style="font-size: 12px; font-weight: 600">Télécharger sur</span><span style="font-size: 18px; font-weight: 800">l'App Store</span></a>
 <a href="#" style="display: inline-flex; flex-direction: column; justify-content: center; background: #14201B; color: #F1F3F0; text-decoration: none; padding: 10px 24px; border-radius: 999px; min-height: 56px; box-sizing: border-box; line-height: 1.15"><span style="font-size: 12px; font-weight: 600">Disponible sur</span><span style="font-size: 18px; font-weight: 800">Google Play</span></a>
+<span class="sl-stamp" aria-label="Bientôt disponible">Bientôt dispo</span>
 </div>
 </div>
 </div>
@@ -522,9 +527,10 @@ a{color:#23629A}a:hover{color:#14201B}
 <div class="sl-rv" style="position: relative; overflow: hidden; background: #E0A21B; color: #14201B; border-radius: 24px; padding: clamp(40px, 6vw, 80px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px">
 <svg viewBox="0 0 400 200" style="position: absolute; right: -40px; top: -20px; width: 460px; opacity: 0.35" aria-hidden="true"><g stroke="#14201B" stroke-width="3" stroke-linecap="round" fill="none"><path class="sl-windline" d="M0 40 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -1s" d="M120 100 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -2s" d="M40 160 q 100 -18 200 0"></path></g></svg>
 <h2 style="position: relative; margin: 0; font-weight: 800; font-size: clamp(36px, 4.6vw, 64px); line-height: 1; letter-spacing: -0.03em; max-width: 640px">Ta prochaine sortie mérite le bon départ.</h2>
-<div style="position: relative; display: flex; flex-wrap: wrap; gap: 12px">
+<div class="sl-soon">
 <a href="#" style="display: inline-flex; align-items: center; background: #14201B; color: #F1F3F0; text-decoration: none; padding: 16px 26px; border-radius: 999px; font-weight: 700; font-size: 17px; min-height: 56px; box-sizing: border-box">App Store</a>
 <a href="#" style="display: inline-flex; align-items: center; background: #14201B; color: #F1F3F0; text-decoration: none; padding: 16px 26px; border-radius: 999px; font-weight: 700; font-size: 17px; min-height: 56px; box-sizing: border-box">Google Play</a>
+<span class="sl-stamp" style="background: rgba(255,248,232,0.92)">Bientôt dispo</span>
 </div>
 </div>
 </section>
