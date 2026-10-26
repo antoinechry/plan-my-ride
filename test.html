@@ -639,6 +639,7 @@ body:not(.admin) .me-btns .adm{display:none}
   body:not([data-mode="taf"]) .verdict{font-size:48px;line-height:1.02;letter-spacing:-.02em}
   body:not([data-mode="taf"]) #map{height:520px}
 }
+#meLang,#meDist,#meTemp{grid-template-columns:1fr 1fr}
 </style>
 </head>
 <body>
@@ -739,6 +740,10 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
     <span class="al-l">Langue</span>
     <div class="seg2 me-theme" id="meLang" role="group" aria-label="Langue · Language"><button type="button" data-l="fr" lang="fr">Français</button><button type="button" data-l="en" lang="en">English</button></div>
+    <span class="al-l">Distances et vitesses</span>
+    <div class="seg2 me-theme" id="meDist" role="group" aria-label="Distances et vitesses"><button type="button" data-u="km">Métrique (km)</button><button type="button" data-u="mi">Impérial (mi)</button></div>
+    <span class="al-l">Température</span>
+    <div class="seg2 me-theme" id="meTemp" role="group" aria-label="Température"><button type="button" data-u="c">°C</button><button type="button" data-u="f">°F</button></div>
     <div class="me-btns"><button type="button" class="btn small" id="meHelp">Mode d'emploi</button></div></div>
 </section>
 <nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin-test.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
@@ -1133,8 +1138,28 @@ if (IS_TEST) { document.getElementById('testBand').hidden = false; document.titl
 const LANGS = ['fr', 'en'];
 const LANG = (() => { try { const l = localStorage.getItem('pmr-lang'); if (LANGS.includes(l)) return l; } catch (e) {} return /^fr\b/i.test(navigator.language || 'fr') ? 'fr' : 'en'; })();
 const LOC = LANG === 'en' ? 'en-GB' : 'fr-FR';
+/* ---------- unités (depuis le 26/10/2026) ----------
+   Tout est calculé et gardé en km, m, km/h, °C et mm ; la conversion ne se fait qu'à l'affichage.
+   Deux réglages (pmr-units) : distances, dénivelé, vitesses et pluie en métrique ou en impérial (mi, ft, mph, in),
+   et température en °C ou °F. Par défaut : impérial pour les navigateurs en-US / en-GB, °F pour en-US. */
+const UNITS = (() => { let u = {}; try { u = JSON.parse(localStorage.getItem('pmr-units') || '{}') || {}; } catch (e) {}
+  const nl = navigator.language || '', us = /-US$/i.test(nl), gb = /-GB$/i.test(nl);
+  return { mi: u.dist ? u.dist === 'mi' : (us || gb), f: u.temp ? u.temp === 'f' : us }; })();
+const UL = { km: UNITS.mi ? 'mi' : 'km', m: UNITS.mi ? 'ft' : 'm', kmh: UNITS.mi ? 'mph' : 'km/h', mh: UNITS.mi ? 'ft/h' : 'm/h', mm: UNITS.mi ? 'in' : 'mm', mmh: UNITS.mi ? 'in/h' : 'mm/h', C: UNITS.f ? '°F' : '°C' };
+const uD = km => UNITS.mi ? km * 0.621371 : km, uE = m => UNITS.mi ? m * 3.28084 : m, uV = uD, uT = c => UNITS.f ? c * 1.8 + 32 : c, uR = mm => UNITS.mi ? mm / 25.4 : mm;
+// unités dans un texte de T : seulement collées à une valeur {n} (« {0} km », « km {1} », « {2} °C »…) ou entre parenthèses (« (km/h) »)
+function unitTpl(r) {
+  const sp = '([ \u00a0])';
+  if (UNITS.mi) r = r.replace(new RegExp('(\\{\\d+\\})' + sp + 'km/h', 'g'), '$1$2mph').replace(/\(km\/h\)/g, '(mph)')
+    .replace(new RegExp('(\\{\\d+\\})' + sp + 'mm/h', 'g'), '$1$2in/h').replace(/\(mm\/h\)/g, '(in/h)')
+    .replace(new RegExp('(\\{\\d+\\})' + sp + 'm/h', 'g'), '$1$2ft/h')
+    .replace(new RegExp('(\\{\\d+\\})' + sp + 'km\\b', 'g'), '$1$2mi').replace(new RegExp('\\bkm' + sp + '(\\{\\d+\\})', 'g'), 'mi$1$2')
+    .replace(new RegExp('(\\{\\d+\\})' + sp + 'mm\\b', 'g'), '$1$2in').replace(new RegExp('(\\{\\d+\\})' + sp + 'm\\b', 'g'), '$1$2ft');
+  if (UNITS.f) r = r.replace(new RegExp('(\\{\\d+\\})' + sp + '°C', 'g'), '$1$2°F');
+  return r;
+}
 const I18N = LANG === 'fr' ? null : ((window.PMR_I18N || {})[LANG] || null);
-function T(s, a) { const r = I18N && I18N[s] != null ? I18N[s] : s; return a ? r.replace(/\{(\d+)\}/g, (m, i) => String(a[i])) : r; }
+function T(s, a) { const r = unitTpl(I18N && I18N[s] != null ? I18N[s] : s); return a ? r.replace(/\{(\d+)\}/g, (m, i) => String(a[i])) : r; }
 // textes et attributs du HTML fixe (clé = texte français, espaces ramenés à un seul)
 function i18nDom(root) {
   if (!I18N) return;
@@ -1152,6 +1177,14 @@ document.documentElement.lang = LANG;
 i18nDom(document.body);
 if (LANG === 'en') { const t = document.querySelector('#tabLib'); if (t && t.lastChild) t.lastChild.nodeValue = 'Routes'; } // onglet au pluriel (« Parcours » = Route ailleurs)
 const hrTxt = h => LANG === 'fr' ? h + 'h' : h + ':00'; // repères d'heure des graphes
+// Changer d'unités : même principe que la langue (gardées dans le navigateur et pour les alertes, puis rechargement)
+async function setUnits(ch) {
+  const cur = { dist: UNITS.mi ? 'mi' : 'km', temp: UNITS.f ? 'f' : 'c' }, nu = { ...cur, ...ch };
+  if (nu.dist === cur.dist && nu.temp === cur.temp) return;
+  try { localStorage.setItem('pmr-units', JSON.stringify(nu)); } catch (e) {}
+  try { const sb = await Promise.race([sbIfLogged(), new Promise(r => setTimeout(r, 2500))]); if (sb) { const { data: { session } } = await sb.auth.getSession(); if (session) await Promise.race([sb.from('push_alerts').update({ dist: nu.dist, temp: nu.temp }).eq('user_id', session.user.id), new Promise(r => setTimeout(r, 2500))]); } } catch (e) {}
+  location.reload();
+}
 // Changer de langue : gardée dans le navigateur et, s'il y a des alertes météo, dans le compte (texte des notifications), puis rechargement
 async function setLang(l) {
   if (!LANGS.includes(l) || l === LANG) return;
@@ -1167,6 +1200,17 @@ const dayFmt = new Intl.DateTimeFormat(LOC, { weekday: 'short', day: 'numeric', 
 const n0 = x => (Math.round(x) + 0).toLocaleString(LOC); // + 0 : jamais « -0 »
 const n1 = x => (Math.round(x * 10) / 10).toLocaleString(LOC, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fD = (km, d = 1) => (d ? n1 : n0)(uD(km)), fE = m => n0(uE(m)), fV = (v, d = 0) => (d ? n1 : n0)(uV(v)), fT = c => n0(uT(c));
+const fR = mm => UNITS.mi ? (Math.round(uR(mm) * 100) / 100 + 0).toLocaleString(LOC, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : n1(mm);
+const fOff = m => UNITS.mi ? (m < 160 ? fE(m) + ' ft' : fD(m / 1000) + ' mi') : (m < 1000 ? m + ' m' : n1(m / 1000) + ' km'); // écart à la trace
+// unités dans le HTML fixe (légendes, en-têtes « Km », rayon des ravitos)
+if (UNITS.mi) {
+  const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = tw.nextNode());) { const v = n.nodeValue, w = v.replace(/\((mm)\/h\)/g, '(in/h)').replace(/, km\/h\)/g, ', mph)').replace(/< 4 km\/h/g, '< 2 mph').replace(/^(\s*)Km(\s*)$/, '$1Mi$2')
+    .replace(/kilometre by kilometre/g, 'mile by mile').replace(/at every kilometre/g, 'at every mile').replace(/^(\s*)Metres of elevation/, '$1Feet of elevation')
+    .replace(/au fil des kilomètres/g, 'au fil des miles').replace(/à chaque kilomètre/g, 'à chaque mile').replace(/^(\s*)Mètres de dénivelé/, '$1Pieds de dénivelé'); if (w !== v) n.nodeValue = w; }
+  for (const o of document.querySelectorAll('#poiRadius option')) o.textContent = fOff(+o.value);
+}
 
 /* ---------- état ---------- */
 // pages : Sortie (#), Ultra (#ultra), Vélotaf (#velotaf)
@@ -1274,7 +1318,7 @@ function applyLaps(opt) {
   const want = S.mode === 'ride' ? clamp(Math.round(opt.laps || 1), 1, 50) : 1;
   const gap = hav(B.pts[0], B.pts[B.n - 1]), loop = gap <= LAP_GAP, n = want > 1 && loop ? want : 1;
   const err = $('#lapErr'); err.hidden = !(want > 1 && !loop);
-  if (!err.hidden) err.textContent = T("Ce GPX n'est pas une boucle : l'arrivée est à {0} km du départ. Le mode tours ne fonctionne qu'avec une boucle (arrivée à moins de {1} m du départ).", [gap < 10 ? n1(gap) : n0(gap), LAP_GAP * 1000]);
+  if (!err.hidden) err.textContent = T("Ce GPX n'est pas une boucle : l'arrivée est à {0} km du départ. Le mode tours ne fonctionne qu'avec une boucle (arrivée à moins de {1} m du départ).", [gap < 10 ? fD(gap) : fD(gap, 0), fE(LAP_GAP * 1000)]);
   $('#lapPauseField').hidden = want < 2;
   if (n === S.lapN) return;
   S.lapN = n; S.tl = null;
@@ -1963,7 +2007,7 @@ async function run() {
   if (optArr !== opt) { opt = tafSolve(optArr, true); t0 = startMs(opt); } // puis avec le vent
   S.tl = simulate(t0, opt, true);
   tafDepShow(opt);
-  if (S.wx && S.tl.st.missKm > 0.5) note = note || T("La fin du parcours ({0} km) dépasse l'horizon des prévisions.", [n0(S.tl.st.missKm)]);
+  if (S.wx && S.tl.st.missKm > 0.5) note = note || T("La fin du parcours ({0} km) dépasse l'horizon des prévisions.", [fD(S.tl.st.missKm, 0)]);
   setStatus(note, note ? 'err' : '');
   const opts = S.wx ? cand.map(c => { const r = simulate(startMs(opt, c), opt, true); return { time: c, r, sc: score(r.st, S.P.total) }; }) : [];
   // Vélotaf : aller et retour de chaque jour ouvré de la semaine, aux mêmes heures
@@ -2074,8 +2118,8 @@ const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', '
 const compass = deg => COMPASS[Math.round(deg / 22.5) % 16];
 const arrowSvg = (deg, color) => `<svg class="arrow" viewBox="0 0 24 24" style="transform:rotate(${deg}deg)"><path d="M12 2 L19 20 L12 15.5 L5 20 Z" fill="${color}"/></svg>`;
 function relLabel(head) {
-  if (head > 5) return { cls: 'h', txt: T("Face {0} km/h", [n0(head)]) };
-  if (head < -5) return { cls: 't', txt: T("Dos {0} km/h", [n0(-head)]) };
+  if (head > 5) return { cls: 'h', txt: T("Face {0} km/h", [fV(head)]) };
+  if (head < -5) return { cls: 't', txt: T("Dos {0} km/h", [fV(-head)]) };
   return { cls: 'c', txt: T("Travers / faible") };
 }
 function durTxt(h) { const tot = Math.round(h * 60); return `${Math.floor(tot / 60)} h ${String(tot % 60).padStart(2, '0')}`; }
@@ -2096,24 +2140,24 @@ function renderSummary(opt) {
   const pct = x => covered > 0 ? Math.round(x / covered * 100) : 0;
   const elapsed = (tl.end - tl.start) / 3600e3;
   const tiles = [
-    ['Distance', `${n1(P.total)} <small>km</small>`, (S.laps ? T("{0} tours de {1} km · ", [S.laps.n, n1(S.lapBase.total)]) : '') + (P.hasEle ? `D+ ${n0(P.up)} m · D− ${n0(P.down)} m` : T("Pas d'altitude dans le GPX"))],
+    ['Distance', `${fD(P.total)} <small>${UL.km}</small>`, (S.laps ? T("{0} tours de {1} km · ", [S.laps.n, fD(S.lapBase.total)]) : '') + (P.hasEle ? `D+ ${fE(P.up)} ${UL.m} · D− ${fE(P.down)} ${UL.m}` : T("Pas d'altitude dans le GPX"))],
     [T("Arrivée"), whenTxt(tl.end, tl.start), T("{0} au total{1}", [durTxt(elapsed), tl.stops.some(isNight) ? ` · ${tl.stops.filter(s => isNight(s) && s.to - s.from > 3600e3 * 3).length} ${T('nuit(s)')}` : ''])],
   ];
   if (has) {
-    tiles.push([T("Températures"), `${n0(st.tmin)}–${n0(st.tmax)} <small>°C</small>`, T("Ressenti {0} à {1} °C", [n0(st.amin), n0(st.amax)])]);
-    tiles.push([T("Pluie"), `${n1(st.rain)} <small>mm</small>`, st.wetH > 0.05 ? T("{0} sous la pluie · risque max {1} %", [durTxt(st.wetH), n0(st.prob)]) : T("Risque max {0} %", [n0(st.prob)])]);
-    tiles.push([T("Vent"), T("{0} <small>% de face</small>", [pct(st.headKm)]), T("{0} % de dos{1}", [pct(st.tailKm), st.hasGust ? T(" · rafales {0} km/h", [n0(st.gust)]) : ''])]);
+    tiles.push([T("Températures"), `${fT(st.tmin)}–${fT(st.tmax)} <small>${UL.C}</small>`, T("Ressenti {0} à {1} °C", [fT(st.amin), fT(st.amax)])]);
+    tiles.push([T("Pluie"), `${fR(st.rain)} <small>${UL.mm}</small>`, st.wetH > 0.05 ? T("{0} sous la pluie · risque max {1} %", [durTxt(st.wetH), n0(st.prob)]) : T("Risque max {0} %", [n0(st.prob)])]);
+    tiles.push([T("Vent"), T("{0} <small>% de face</small>", [pct(st.headKm)]), T("{0} % de dos{1}", [pct(st.tailKm), st.hasGust ? T(" · rafales {0} km/h", [fV(st.gust)]) : ''])]);
     tiles.push([T("Soleil"), `${n0(st.rideH > 0 ? st.sunH / st.rideH * 100 : 0)} <small>%</small>`, st.nightH > 0.1 ? T("{0} de nuit", [durTxt(st.nightH)]) : T("du temps en selle ensoleillé")]);
   }
   // Vélotaf : distance aller / retour, heures d'arrivée au travail et à la maison
   const tafSum = S.laps && S.laps.taf ? lapSummaries() : null;
   if (tafSum) {
-    tiles[0] = ['Distance', `${n1(tafSum[0].dist + tafSum[1].dist)} <small>km</small>`, T("Aller {0} km · retour {1} km", [n1(tafSum[0].dist), n1(tafSum[1].dist)])];
+    tiles[0] = ['Distance', `${fD(tafSum[0].dist + tafSum[1].dist)} <small>${UL.km}</small>`, T("Aller {0} km · retour {1} km", [fD(tafSum[0].dist), fD(tafSum[1].dist)])];
     tiles[1] = [T("Arrivées"), `${hm.format(new Date(tafSum[0].b.t))} · ${hm.format(new Date(tafSum[1].b.t))}`, T("au travail · à la maison{0}", [tafSum[0].late ? T(" · ⚠ retour avant l'arrivée") : ''])];
   }
   const rs = has ? windRoseStats(tl.start, tl.end) : null; // rose du vent ressenti dans la tuile Vent
   $('#stats').innerHTML = tiles.map(([l, v, s]) => l === T("Vent") && rs
-    ? T("<div class=\"stat wind\" title=\"Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force\"><canvas id=\"roseAll\"></canvas><div class=\"wtxt\"><span class=\"label\">Vent ressenti</span><span class=\"s\"><b>{0} %</b> de face</span><span class=\"s\"><b>{1} %</b> de travers</span><span class=\"s\"><b>{2} %</b> de dos</span>{3}{4}</div></div>", [Math.round(rs.face * 100), Math.round(rs.cross * 100), Math.round(rs.tail * 100), rs.calm > 0.02 ? T("<span class=\"s\">{0} % calme</span>", [Math.round(rs.calm * 100)]) : '', st.hasGust ? T('<span class="s">rafales {0} km/h</span>', [n0(st.gust)]) : ''])
+    ? T("<div class=\"stat wind\" title=\"Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force\"><canvas id=\"roseAll\"></canvas><div class=\"wtxt\"><span class=\"label\">Vent ressenti</span><span class=\"s\"><b>{0} %</b> de face</span><span class=\"s\"><b>{1} %</b> de travers</span><span class=\"s\"><b>{2} %</b> de dos</span>{3}{4}</div></div>", [Math.round(rs.face * 100), Math.round(rs.cross * 100), Math.round(rs.tail * 100), rs.calm > 0.02 ? T("<span class=\"s\">{0} % calme</span>", [Math.round(rs.calm * 100)]) : '', st.hasGust ? T('<span class="s">rafales {0} km/h</span>', [fV(st.gust)]) : ''])
     : `<div class="stat"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
   { const small = [...$('#stats').children].filter(e => !e.classList.contains('wind')); // mobile : dernière tuile seule sur sa ligne = pleine largeur
     if (small.length % 2) small[small.length - 1].classList.add('span'); }
@@ -2125,11 +2169,11 @@ function renderSummary(opt) {
     S.roses = tafSum.map(d => has ? windRoseStats(d.a.t, d.b.t) : null); S.rose = null;
     $('#stats').innerHTML = tafSum.map((d, k) => {
       const w = d.wx, r = S.roses[k], TT = [
-        tile('Distance', `${n1(d.dist)} <small>km</small>`, `${durShort(d.h)} · D+ ${n0(d.dplus)} m`),
+        tile('Distance', `${fD(d.dist)} <small>${UL.km}</small>`, `${durShort(d.h)} · D+ ${fE(d.dplus)} ${UL.m}`),
         tile(k ? T("Arrivée maison") : T("Arrivée travail"), hm.format(new Date(d.b.t)), T("départ {0}", [hm.format(new Date(d.a.t))]))];
-      if (w) TT.push(tile(T("Températures"), `${n0(w.tAmin)}${Math.round(w.tAmax) !== Math.round(w.tAmin) ? '–' + n0(w.tAmax) : ''} <small>°C</small>`, T("Ressenti {0} à {1} °C", [n0(w.tmin), n0(w.tmax)])),
-        tile(T("Pluie"), `${n1(w.rain)} <small>mm</small>`, (w.prob != null && isFinite(w.prob) ? T("Risque max {0} % · ", [n0(w.prob)]) : '') + (w.dark > 0.5 ? T("de nuit") : T('soleil {0} %', [n0(w.sun * 100)]))));
-      if (r) TT.push(T("<div class=\"stat wind\" title=\"Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force\"><canvas id=\"rose{0}\"></canvas><div class=\"wtxt\"><span class=\"label\">Vent ressenti</span><span class=\"s\"><b>{1} %</b> de face</span><span class=\"s\"><b>{2} %</b> de travers</span><span class=\"s\"><b>{3} %</b> de dos</span>{4}{5}</div></div>", [k, Math.round(r.face * 100), Math.round(r.cross * 100), Math.round(r.tail * 100), r.calm > 0.02 ? T("<span class=\"s\">{0} % calme</span>", [Math.round(r.calm * 100)]) : '', w && w.gust > 0 ? T('<span class="s">rafales {0} km/h</span>', [n0(w.gust)]) : '']));
+      if (w) TT.push(tile(T("Températures"), `${fT(w.tAmin)}${Math.round(w.tAmax) !== Math.round(w.tAmin) ? '–' + fT(w.tAmax) : ''} <small>${UL.C}</small>`, T("Ressenti {0} à {1} °C", [fT(w.tmin), fT(w.tmax)])),
+        tile(T("Pluie"), `${fR(w.rain)} <small>${UL.mm}</small>`, (w.prob != null && isFinite(w.prob) ? T("Risque max {0} % · ", [n0(w.prob)]) : '') + (w.dark > 0.5 ? T("de nuit") : T('soleil {0} %', [n0(w.sun * 100)]))));
+      if (r) TT.push(T("<div class=\"stat wind\" title=\"Vent ressenti : avant du cycliste à droite ; longueur = part du temps où le vent vient de ce côté, couleur = force\"><canvas id=\"rose{0}\"></canvas><div class=\"wtxt\"><span class=\"label\">Vent ressenti</span><span class=\"s\"><b>{1} %</b> de face</span><span class=\"s\"><b>{2} %</b> de travers</span><span class=\"s\"><b>{3} %</b> de dos</span>{4}{5}</div></div>", [k, Math.round(r.face * 100), Math.round(r.cross * 100), Math.round(r.tail * 100), r.calm > 0.02 ? T("<span class=\"s\">{0} % calme</span>", [Math.round(r.calm * 100)]) : '', w && w.gust > 0 ? T('<span class="s">rafales {0} km/h</span>', [fV(w.gust)]) : '']));
       return `<div class="sd"><div class="sd-ttl"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span></div><div class="stats">${TT.join('')}</div></div>`;
     }).join('');
     S.roses.forEach((r, k) => { if (r) roseCanvas($('#rose' + k), r, 150, 84); });
@@ -2148,7 +2192,7 @@ function renderSummary(opt) {
     if (st.rain >= 10) neg.push(T("grosse pluie")); else if (st.rain >= 3) neg.push(T('pluie')); else if (st.rain >= 0.3) neg.push(T("quelques gouttes"));
     if (st.amin < 3) neg.push(T('froid')); else if (st.amin < 8) neg.push(T("fraîcheur")); else if (st.amax > 34) neg.push(T('canicule')); else if (st.amax > 30) neg.push(T('chaleur'));
     if (headwind) neg.push(T("vent de face"));
-    if (st.hasGust && st.gust >= GUST_WARN) neg.push(T("rafales à {0} km/h", [n0(st.gust)]));
+    if (st.hasGust && st.gust >= GUST_WARN) neg.push(T("rafales à {0} km/h", [fV(st.gust)]));
     if (tailwind) pos.push(T("vent dans le dos"));
     if (sunPct >= 60) pos.push('soleil');
     const list = a => a.length < 2 ? (a[0] || '') : T("{0} et {1}", [a.slice(0, -1).join(', '), a[a.length - 1]]);
@@ -2167,13 +2211,13 @@ function renderSummary(opt) {
       const head = w.ws * Math.cos((w.wd - P.b[i]) * RAD) > 5 ? dk : 0;
       if (P.d[i] <= P.total / 2) { hA += head; dA += dk; } else { hB += head; dB += dk; }
     }
-    const S1 = [], hh = t => hm.format(new Date(t)), deg = x => n0(Math.round(x) + 0), nb = x => x.replace(/ /g, '\u00a0'); // pas de « -0 », durées insécables
+    const S1 = [], hh = t => hm.format(new Date(t)), deg = x => fT(x), nb = x => x.replace(/ /g, '\u00a0'); // pas de « -0 », durées insécables
     S1.push(T("{0}, arrivée vers <b>{1}</b>, soit {2} au total.", [dep, whenTxt(tl.end, tl.start), nb(durTxt(elapsed))]));
     if (dry) S1.push(T("Pas de pluie attendue{0}.", [isFinite(st.prob) && st.prob > 0 ? T(" (risque au plus {0} %)", [n0(st.prob)]) : '']));
-    else S1.push(T("<b>{0} mm</b> de pluie prévus{1}{2}{3}.", [n1(st.rain), st.wetH > 0.05 ? T(", soit {0} sous la pluie", [nb(durTxt(st.wetH))]) : '', w0 != null && w1 - w0 > 15 * 60e3 ? (tl.end - w1 < 10 * 60e3 ? T(", de {0} jusqu'à l'arrivée (à partir du km {1})", [hh(w0), n0(k0)]) : T(", surtout entre {0} et {1} (km {2} à {3})", [hh(w0), hh(w1), n0(k0), n0(k1)])) : w0 != null ? T(', vers {0} (km {1})', [hh(w0), n0(k0)]) : '', isFinite(st.prob) && st.prob > 0 ? T(", risque jusqu'à {0} %", [n0(st.prob)]) : '']));
+    else S1.push(T("<b>{0} mm</b> de pluie prévus{1}{2}{3}.", [fR(st.rain), st.wetH > 0.05 ? T(", soit {0} sous la pluie", [nb(durTxt(st.wetH))]) : '', w0 != null && w1 - w0 > 15 * 60e3 ? (tl.end - w1 < 10 * 60e3 ? T(", de {0} jusqu'à l'arrivée (à partir du km {1})", [hh(w0), fD(k0, 0)]) : T(", surtout entre {0} et {1} (km {2} à {3})", [hh(w0), hh(w1), fD(k0, 0), fD(k1, 0)])) : w0 != null ? T(', vers {0} (km {1})', [hh(w0), fD(k0, 0)]) : '', isFinite(st.prob) && st.prob > 0 ? T(", risque jusqu'à {0} %", [n0(st.prob)]) : '']));
     const fa = dA > 0 ? hA / dA : 0, fb = dB > 0 ? hB / dB : 0;
     const where = headP >= 15 ? (fb - fa > 0.2 ? T(", surtout en fin de parcours") : fa - fb > 0.2 ? T(", surtout en début de parcours") : '') : '';
-    S1.push(T("Vent de face sur <b>{0} %</b> du parcours{1}, de dos sur {2} %{3}{4}", [headP, where, tailP, st.hasGust ? T(", rafales jusqu'à {0} km/h", [n0(st.gust)]) : '', Math.abs(avgHead) < 4 ? T(" : peu d'effet sur ta vitesse.") : avgHead > 0 ? T(" : il te ralentira.") : T(" : il t'aidera.")]));
+    S1.push(T("Vent de face sur <b>{0} %</b> du parcours{1}, de dos sur {2} %{3}{4}", [headP, where, tailP, st.hasGust ? T(", rafales jusqu'à {0} km/h", [fV(st.gust)]) : '', Math.abs(avgHead) < 4 ? T(" : peu d'effet sur ta vitesse.") : avgHead > 0 ? T(" : il te ralentira.") : T(" : il t'aidera.")]));
     S1.push((Math.round(st.tmin) === Math.round(st.tmax) ? T("Température autour de {0} °C", [deg(st.tmin)]) : T("Températures de {0} à {1} °C", [deg(st.tmin), deg(st.tmax)]))
       + (Math.round(st.amin) === Math.round(st.tmin) && Math.round(st.amax) === Math.round(st.tmax) ? '' : T(", ressenti de {0} à {1} °C", [deg(st.amin), deg(st.amax)]))
       + (st.amin < 3 ? T(" : gants, couvre-chaussures et coupe-vent conseillés.") : st.amin < 8 ? T(" : prévoir manchettes et coupe-vent.") : st.amax > 30 ? T(" : pense à boire souvent.") : '.'));
@@ -2187,7 +2231,7 @@ function renderSummary(opt) {
   if (tafSum) { // Vélotaf : une phrase par trajet
     const vs = tafSum.map(d => tripVerdict(d.wx));
     const ro = readOpt(), arrT = ro.tafGoMode === 'arr' ? tafOpt(ro, ro.date).time : '';
-    txt = T("{0} : <b>aller</b> à {1}{2}, {3}{4} ; <b>retour</b> à {5}, {6}{7}.", [dayFmt.format(new Date(tl.start)), hm.format(new Date(tafSum[0].a.t)), arrT ? T(" pour arriver à {0}", [arrT]) : '', vs[0].txt, tafSum[0].wx ? T(' ({0} °C ressentis)', [n0(tafSum[0].wx.tmin)]) : '', hm.format(new Date(tafSum[1].a.t)), vs[1].txt, tafSum[1].wx ? T(' ({0} °C ressentis)', [n0(tafSum[1].wx.tmin)]) : '']);
+    txt = T("{0} : <b>aller</b> à {1}{2}, {3}{4} ; <b>retour</b> à {5}, {6}{7}.", [dayFmt.format(new Date(tl.start)), hm.format(new Date(tafSum[0].a.t)), arrT ? T(" pour arriver à {0}", [arrT]) : '', vs[0].txt, tafSum[0].wx ? T(' ({0} °C ressentis)', [fT(tafSum[0].wx.tmin)]) : '', hm.format(new Date(tafSum[1].a.t)), vs[1].txt, tafSum[1].wx ? T(' ({0} °C ressentis)', [fT(tafSum[1].wx.tmin)]) : '']);
   }
   $('#verdict').innerHTML = txt; try { chipsRender(); } catch (e) {}
   $('#verdictMore').innerHTML = tafSum ? '' : more; $('#verdictMore').hidden = !!tafSum || !more;
@@ -2302,7 +2346,7 @@ function renderMap() {
   for (const st of S.tl.stops) {
     if (st.lap || st.to - st.from < 3 * 3600e3 || st.km === 0) continue;
     const i = idxAtKm(st.km), p = P.pts[i];
-    L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: cssVar('--elev-line'), fillOpacity: 1 }).bindTooltip(T("Bivouac km {0} · reprise {1}", [n0(st.km), whenTxt(st.to, S.tl.start)])).addTo(routeLayer);
+    L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: cssVar('--elev-line'), fillOpacity: 1 }).bindTooltip(T("Bivouac km {0} · reprise {1}", [fD(st.km, 0), whenTxt(st.to, S.tl.start)])).addTo(routeLayer);
   }
   renderLegend();
   flowUpdate(true);
@@ -2354,10 +2398,10 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
     const delay = (-(shown.length * 0.37) % dur).toFixed(2), calm = w.ws < 5 ? ' calm' : '';
     const arrowHtml = showA ? `<span class="wring" style="width:${sz}px;height:${sz}px"><span class="wrot" style="transform:rotate(${(w.wd + 180) % 360}deg)"><svg class="wmove${calm}" viewBox="0 0 24 24" width="${as}" height="${as}" style="--d:${dur}s;--a:${amp}px;--dl:${delay}s"><path d="${WARROW}" fill="${col}" stroke="#0b1218" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>` : '';
     const sky = showS ? skySvg(w, 15) : '';
-    const html = `<div class="wa">${arrowHtml}<b class="${showA ? '' : 'solo'}">${sky}<span class="wt">${n0(w.temp)}°</span>${showA ? `<span class="ww">${n0(w.ws)}<small>km/h</small></span>` : ''}</b></div>`;
+    const html = `<div class="wa">${arrowHtml}<b class="${showA ? '' : 'solo'}">${sky}<span class="wt">${fT(w.temp)}°</span>${showA ? `<span class="ww">${fV(w.ws)}<small>${UL.kmh}</small></span>` : ''}</b></div>`;
     const icon = showA ? { iconSize: [110, sz + 18], iconAnchor: [55, sz / 2] } : { iconSize: [60, 22], iconAnchor: [30, 11] };
     L.marker([p.lat, p.lon], { icon: L.divIcon({ html, className: '', ...icon }), keyboard: false })
-      .bindTooltip(T("<b>km {0}</b> · passage {1}<br>{2}{3} · {4} °C{5}<br>Vent de {6} : {7} km/h ({8}){9}<br>Pour vous : {10}", [n1(P.d[i] - (kOff || 0)), hm.format(new Date(t)), skyLabel(w.code, w.day), isFinite(w.cc) ? T(' (nuages {0} %)', [n0(w.cc)]) : '', n0(w.temp), w.pr >= 0.1 ? T(" · pluie {0} mm/h", [n1(w.pr)]) : '', compass(w.wd), n0(w.ws), lbl.toLowerCase(), isFinite(w.gust) ? T("<br>Rafales {0} km/h", [n0(w.gust)]) : '', relLabel(head).txt]))
+      .bindTooltip(T("<b>km {0}</b> · passage {1}<br>{2}{3} · {4} °C{5}<br>Vent de {6} : {7} km/h ({8}){9}<br>Pour vous : {10}", [fD(P.d[i] - (kOff || 0)), hm.format(new Date(t)), skyLabel(w.code, w.day), isFinite(w.cc) ? T(' (nuages {0} %)', [n0(w.cc)]) : '', fT(w.temp), w.pr >= 0.1 ? T(" · pluie {0} mm/h", [fR(w.pr)]) : '', compass(w.wd), fV(w.ws), lbl.toLowerCase(), isFinite(w.gust) ? T("<br>Rafales {0} km/h", [fV(w.gust)]) : '', relLabel(head).txt]))
       .addTo(windLayer);
   }
   return layer;
@@ -2475,7 +2519,7 @@ function flowLabel() {
   const t = FLOW.t, tl = S.tl, P = S.P;
   $('#flowLbl').textContent = whenTxt(t, tl.start);
   let i = 0; { const TT = tl.times; let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (TT[m] < t) lo = m + 1; else hi = m; } i = lo; }
-  $('#flowPos').textContent = FLOW.status ? '· ' + FLOW.status : t < tl.start ? T("· avant le départ") : t > tl.end ? T("· après l'arrivée") : T("· tu es au km {0}", [n0(P.d[i])]);
+  $('#flowPos').textContent = FLOW.status ? '· ' + FLOW.status : t < tl.start ? T("· avant le départ") : t > tl.end ? T("· après l'arrivée") : T("· tu es au km {0}", [fD(P.d[i], 0)]);
   const p = P.pts[t <= tl.start ? 0 : t >= tl.end ? P.n - 1 : i];
   if (!FLOW.rider) FLOW.rider = L.circleMarker([p.lat, p.lon], { radius: 7, color: '#fff', weight: 3, fillColor: '#111', fillOpacity: 1, pane: 'markerPane' }).bindTooltip(T("Toi à l'heure choisie"));
   FLOW.rider.setLatLng([p.lat, p.lon]); if (!map.hasLayer(FLOW.rider)) FLOW.rider.addTo(map);
@@ -2505,11 +2549,11 @@ function renderLegend() {
   const el = $('#legend');
   if (!S.wx) { el.innerHTML = T("<span>Trace sans données météo.</span>"); return; }
   if (S.metric === 'wind') el.innerHTML = T("<span><i style=\"background:{0}\"></i>Vent de face</span><span><i style=\"background:{1}\"></i>Travers ou faible</span><span><i style=\"background:{2}\"></i>Vent de dos</span>", [cssVar('--head'), cssVar('--cross'), cssVar('--tail')]);
-  else if (S.metric === 'temp') el.innerHTML = T("<span>Température ressentie</span><span>−5 °C <i class=\"ramp\" style=\"background:linear-gradient(90deg,{0})\"></i> 33 °C</span>", [TEMP_STOPS.map(s => s[1]).join(',')]);
-  else if (S.metric === 'rain') el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>${T('Sec')}</span><span>${n1(0.1)} mm/h <i class="ramp" style="background:linear-gradient(90deg,#9cc7ef,#123f8c)"></i> 8 mm/h</span>`;
+  else if (S.metric === 'temp') el.innerHTML = T("<span>Température ressentie</span><span>−5 °C <i class=\"ramp\" style=\"background:linear-gradient(90deg,{0})\"></i> 33 °C</span>", [TEMP_STOPS.map(s => s[1]).join(',')]).replace('−5 °C', fT(-5) + ' ' + UL.C).replace('33 °C', fT(33) + ' ' + UL.C);
+  else if (S.metric === 'rain') el.innerHTML = `<span><i style="background:${cssVar('--cross')}"></i>${T('Sec')}</span><span>${fR(0.1)} ${UL.mmh} <i class="ramp" style="background:linear-gradient(90deg,#9cc7ef,#123f8c)"></i> ${fR(8)} ${UL.mmh}</span>`;
   else el.innerHTML = T("<span><i style=\"background:{0}\"></i>Couvert</span><span><i style=\"background:{1}\"></i>Plein soleil</span><span><i style=\"background:#3a4552\"></i>Nuit</span>", [cssVar('--cross'), cssVar('--sun')]);
   if (S.laps && !S.laps.taf) el.innerHTML += T("<div class=\"wrow\"><span>{0} tours : trace colorée d'après le 1er tour, pas de flèches de vent sur la carte. La météo de chaque tour est sous la carte.</span></div>", [S.laps.n]);
-  else if ($('#arrowsOn').checked) el.innerHTML += T("<div class=\"wrow\"><span>Flèches : sens où va le vent · pastille : {0}température et vent à l'heure de passage</span><span>Force<span class=\"wscale\">{1}</span></span></div>", [$('#skyOn').checked ? T('ciel, ') : '', WIND_SCALE.map((w, i) => `<span style="background:${w[1]};color:${w[3]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? w[0] + '+' : w[0] + '–' + WIND_SCALE[i + 1][0]}</span>`).join('')]);
+  else if ($('#arrowsOn').checked) el.innerHTML += T("<div class=\"wrow\"><span>Flèches : sens où va le vent · pastille : {0}température et vent à l'heure de passage</span><span>Force<span class=\"wscale\">{1}</span></span></div>", [$('#skyOn').checked ? T('ciel, ') : '', WIND_SCALE.map((w, i) => `<span style="background:${w[1]};color:${w[3]}" title="${w[2]}">${i === WIND_SCALE.length - 1 ? fV(w[0]) + '+' : fV(w[0]) + '–' + fV(WIND_SCALE[i + 1][0])}</span>`).join('')]);
   else if ($('#skyOn').checked) el.innerHTML += T("<div class=\"wrow\"><span>Pastilles : ciel (soleil, lune la nuit, nuages, pluie) et température à l'heure de passage</span></div>");
 }
 /* ---------- export image (page Sortie) : carte avec la trace et le vent + profil météo ---------- */
@@ -2572,9 +2616,9 @@ async function drawMapTo(c, x0, y0, W, H) {
       // pastille : pictogramme du ciel + vitesse du vent (ou pictogramme seul sans les flèches)
       // pastille comme à l'écran : ciel, température, | vent km/h
       const mono = cssVar('--f-mono').split(',')[0], fBig = `600 10.5px ${mono}, monospace`, fSmall = `500 8.5px ${mono}, monospace`;
-      const is = exS && skyKind(w) ? 15 : 0, tT = `${n0(w.temp)}°`, tW = n0(w.ws);
+      const is = exS && skyKind(w) ? 15 : 0, tT = `${fT(w.temp)}°`, tW = fV(w.ws);
       c.font = fBig; const wT = c.measureText(tT).width, wW = exA ? c.measureText(tW).width : 0;
-      c.font = fSmall; const wU = exA ? c.measureText('km/h').width + 1 : 0;
+      c.font = fSmall; const wU = exA ? c.measureText(UL.kmh).width + 1 : 0;
       const sep = exA ? 7 : 0, bw = 8 + (is ? is + 2 : 0) + wT + sep + wW + wU, bh = 19;
       const by = exA ? y + sz / 2 + 2 : y - bh / 2, bx = x - bw / 2, my = by + bh / 2;
       c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.roundRect(bx, by, bw, bh, 7); c.fill();
@@ -2585,7 +2629,7 @@ async function drawMapTo(c, x0, y0, W, H) {
       if (exA) {
         c.strokeStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.moveTo(cx + 3.5, by + 4); c.lineTo(cx + 3.5, by + bh - 4); c.stroke(); cx += sep;
         c.fillText(tW, cx, my); cx += wW + 1;
-        c.font = fSmall; c.fillStyle = '#46525e'; c.fillText('km/h', cx, my + 0.5);
+        c.font = fSmall; c.fillStyle = '#46525e'; c.fillText(UL.kmh, cx, my + 0.5);
       }
       c.textBaseline = 'alphabetic';
     }
@@ -2625,16 +2669,16 @@ async function exportImage() {
     const meas = document.createElement('canvas').getContext('2d'); meas.font = `500 17px ${body}`;
     const tl = S.tl, P = S.P;
     const ultra = S.mode === 'ultra';
-    const sub = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${durTxt((tl.end - tl.start) / 3600e3)} ${ultra ? T("au total") : T("de sortie")}`; // départ et arrivée sont dans la phrase de résumé
+    const sub = `${fD(P.total)} ${UL.km} · D+ ${fE(P.up)} ${UL.m} · ${durTxt((tl.end - tl.start) / 3600e3)} ${ultra ? T("au total") : T("de sortie")}`; // départ et arrivée sont dans la phrase de résumé
     const verdictLines = wrapText(meas, $('#verdict').innerText.trim(), MW);
     meas.font = `14px ${body}`; const moreLines = $('#verdictMore').hidden ? [] : wrapText(meas, $('#verdictMore').innerText.replace(/\s*\n\s*/g, ' ').trim(), MW); meas.font = `500 17px ${body}`;
     // page Ultra : jour par jour (2 lignes par jour)
     const days = ultra ? daySummaries() : [];
     const dayLines = days.map((d, k) => ({
       head: T("Jour {0} · {1}", [k + 1, dayFmt.format(new Date(d.a.t))]),
-      main: T("{0} → {1} · km {2} → {3} · {4} km · D+ {5} m · pédalage {6} · pauses {7}", [hm.format(new Date(d.a.t)), whenTxt(d.b.t, d.a.t), n0(d.a.km), n0(d.b.km), n0(d.dist), n0(d.dplus), durShort(d.rideH), durShort(d.pauseH)]),
-      sub: (d.wx ? T("{0} à {1} °C ressentis · pluie {2} mm · vent de face {3} %", [n0(d.wx.tmin), n0(d.wx.tmax), n1(d.wx.rain), d.wx.head]) : T("Pas encore de prévision météo pour ce jour"))
-        + (d.night ? T(" · nuit au km {0}, {1} → {2}", [n0(d.b.km), hm.format(new Date(d.night.from)), hm.format(new Date(d.night.to))]) : ''),
+      main: T("{0} → {1} · km {2} → {3} · {4} km · D+ {5} m · pédalage {6} · pauses {7}", [hm.format(new Date(d.a.t)), whenTxt(d.b.t, d.a.t), fD(d.a.km, 0), fD(d.b.km, 0), fD(d.dist, 0), fE(d.dplus), durShort(d.rideH), durShort(d.pauseH)]),
+      sub: (d.wx ? T("{0} à {1} °C ressentis · pluie {2} mm · vent de face {3} %", [fT(d.wx.tmin), fT(d.wx.tmax), fR(d.wx.rain), d.wx.head]) : T("Pas encore de prévision météo pour ce jour"))
+        + (d.night ? T(" · nuit au km {0}, {1} → {2}", [fD(d.b.km, 0), hm.format(new Date(d.night.from)), hm.format(new Date(d.night.to))]) : ''),
     }));
     const daysH = days.length > 1 ? 16 + 28 + dayLines.length * 46 : 0;
     const headH = 34 + 24 + verdictLines.length * 23 + (moreLines.length ? 6 + moreLines.length * 19 : 0) + 14, legH = 40, keysH = 26, footH = 30;
@@ -2752,9 +2796,9 @@ function renderChart() {
   }
   // axes altitude
   c.font = font(10.5); c.fillStyle = muted; c.textAlign = 'right'; c.textBaseline = 'middle';
-  const eStep = niceStep((eMax - eMin) / 4);
+  const eK = uE(1), eStep = niceStep((eMax - eMin) * eK / 4); // repères dans l'unité affichée (m ou ft)
   c.strokeStyle = line; c.lineWidth = 1;
-  for (let e = Math.ceil(eMin / eStep) * eStep; e <= eMax; e += eStep) { const y = Ye(e); c.beginPath(); c.moveTo(pad.l, y); c.lineTo(pad.l + pw, y); c.globalAlpha = .6; c.stroke(); c.globalAlpha = 1; c.fillText(e + ' m', pad.l - 5, y); }
+  for (let ed = Math.ceil(eMin * eK / eStep) * eStep; ed <= eMax * eK; ed += eStep) { const y = Ye(ed / eK); c.beginPath(); c.moveTo(pad.l, y); c.lineTo(pad.l + pw, y); c.globalAlpha = .6; c.stroke(); c.globalAlpha = 1; c.fillText(Math.round(ed) + ' ' + UL.m, pad.l - 5, y); }
   // pluie
   if (S.wx) {
     // pluie : une barre par heure de roulage (pas des prévisions : 1 h), du km atteint au début de l'heure à celui de la fin,
@@ -2788,8 +2832,8 @@ function renderChart() {
       bins.forEach(b => { if (!b.w) { started = false; return; } const x = X(b.km), y = Yt(b.w.app); if (!started) { c.moveTo(x, y); started = true; } else c.lineTo(x, y); });
       c.strokeStyle = cssVar('--warm'); c.lineWidth = 2; c.stroke();
       c.textAlign = 'left'; c.fillStyle = cssVar('--warm');
-      const tStep = niceStep((tMax - tMin) / 4);
-      for (let t = Math.ceil(tMin / tStep) * tStep; t <= tMax; t += tStep) c.fillText(t + '°', pad.l + pw + 5, Yt(t));
+      const tStep = niceStep((uT(tMax) - uT(tMin)) / 4), tBack = v => UNITS.f ? (v - 32) / 1.8 : v; // repères en °C ou °F
+      for (let td = Math.ceil(uT(tMin) / tStep) * tStep; td <= uT(tMax); td += tStep) c.fillText(Math.round(td) + '°', pad.l + pw + 5, Yt(tBack(td)));
     }
     // bande vent
     // vent ressenti par heure de roulage : barre vers le haut = de face, vers le bas = de dos (moyenne sur l'heure)
@@ -2813,7 +2857,7 @@ function renderChart() {
         const bw = Math.max(2, b.x2 - b.x - 1.5), bx = b.x + .75, hh = Math.max(1.5, Math.abs(b.v) * sc);
         const col = Math.abs(b.v) < 4 ? cssVar('--cross') : b.v > 0 ? cssVar('--head') : cssVar('--tail');
         c.fillStyle = col; c.fillRect(bx, b.v > 0 ? wyz - hh : wyz, bw, hh);
-        if (bw >= 16 && Math.abs(b.v) >= 6) { c.textBaseline = b.v > 0 ? 'bottom' : 'top'; c.fillText(n0(Math.abs(b.v)), bx + bw / 2, b.v > 0 ? wyz - hh - 1 : wyz + hh + 1); }
+        if (bw >= 16 && Math.abs(b.v) >= 6) { c.textBaseline = b.v > 0 ? 'bottom' : 'top'; c.fillText(fV(Math.abs(b.v)), bx + bw / 2, b.v > 0 ? wyz - hh - 1 : wyz + hh + 1); }
       }
       // rafales de chaque heure : bande en haut du panneau, grises, orange à partir de GUST_SHOW, rouges à partir de GUST_WARN
       c.font = font(8.5); c.textBaseline = 'middle'; c.textAlign = 'left';
@@ -2821,7 +2865,7 @@ function renderChart() {
       for (const b of wbars) {
         if (!isFinite(b.g)) continue;
         const bw = Math.max(2, b.x2 - b.x - 1.5), cx = b.x + .75 + bw / 2, col = b.g >= GUST_WARN ? cssVar('--head') : b.g >= GUST_SHOW ? cssVar('--warm') : muted, y = wy0 + GS / 2;
-        const txt = (bw >= 44 ? T('rafales ') : '') + n0(b.g), tw = c.measureText(txt).width, x0 = cx - (tw + 9) / 2;
+        const txt = (bw >= 44 ? T('rafales ') : '') + fV(b.g), tw = c.measureText(txt).width, x0 = cx - (tw + 9) / 2;
         if (bw < 14 || x0 < lastG + 4) { c.fillStyle = col; c.beginPath(); c.moveTo(cx - 3, y - 2); c.lineTo(cx + 3, y - 2); c.lineTo(cx, y + 2.5); c.closePath(); c.fill(); continue; }
         c.fillStyle = col; c.beginPath(); c.moveTo(x0, y - 2); c.lineTo(x0 + 6, y - 2); c.lineTo(x0 + 3, y + 2.5); c.closePath(); c.fill();
         c.fillText(txt, x0 + 9, y); lastG = x0 + tw + 9;
@@ -2831,8 +2875,8 @@ function renderChart() {
   }
   // axe km
   c.fillStyle = muted; c.textAlign = 'center'; c.textBaseline = 'top';
-  const kStep = niceStep(P.total / Math.max(3, Math.floor(pw / 80)));
-  for (let k = 0; k <= P.total + 1e-6; k += kStep) { const x = X(k); c.fillText(n0(k) + (k === 0 ? ' km' : ''), x, wy0 + WP + 6); }
+  const kK = uD(1), kStep = niceStep(P.total * kK / Math.max(3, Math.floor(pw / 80))); // repères en km ou en miles
+  for (let k = 0; k <= P.total * kK + 1e-6; k += kStep) { const x = X(k / kK); c.fillText(n0(k) + (k === 0 ? ' ' + UL.km : ''), x, wy0 + WP + 6); }
   // heures en haut
   const span = (tl.end - tl.start) / 3600e3;
   const hStep = [1, 2, 3, 4, 6, 12, 24].find(s => span / s <= pw / 46) || 24;
@@ -2885,8 +2929,8 @@ function chartHover(ev) {
   c.strokeStyle = cssVar('--ink'); c.lineWidth = 1; c.beginPath(); c.moveTo(x, pad.t); c.lineTo(x, chartGeom.wy0 + WP_CHART); c.stroke();
   const tip = $('#tip'); tip.hidden = false;
   const rel = relLabel(head);
-  tip.innerHTML = `<div class="label">km ${n1(km)} · ${whenTxt(t, S.tl.start)}</div>
-    <div class="mono">Alt. ${n0(S.P.es[i])} m</div>` + (w ? T("<div class=\"mono\">{0} °C (ressenti {1})</div>\n    <div class=\"mono\">{2}{3}</div>\n    <div class=\"mono\">Pluie {4} mm/h ({5} %)</div>\n    <div class=\"mono\">Vent {6} {7} km/h{8}</div>\n    <div class=\"rel {9}\">{10}</div>", [n0(w.temp), n0(w.app), skyLabel(w.code, w.day), isFinite(w.cc) ? T(' · nuages {0} %', [n0(w.cc)]) : '', n1(w.pr), n0(w.prob), compass(w.wd), n0(w.ws), isFinite(w.gust) ? `, raf. ${n0(w.gust)}` : '', rel.cls, rel.txt]) : T("<div class=\"hint\">Hors prévisions</div>"));
+  tip.innerHTML = `<div class="label">${UL.km} ${fD(km)} · ${whenTxt(t, S.tl.start)}</div>
+    <div class="mono">Alt. ${fE(S.P.es[i])} ${UL.m}</div>` + (w ? T("<div class=\"mono\">{0} °C (ressenti {1})</div>\n    <div class=\"mono\">{2}{3}</div>\n    <div class=\"mono\">Pluie {4} mm/h ({5} %)</div>\n    <div class=\"mono\">Vent {6} {7} km/h{8}</div>\n    <div class=\"rel {9}\">{10}</div>", [fT(w.temp), fT(w.app), skyLabel(w.code, w.day), isFinite(w.cc) ? T(' · nuages {0} %', [n0(w.cc)]) : '', fR(w.pr), n0(w.prob), compass(w.wd), fV(w.ws), isFinite(w.gust) ? `, raf. ${fV(w.gust)}` : '', rel.cls, rel.txt]) : T("<div class=\"hint\">Hors prévisions</div>"));
   const wrapW = $('#chartWrap').clientWidth;
   tip.style.left = Math.min(wrapW - tip.offsetWidth - 6, Math.max(6, x + 14)) + 'px';
   tip.style.top = '30px';
@@ -2915,11 +2959,11 @@ function renderTable() {
   const tl = S.tl;
   $('#rows').innerHTML = tableRows().map(r => {
     if (r.stop && r.stop.work) return T("<tr class=\"stop\"><td colspan=\"8\"><b>Retour</b> : départ {0}{1}</td></tr>", [whenTxt(r.stop.to, tl.start), r.stop.late ? T(" ⚠ (arrivée au travail après l'heure du retour)") : T(" après {0} au travail", [durTxt((r.stop.to - r.stop.from) / 3600e3)])]);
-    if (r.stop && r.stop.lap) return T("<tr class=\"stop\"><td colspan=\"8\"><b>Tour {0}</b> au km {1} : départ {2}{3}</td></tr>", [r.stop.lap, n0(r.stop.km), whenTxt(r.stop.to, tl.start), r.stop.to > r.stop.from ? T(" après {0} de pause", [durTxt((r.stop.to - r.stop.from) / 3600e3)]) : '']);
-    if (r.stop) return T("<tr class=\"stop\"><td colspan=\"8\">{0} au km {1} : {2} → reprise {3} ({4})</td></tr>", [isNight(r.stop) ? T("Nuit") : T("Arrêt"), n0(r.stop.km), whenTxt(r.stop.from, tl.start), whenTxt(r.stop.to, tl.start), durTxt((r.stop.to - r.stop.from) / 3600e3)]);
+    if (r.stop && r.stop.lap) return T("<tr class=\"stop\"><td colspan=\"8\"><b>Tour {0}</b> au km {1} : départ {2}{3}</td></tr>", [r.stop.lap, fD(r.stop.km, 0), whenTxt(r.stop.to, tl.start), r.stop.to > r.stop.from ? T(" après {0} de pause", [durTxt((r.stop.to - r.stop.from) / 3600e3)]) : '']);
+    if (r.stop) return T("<tr class=\"stop\"><td colspan=\"8\">{0} au km {1} : {2} → reprise {3} ({4})</td></tr>", [isNight(r.stop) ? T("Nuit") : T("Arrêt"), fD(r.stop.km, 0), whenTxt(r.stop.from, tl.start), whenTxt(r.stop.to, tl.start), durTxt((r.stop.to - r.stop.from) / 3600e3)]);
     const w = r.w, rel = relLabel(r.head);
-    return `<tr class="${w && !w.day ? 'night' : ''}"><td class="num">${n1(r.s.km)}</td><td class="num">${whenTxt(r.t, tl.start)}</td><td class="num">${n0(r.ele)} m</td>` +
-      (w ? T("<td>{0}</td><td class=\"num\">{1}° / {2}°</td>\n        <td class=\"num\">{3}{4} {5}{6}</td>\n        <td><span class=\"rel {7}\">{8}</span></td>\n        <td class=\"num\" style=\"color:{9}\">{10} mm · {11} %</td>", [skyLabel(w.code, w.day), n0(w.temp), n0(w.app), arrowSvg((w.wd + 180) % 360, windStrength(w.ws)[1]), compass(w.wd), n0(w.ws), isFinite(w.gust) ? ` <span style="color:var(--muted)">raf. ${n0(w.gust)}</span>` : '', rel.cls, rel.txt, w.pr >= 0.1 ? 'var(--rain)' : 'var(--muted)', n1(w.pr), n0(w.prob)])
+    return `<tr class="${w && !w.day ? 'night' : ''}"><td class="num">${fD(r.s.km)}</td><td class="num">${whenTxt(r.t, tl.start)}</td><td class="num">${fE(r.ele)} ${UL.m}</td>` +
+      (w ? T("<td>{0}</td><td class=\"num\">{1}° / {2}°</td>\n        <td class=\"num\">{3}{4} {5}{6}</td>\n        <td><span class=\"rel {7}\">{8}</span></td>\n        <td class=\"num\" style=\"color:{9}\">{10} mm · {11} %</td>", [skyLabel(w.code, w.day), fT(w.temp), fT(w.app), arrowSvg((w.wd + 180) % 360, windStrength(w.ws)[1]), compass(w.wd), fV(w.ws), isFinite(w.gust) ? ` <span style="color:var(--muted)">raf. ${fV(w.gust)}</span>` : '', rel.cls, rel.txt, w.pr >= 0.1 ? 'var(--rain)' : 'var(--muted)', fR(w.pr), n0(w.prob)])
         : T("<td colspan=\"5\" style=\"color:var(--muted)\">Hors prévisions</td>")) + '</tr>';
   }).join('');
 }
@@ -2938,7 +2982,7 @@ function renderOpts(opts, opt) {
   const row = (o, pills) => {
     const st = o.r.st, cov = S.P.total - st.missKm || 1, ok = okRun(o.r);
     const q = ok && valid.length ? (hi - lo < 1e-6 ? 1 : clamp(1 - (o.sc - lo) / (hi - lo), 0, 1)) : 0;
-    return T("<button type=\"button\" class=\"opt{0}\" data-time=\"{1}\">\n      <span class=\"h\">{2}</span>\n      <span class=\"d\">{3} Arrivée <b>{4}</b> · pluie <b>{5} mm</b> · face <b>{6} %</b> · {7}{8}</span>\n      <span class=\"bar\" aria-hidden=\"true\"><span style=\"width:{9}%;opacity:{10}\"></span></span>\n    </button>", [o === mine ? ' sel' : '', o.time, hLbl(o.time), pills, whenTxt(o.r.end, o.r.start), n1(st.rain), Math.round(st.headKm / cov * 100), ok ? T('{0} à {1} °C ressentis', [n0(st.amin), n0(st.amax)]) : T("prévision incomplète"), st.nightH > 0.2 ? T(" · {0} de nuit", [durTxt(st.nightH).replace(/ /g, '\u00a0')]) : '', Math.round(8 + q * 92), ok ? 1 : .3]);
+    return T("<button type=\"button\" class=\"opt{0}\" data-time=\"{1}\">\n      <span class=\"h\">{2}</span>\n      <span class=\"d\">{3} Arrivée <b>{4}</b> · pluie <b>{5} mm</b> · face <b>{6} %</b> · {7}{8}</span>\n      <span class=\"bar\" aria-hidden=\"true\"><span style=\"width:{9}%;opacity:{10}\"></span></span>\n    </button>", [o === mine ? ' sel' : '', o.time, hLbl(o.time), pills, whenTxt(o.r.end, o.r.start), fR(st.rain), Math.round(st.headKm / cov * 100), ok ? T('{0} à {1} °C ressentis', [fT(st.amin), fT(st.amax)]) : T("prévision incomplète"), st.nightH > 0.2 ? T(" · {0} de nuit", [durTxt(st.nightH).replace(/ /g, '\u00a0')]) : '', Math.round(8 + q * 92), ok ? 1 : .3]);
   };
   const isBest = best && (best === mine || best.time === mine.time);
   let html = row(mine, T("<span class=\"pill mine\">Ton départ</span>{0}", [isBest ? T(" <span class=\"pill best\">Meilleur créneau</span>") : '']));
@@ -2989,7 +3033,7 @@ function loadRoute(raw, name, rev) {
   const rb = $('#revBtn'); rb.hidden = false; rb.setAttribute('aria-pressed', String(!!rev));
   $('#empty').hidden = true; $('#results').hidden = false;
   if (map) map.invalidateSize();
-  $('#routeMeta').textContent = `${n1(P.total)} km · D+ ${n0(P.up)} m · ${n0(P.n)} points`;
+  $('#routeMeta').textContent = `${fD(P.total)} ${UL.km} · D+ ${fE(P.up)} ${UL.m} · ${n0(P.n)} points`;
   run();
 }
 function handleFile(file) {
@@ -3100,8 +3144,8 @@ function tafRouteSwitch(from, to) {
 }
 window.addEventListener('hashchange', () => switchMode(hashMode(location.hash)));
 function syncOutputs() {
-  $('#speedOut').textContent = n1(+$('#speed').value) + ' km/h';
-  $('#vamOut').textContent = $('#vam').value + ' m/h';
+  $('#speedOut').textContent = fV(+$('#speed').value, 1) + ' ' + UL.kmh;
+  $('#vamOut').textContent = fE(+$('#vam').value) + ' ' + UL.mh;
   $('#pauseOut').textContent = '+' + $('#pause').value + ' %';
   const pm = segVal('#pauseSeg') === 'min';
   $('#pausePctRow').hidden = pm; $('#pauseMinRow').hidden = !pm;
@@ -3448,7 +3492,7 @@ function renderPois() {
   if (!POI.list.length) { $('#poiRows').innerHTML = POI.loading || POI.error ? '' : T("<tr><td colspan=\"5\" class=\"hint\">Aucun lieu trouvé dans ce rayon.</td></tr>"); return; }
   for (const p of shown) {
     const g = POI_GROUPS[p.g];
-    rows.push(T("<tr data-id=\"{0}\"><td class=\"num\">{1}</td><td class=\"num\">{2}</td>\n      <td><span class=\"nm\">{3} {4}</span><span class=\"ty\">{5} · <a class=\"gm\" href=\"{6}\" target=\"_blank\" rel=\"noopener\" title=\"Vérifier les horaires et les avis sur Google Maps\">Google Maps ↗</a></span></td>\n      <td class=\"num\">{7}</td>\n      <td><span class=\"st-{8}\">{9}</span>{10}</td></tr>", [p.id, n1(p.km), p.t ? whenTxt(p.t, tl.start) : '', g.emo, escH(p.name || p.type), escH(p.type), gmapsUrl(p), p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km', p.st.cls, escH(p.st.txt), p.oh && p.oh !== '24/7' ? `<span class="oh">${escH(p.oh)}</span>` : '']));
+    rows.push(T("<tr data-id=\"{0}\"><td class=\"num\">{1}</td><td class=\"num\">{2}</td>\n      <td><span class=\"nm\">{3} {4}</span><span class=\"ty\">{5} · <a class=\"gm\" href=\"{6}\" target=\"_blank\" rel=\"noopener\" title=\"Vérifier les horaires et les avis sur Google Maps\">Google Maps ↗</a></span></td>\n      <td class=\"num\">{7}</td>\n      <td><span class=\"st-{8}\">{9}</span>{10}</td></tr>", [p.id, fD(p.km), p.t ? whenTxt(p.t, tl.start) : '', g.emo, escH(p.name || p.type), escH(p.type), gmapsUrl(p), fOff(p.off), p.st.cls, escH(p.st.txt), p.oh && p.oh !== '24/7' ? `<span class="oh">${escH(p.oh)}</span>` : '']));
   }
   $('#poiRows').innerHTML = rows.join('') || T("<tr><td colspan=\"5\" class=\"hint\">Aucun lieu avec ces filtres.</td></tr>");
 }
@@ -3462,7 +3506,7 @@ function gmapsUrl(p) {
 const escH = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function poiTip(p, link) {
   const g = POI_GROUPS[p.g];
-  return T("{0} <b>{1}</b>{2}<br>{3} · km {4} · à {5} de la trace{6}{7}", [g.emo, escH(p.name || p.type), link ? ` · <a class="gm" href="${gmapsUrl(p)}" target="_blank" rel="noopener">Google Maps ↗</a>` : '', escH(p.type), n1(p.km), p.off < 1000 ? p.off + ' m' : n1(p.off / 1000) + ' km', p.t ? T("<br>Passage {0}{1}", [whenTxt(p.t, S.tl.start), p.st.txt ? ' · ' + escH(p.st.txt) : '']) : '', p.oh ? `<br><span style="font-family:var(--f-mono);font-size:11px">${escH(p.oh)}</span>` : '']);
+  return T("{0} <b>{1}</b>{2}<br>{3} · km {4} · à {5} de la trace{6}{7}", [g.emo, escH(p.name || p.type), link ? ` · <a class="gm" href="${gmapsUrl(p)}" target="_blank" rel="noopener">Google Maps ↗</a>` : '', escH(p.type), fD(p.km), fOff(p.off), p.t ? T("<br>Passage {0}{1}", [whenTxt(p.t, S.tl.start), p.st.txt ? ' · ' + escH(p.st.txt) : '']) : '', p.oh ? `<br><span style="font-family:var(--f-mono);font-size:11px">${escH(p.oh)}</span>` : '']);
 }
 // Plus longs tronçons sans ravitaillement (alimentation, restos, bars, stations), puis sans ravitaillement ouvert au passage.
 function renderPoiGaps() {
@@ -3480,10 +3524,10 @@ function renderPoiGaps() {
   const open = res.filter(p => p.st && (p.st.cls === 'open' || (p.st.cls === 'unk' && !p.oh)));
   const lines = [];
   const g1 = gapsOf(res)[0];
-  if (g1) lines.push(T("Plus long tronçon sans ravitaillement : <b>{0} km</b> (km {1} → {2}).", [n0(g1.len), n0(g1.a), n0(g1.b)]));
+  if (g1) lines.push(T("Plus long tronçon sans ravitaillement : <b>{0} km</b> (km {1} → {2}).", [fD(g1.len, 0), fD(g1.a, 0), fD(g1.b, 0)]));
   const g2 = gapsOf(open).filter(g => g.len >= 30).slice(0, 3);
-  for (const g of g2) lines.push(T("<span class=\"warn\">{0} km sans ravitaillement ouvert à ton passage</span> : km {1} → {2}, de {3} à {4}.", [n0(g.len), n0(g.a), n0(g.b), whenTxt(timeAt(g.a), tl.start), whenTxt(timeAt(g.b), tl.start)]));
-  if (!g2.length && open.length) lines.push(T("Pas de tronçon de plus de 30 km sans ravitaillement ouvert (ou à horaires inconnus) à ton passage."));
+  for (const g of g2) lines.push(T("<span class=\"warn\">{0} km sans ravitaillement ouvert à ton passage</span> : km {1} → {2}, de {3} à {4}.", [fD(g.len, 0), fD(g.a, 0), fD(g.b, 0), whenTxt(timeAt(g.a), tl.start), whenTxt(timeAt(g.b), tl.start)]));
+  if (!g2.length && open.length) lines.push(T("Pas de tronçon de plus de {0} km sans ravitaillement ouvert (ou à horaires inconnus) à ton passage.", [fD(30, 0)]));
   lines.push(T("<span class=\"hint\">Ouvert à ton passage : selon les horaires OpenStreetMap ; les lieux sans horaires renseignés sont comptés comme possibles.</span>"));
   el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
 }
@@ -3707,7 +3751,7 @@ function drawDayWx(cv, cur) {
     c.fillStyle = cssVar('--elev'); c.globalAlpha = .75; c.fill(); c.globalAlpha = 1;
     c.beginPath(); ep.forEach(([x, e], i) => i ? c.lineTo(x, Ye(e)) : c.moveTo(x, Ye(e))); c.strokeStyle = cssVar('--elev-line'); c.lineWidth = 1; c.stroke();
     c.fillStyle = cssVar('--elev-line'); c.font = `10px ${mono}, monospace`; c.textAlign = 'left'; c.textBaseline = 'middle';
-    c.fillText(n0(eHi) + ' m', l + pw + 5, Ye(eHi)); if (Ye(eLo) - Ye(eHi) > 14) c.fillText(n0(eLo) + ' m', l + pw + 5, Ye(eLo));
+    c.fillText(fE(eHi) + ' ' + UL.m, l + pw + 5, Ye(eHi)); if (Ye(eLo) - Ye(eHi) > 14) c.fillText(fE(eLo) + ' ' + UL.m, l + pw + 5, Ye(eLo));
     // pluie par heure
     const hours = []; for (let h0 = Math.floor(ta / 3600e3) * 3600e3; h0 < tb; h0 += 3600e3) { const a = Math.max(ta, h0), b = Math.min(tb, h0 + 3600e3); if (b - a < 60e3) continue;
       const tm = (a + b) / 2, km = kmAtT(tm), w = S.wx ? wxAt(sIdx(km), tm) : null; hours.push({ a, b, tm, km, w }); }
@@ -3730,7 +3774,7 @@ function drawDayWx(cv, cur) {
     for (const i of new Set([0, iMin, iMax, pts.length - 1])) { const p = pts[i], x = X(p.t), y = Yt(p.w.app);
       c.beginPath(); c.arc(x, y, 2.5, 0, Math.PI * 2); c.fill();
       c.textAlign = i === 0 ? 'right' : i === pts.length - 1 ? 'right' : 'center';
-      c.fillText(n0(p.w.app) + '°', i === 0 ? x - 4 : i === pts.length - 1 ? x - 4 : x, i === 0 ? y + 5 : y - 4); }
+      c.fillText(fT(p.w.app) + '°', i === 0 ? x - 4 : i === pts.length - 1 ? x - 4 : x, i === 0 ? y + 5 : y - 4); }
     }
     // ciel et sens du vent, une colonne par heure (on en saute si c'est trop serré)
     let last = -99;
@@ -3743,14 +3787,14 @@ function drawDayWx(cv, cur) {
     const step = pw / Math.max(1, span / 3600e3) < 34 ? 2 : 1; let lastH = -99;
     for (let h0 = Math.ceil(ta / 3600e3) * 3600e3; h0 <= tb; h0 += 3600e3) { const hr = new Date(h0).getHours(); if (hr % step) continue; const x = X(h0); if (x - lastH < 26) continue; lastH = x; c.fillText(hrTxt(hr), x, yT1 + 4); }
     // découpage en km : repère au passage de chaque km rond (pas de 5 à 50 km selon la place)
-    const kmSpan = d.b.km - d.a.km, kStep = [1, 2, 5, 10, 20, 25, 50].find(s => pw / (kmSpan / s) >= 44) || 50;
+    const kK = uD(1), kmSpan = (d.b.km - d.a.km) * kK, kStep = [1, 2, 5, 10, 20, 25, 50].find(s => pw / (kmSpan / s) >= 44) || 50; // dans l'unité affichée
     const tAtKm = km => S.tl.times[idxAtKm(km)];
     c.fillStyle = cssVar('--ink'); let lastR = -99;
     const kOff = isLap && S.laps && S.laps.taf ? d.a.km : 0; // Vélotaf : km depuis le début du trajet
-    for (let km = Math.ceil((d.a.km - kOff) / kStep) * kStep + kOff; km <= d.b.km + 1e-6; km += kStep) {
-      const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(km - kOff), w2 = c.measureText(txt).width / 2;
+    for (let kd = Math.ceil((d.a.km - kOff) * kK / kStep) * kStep; kd <= (d.b.km - kOff) * kK + 1e-6; kd += kStep) { const km = kd / kK + kOff;
+      const x = X(clamp(tAtKm(km), ta, tb)), txt = n0(kd), w2 = c.measureText(txt).width / 2;
       if (x - w2 < lastR + 8 || x - w2 < l - 2) continue; lastR = x + w2; c.fillText(txt, x, yT1 + 20); }
-    c.textAlign = 'right'; c.fillStyle = muted; c.fillText('km', l - 8, yT1 + 20);
+    c.textAlign = 'right'; c.fillStyle = muted; c.fillText(UL.km, l - 8, yT1 + 20);
     // lever et coucher du soleil pendant la journée, calculés là où l'on se trouve à ce moment-là
     const posAt = t => S.P.pts[idxAtKm(kmAtT(clamp(t, ta, tb)))];
     const sunNear = []; let sunIn = false;
@@ -3799,8 +3843,8 @@ function drawDayWx(cv, cur) {
       const x = X(cur), km = kmAtT(cur), i = idxAtKm(km), w = S.wx ? wxAt(sIdx(km), cur) : null;
       c.strokeStyle = ink; c.lineWidth = 1; c.beginPath(); c.moveTo(x + .5, 0); c.lineTo(x + .5, yT1 + 14); c.stroke();
       c.fillStyle = cssVar('--accent'); c.beginPath(); c.arc(x, Ye(S.P.es[i]), 4, 0, Math.PI * 2); c.fill();
-      const lines = [`${hm.format(new Date(cur))} · km ${n1(km - (isLap && S.laps && S.laps.taf ? d.a.km : 0))} · ${n0(S.P.es[i])} m`];
-      if (w) lines.push(`${skyLabel(w.code, w.day)} · ${n0(w.app)}° ${T('ressentis')}${w.pr >= 0.1 ? ` · ${n1(w.pr)} mm/h` : ''}`, T("Vent {0} {1} km/h · {2}", [compass(w.wd), n0(w.ws), relLabel(w.ws * Math.cos((w.wd - S.P.b[i]) * RAD)).txt]));
+      const lines = [`${hm.format(new Date(cur))} · ${UL.km} ${fD(km - (isLap && S.laps && S.laps.taf ? d.a.km : 0))} · ${fE(S.P.es[i])} ${UL.m}`];
+      if (w) lines.push(`${skyLabel(w.code, w.day)} · ${fT(w.app)}° ${T('ressentis')}${w.pr >= 0.1 ? ` · ${fR(w.pr)} ${UL.mmh}` : ''}`, T("Vent {0} {1} km/h · {2}", [compass(w.wd), fV(w.ws), relLabel(w.ws * Math.cos((w.wd - S.P.b[i]) * RAD)).txt]));
       c.font = `600 11px ${mono}, monospace`;
       const bw = Math.max(...lines.map(s => c.measureText(s).width)) + 14, bh = lines.length * 15 + 8;
       const bx = clamp(x + 10 + bw > W ? x - 10 - bw : x + 10, 2, Math.max(2, W - bw - 2)), by = 40;
@@ -3850,14 +3894,14 @@ function renderPlan() {
     const isLate = d.night && d.night.late; if (isLate) late++;
     // fin : modifiable (sauf le dernier jour) ; sans heure choisie, l'heure calculée au km de coupe
     const endTxt = (custom && d.night ? T("<input type=\"time\" step=\"900\" data-end=\"{0}\" value=\"{1}\" class=\"{2}\" aria-label=\"Heure de fin du jour {3}\">", [k, PLAN.ends[k] || hm.format(new Date(d.b.t)), PLAN.ends[k] ? 'set' : '', k + 1]) : whenTxt(d.b.t, d.a.t)) + (isLate ? ' <span class="late" title="L\'étape finit après l\'heure de départ prévue le lendemain : pas de nuit">⚠</span>' : '');
-    return T("<tr><td>Jour {0}<br><span class=\"hint\">{1}</span></td><td>{2}</td><td>{3}</td>\n      <td class=\"num\">{4} km<br><span class=\"hint\">km {5} → {6}</span></td><td class=\"num\">{7} m</td>\n      <td class=\"num\">{8}</td><td class=\"num\">{9}</td>\n      <td class=\"num\">{10}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{11}\" aria-label=\"Météo du jour {12}\"></canvas></td></tr>", [k + 1, dayFmt.format(new Date(d.a.t)), startCell, endTxt, n0(d.dist), n0(d.a.km), n0(d.b.km), n0(d.dplus), durShort(d.rideH), durShort(d.pauseH), d.night ? (d.night.to > d.night.from ? durShort((d.night.to - d.night.from) / 3600e3) + `<br><span class="hint">→ ${hm.format(new Date(d.night.to))}</span>` : '0 h 00') : T("<span class=\"hint\">arrivée</span>"), k, k + 1]);
+    return T("<tr><td>Jour {0}<br><span class=\"hint\">{1}</span></td><td>{2}</td><td>{3}</td>\n      <td class=\"num\">{4} km<br><span class=\"hint\">km {5} → {6}</span></td><td class=\"num\">{7} m</td>\n      <td class=\"num\">{8}</td><td class=\"num\">{9}</td>\n      <td class=\"num\">{10}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{11}\" aria-label=\"Météo du jour {12}\"></canvas></td></tr>", [k + 1, dayFmt.format(new Date(d.a.t)), startCell, endTxt, fD(d.dist, 0), fD(d.a.km, 0), fD(d.b.km, 0), fE(d.dplus), durShort(d.rideH), durShort(d.pauseH), d.night ? (d.night.to > d.night.from ? durShort((d.night.to - d.night.from) / 3600e3) + `<br><span class="hint">→ ${hm.format(new Date(d.night.to))}</span>` : '0 h 00') : T("<span class=\"hint\">arrivée</span>"), k, k + 1]);
   });
   $('#planRows').innerHTML = rows.join('');
   PLAN.days = days; drawPlanWx();
   const sum = f => days.reduce((s, d) => s + f(d), 0);
-  $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n0(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td><td class="num">${durShort(sum(d => d.night ? (d.night.to - d.night.from) / 3600e3 : 0))}</td></tr>` : '';
+  $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${fD(sum(d => d.dist), 0)} ${UL.km}</td><td class="num">${fE(sum(d => d.dplus))} ${UL.m}</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td><td class="num">${durShort(sum(d => d.night ? (d.night.to - d.night.from) / 3600e3 : 0))}</td></tr>` : '';
   $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? T("Étapes de même temps de pédalage.") : T("Étapes de même distance.")) : T("D'une traite.");
-  $('#planNote').innerHTML = T("Fin de journée estimée avec ta vitesse sur le plat ({0} km/h), ta VAM ({1} m/h) et tes arrêts courts ({2}){3} : réglages ci-dessus.{4}", [n1(opt.speed), opt.vam, pauseTxt(opt), opt.windOn ? T(", vent compris") : '', late ? T(" <span class=\"late\">⚠ {0} après l'heure de départ du lendemain : allonge le découpage, avance une heure de fin ou retarde un départ.</span>", [late > 1 ? T("{0} étapes finissent", [late]) : T("Une étape finit")]) : '']);
+  $('#planNote').innerHTML = T("Fin de journée estimée avec ta vitesse sur le plat ({0} km/h), ta VAM ({1} m/h) et tes arrêts courts ({2}){3} : réglages ci-dessus.{4}", [fV(opt.speed, 1), fE(opt.vam), pauseTxt(opt), opt.windOn ? T(", vent compris") : '', late ? T(" <span class=\"late\">⚠ {0} après l'heure de départ du lendemain : allonge le découpage, avance une heure de fin ou retarde un départ.</span>", [late > 1 ? T("{0} étapes finissent", [late]) : T("Une étape finit")]) : '']);
   $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
   $('#planReset').hidden = !(custom && opt.planDays > 1 && (PLAN.times.some(Boolean) || PLAN.ends.some(Boolean)));
 }
@@ -3914,7 +3958,7 @@ function applyTaf(opt) {
   const sig = 'taf:' + (R ? TAF.ret : 'rev') + ':' + B.total;
   $('#lapErr').hidden = true;
   const gap = R ? hav(B.pts[B.n - 1], R.pts[0]) : 0, err = $('#tafErr');
-  err.hidden = gap <= 1; if (!err.hidden) err.textContent = T("Le retour ne part pas de l'arrivée de l'aller ({0} km d'écart) : vérifie le sens de la trace du retour.", [n1(gap)]);
+  err.hidden = gap <= 1; if (!err.hidden) err.textContent = T("Le retour ne part pas de l'arrivée de l'aller ({0} km d'écart) : vérifie le sens de la trace du retour.", [fD(gap)]);
   if (S.lapN === sig) return;
   S.lapN = sig; S.tl = null;
   const raw = [], back = R ? R.pts : [...B.pts].reverse();
@@ -3949,7 +3993,7 @@ async function tafLoad(id) {
 function tafRenderSel() {
   const sel = $('#tafRet'); if (!sel) return;
   const opts = [T("<option value=\"\">Même trace, dans l'autre sens</option>")]
-    .concat(LIB.list.filter(m => m.id !== LIB.current).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || '')).map(m => `<option value="${m.id}">${escH(m.name)} · ${n1(+m.km || 0)} km</option>`))
+    .concat(LIB.list.filter(m => m.id !== LIB.current).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || '')).map(m => `<option value="${m.id}">${escH(m.name)} · ${fD(+m.km || 0)} ${UL.km}</option>`))
     .concat(T("<option value=\"__imp\">＋ Importer un GPX pour le retour…</option>"));
   sel.innerHTML = opts.join('');
   sel.value = TAF.ret && LIB.list.some(m => m.id === TAF.ret) ? TAF.ret : '';
@@ -3981,7 +4025,7 @@ function tripVerdict(wx) {
   const out = []; let lvl = 0; const up = l => { lvl = Math.max(lvl, l); };
   if (wx.rain >= 1) { up(2); out.push(T("pluie, prends la veste")); } else if (wx.rain >= 0.2) { up(1); out.push(T("quelques gouttes")); } else if (wx.prob >= 70) { up(1); out.push(T("risque d'averse")); }
   if (wx.headAvg >= 20) { up(2); out.push(T("gros vent de face")); } else if (wx.headAvg >= 12) { up(1); out.push(T("vent de face")); } else if (wx.headAvg <= -12) out.push(T("vent dans le dos"));
-  if (wx.gust >= GUST_DANGER) { up(2); out.push(T("rafales à {0} km/h", [n0(wx.gust)])); } else if (wx.gust >= GUST_WARN) { up(1); out.push(T("rafales à {0} km/h", [n0(wx.gust)])); }
+  if (wx.gust >= GUST_DANGER) { up(2); out.push(T("rafales à {0} km/h", [fV(wx.gust)])); } else if (wx.gust >= GUST_WARN) { up(1); out.push(T("rafales à {0} km/h", [fV(wx.gust)])); }
   if (wx.tmin < 0) { up(1); out.push(T("gel possible")); } else if (wx.tmin < 4) { up(1); out.push(T("froid, gants")); } else if (wx.tmax > 30) { up(1); out.push(T('chaud')); }
   if (wx.dark > 0.3) out.push(T("de nuit, lumières"));
   if (!out.length) out.push(wx.rain < 0.05 ? T("au sec, beau trajet") : T("au sec"));
@@ -3999,7 +4043,7 @@ function renderWeek() {
   const cell = d => {
     if (!d || !d.wx) return T("<div class=\"wk\">{0}<div class=\"t\"><span>pas encore de prévision</span></div></div>", [vdot({ lvl: -1 })]);
     const v = tripVerdict(d.wx), w = d.wxMid;
-    return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${n0(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + n0(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? n1(d.wx.rain) + ' mm' : T('sec')} · ${d.wx.headAvg >= 4 ? T('face ') + n0(d.wx.headAvg) : d.wx.headAvg <= -4 ? T('dos ') + n0(-d.wx.headAvg) : T("vent faible")}${Math.abs(d.wx.headAvg) >= 4 ? ' km/h' : ''}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
+    return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${fT(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + fT(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? fR(d.wx.rain) + ' ' + UL.mm : T('sec')} · ${d.wx.headAvg >= 4 ? T('face ') + fV(d.wx.headAvg) : d.wx.headAvg <= -4 ? T('dos ') + fV(-d.wx.headAvg) : T("vent faible")}${Math.abs(d.wx.headAvg) >= 4 ? ' ' + UL.kmh : ''}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
   };
   // samedi et dimanche : une ligne pour le week-end, avec une invitation vers la page Sortie
   const fmtW = new Intl.DateTimeFormat(LOC, { weekday: 'short', day: 'numeric', month: 'short' }), rows = [];
@@ -4043,8 +4087,8 @@ function renderDuo(laps, opt) {
   const vs = laps.map(d => tripVerdict(d.wx)), arrT = opt.tafGoMode === 'arr' ? tafOpt(opt, TAF.sel || opt.date).time : '';
   $('#duoHint').textContent = TAF.ret ? T("Retour par un autre parcours.") : T("Retour par la même trace, dans l'autre sens.");
   laps.forEach((d, k) => {
-    $('#duoHead' + k).innerHTML = `<div class="ttl"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span><span class="hint">${n1(d.dist)} km · ${durShort(d.h)} · D+ ${n0(d.dplus)} m</span></div>
-      <div class="wk">${vdot(vs[k])}<div class="t">${d.wx ? T('<b>{0} à {1}° ressentis · {2}</b>', [n0(d.wx.tmin), n0(d.wx.tmax), d.wx.rain >= 0.1 ? T('pluie {0} mm', [n1(d.wx.rain)]) : T('sec')]) : ''}<span class="vtxt l${Math.max(0, vs[k].lvl)}">${vs[k].txt}</span></div></div>
+    $('#duoHead' + k).innerHTML = `<div class="ttl"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span><span class="hint">${fD(d.dist)} ${UL.km} · ${durShort(d.h)} · D+ ${fE(d.dplus)} ${UL.m}</span></div>
+      <div class="wk">${vdot(vs[k])}<div class="t">${d.wx ? T('<b>{0} à {1}° ressentis · {2}</b>', [fT(d.wx.tmin), fT(d.wx.tmax), d.wx.rain >= 0.1 ? T('pluie {0} mm', [fR(d.wx.rain)]) : T('sec')]) : ''}<span class="vtxt l${Math.max(0, vs[k].lvl)}">${vs[k].txt}</span></div></div>
       <div class="sub">${FLOW.on ? T("Vent animé à {0} · ", [hm.format(new Date(duoT(k)))]) : ''}${k ? T("Départ du travail à {0}", [hm.format(new Date(d.a.t))]) : (arrT ? T("Pour être au travail à {0}{1}", [arrT, opt.tafMargin ? T(" ({0} min de marge)", [opt.tafMargin]) : '']) : T("Arrivée au travail à {0}", [hm.format(new Date(d.b.t))]))}${!k && d.pause != null ? (d.late ? T(" · ⚠ arrivée après l'heure du retour") : T(" · {0} au travail", [durShort(d.pause)])) : ''}</div>`;
   });
   if (typeof L === 'undefined') return;
@@ -4118,17 +4162,17 @@ function renderLaps() {
     // Vélotaf : deux colonnes (carte + graphe par trajet) au lieu du tableau
     $('#lapCard').hidden = true; LAPS.days = laps; renderDuo(laps, opt); return;
     const vs = laps.map(d => tripVerdict(d.wx));
-    $('#lapRows').innerHTML = laps.map((d, k) => T("<tr><td><b>{0}</b></td><td>{1}</td><td>{2}</td>\n      <td class=\"num\">{3} km</td><td class=\"num\">{4} m</td><td class=\"num\">{5}</td>\n      <td><div class=\"wk\">{6}<div class=\"t\">{7}<span class=\"vtxt l{8}\">{9}</span></div></div></td>\n      <td class=\"num\">{10}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{11}\" aria-label=\"Météo du trajet {12}\"></canvas></td></tr>", [S.laps.names[k], whenTxt(d.a.t, t0), whenTxt(d.b.t, t0), n1(d.dist), n0(d.dplus), durShort(d.h), vdot(vs[k]), d.wx ? T('<b>{0} à {1}° ressentis · {2}</b>', [n0(d.wx.tmin), n0(d.wx.tmax), d.wx.rain >= 0.1 ? T('pluie {0} mm', [n1(d.wx.rain)]) : T('sec')]) : '', Math.max(0, vs[k].lvl), vs[k].txt, d.pause == null ? T("<span class=\"hint\">à la maison</span>") : (d.late ? '<span class="late" title="Arrivée au travail après l\'heure du retour">⚠ 0 h 00</span>' : durShort(d.pause)), k, S.laps.names[k].toLowerCase()])).join('');
+    $('#lapRows').innerHTML = laps.map((d, k) => T("<tr><td><b>{0}</b></td><td>{1}</td><td>{2}</td>\n      <td class=\"num\">{3} km</td><td class=\"num\">{4} m</td><td class=\"num\">{5}</td>\n      <td><div class=\"wk\">{6}<div class=\"t\">{7}<span class=\"vtxt l{8}\">{9}</span></div></div></td>\n      <td class=\"num\">{10}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{11}\" aria-label=\"Météo du trajet {12}\"></canvas></td></tr>", [S.laps.names[k], whenTxt(d.a.t, t0), whenTxt(d.b.t, t0), fD(d.dist), fE(d.dplus), durShort(d.h), vdot(vs[k]), d.wx ? T('<b>{0} à {1}° ressentis · {2}</b>', [fT(d.wx.tmin), fT(d.wx.tmax), d.wx.rain >= 0.1 ? T('pluie {0} mm', [fR(d.wx.rain)]) : T('sec')]) : '', Math.max(0, vs[k].lvl), vs[k].txt, d.pause == null ? T("<span class=\"hint\">à la maison</span>") : (d.late ? '<span class="late" title="Arrivée au travail après l\'heure du retour">⚠ 0 h 00</span>' : durShort(d.pause)), k, S.laps.names[k].toLowerCase()])).join('');
     LAPS.days = laps; drawPlanWx();
     $('#lapFoot').innerHTML = '';
     $('#lapCardHint').textContent = T("Retour à {0}, {1}.", [tafOpt(opt, opt.date).tafBack, TAF.ret ? T("par un autre parcours") : T("même trace dans l'autre sens")]);
     return;
   }
-  $('#lapRows').innerHTML = laps.map((d, k) => T("<tr><td><b>Tour {0}</b></td><td>{1}</td><td>{2}</td>\n      <td class=\"num\">{3} km<br><span class=\"hint\">km {4} → {5}</span></td><td class=\"num\">{6} m</td><td class=\"num\">{7}</td>\n      <td>{8}</td>\n      <td class=\"num\">{9}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{10}\" aria-label=\"Météo du tour {11}\"></canvas></td></tr>", [k + 1, whenTxt(d.a.t, t0), whenTxt(d.b.t, t0), n1(d.dist), n0(d.a.km), n0(d.b.km), n0(d.dplus), durShort(d.h), d.wx ? T("{0} à {1}° ressentis<br><span class=\"hint\">{2} · vent de face {3} %</span>", [n0(d.wx.tmin), n0(d.wx.tmax), d.wx.rain >= 0.1 ? T('pluie {0} mm', [n1(d.wx.rain)]) : T("au sec"), Math.round(d.wx.head * 100)]) : T("<span class=\"hint\">hors prévisions</span>"), d.pause == null ? T("<span class=\"hint\">arrivée</span>") : durShort(d.pause), k, k + 1])).join('');
+  $('#lapRows').innerHTML = laps.map((d, k) => T("<tr><td><b>Tour {0}</b></td><td>{1}</td><td>{2}</td>\n      <td class=\"num\">{3} km<br><span class=\"hint\">km {4} → {5}</span></td><td class=\"num\">{6} m</td><td class=\"num\">{7}</td>\n      <td>{8}</td>\n      <td class=\"num\">{9}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{10}\" aria-label=\"Météo du tour {11}\"></canvas></td></tr>", [k + 1, whenTxt(d.a.t, t0), whenTxt(d.b.t, t0), fD(d.dist), fD(d.a.km, 0), fD(d.b.km, 0), fE(d.dplus), durShort(d.h), d.wx ? T("{0} à {1}° ressentis<br><span class=\"hint\">{2} · vent de face {3} %</span>", [fT(d.wx.tmin), fT(d.wx.tmax), d.wx.rain >= 0.1 ? T('pluie {0} mm', [fR(d.wx.rain)]) : T("au sec"), Math.round(d.wx.head * 100)]) : T("<span class=\"hint\">hors prévisions</span>"), d.pause == null ? T("<span class=\"hint\">arrivée</span>") : durShort(d.pause), k, k + 1])).join('');
   LAPS.days = laps; drawPlanWx();
   const sum = f => laps.reduce((s, d) => s + f(d), 0);
-  $('#lapFoot').innerHTML = `<tr><td>Total</td><td>${hm.format(new Date(t0))}</td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${n1(sum(d => d.dist))} km</td><td class="num">${n0(sum(d => d.dplus))} m</td><td class="num">${durShort(sum(d => d.h))}</td><td></td><td class="num">${durShort(sum(d => d.pause || 0))}</td></tr>`;
-  $('#lapCardHint').textContent = T("{0} tours de {1} km{2}.", [S.laps.n, n1(S.lapBase.total), opt.lapPause ? T(", {0} min de pause entre deux tours", [opt.lapPause]) : T(", enchaînés sans pause")]);
+  $('#lapFoot').innerHTML = `<tr><td>Total</td><td>${hm.format(new Date(t0))}</td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${fD(sum(d => d.dist))} ${UL.km}</td><td class="num">${fE(sum(d => d.dplus))} ${UL.m}</td><td class="num">${durShort(sum(d => d.h))}</td><td></td><td class="num">${durShort(sum(d => d.pause || 0))}</td></tr>`;
+  $('#lapCardHint').textContent = T("{0} tours de {1} km{2}.", [S.laps.n, fD(S.lapBase.total), opt.lapPause ? T(", {0} min de pause entre deux tours", [opt.lapPause]) : T(", enchaînés sans pause")]);
 }
 $('#laps').addEventListener('input', () => { if (+$('#laps').value >= 1) schedule(); });
 $('#lapPause').addEventListener('input', () => { if ($('#lapPause').value !== '') schedule(); });
@@ -4407,7 +4451,7 @@ function libSuggest() {
   LIBQ.items = LIB.list.filter(r => { const hay = fold(`${r.name} ${n0(r.km || 0)} km`); return words.every(w => hay.includes(w)); });
   const mark = name => { let out = escH(name); for (const w of words) { const i = fold(name).indexOf(w); if (i >= 0) { out = escH(name.slice(0, i)) + '<mark>' + escH(name.slice(i, i + w.length)) + '</mark>' + escH(name.slice(i + w.length)); break; } } return out; };
   LIBQ.act = clamp(LIBQ.act, 0, Math.max(0, LIBQ.items.length - 1));
-  ul.innerHTML = T("{0}<li class=\"imp\" data-imp=\"1\">＋ Importer un GPX…</li>", [LIBQ.items.length ? LIBQ.items.map((r, k) => `<li role="option" id="libo${k}" data-id="${r.id}" aria-selected="${k === LIBQ.act}" class="${r.id === LIB.current ? 'cur' : ''}"><b>${mark(r.name)}</b><span class="m">${n0(r.km || 0)} km · D+ ${n0(r.dplus || 0)} m${r.used_at ? ' · ' + agoTxt(r.used_at) : ''}</span></li>`).join('')
+  ul.innerHTML = T("{0}<li class=\"imp\" data-imp=\"1\">＋ Importer un GPX…</li>", [LIBQ.items.length ? LIBQ.items.map((r, k) => `<li role="option" id="libo${k}" data-id="${r.id}" aria-selected="${k === LIBQ.act}" class="${r.id === LIB.current ? 'cur' : ''}"><b>${mark(r.name)}</b><span class="m">${fD(r.km || 0, 0)} ${UL.km} · D+ ${fE(r.dplus || 0)} ${UL.m}${r.used_at ? ' · ' + agoTxt(r.used_at) : ''}</span></li>`).join('')
     : T("<li class=\"empty\">Aucun parcours ne correspond à « {0} ».</li>", [escH(inp.value)])]);
   ul.hidden = false; inp.setAttribute('aria-expanded', 'true'); inp.setAttribute('aria-activedescendant', LIBQ.items.length ? 'libo' + LIBQ.act : '');
   const a = ul.querySelector('[aria-selected="true"]'); if (a) a.scrollIntoView({ block: 'nearest' });
@@ -4555,7 +4599,7 @@ function lpRender() {
   $('#lpList').innerHTML = items.map(r => {
     const th = t[r.id], cur = r.id === LIB.current;
     const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
-    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), n1(r.km || 0), n0(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
+    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), fD(r.km || 0), fE(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
         : LP.open === r.id ? T("<div class=\"lp-acts\"><button type=\"button\" class=\"btn small\" data-ren=\"{0}\">Renommer</button><button type=\"button\" class=\"btn small{1}\" data-del=\"{2}\">{3}</button></div>", [r.id, LP.del === r.id ? ' danger' : '', r.id, LP.del === r.id ? T("Confirmer la suppression") : T("Supprimer")]) : '']); }).join('');
   if (LP.ren) { const i = $('#lpRenIn'); if (i) { i.focus(); i.select(); } }
   lpFillThumbs();
@@ -4616,7 +4660,7 @@ function outHead(st, total) {
   if (st.amin < 3) neg.push(T('froid')); else if (st.amin < 8) neg.push(T("fraîcheur")); else if (st.amax > 34) neg.push(T('canicule')); else if (st.amax > 30) neg.push(T('chaleur'));
   if (headwind) neg.push(T("vent de face"));
   const gust = st.hasGust ? st.gust : 0;
-  if (gust >= GUST_WARN) neg.push(T("rafales à {0} km/h", [Math.round(gust)]));
+  if (gust >= GUST_WARN) neg.push(T("rafales à {0} km/h", [fV(gust)]));
   if (tailwind) pos.push(T("vent dans le dos")); if (sunPct >= 60) pos.push('soleil');
   const list = a => a.length < 2 ? (a[0] || '') : T("{0} et {1}", [a.slice(0, -1).join(', '), a[a.length - 1]]), cap = x => x.charAt(0).toUpperCase() + x.slice(1);
   const dry = st.rain < 0.3;
@@ -4665,7 +4709,7 @@ function outDaysRender() {
 }
 async function outRun() {
   const id = ++OUT.run, opt = outOpt(), day = outDays()[OUT.day], date = ymd(day), time = $('#outTime').value || opt.time || '08:00';
-  $('#outPace').textContent = `· ${n1(opt.speed)} km/h`;
+  $('#outPace').textContent = `· ${fV(opt.speed, 1)} ${UL.kmh}`;
   const [hh, mm] = time.split(':').map(Number), t0 = new Date(day); t0.setHours(hh, mm, 0, 0);
   const end = outDays()[3], to = new Date(day); to.setDate(to.getDate() + 1); const toD = to > end ? end : to;
   const list = LIB.list.slice(), res = [], long = [];
@@ -4701,9 +4745,9 @@ function outRender(res, long) {
     const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
     const miss = st.missKm > r.R.P.total * 0.05;
     const bestTxt = r.best && r.best.sc < r.sc - 2 && !miss ? T("Mieux à {0}:00 : {1}", [String(r.best.h).padStart(2, '0'), outHead(r.best.st, r.R.P.total).txt.charAt(0).toLowerCase() + outHead(r.best.st, r.R.P.total).txt.slice(1)]) : '';
-    return T("<li class=\"lp-item out-item\"><button type=\"button\" class=\"lp-open\" data-go=\"{0}\"><span class=\"out-rank\">{1}</span><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{2}</svg>\n      <span class=\"lp-txt\"><b>{3}</b><span class=\"out-v\"><i class=\"out-pill {4}\"></i>{5}</span>\n      <span>{6} km · arrivée {7} · {8} mm · face {9} % · {10} à {11} °C ressentis</span>\n      {12}</span></button></li>", [r.m.id, k + 1, svg, escH(r.m.name), miss ? 'n' : h.lvl, miss ? T("Prévision incomplète") : escH(h.txt), n1(r.R.P.total), whenTxt(r.sim.end, r.sim.start), n1(st.rain), h.head, n0(st.amin), n0(st.amax), bestTxt ? `<span class="out-best">${escH(bestTxt)}</span>` : '']);
+    return T("<li class=\"lp-item out-item\"><button type=\"button\" class=\"lp-open\" data-go=\"{0}\"><span class=\"out-rank\">{1}</span><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{2}</svg>\n      <span class=\"lp-txt\"><b>{3}</b><span class=\"out-v\"><i class=\"out-pill {4}\"></i>{5}</span>\n      <span>{6} km · arrivée {7} · {8} mm · face {9} % · {10} à {11} °C ressentis</span>\n      {12}</span></button></li>", [r.m.id, k + 1, svg, escH(r.m.name), miss ? 'n' : h.lvl, miss ? T("Prévision incomplète") : escH(h.txt), fD(r.R.P.total), whenTxt(r.sim.end, r.sim.start), fR(st.rain), h.head, fT(st.amin), fT(st.amax), bestTxt ? `<span class="out-best">${escH(bestTxt)}</span>` : '']);
   }).join('') + bad.map(r => T("<li class=\"lp-empty\">{0} : météo indisponible ({1}).</li>", [escH(r.m.name), escH(r.err || T("tracé introuvable"))])).join('');
-  $('#outLong').innerHTML = long.length ? T("<p class=\"out-sec\">Sur plusieurs jours, à planifier dans Ultra</p><ul class=\"lp-list\">{0}</ul>", [long.map(m => `<li class="lp-item"><button type="button" class="lp-open" data-ultra="${m.id}"><span class="lp-txt"><b>${escH(m.name)}</b><span>${n0(m.km || 0)} km · D+ ${n0(m.dplus || 0)} m</span></span></button></li>`).join('')]) : '';
+  $('#outLong').innerHTML = long.length ? T("<p class=\"out-sec\">Sur plusieurs jours, à planifier dans Ultra</p><ul class=\"lp-list\">{0}</ul>", [long.map(m => `<li class="lp-item"><button type="button" class="lp-open" data-ultra="${m.id}"><span class="lp-txt"><b>${escH(m.name)}</b><span>${fD(m.km || 0, 0)} ${UL.km} · D+ ${fE(m.dplus || 0)} ${UL.m}</span></span></button></li>`).join('')]) : '';
 }
 function outOpen() {
   pageOpen('outPage', '#tabOut');
@@ -4752,7 +4796,7 @@ function chipsRender() {
   const c = (k, txt, target) => `<button type="button" class="chip" data-go="${target}"><svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg><span>${txt}</span></button>`;
   box.innerHTML = c('route', S.name || T("Parcours"), '@lib')
     + c('when', when, S.mode === 'ultra' ? '#planStartSlot' : '#startRow')
-    + c('speed', n1(+$('#speed').value) + ' km/h', S.mode === 'ultra' ? '#planSpeedSlot' : '#speed')
+    + c('speed', fV(+$('#speed').value, 1) + ' ' + UL.kmh, S.mode === 'ultra' ? '#planSpeedSlot' : '#speed')
     + c('set', T("Réglages"), '');
 }
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const t = b.dataset.go; if (t === '@lib') { lpOpen(); return; }
@@ -4838,22 +4882,26 @@ function meRender() {
   $('#meWho').textContent = who ? T("Connecté avec {0}.{1}", [who, LIB.list.length ? T(" {0} parcours dans ton compte.", [LIB.list.length]) : '']) : T("Pas connecté.");
   const row = (m, k, label, min, max, step, v, unit) => `<div class="me-row"><label for="me-${m}-${k}">${label}</label><output id="me-${m}-${k}-o">${unit(v)}</output>
     <input type="range" id="me-${m}-${k}" data-m="${m}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
-  const kmh = v => n1(+v) + ' km/h', mh = v => v + ' m/h', mn = v => v + ' min / h';
+  const kmh = v => fV(+v, 1) + ' ' + UL.kmh, mh = v => fE(+v) + ' ' + UL.mh, mn = v => v + ' min / h';
   $('#meModes').innerHTML = ['ride', 'ultra', 'taf'].map(m => { const g = meGet(m);
     return `<div class="me-mode"><h4>${ME_NAME[m]}${m === S.mode ? T(" · mode en cours") : ''}</h4>`
       + row(m, 'speed', m === 'taf' ? T("Vitesse moyenne") : T("Vitesse sur le plat"), 12, 40, 0.5, g.speed, kmh)
       + (m === 'taf' ? '' : row(m, 'vam', T("Vitesse de montée (VAM)"), 300, 1400, 50, g.vam, mh) + row(m, 'pmin', T("Arrêts par heure de pédalage"), 0, 30, 1, g.pmin, mn))
       + '</div>'; }).join('');
   const td = tafDefault(), opts = LIB.list.slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
-  $('#meTaf').innerHTML = T("<option value=\"\">Aucun : le parcours ouvert</option>{0}", [opts.map(r => `<option value="${r.id}"${r.id === td ? ' selected' : ''}>${escH(r.name)} · ${n1(r.km || 0)} km</option>`).join('')]);
+  $('#meTaf').innerHTML = T("<option value=\"\">Aucun : le parcours ouvert</option>{0}", [opts.map(r => `<option value="${r.id}"${r.id === td ? ' selected' : ''}>${escH(r.name)} · ${fD(r.km || 0)} ${UL.km}</option>`).join('')]);
   const th = document.documentElement.dataset.theme || 'auto';
   for (const b of document.querySelectorAll('#meTheme button')) b.setAttribute('aria-pressed', String(b.dataset.t === th));
 }
 function meOpen() { pageOpen('mePage', '#tabMe'); meRender(); alRender(); alLoad(); }
 $('#meModes').addEventListener('input', e => { const i = e.target.closest('input[data-k]'); if (!i) return; const v = +i.value, k = i.dataset.k;
-  $('#' + i.id + '-o').textContent = k === 'speed' ? n1(v) + ' km/h' : k === 'vam' ? v + ' m/h' : v + ' min / h'; meSet(i.dataset.m, k, v); });
+  $('#' + i.id + '-o').textContent = k === 'speed' ? fV(v, 1) + ' ' + UL.kmh : k === 'vam' ? fE(v) + ' ' + UL.mh : v + ' min / h'; meSet(i.dataset.m, k, v); });
 for (const b of document.querySelectorAll('#meLang button')) b.setAttribute('aria-pressed', String(b.dataset.l === LANG));
 { const g = $('#gateLang'); if (g) { if (LANG === 'en') { g.dataset.l = 'fr'; g.lang = 'fr'; g.textContent = 'Français'; } g.addEventListener('click', () => setLang(g.dataset.l)); } }
+for (const b of document.querySelectorAll('#meDist button')) b.setAttribute('aria-pressed', String((b.dataset.u === 'mi') === UNITS.mi));
+for (const b of document.querySelectorAll('#meTemp button')) b.setAttribute('aria-pressed', String((b.dataset.u === 'f') === UNITS.f));
+$('#meDist').addEventListener('click', e => { const b = e.target.closest('button[data-u]'); if (b) setUnits({ dist: b.dataset.u }); });
+$('#meTemp').addEventListener('click', e => { const b = e.target.closest('button[data-u]'); if (b) setUnits({ temp: b.dataset.u }); });
 $('#meLang').addEventListener('click', e => { const b = e.target.closest('button[data-l]'); if (b) setLang(b.dataset.l); });
 $('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); });
 $('#meHelp').addEventListener('click', () => $('#helpBtn').click());
@@ -4905,7 +4953,7 @@ function alRender() {
   $('#alState').classList.toggle('on', dev && on);
   const rem = LIB.list.filter(x => x.remote).sort((a, b) => a.name.localeCompare(b.name, LANG));
   $('#alRoute').innerHTML = (rem.length ? '' : T("<option value=\"\">Aucun parcours dans ton compte</option>"))
-    + rem.map(x => `<option value="${escH(x.id)}"${x.id === r.route_id ? ' selected' : ''}>${escH(x.name)} · ${n1(x.km || 0)} km</option>`).join('');
+    + rem.map(x => `<option value="${escH(x.id)}"${x.id === r.route_id ? ' selected' : ''}>${escH(x.name)} · ${fD(x.km || 0)} ${UL.km}</option>`).join('');
   if (r.route_id && !rem.some(x => x.id === r.route_id)) $('#alRoute').insertAdjacentHTML('afterbegin', `<option value="${escH(r.route_id)}" selected>${escH(r.route_name || T("Parcours"))}</option>`);
   $('#alTime').value = r.dep_time || '09:00'; $('#alWhen').value = r.notify || 'eve';
   const days = new Set(r.days || []);
@@ -4917,9 +4965,9 @@ async function alSave(patch) {
   const sb = await sbIfLogged(); if (!sb) { alMsg(T("Connecte-toi pour régler les alertes.")); return false; }
   const { data: { session } } = await sb.auth.getSession(); if (!session) return false;
   const cur = AL.row || alDefaults(), g = meGet('ride'), opt = $('#alRoute').selectedOptions[0];
-  const row = { ...cur, ...patch, user_id: session.user.id, route_id: $('#alRoute').value || null, route_name: opt ? opt.textContent.replace(/ · [\d,.]+ km$/, '') : null,
+  const row = { ...cur, ...patch, user_id: session.user.id, route_id: $('#alRoute').value || null, route_name: opt ? opt.textContent.replace(/ · [\d,.]+ (km|mi)$/, '') : null,
     dep_time: $('#alTime').value || '09:00', notify: $('#alWhen').value, days: [...document.querySelectorAll('#alDays button[aria-pressed="true"]')].map(b => +b.dataset.d),
-    speed: g.speed, vam: g.vam, lang: LANG, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris', page: location.origin + location.pathname, updated_at: new Date().toISOString() };
+    speed: g.speed, vam: g.vam, lang: LANG, dist: UNITS.mi ? 'mi' : 'km', temp: UNITS.f ? 'f' : 'c', tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris', page: location.origin + location.pathname, updated_at: new Date().toISOString() };
   delete row.last_sent;
   const { data, error } = await sb.from('push_alerts').upsert(row, { onConflict: 'user_id' }).select().maybeSingle();
   if (error) { alMsg(T("Réglages non enregistrés : {0}", [error.message])); return false; }

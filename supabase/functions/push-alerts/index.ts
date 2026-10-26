@@ -1,6 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { sendPush, vapidGenerate, type VapidKeys, type Sub } from './webpush.ts';
-import { localParts, zoned, addDays, isoWd, route, weather, ride, verdict, score, tr, LANGS } from './forecast.ts';
+import { localParts, zoned, addDays, isoWd, route, weather, ride, verdict, score, tr, LANGS, unitsOf, cv } from './forecast.ts';
 
 // Alertes météo de Plan My Ride (notifications Web Push), depuis le 25/10/2026.
 // POST, jeton de session d'un compte actif avec l'accès Plan My Ride :
@@ -24,7 +24,7 @@ const NOTIFY_H: Record<string, number> = { eve: 20, morn: 7 };
 
 type Admin = ReturnType<typeof createClient>;
 type Alert = { user_id: string; enabled: boolean; route_id: string | null; route_name: string | null; dep_time: string; days: number[];
-  notify: string; speed: number | null; vam: number | null; tz: string; page: string | null; last_sent: string | null; lang?: string | null };
+  notify: string; speed: number | null; vam: number | null; tz: string; page: string | null; last_sent: string | null; lang?: string | null; dist?: string | null; temp?: string | null };
 
 async function vapid(db: Admin): Promise<VapidKeys> {
   const { data } = await db.from('push_keys').select('pub,priv').eq('id', 1).maybeSingle();
@@ -42,18 +42,18 @@ async function buildAlert(db: Admin, a: Alert, day: string, todayLocal: string) 
   const speed = Math.min(45, Math.max(10, Number(a.speed) || 25)), vam = Math.min(1500, Math.max(250, Number(a.vam) || 700));
   const ahead = Math.round((Date.parse(day) - Date.parse(todayLocal)) / 864e5);
   const wx = await weather(R.smp, addDays(day, -1), addDays(day, 1), ahead <= 2);
-  const lang = LANGS.includes(String(a.lang)) ? String(a.lang) : 'fr', loc = lang === 'en' ? 'en-GB' : 'fr-FR', T = (k: string, x?: (string | number)[]) => tr(lang, k, x);
-  const t0 = zoned(day, a.dep_time, tz), s = ride(R, wx, t0, speed, vam), v = verdict(s, lang);
+  const lang = LANGS.includes(String(a.lang)) ? String(a.lang) : 'fr', loc = lang === 'en' ? 'en-GB' : 'fr-FR', u = unitsOf(a), T = (k: string, x?: (string | number)[]) => tr(lang, k, x, u);
+  const t0 = zoned(day, a.dep_time, tz), s = ride(R, wx, t0, speed, vam), v = verdict(s, lang, u);
   // meilleure heure de départ ce jour-là (6 h → 17 h), si nettement meilleure
   let best: { h: number; sc: number; v: ReturnType<typeof verdict> } | null = null;
   for (let h = 6; h <= 17; h++) {
     const s2 = ride(R, wx, zoned(day, String(h).padStart(2, '0') + ':00', tz), speed, vam); if (s2.miss) continue;
-    const sc = score(s2); if (!best || sc < best.sc) best = { h, sc, v: verdict(s2, lang) };
+    const sc = score(s2); if (!best || sc < best.sc) best = { h, sc, v: verdict(s2, lang, u) };
   }
   const dot = ['🟢', '🟠', '🔴'][v.lvl], name = a.route_name || r.name || T('Ton parcours');
   const when = day === todayLocal ? T("Aujourd'hui") : day === addDays(todayLocal, 1) ? T('Demain') : new Intl.DateTimeFormat(loc, { weekday: 'long', timeZone: 'UTC' }).format(new Date(day + 'T12:00Z'));
   const fmt = (ms: number) => new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(new Date(ms));
-  const ressenti = Math.round(s.amin) === Math.round(s.amax) ? T('ressenti {0} °C', [Math.round(s.amin)]) : T('ressenti {0} à {1} °C', [Math.round(s.amin), Math.round(s.amax)]);
+  const ressenti = Math.round(s.amin) === Math.round(s.amax) ? T('ressenti {0} °C', [cv.t(u, s.amin)]) : T('ressenti {0} à {1} °C', [cv.t(u, s.amin), cv.t(u, s.amax)]);
   let body = s.miss ? T('Prévision incomplète pour ce parcours.') : `${dot} ${v.txt} · ${ressenti} · ${T('arrivée vers {0}', [fmt(s.endMs)])}`;
   if (best && !s.miss && best.sc < score(s) - 2 && String(best.h).padStart(2, '0') + ':00' !== a.dep_time)
     body += '\n' + T('Mieux à {0} ({1})', [String(best.h).padStart(2, '0') + ':00', best.v.txt.charAt(0).toLowerCase() + best.v.txt.slice(1)]);

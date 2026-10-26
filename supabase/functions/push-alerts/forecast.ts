@@ -89,17 +89,24 @@ const EN: Record<string, string> = {
   'arrivée vers {0}': 'finish around {0}', 'Mieux à {0} ({1})': 'Better at {0} ({1})', 'Alerte de test (météo indisponible : {0}).': 'Test alert (weather unavailable: {0}).',
   'Les alertes fonctionnent sur cet appareil. Choisis un parcours pour recevoir sa météo.': 'Alerts work on this device. Choose a route to get its weather.',
 };
-export function tr(lang: string, k: string, a: (string | number)[] = []) {
-  const r = lang === 'en' && EN[k] != null ? EN[k] : k;
+// Unités d'affichage du compte (calculs toujours en km/h, °C, mm) : mi = mph et pouces, f = °F
+export type Units = { mi: boolean; f: boolean };
+export const unitsOf = (a: { dist?: string | null; temp?: string | null }): Units => ({ mi: a.dist === 'mi', f: a.temp === 'f' });
+export const cv = { v: (u: Units, kmh: number) => Math.round(u.mi ? kmh * 0.621371 : kmh), t: (u: Units, c: number) => Math.round(u.f ? c * 1.8 + 32 : c),
+  r: (u: Units, mm: number) => u.mi ? String(Math.round(mm / 25.4 * 100) / 100) : String(Math.round(mm)) };
+export function tr(lang: string, k: string, a: (string | number)[] = [], u?: Units) {
+  let r = lang === 'en' && EN[k] != null ? EN[k] : k;
+  if (u?.mi) r = r.replace(/(\{\d+\}) km\/h/g, '$1 mph').replace(/(\{\d+\}) mm/g, '$1 in');
+  if (u?.f) r = r.replace(/(\{\d+\}) °C/g, '$1 °F');
   return r.replace(/\{(\d+)\}/g, (_m, i) => String(a[+i]));
 }
-export function verdict(s: Stats, lang = 'fr') {
-  const T = (k: string, a?: (string | number)[]) => tr(lang, k, a);
+export function verdict(s: Stats, lang = 'fr', u: Units = { mi: false, f: false }) {
+  const T = (k: string, a?: (string | number)[]) => tr(lang, k, a, u);
   const neg: string[] = [], pos: string[] = [];
-  if (s.rain >= 10) neg.push(T('grosse pluie ({0} mm)', [Math.round(s.rain)])); else if (s.rain >= 3) neg.push(T('pluie ({0} mm)', [Math.round(s.rain)])); else if (s.rain >= 0.3) neg.push(T('quelques gouttes'));
-  if (s.head >= 8 || s.headPct >= 50) neg.push(T('vent de face ({0} km/h en moyenne)', [Math.round(Math.max(0, s.head))]));
+  if (s.rain >= 10) neg.push(T('grosse pluie ({0} mm)', [cv.r(u, s.rain)])); else if (s.rain >= 3) neg.push(T('pluie ({0} mm)', [cv.r(u, s.rain)])); else if (s.rain >= 0.3) neg.push(T('quelques gouttes'));
+  if (s.head >= 8 || s.headPct >= 50) neg.push(T('vent de face ({0} km/h en moyenne)', [cv.v(u, Math.max(0, s.head))]));
   else if (s.head <= -8 || s.tailPct >= 50) pos.push(T('vent dans le dos'));
-  if (s.gust >= GUST_WARN) neg.push(T('rafales à {0} km/h', [Math.round(s.gust)]));
+  if (s.gust >= GUST_WARN) neg.push(T('rafales à {0} km/h', [cv.v(u, s.gust)]));
   if (s.amin < 3) neg.push(T('froid')); else if (s.amin < 8) neg.push(T('fraîcheur')); else if (s.amax > 34) neg.push(T('canicule')); else if (s.amax > 30) neg.push(T('chaleur'));
   const list = (a: string[]) => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + T(' et ') + a[a.length - 1];
   const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
