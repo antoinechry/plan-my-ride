@@ -893,11 +893,22 @@ body:not(.admin) .me-btns .adm{display:none}
           <option value="dmi">HARMONIE · DMI (Danemark, nord de l'Europe)</option>
           <option value="ukmo">Met Office (Royaume-Uni)</option>
           <option value="ecmwf">ECMWF (centre européen)</option>
+          <option value="geo">AROME · GeoSphere (Autriche, Alpes de l'Est)</option>
+          <option value="chmi">ALADIN · CHMI (Tchéquie, Europe centrale)</option>
         </optgroup>
         <optgroup label="Amérique du Nord">
           <option value="gfs">GFS + HRRR · NOAA (États-Unis)</option>
           <option value="nbm">NBM · NOAA (États-Unis, risque de pluie)</option>
           <option value="gem">GEM · Environnement Canada</option>
+          <option value="nam">NAM · NOAA (États-Unis, 2 jours et demi)</option>
+        </optgroup>
+        <optgroup label="Asie">
+          <option value="jma">JMA (Japon)</option>
+          <option value="cma">GRAPES · CMA (Chine)</option>
+        </optgroup>
+        <optgroup label="Modèles d'intelligence artificielle">
+          <option value="aifs">AIFS · ECMWF (IA)</option>
+          <option value="aigfs">AIGFS · NOAA (IA)</option>
         </optgroup>
       </select>
       <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Sillage est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
@@ -1422,6 +1433,23 @@ const OM_MODELS = {
     hint: T("National Blend of Models du service météo américain : synthèse corrigée de plusieurs modèles (2,5 km, États-Unis contigus, mise à jour toutes les heures), avec risque de pluie, jusqu'à 11 jours") },
   gem: { name: 'GEM (Environnement Canada)', models: ['gem_seamless', 'cmc_gem_seamless'], days: 10, org: T("Environnement et Changement climatique Canada"), url: 'https://meteo.gc.ca', mdl: 'GEM HRDPS, RDPS, global',
     hint: T("Service météo canadien : HRDPS (2,5 km, Canada et nord des États-Unis) sur 2 jours, RDPS (10 km, Amérique du Nord) jusqu'à 3 jours et demi, puis GEM mondial (15 km) jusqu'à 10 jours") },
+  // Ajoutés le 26/10/2026 (identifiants vérifiés en direct sur l'API Open-Meteo ce jour-là). Écartés car sans données ce jour-là :
+  // kma_seamless (Corée), bom_access_global (Australie), gfs_graphcast025. `fill` : variables manquantes (rafales, ressenti…)
+  // toujours complétées par Open-Meteo automatique.
+  geo: { name: 'AROME (GeoSphere Austria)', models: ['geosphere_seamless'], days: 15, org: 'GeoSphere Austria', url: 'https://www.geosphere.at', mdl: 'AROME, ECMWF',
+    hint: T("Service météo autrichien : AROME (2,5 km, Autriche et Alpes de l'Est) sur 2 jours et demi, puis ECMWF jusqu'à 15 jours") },
+  chmi: { name: 'ALADIN (CHMI)', models: ['chmi_aladin_seamless'], days: 15, org: 'CHMI', url: 'https://www.chmi.cz', mdl: 'ALADIN, ECMWF',
+    hint: T("Service météo tchèque : ALADIN (1 à 2,3 km, Tchéquie et Europe centrale) sur 3 jours, puis ECMWF jusqu'à 15 jours") },
+  nam: { name: 'NAM (NOAA)', models: ['ncep_nam_conus'], days: 3, org: 'NOAA', url: 'https://www.noaa.gov', mdl: 'NAM',
+    hint: T("Modèle régional du service météo américain : NAM (3 km, États-Unis contigus), 2 jours et demi") },
+  jma: { name: 'JMA (Japon)', models: ['jma_seamless'], days: 11, org: T("Agence météorologique du Japon"), url: 'https://www.jma.go.jp', mdl: 'MSM, GSM',
+    hint: T("Service météo japonais : MSM (5 km, Japon et ses abords) sur 4 jours, puis GSM mondial (20 km) jusqu'à 11 jours") },
+  cma: { name: 'GRAPES (CMA)', models: ['cma_grapes_global'], days: 5, org: T("Administration météorologique de Chine"), url: 'https://www.cma.gov.cn', mdl: 'GRAPES',
+    hint: T("Modèle mondial du service météo chinois : GRAPES (15 km), 5 jours") },
+  aifs: { name: 'AIFS (ECMWF, IA)', models: ['ecmwf_aifs025_single'], days: 15, fill: true, org: 'ECMWF', url: 'https://www.ecmwf.int', mdl: 'AIFS',
+    hint: T("Modèle d'intelligence artificielle du centre européen (25 km), jusqu'à 15 jours : bon à moyenne échéance, peu de détail local. Sans rafales : reprises d'Open-Meteo") },
+  aigfs: { name: 'AIGFS (NOAA, IA)', models: ['ncep_aigfs025'], days: 16, fill: true, org: 'NOAA', url: 'https://www.noaa.gov', mdl: 'AIGFS',
+    hint: T("Modèle d'intelligence artificielle du service météo américain (25 km), jusqu'à 16 jours. Sans rafales, ressenti ni ensoleillement : repris d'Open-Meteo") },
 };
 const OM_PROB = new Set(Object.values(OM_MODELS).filter(m => m.prob).flatMap(m => m.models)); // modèles qui donnent le risque de pluie
 const WX_SRC = { mb: 'meteoblue', arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
@@ -1712,7 +1740,7 @@ async function getWeather(src, from, to, today) {
     const needAlt = src === 'mb' ? to > end : to >= end;
     let alt = needAlt ? await om().catch(() => null) : null, part = 0;
     // modèle régional : trous comblés par Open-Meteo automatique (parcours hors de la zone du modèle)
-    if (OM_MODELS[src] && omGaps(r.wx)) {
+    if (OM_MODELS[src] && (OM_MODELS[src].fill || omGaps(r.wx))) {
       const b = alt || await om().catch(() => null);
       if (b){ part = omFill(r.wx, b); if (part && !alt) alt = b; }
     }
