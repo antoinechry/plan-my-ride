@@ -3567,13 +3567,17 @@ const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : S.mode === 'taf' ? 
 const MODE_DEF = {
   ride: { time: '08:00', speed: 25, vam: 700, pause: 10, pauseMode: 'pct', pauseMin: 6, pauseEvery: 1, windOn: true, poiRadius: 500, laps: 1, lapPause: 10 },
   taf: { time: '07:45', speed: 20, vam: 600, pause: 5, pauseMode: 'pct', pauseMin: 3, pauseEvery: 1, windOn: true, poiRadius: 500, tafBack: '17:30', tafRet: '' },
-  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, pauseMode: 'pct', pauseMin: 15, pauseEvery: 1, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
+  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, pauseMode: 'min', pauseMin: 12, pauseEvery: 1, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
   const tm = new Date(); tm.setDate(tm.getDate() + 1);
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(optKey()) || '{}') || {}; } catch (e) {}
   const def = { ...MODE_DEF[S.mode], ...saved };
+  // Ultra : arrêts courts en minutes par heure (27/10/2026) ; une seule fois, un réglage en % est converti à l'identique (20 % = 12 min / h)
+  if (S.mode === 'ultra') { let done = false; try { done = !!localStorage.getItem('pmr-ultra-pmin'); localStorage.setItem('pmr-ultra-pmin', '1'); } catch (e) {}
+    if (!done && def.pauseMode !== 'min') { Object.assign(def, { pauseMode: 'min', pauseMin: Math.round((+def.pause || 0) * 0.6), pauseEvery: 1 });
+      try { localStorage.setItem(optKey(), JSON.stringify({ ...saved, pauseMode: 'min', pauseMin: def.pauseMin, pauseEvery: 1 })); } catch (e) {} } }
   $('#date').value = S.mode === 'ultra' && def.date && def.date >= ymd(new Date()) ? def.date : ymd(tm);
   if (S.mode === 'ride') { let rd = ''; try { rd = sessionStorage.getItem('pmr-ride-date') || ''; sessionStorage.removeItem('pmr-ride-date'); } catch (e) {}
     if (rd && rd >= ymd(new Date())) $('#date').value = rd; }
