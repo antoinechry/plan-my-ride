@@ -70,7 +70,6 @@ a{color:#23629A}a:hover{color:#14201B}
 .sl-attr{bottom:6px !important}
 .sl-days{grid-template-columns:repeat(5,minmax(112px,1fr)) !important;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
 .sl-navlink{display:none}
-.sl-nlwind{display:none}
 .sl-seg span{padding:6px 8px !important;font-size:12px !important}
 .sl-hour{font-size:24px !important}
 .sl-scrollimg img{min-width:720px}
@@ -639,14 +638,34 @@ a{color:#23629A}a:hover{color:#14201B}
 
 <!-- CTA : NEWSLETTER -->
 <section id="newsletter" style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 112px">
-<div class="sl-rv" style="position: relative; overflow: hidden; background: #E0A21B; color: #14201B; border-radius: 24px; padding: clamp(28px, 6vw, 72px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 40px">
-<svg class="sl-nlwind" viewBox="0 0 400 200" style="position: absolute; right: -40px; top: -20px; width: 460px; opacity: 0.35" aria-hidden="true"><g stroke="#14201B" stroke-width="3" stroke-linecap="round" fill="none"><path class="sl-windline" d="M0 40 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -1s" d="M120 100 q 100 -18 200 0"></path><path class="sl-windline" style="animation-delay: -2s" d="M40 160 q 100 -18 200 0"></path></g></svg>
-<div style="position: relative; flex: 1 1 360px; min-width: 0">
-<p style="margin: 0 0 14px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase">Bientôt sur iPhone et Android</p>
-<h2 style="margin: 0; font-weight: 800; font-size: clamp(36px, 4.6vw, 64px); line-height: 1; letter-spacing: -0.03em; max-width: 600px">Ta prochaine sortie mérite le bon départ.</h2>
-<p style="margin: 20px 0 0; font-size: 19px; line-height: 1.55; max-width: 520px">Laisse ton e-mail : tu seras prévenu·e avant tout le monde de la sortie de Sillage, et tu pourras le tester en avant-première.</p>
+<div class="sl-rv sl-nlbox" style="position: relative; overflow: hidden; background: #121B17; color: #FFFFFF; border-radius: 24px; padding: clamp(24px, 5vw, 64px); display: flex; flex-direction: column; gap: 32px">
+<div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none">
+<svg class="sl-nlmap" viewBox="0 1300 2048 1400" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<image href="img/chambery-ortho-ign.jpg" x="0" y="0" width="3072" height="3584" preserveAspectRatio="none"></image>
+</svg>
+<div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,20,16,0.62) 0%, rgba(11,20,16,0.25) 38%, rgba(11,20,16,0.2) 100%)"></div>
+<canvas class="sl-nlcv" style="position: absolute; inset: 0; width: 100%; height: 100%"></canvas>
+<svg class="sl-nlmap" viewBox="0 1300 2048 1400" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<path id="sl-nl-trace" d="M1110.5 2099.7 L1108.3 2100.3 L1108.1 2101.1 L1112.5 2108.2 L1114.6 2109.4 L1106.7 2122.1 L1102.9 2122.5 L1100.1 2124.5 L1092.2 2127.6 L1089.0 2127.5 L1084.4 2125.6 L1082.1 2128.3 L1073.7 2130.7 L1068.8 2130.1 L1066.6 2129.0 L1064.6 2130.9 L1055.7 2134.8 L1052.2 2139.5 L1039.1 2134.8 L1035.5 2136.0 L1030.3 2134.3 L1023.7 2127.4 L1022.1 2122.3 L1017.7 2118.0 L1014.4 2107.6 L1008.7 2102.5 L1006.2 2104.4 L1003.1 2105.2 L995.1 2109.5 L994.1 2117.6 L986.6 2119.8 L982.5 2127.2 L981.6 2132.2 L977.2 2136.4 L964.9 2135.7 L952.4 2138.1 L943.4 2135.8 L929.9 2137.7 L919.4 2141.4 L916.9 2142.9 L914.4 2142.5 L913.2 2144.1 L909.5 2143.7 L908.9 2142.5 L912.0 2136.5 L907.5 2132.0 L905.2 2128.4 L903.3 2127.8 L899.3 2130.2 L896.7 2130.1 L898.6 2127.1 L897.8 2125.1 L898.0 2119.1 L896.3 2117.0 L897.0 2114.7 L895.3 2113.5 L894.1 2108.0 L885.6 2092.0 L882.1 2090.2 L880.0 2093.1 L876.5 2094.7 L872.7 2101.5 L871.8 2104.6 L870.6 2103.3 L869.1 2098.6 L862.1 2091.1 L857.0 2083.8 L856.5 2080.6 L858.1 2072.2 L856.6 2068.2 L856.8 2059.2 L854.3 2056.9 L854.4 2052.2 L855.4 2050.1 L855.1 2044.4 L853.4 2034.0 L851.2 2026.1 L847.2 2018.7 L847.4 2016.5 L846.7 2016.6 L846.4 2019.0 L847.6 2026.5 L846.9 2038.9 L845.1 2049.9 L844.2 2050.1 L842.4 2033.4 L841.1 2051.6 L840.3 2053.1 L840.4 2056.9 L841.0 2057.0 L840.4 2056.9 L838.7 2060.7 L836.1 2060.7 L833.3 2058.9 L832.7 2054.4 L833.3 2053.1 L832.5 2050.7 L833.7 2047.9 L831.5 2042.8 L829.0 2042.6 L825.7 2044.2 L819.6 2042.9 L815.7 2043.6 L810.1 2043.3 L809.4 2039.8 L805.1 2037.6 L805.6 2034.0 L805.0 2032.9 L800.1 2030.7 L794.3 2032.1 L790.5 2028.0 L787.6 2028.2 L783.2 2025.7 L781.8 2018.6 L779.8 2015.7 L776.9 2001.0 L773.4 1994.0 L773.5 1987.4 L770.1 1979.8 L766.4 1974.9 L764.7 1968.3 L761.4 1967.8 L759.3 1966.2 L752.4 1964.4 L751.3 1961.7 L748.7 1962.5 L747.2 1961.5 L745.4 1962.6 L743.2 1962.6 L740.3 1961.6 L738.8 1960.0 L735.4 1961.1 L729.8 1959.6 L728.9 1957.2 L731.3 1953.6 L731.0 1952.8 L728.8 1955.1 L725.5 1954.3 L722.7 1956.2 L722.0 1955.0 L723.6 1955.0 L723.7 1954.4 L720.0 1952.8 L713.7 1948.0 L711.0 1942.9 L702.9 1937.6 L702.1 1934.5 L708.6 1916.0 L711.1 1914.5 L718.5 1913.0 L724.1 1914.8 L724.1 1911.8 L725.5 1909.0 L728.1 1908.2 L731.9 1905.2 L732.2 1904.3 L730.8 1902.2 L733.9 1900.8 L733.8 1898.9 L730.4 1897.3 L731.7 1895.2 L731.1 1893.1 L728.1 1892.7 L725.0 1890.1 L724.5 1887.8 L721.9 1886.2 L721.2 1884.1 L723.4 1879.0 L727.1 1875.8 L729.4 1870.6 L730.1 1866.0 L733.3 1860.9 L733.8 1856.4 L735.3 1853.3 L732.5 1849.5 L733.7 1845.4 L738.6 1838.5 L740.2 1837.4 L741.5 1834.2 L744.9 1834.2 L740.8 1824.5 L738.1 1825.4 L735.3 1824.7 L734.0 1820.3 L732.7 1818.8 L731.5 1818.8 L730.7 1822.2 L727.0 1822.1 L722.2 1817.9 L718.3 1810.7 L717.0 1803.4 L718.3 1797.8 L732.3 1779.2 L735.6 1767.7 L735.8 1765.3 L734.0 1758.1 L734.6 1737.5 L733.6 1730.6 L736.2 1719.0 L735.2 1717.4 L732.6 1717.8 L732.4 1717.2 L736.2 1713.9 L739.2 1713.3 L743.0 1709.8 L739.2 1707.0 L734.2 1706.4 L733.8 1704.4 L734.5 1701.0 L731.6 1698.0 L729.2 1692.8 L721.6 1682.3 L717.7 1674.8 L716.2 1670.0 L717.5 1664.2 L716.8 1661.9 L727.3 1653.5 L730.5 1649.2 L764.9 1616.4 L776.6 1609.1 L784.0 1611.9 L788.9 1617.0 L792.7 1617.4 L805.8 1608.1 L810.7 1602.6 L819.7 1600.8 L822.9 1601.9 L823.5 1602.9 L822.7 1604.6 L822.6 1607.8 L826.4 1613.9 L826.2 1618.6 L823.3 1621.0 L828.9 1620.8 L838.1 1617.6 L840.8 1615.8 L845.2 1615.0 L849.1 1617.2 L850.8 1617.3 L857.0 1614.3 L865.5 1608.1 L869.8 1600.9 L871.4 1592.1 L876.1 1587.4 L876.5 1584.0 L875.9 1581.8 L876.9 1579.3 L878.4 1577.9 L883.2 1576.9 L886.6 1574.8 L891.2 1569.8 L894.7 1573.3 L894.2 1577.1 L895.6 1579.7 L895.4 1583.6 L894.1 1585.4 L894.1 1587.5 L890.2 1590.3 L893.3 1589.2 L896.0 1589.5 L896.8 1587.8 L897.6 1587.6 L907.9 1594.8 L914.0 1595.9 L917.6 1598.6 L921.3 1595.0 L925.4 1593.2 L928.4 1590.2 L926.2 1594.7 L927.9 1598.6 L927.7 1602.1 L926.5 1603.4 L925.7 1606.5 L924.8 1606.8 L920.3 1605.4 L918.1 1605.8 L926.3 1608.6 L920.4 1607.8 L918.2 1608.1 L917.6 1609.1 L918.1 1618.2 L919.3 1611.0 L919.9 1611.3 L920.2 1615.4 L919.1 1620.1 L916.2 1621.1 L913.7 1627.1 L912.7 1634.7 L913.0 1644.9 L911.5 1648.7 L911.8 1656.1 L912.9 1658.3 L916.3 1660.5 L915.7 1659.5 L916.8 1658.4 L914.9 1653.6 L916.5 1654.2 L921.0 1651.7 L922.5 1649.4 L924.8 1649.4 L928.1 1636.6 L931.7 1642.1 L930.0 1655.2 L930.2 1659.3 L929.3 1661.6 L930.8 1666.9 L929.7 1682.9 L931.4 1684.5 L932.4 1692.6 L936.8 1706.6 L934.7 1714.5 L935.7 1727.2 L937.1 1732.1 L936.2 1741.3 L938.8 1745.6 L940.4 1750.6 L942.8 1753.2 L942.3 1760.3 L944.5 1762.2 L948.0 1763.2 L951.1 1766.0 L954.6 1771.6 L955.0 1777.1 L956.0 1777.9 L954.3 1782.0 L956.6 1785.3 L955.3 1786.1 L957.7 1789.5 L958.5 1794.9 L960.0 1794.9 L966.3 1811.7 L966.7 1814.7 L968.4 1817.5 L970.0 1830.0 L971.9 1834.9 L972.5 1842.0 L975.0 1848.0 L975.5 1852.6 L980.2 1860.2 L980.4 1862.2 L979.0 1866.0 L979.9 1872.3 L983.5 1878.5 L1001.8 1904.2 L1006.3 1908.1 L1008.0 1910.9 L1008.5 1925.7 L1010.0 1935.3 L1017.8 1958.4 L1025.2 1968.4 L1024.4 1969.5 L1030.3 1976.0 L1036.7 2001.1 L1052.6 2018.9 L1058.8 2024.5 L1060.7 2027.7 L1069.3 2036.1 L1071.7 2039.9 L1076.0 2044.2 L1077.1 2051.2 L1080.6 2062.4 L1080.3 2068.2 L1076.2 2078.4 L1086.7 2081.5 L1093.0 2082.5 L1105.6 2102.4 L1109.1 2101.4 L1110.5 2099.7 Z" fill="none" stroke="#FFFFFF" stroke-width="10" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"></path>
+<path d="M1110.5 2099.7 L1108.3 2100.3 L1108.1 2101.1 L1112.5 2108.2 L1114.6 2109.4 L1106.7 2122.1 L1102.9 2122.5 L1100.1 2124.5 L1092.2 2127.6 L1089.0 2127.5 L1084.4 2125.6 L1082.1 2128.3 L1073.7 2130.7 L1068.8 2130.1 L1066.6 2129.0 L1064.6 2130.9 L1055.7 2134.8 L1052.2 2139.5 L1039.1 2134.8 L1035.5 2136.0 L1030.3 2134.3 L1023.7 2127.4 L1022.1 2122.3 L1017.7 2118.0 L1014.4 2107.6 L1008.7 2102.5 L1006.2 2104.4 L1003.1 2105.2 L995.1 2109.5 L994.1 2117.6 L986.6 2119.8 L982.5 2127.2 L981.6 2132.2 L977.2 2136.4 L964.9 2135.7 L952.4 2138.1 L943.4 2135.8 L929.9 2137.7 L919.4 2141.4 L916.9 2142.9 L914.4 2142.5 L913.2 2144.1 L909.5 2143.7 L908.9 2142.5 L912.0 2136.5 L907.5 2132.0 L905.2 2128.4 L903.3 2127.8 L899.3 2130.2 L896.7 2130.1 L898.6 2127.1 L897.8 2125.1 L898.0 2119.1 L896.3 2117.0 L897.0 2114.7 L895.3 2113.5 L894.1 2108.0 L885.6 2092.0 L882.1 2090.2 L880.0 2093.1 L876.5 2094.7 L872.7 2101.5 L871.8 2104.6 L870.6 2103.3 L869.1 2098.6 L862.1 2091.1 L857.0 2083.8 L856.5 2080.6 L858.1 2072.2 L856.6 2068.2 L856.8 2059.2 L854.3 2056.9 L854.4 2052.2 L855.4 2050.1 L855.1 2044.4 L853.4 2034.0 L851.2 2026.1 L847.2 2018.7 L847.4 2016.5 L846.7 2016.6 L846.4 2019.0 L847.6 2026.5 L846.9 2038.9 L845.1 2049.9 L844.2 2050.1 L842.4 2033.4 L841.1 2051.6 L840.3 2053.1 L840.4 2056.9 L841.0 2057.0 L840.4 2056.9 L838.7 2060.7 L836.1 2060.7 L833.3 2058.9 L832.7 2054.4 L833.3 2053.1 L832.5 2050.7 L833.7 2047.9 L831.5 2042.8 L829.0 2042.6 L825.7 2044.2 L819.6 2042.9 L815.7 2043.6 L810.1 2043.3 L809.4 2039.8 L805.1 2037.6 L805.6 2034.0 L805.0 2032.9 L800.1 2030.7 L794.3 2032.1 L790.5 2028.0 L787.6 2028.2 L783.2 2025.7 L781.8 2018.6 L779.8 2015.7 L776.9 2001.0 L773.4 1994.0 L773.5 1987.4 L770.1 1979.8 L766.4 1974.9 L764.7 1968.3 L761.4 1967.8 L759.3 1966.2 L752.4 1964.4 L751.3 1961.7 L748.7 1962.5 L747.2 1961.5 L745.4 1962.6 L743.2 1962.6 L740.3 1961.6 L738.8 1960.0 L735.4 1961.1 L729.8 1959.6 L728.9 1957.2 L731.3 1953.6 L731.0 1952.8 L728.8 1955.1 L725.5 1954.3 L722.7 1956.2 L722.0 1955.0 L723.6 1955.0 L723.7 1954.4 L720.0 1952.8 L713.7 1948.0 L711.0 1942.9 L702.9 1937.6 L702.1 1934.5 L708.6 1916.0 L711.1 1914.5 L718.5 1913.0 L724.1 1914.8 L724.1 1911.8 L725.5 1909.0 L728.1 1908.2 L731.9 1905.2 L732.2 1904.3 L730.8 1902.2 L733.9 1900.8 L733.8 1898.9 L730.4 1897.3 L731.7 1895.2 L731.1 1893.1 L728.1 1892.7 L725.0 1890.1 L724.5 1887.8 L721.9 1886.2 L721.2 1884.1 L723.4 1879.0 L727.1 1875.8 L729.4 1870.6 L730.1 1866.0 L733.3 1860.9 L733.8 1856.4 L735.3 1853.3 L732.5 1849.5 L733.7 1845.4 L738.6 1838.5 L740.2 1837.4 L741.5 1834.2 L744.9 1834.2 L740.8 1824.5 L738.1 1825.4 L735.3 1824.7 L734.0 1820.3 L732.7 1818.8 L731.5 1818.8 L730.7 1822.2 L727.0 1822.1 L722.2 1817.9 L718.3 1810.7 L717.0 1803.4 L718.3 1797.8 L732.3 1779.2 L735.6 1767.7 L735.8 1765.3 L734.0 1758.1 L734.6 1737.5 L733.6 1730.6 L736.2 1719.0 L735.2 1717.4 L732.6 1717.8 L732.4 1717.2 L736.2 1713.9 L739.2 1713.3 L743.0 1709.8 L739.2 1707.0 L734.2 1706.4 L733.8 1704.4 L734.5 1701.0 L731.6 1698.0 L729.2 1692.8 L721.6 1682.3 L717.7 1674.8 L716.2 1670.0 L717.5 1664.2 L716.8 1661.9 L727.3 1653.5 L730.5 1649.2 L764.9 1616.4 L776.6 1609.1 L784.0 1611.9 L788.9 1617.0 L792.7 1617.4 L805.8 1608.1 L810.7 1602.6 L819.7 1600.8 L822.9 1601.9 L823.5 1602.9 L822.7 1604.6 L822.6 1607.8 L826.4 1613.9 L826.2 1618.6 L823.3 1621.0 L828.9 1620.8 L838.1 1617.6 L840.8 1615.8 L845.2 1615.0 L849.1 1617.2 L850.8 1617.3 L857.0 1614.3 L865.5 1608.1 L869.8 1600.9 L871.4 1592.1 L876.1 1587.4 L876.5 1584.0 L875.9 1581.8 L876.9 1579.3 L878.4 1577.9 L883.2 1576.9 L886.6 1574.8 L891.2 1569.8 L894.7 1573.3 L894.2 1577.1 L895.6 1579.7 L895.4 1583.6 L894.1 1585.4 L894.1 1587.5 L890.2 1590.3 L893.3 1589.2 L896.0 1589.5 L896.8 1587.8 L897.6 1587.6 L907.9 1594.8 L914.0 1595.9 L917.6 1598.6 L921.3 1595.0 L925.4 1593.2 L928.4 1590.2 L926.2 1594.7 L927.9 1598.6 L927.7 1602.1 L926.5 1603.4 L925.7 1606.5 L924.8 1606.8 L920.3 1605.4 L918.1 1605.8 L926.3 1608.6 L920.4 1607.8 L918.2 1608.1 L917.6 1609.1 L918.1 1618.2 L919.3 1611.0 L919.9 1611.3 L920.2 1615.4 L919.1 1620.1 L916.2 1621.1 L913.7 1627.1 L912.7 1634.7 L913.0 1644.9 L911.5 1648.7 L911.8 1656.1 L912.9 1658.3 L916.3 1660.5 L915.7 1659.5 L916.8 1658.4 L914.9 1653.6 L916.5 1654.2 L921.0 1651.7 L922.5 1649.4 L924.8 1649.4 L928.1 1636.6 L931.7 1642.1 L930.0 1655.2 L930.2 1659.3 L929.3 1661.6 L930.8 1666.9 L929.7 1682.9 L931.4 1684.5 L932.4 1692.6 L936.8 1706.6 L934.7 1714.5 L935.7 1727.2 L937.1 1732.1 L936.2 1741.3 L938.8 1745.6 L940.4 1750.6 L942.8 1753.2 L942.3 1760.3 L944.5 1762.2 L948.0 1763.2 L951.1 1766.0 L954.6 1771.6 L955.0 1777.1 L956.0 1777.9 L954.3 1782.0 L956.6 1785.3 L955.3 1786.1 L957.7 1789.5 L958.5 1794.9 L960.0 1794.9 L966.3 1811.7 L966.7 1814.7 L968.4 1817.5 L970.0 1830.0 L971.9 1834.9 L972.5 1842.0 L975.0 1848.0 L975.5 1852.6 L980.2 1860.2 L980.4 1862.2 L979.0 1866.0 L979.9 1872.3 L983.5 1878.5 L1001.8 1904.2 L1006.3 1908.1 L1008.0 1910.9 L1008.5 1925.7 L1010.0 1935.3 L1017.8 1958.4 L1025.2 1968.4 L1024.4 1969.5 L1030.3 1976.0 L1036.7 2001.1 L1052.6 2018.9 L1058.8 2024.5 L1060.7 2027.7 L1069.3 2036.1 L1071.7 2039.9 L1076.0 2044.2 L1077.1 2051.2 L1080.6 2062.4 L1080.3 2068.2 L1076.2 2078.4 L1086.7 2081.5 L1093.0 2082.5 L1105.6 2102.4 L1109.1 2101.4 L1110.5 2099.7 Z" fill="none" stroke="#2F7BC0" stroke-width="5.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"></path>
+<g class="sl-nlpin" data-x="1110.5" data-y="2099.7" transform="translate(1110.5 2099.7)"><circle r="8" fill="#14201B" stroke="#FFFFFF" stroke-width="3"></circle><text x="0" y="26" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="700" fill="#FFFFFF" stroke="#0B1410" stroke-opacity="0.75" stroke-width="3.5" paint-order="stroke" font-size="15">Chambéry</text></g>
+<g class="sl-nlpin" data-x="833.2" data-y="2053.6" transform="translate(833.2 2053.6)"><circle r="5" fill="#14201B" stroke="#FFFFFF" stroke-width="2"></circle><text x="-12" y="4" text-anchor="end" font-family="Archivo, sans-serif" font-weight="700" fill="#FFFFFF" stroke="#0B1410" stroke-opacity="0.75" stroke-width="3.5" paint-order="stroke" font-size="15">Col de l'Épine</text><text x="-12" y="19" text-anchor="end" font-family="Archivo, sans-serif" font-weight="700" fill="#FFFFFF" stroke="#0B1410" stroke-opacity="0.75" stroke-width="3.5" paint-order="stroke" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="11">987 m</text></g>
+<g class="sl-nlpin" data-x="901.7" data-y="1590.8" transform="translate(901.7 1590.8)"><circle r="5" fill="#14201B" stroke="#FFFFFF" stroke-width="2"></circle><text x="12" y="4" font-family="Archivo, sans-serif" font-weight="700" fill="#FFFFFF" stroke="#0B1410" stroke-opacity="0.75" stroke-width="3.5" paint-order="stroke" font-size="15">Col du Chat</text><text x="12" y="19" font-family="Archivo, sans-serif" font-weight="700" fill="#FFFFFF" stroke="#0B1410" stroke-opacity="0.75" stroke-width="3.5" paint-order="stroke" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="11">638 m</text></g>
+<g class="sl-nlpin" data-x="992.0" data-y="1682.0" transform="translate(992.0 1682.0)"><text font-family="Archivo, sans-serif" font-weight="700" fill="#FFFFFF" stroke="#0B1410" stroke-opacity="0.75" stroke-width="3.5" paint-order="stroke" font-size="13" font-style="italic" font-weight="600" transform="rotate(80)">Lac du Bourget</text></g>
+<g class="sl-nlpin" data-rider="1"><circle r="10" fill="#E0A21B" stroke="#14201B" stroke-width="3"></circle></g>
+</svg>
+<span style="position: absolute; right: 12px; bottom: 8px; font-size: 10px; color: rgba(255,255,255,0.75)">Orthophoto © IGN · Licence ouverte</span>
 </div>
-<div data-ref="nlRef" class="sl-nl" style="position: relative; flex: 1 1 380px; max-width: 460px; min-width: 0; background: #FFFFFF; border-radius: 20px; padding: 24px; box-sizing: border-box; box-shadow: 0 20px 50px -24px rgba(20,32,27,0.5)">
+<div style="position: relative; text-shadow: 0 1px 12px rgba(0,0,0,0.6)">
+<p style="margin: 0 0 14px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; color: #F2C25A">Bientôt sur iPhone et Android</p>
+<h2 style="margin: 0; font-weight: 800; font-size: clamp(36px, 4.6vw, 64px); line-height: 1; letter-spacing: -0.03em; max-width: 900px">Ta prochaine sortie mérite le bon départ.</h2>
+<p style="margin: 18px 0 0; font-size: 19px; line-height: 1.55; max-width: 620px">Laisse ton e-mail : tu seras prévenu·e avant tout le monde de la sortie de Sillage, et tu pourras le tester en avant-première.</p>
+</div>
+<div style="position: relative; display: flex; flex-wrap: wrap; gap: 32px; align-items: stretch">
+<div class="sl-nlstage" style="flex: 1 1 340px; min-height: 340px; position: relative">
+<p style="position: absolute; left: 0; bottom: 0; margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.9); text-shadow: 0 1px 8px rgba(0,0,0,0.8)">Boucle col de l'Épine – col du Chat · 58 km · 1 210 m D+</p>
+</div>
+<div data-ref="nlRef" class="sl-nl" style="position: relative; color: #14201B; flex: 1 1 380px; max-width: 460px; min-width: 0; background: #FFFFFF; border-radius: 20px; padding: 24px; box-sizing: border-box; box-shadow: 0 20px 50px -24px rgba(20,32,27,0.5)">
 <form novalidate style="display: flex; flex-direction: column; gap: 16px">
 <fieldset style="margin: 0; padding: 0; border: 0">
 <legend style="margin-bottom: 8px; font-size: 14px; font-weight: 700">Tu es…</legend>
@@ -670,6 +689,7 @@ a{color:#23629A}a:hover{color:#14201B}
 <div style="width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; background: #2E7D4F; display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
 <p style="margin: 16px 0 0; font-weight: 800; font-size: 22px">C'est noté !</p>
 <p class="sl-nl-okmsg" style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #4C5852">On te prévient avant tout le monde.</p>
+</div>
 </div>
 </div>
 </div>
@@ -773,11 +793,60 @@ class Component extends DCLogic {
     if (this.timer) clearInterval(this.timer);
     if (this.raf) cancelAnimationFrame(this.raf);
     if (this.raf2) cancelAnimationFrame(this.raf2);
+    if (this.raf3) cancelAnimationFrame(this.raf3);
+    if (this.raf4) cancelAnimationFrame(this.raf4);
+    if (this.ro3) this.ro3.disconnect();
     if (this.ro2) this.ro2.disconnect();
     if (this.ro) this.ro.disconnect();
   }
+  nlWind(cv) {
+    if (!cv || !cv.getContext) return;
+    var self = this, ctx = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2), W = 1, H = 1, S = [], vis = true;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function spawn(p) { p.x = Math.random() * W; p.y = Math.random() * H; p.age = 0; p.life = 60 + Math.random() * 90; return p; }
+    function size() { var r = cv.getBoundingClientRect(); W = Math.max(1, Math.round(r.width * dpr)); H = Math.max(1, Math.round(r.height * dpr)); cv.width = W; cv.height = H; var n = Math.round(Math.min(600, Math.max(140, (W / dpr) * (H / dpr) / 1300))); S = []; for (var i = 0; i < n; i++) { var p = spawn({}); p.age = Math.random() * p.life; S.push(p); } }
+    size();
+    if (window.ResizeObserver) { this.ro3 = new ResizeObserver(size); this.ro3.observe(cv); }
+    if (window.IntersectionObserver) new IntersectionObserver(function (e) { vis = e[0].isIntersecting; }).observe(cv);
+    var base = -0.55;
+    function field(x, y, t) { var u = x / dpr, v = y / dpr; var a = base + 0.35 * Math.sin(u * 0.004 + t * 0.0002) + 0.25 * Math.cos(v * 0.006 - t * 0.00016); var sp = 1 + 0.5 * Math.sin(u * 0.003 + v * 0.004 + t * 0.0003); return [Math.cos(a) * sp * 2.2 * dpr, Math.sin(a) * sp * 2.2 * dpr, sp]; }
+    function step(t) {
+      ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over'; ctx.lineWidth = 1.2 * dpr; ctx.lineCap = 'round';
+      var calm = new Path2D(), gust = new Path2D();
+      for (var i = 0; i < S.length; i++) { var p = S[i], f = field(p.x, p.y, t), nx = p.x + f[0], ny = p.y + f[1], q = f[2] > 1.35 ? gust : calm; q.moveTo(p.x, p.y); q.lineTo(nx, ny); p.x = nx; p.y = ny; p.age++; if (p.age > p.life || nx < -10 || ny < -10 || nx > W + 10 || ny > H + 10) spawn(p); }
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.stroke(calm); ctx.strokeStyle = 'rgba(255,214,120,0.7)'; ctx.stroke(gust);
+    }
+    if (reduce) { for (var k = 0; k < 70; k++) step(k * 16); return; }
+    function loop(t) { if (self.stopped) return; if (vis && !document.hidden) step(t); self.raf3 = requestAnimationFrame(loop); }
+    this.raf3 = requestAnimationFrame(loop);
+  }
   startNewsletter() {
     var el = this.nl; if (!el || el._nl) return; el._nl = true;
+    var box = el.closest('.sl-nlbox');
+    if (box) {
+      var maps = box.querySelectorAll('.sl-nlmap'), stage = box.querySelector('.sl-nlstage'), pins = box.querySelectorAll('.sl-nlpin[data-x]'), rider = box.querySelector('.sl-nlpin[data-rider]'), trace = box.querySelector('#sl-nl-trace');
+      var BB = [702.0, 1569.8, 1114.6, 2144.1], kk = 1;
+      var fit = function () {
+        var br = box.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+        if (!br.width || !sr.width) return;
+        var tw = BB[2] - BB[0], th = BB[3] - BB[1];
+        kk = 0.8 * Math.min(sr.width / tw, (sr.height - 30) / th);
+        var scx = sr.left - br.left + sr.width / 2, scy = sr.top - br.top + sr.height / 2 - 22;
+        var vx = (BB[0] + BB[2]) / 2 - scx / kk, vy = (BB[1] + BB[3]) / 2 - scy / kk;
+        var vb = vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + (br.width / kk).toFixed(1) + ' ' + (br.height / kk).toFixed(1);
+        maps.forEach(function (sv) { sv.setAttribute('viewBox', vb); sv.setAttribute('preserveAspectRatio', 'none'); });
+        pins.forEach(function (p) { p.setAttribute('transform', 'translate(' + p.dataset.x + ' ' + p.dataset.y + ') scale(' + (1 / kk).toFixed(3) + ')'); });
+      };
+      fit(); window.addEventListener('resize', fit);
+      if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
+      if (rider && trace && trace.getTotalLength) {
+        var L = trace.getTotalLength(), self2 = this, t0 = null;
+        var go = function (t) { if (self2.stopped) return; if (t0 === null) t0 = t; var q = trace.getPointAtLength(((t - t0) / 20000 % 1) * L); rider.setAttribute('transform', 'translate(' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + ') scale(' + (1 / kk).toFixed(3) + ')'); self2.raf4 = requestAnimationFrame(go); };
+        this.raf4 = requestAnimationFrame(go);
+      }
+      this.nlWind(box.querySelector('.sl-nlcv'));
+    }
     var form = el.querySelector('form'), err = el.querySelector('.sl-nl-err'), ok = el.querySelector('.sl-nl-ok'), okMsg = el.querySelector('.sl-nl-okmsg');
     function kind() { var r = form.querySelector('input[name=profil]:checked'); return r ? r.value : 'cycliste'; }
     form.addEventListener('change', function () { el.classList.toggle('is-org', kind() === 'organisateur'); err.textContent = ''; });
