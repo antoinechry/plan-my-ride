@@ -314,6 +314,9 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 @media (pointer:coarse){#fsBtn{display:none!important}}
 html.native #fsBtn{display:none!important}
 .fs-close{display:none!important}
+/* écran tactile, plein écran : la carte seule sur toute la page (sous la barre d'état), commandes décalées sous l'encoche */
+@media (pointer:coarse){#mapCard.map-fs>:not(#map){display:none!important}#mapCard.map-fs{padding:0}#mapCard.map-fs #map{flex:1}#mapCard.map-fs .leaflet-top{top:env(safe-area-inset-top,0px)}#mapCard.map-fs .leaflet-bottom{bottom:env(safe-area-inset-bottom,0px)}}
+html.native #mapCard.map-fs>:not(#map){display:none!important}html.native #mapCard.map-fs{padding:0}html.native #mapCard.map-fs #map{flex:1}html.native #mapCard.map-fs .leaflet-top{top:env(safe-area-inset-top,0px)}html.native #mapCard.map-fs .leaflet-bottom{bottom:env(safe-area-inset-bottom,0px)}
 #mapCard.map-fs .fs-close{display:inline-flex!important;align-items:center;gap:6px;height:40px;padding:0 14px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font:700 15px var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer}
 #mapCard.map-fs .fs-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
 @media (pointer:coarse){.dz-desk{display:none}.dz-touch{display:inline}}

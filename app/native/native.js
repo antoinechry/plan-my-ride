@@ -24,7 +24,9 @@
     'html.native,html.native body{overflow-x:hidden;overscroll-behavior-x:none}' +
     // pas d'effet élastique en haut et en bas : il faisait apparaître le fond sombre de l'app derrière la page
     'html.native{overscroll-behavior-y:none;background:var(--bg)}' +
-    'html.native body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:2147483000;pointer-events:none}';
+    'html.native body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:2147483000;pointer-events:none}' +
+    // carte en plein écran : elle passe aussi sous l'heure et l'îlot
+    'html.native body.fs-lock::before{display:none}';
   document.head.appendChild(css);
   // et si quelque chose décale malgré tout la page de côté, on la remet en place
   window.addEventListener('scroll', function () { if (window.scrollX) window.scrollTo(0, window.scrollY); }, { passive: true });
