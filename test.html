@@ -320,7 +320,7 @@ dialog.help li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px}
 dialog.help li>i{font-style:normal;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center}
 dialog.help li b{display:block;margin-bottom:2px}
 dialog.help li span{color:var(--muted)}
-dialog.help .help-tabs{grid-template-columns:repeat(3,1fr);margin:0 0 14px}
+dialog.help .help-tabs{grid-template-columns:repeat(4,1fr);margin:0 0 14px}
 dialog.help ol[hidden]{display:none}
 dialog.help .note{margin:14px 0 4px;padding:10px 12px;border-radius:8px;background:var(--bg,rgba(127,127,127,.08));border:1px solid var(--line);font-size:13px;color:var(--muted)}
 dialog.help .ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px 18px;flex-wrap:wrap}
@@ -1058,29 +1058,35 @@ body:not(.admin) .me-btns .adm{display:none}
 <dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
   <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
   <div class="bd">
-    <p>Plan My Ride estime votre heure de passage à chaque point d'un parcours et vous donne la météo prévue à cet endroit, à ce moment-là. Trois pages, selon votre envie :</p>
+    <p>Plan My Ride calcule ton heure de passage à chaque point d'un parcours et te donne la météo prévue à cet endroit, à ce moment-là. Trois modes selon ta sortie, et ton espace pour le reste&nbsp;:</p>
     <div class="seg2 help-tabs" role="tablist" aria-label="Pages">
-      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Vélotaf</button>
+      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Vélotaf</button><button type="button" role="tab" data-h="more">Et aussi</button>
     </div>
     <ol data-h="ride">
-      <li><i>1</i><div><b>Importez une trace GPX</b><span>Bouton « Importer un GPX » en haut à gauche ou glisser-déposer. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Vos parcours restent dans votre navigateur et se retrouvent dans « Mes parcours ». « ⇄ Inverser le sens » pour rouler la trace à l'envers.</span></div></li>
-      <li><i>2</i><div><b>Choisissez le départ et votre allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts. Cochez « Effet du vent » pour que le vent ralentisse ou accélère la sortie. Une boucle ? Indiquez le nombre de tours.</span></div></li>
-      <li><i>3</i><div><b>Lisez la météo le long du parcours</b><span>Carte colorée (vent, température, pluie, soleil) avec flèches de vent et vent animé, profil interactif, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
-      <li><i>4</i><div><b>Gardez la feuille de route</b><span>Horaires et météo point par point, en CSV, et « Exporter l'image » pour partager carte, vent et profil.</span></div></li>
+      <li><i>1</i><div><b>Importe une trace GPX</b><span>«&nbsp;Importer un GPX&nbsp;» dans les réglages, ou glisse le fichier sur la page. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Le parcours est gardé dans ton compte et se retrouve sur tous tes appareils. «&nbsp;⇄ Inverser le sens&nbsp;» pour le rouler à l'envers.</span></div></li>
+      <li><i>2</i><div><b>Choisis ton départ et ton allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts, en % ou en minutes. «&nbsp;Effet du vent&nbsp;» ralentit ou accélère la sortie selon le vent. Une boucle&nbsp;? Indique le nombre de tours. Les pastilles en haut des résultats y mènent directement.</span></div></li>
+      <li><i>3</i><div><b>Lis le résumé et la carte</b><span>Une phrase de synthèse, puis le détail&nbsp;: pluie, vent, rafales, températures et nuit. Carte colorée avec flèches de vent et vent animé, profil heure par heure, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
+      <li><i>4</i><div><b>Garde la feuille de route</b><span>Horaires et météo point par point, en CSV, et «&nbsp;Exporter l'image&nbsp;» pour partager carte, vent et profil.</span></div></li>
     </ol>
     <ol data-h="ultra" hidden>
-      <li><i>1</i><div><b>Importez la trace de votre ultra ou de votre voyage</b><span>Même import que pour une sortie ; la trace peut faire des centaines de kilomètres.</span></div></li>
-      <li><i>2</i><div><b>Planifiez jour par jour</b><span>Nombre de jours, date et heure de départ, découpage « Même distance » ou « Adapté au terrain » (même temps de pédalage chaque jour). Vous pouvez fixer une heure de départ et de fin différente chaque jour.</span></div></li>
-      <li><i>3</i><div><b>Voyez chaque journée</b><span>Départ, fin estimée, km, D+, pédalage, pauses et nuit, avec sous chaque jour la météo heure par heure, le relief, le lever et le coucher du soleil et les villes traversées.</span></div></li>
-      <li><i>4</i><div><b>Trouvez vos ravitos</b><span>Épiceries, boulangeries, restos, points d'eau et hébergements le long de la trace, ouverts ou non à votre passage, avec les plus longs tronçons sans ravito.</span></div></li>
+      <li><i>1</i><div><b>Importe la trace de ton ultra ou de ton voyage</b><span>Même import qu'en Sortie&nbsp;; la trace peut faire des centaines de kilomètres.</span></div></li>
+      <li><i>2</i><div><b>Planifie jour par jour</b><span>Nombre de jours, date et heure de départ, découpage «&nbsp;Même distance&nbsp;» ou «&nbsp;Adapté au terrain&nbsp;» (même temps de pédalage chaque jour). Tu peux fixer une heure de départ et de fin différente chaque jour.</span></div></li>
+      <li><i>3</i><div><b>Vois chaque journée</b><span>Départ, fin estimée, km, D+, pédalage, pauses et nuit, avec sous chaque jour la météo heure par heure, le relief, le lever et le coucher du soleil et les villes traversées.</span></div></li>
+      <li><i>4</i><div><b>Trouve tes ravitos</b><span>Coche «&nbsp;Rechercher les lieux&nbsp;»&nbsp;: épiceries, boulangeries, restos, points d'eau et hébergements le long de la trace, ouverts ou non à ton passage, avec les plus longs tronçons sans ravito.</span></div></li>
     </ol>
     <ol data-h="taf" hidden>
-      <li><i>1</i><div><b>Importez votre trajet maison → travail</b><span>Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours (« Trace du retour »).</span></div></li>
-      <li><i>2</i><div><b>Réglez vos horaires</b><span>Heure de départ, ou heure d'arrivée au travail avec une marge : on vous donne alors l'heure de départ conseillée. Heure du retour, et des horaires différents selon le jour si besoin. Vitesse moyenne seulement.</span></div></li>
-      <li><i>3</i><div><b>Aller et retour en un coup d'œil</b><span>Pour chaque trajet : carte, pastille verte, orange ou rouge (pluie, vent de face, froid, nuit), températures et vent ressenti.</span></div></li>
-      <li><i>4</i><div><b>Anticipez deux semaines</b><span>Les jours ouvrés des deux prochaines semaines aux mêmes horaires ; cliquez un jour pour le voir en détail. L'heure de départ est une estimation : prévoyez une marge selon la circulation et la météo.</span></div></li>
+      <li><i>1</i><div><b>Choisis ton trajet maison → travail</b><span>Importe-le une fois et fais-en ton trajet de vélotaf dans Moi&nbsp;: il s'ouvre tout seul sur Vélotaf. Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours («&nbsp;Trace du retour&nbsp;»).</span></div></li>
+      <li><i>2</i><div><b>Règle tes horaires</b><span>Heure de départ, ou heure d'arrivée au travail avec une marge&nbsp;: tu obtiens alors l'heure de départ conseillée. Heure du retour, et des horaires différents selon le jour si besoin. Vitesse moyenne seulement.</span></div></li>
+      <li><i>3</i><div><b>Aller et retour en un coup d'œil</b><span>Pour chaque trajet&nbsp;: carte, pastille verte, orange ou rouge (pluie, vent de face, rafales, froid, nuit), températures et vent ressenti.</span></div></li>
+      <li><i>4</i><div><b>Anticipe deux semaines</b><span>Les jours ouvrés des deux prochaines semaines aux mêmes horaires&nbsp;; touche un jour pour le voir en détail. L'heure de départ est une estimation&nbsp;: prévois une marge selon la circulation et la météo.</span></div></li>
     </ol>
-    <p class="note">Météo au choix (« Source météo ») : AROME de Météo-France par défaut, très fin sur la France (4 jours), MET Norway (9 jours) ou Open-Meteo (16 jours) ; au-delà, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires sont des estimations ; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
+    <ol data-h="more" hidden>
+      <li><i>1</i><div><b>Mes parcours</b><span>Tous tes parcours, avec recherche, tri, «&nbsp;Renommer&nbsp;» et «&nbsp;Supprimer&nbsp;». Touche un parcours pour l'ouvrir.</span></div></li>
+      <li><i>2</i><div><b>Mes sorties</b><span>Tes parcours classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.</span></div></li>
+      <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
+      <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet de vélotaf, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
+    </ol>
+    <p class="note">Météo au choix («&nbsp;Source météo&nbsp;»)&nbsp;: meteoblue, la plus précise (quelques chargements par mois), AROME de Météo-France, très fin sur la France (4 jours), les modèles nationaux voisins (Allemagne, Suisse, Italie, Benelux, Royaume-Uni…), ECMWF, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
 </dialog>
