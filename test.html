@@ -3680,7 +3680,9 @@ function drawDayWx(cv, cur) {
     const ta = d.a.t, tb = d.b.t, span = Math.max(1, tb - ta), l = 40, r = 52, pw = W - l - r;
     const X = t => l + (t - ta) / span * pw;
     // une valeur par demi-heure pour la courbe, une colonne par heure pour le ciel, le vent et la pluie
-    const pts = []; for (let t = ta; t <= tb + 1; t += 1800e3) { const tt = Math.min(t, tb), km = kmAtT(tt), w = S.wx ? wxAt(sIdx(km), tt) : null; if (w) pts.push({ t: tt, km, w }); }
+    // toujours un dernier point à l'arrivée : sans lui, un trajet de 50 min s'arrêtait à 30 min (bug du 26/10/2026)
+    const pts = [], ptAdd = tt => { const km = kmAtT(tt), w = S.wx ? wxAt(sIdx(km), tt) : null; if (w) pts.push({ t: tt, km, w }); };
+    for (let t = ta; t < tb; t += 1800e3) ptAdd(t); ptAdd(tb);
     // sans météo pour ce jour : relief, heures, km, soleil et villes quand même, avec un petit mot en haut
     const noWx = !pts.length;
     const yT0 = 44, yT1 = H - 52; // zone température / pluie / relief ; en bas : heures, km, puis villes et bourgs
