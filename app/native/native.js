@@ -31,6 +31,31 @@
   // et si quelque chose décale malgré tout la page de côté, on la remet en place
   window.addEventListener('scroll', function () { if (window.scrollX) window.scrollTo(0, window.scrollY); }, { passive: true });
 
+  // ---- Diagnostic provisoire (version de test) : signale ce qui dépasse la largeur de l'écran ----
+  // Petit bandeau rouge en bas avec le premier élément trop large ; toucher le bandeau le ferme.
+  function overflowCheck() {
+    if (document.getElementById('sillageDbg')) return;
+    var vw = document.documentElement.clientWidth, worst = null;
+    var all = document.querySelectorAll('body *');
+    for (var i = 0; i < all.length; i++) {
+      var x = all[i], r = x.getBoundingClientRect();
+      if (!r.width || r.right <= vw + 1 || getComputedStyle(x).position === 'fixed') continue;
+      var p = x.parentElement, clipped = false;
+      while (p && p !== document.body) { var o = getComputedStyle(p).overflowX; if (o !== 'visible') { clipped = p.getBoundingClientRect().right <= vw + 1; break; } p = p.parentElement; }
+      if (clipped) continue;
+      if (!worst || r.width > worst.w) worst = { el: x, w: r.width, right: r.right };
+    }
+    if (!worst) return;
+    var e = worst.el, path = [];
+    for (var k = 0, q = e; q && q !== document.body && k < 4; k++, q = q.parentElement) path.push(q.tagName.toLowerCase() + (q.id ? '#' + q.id : '') + (typeof q.className === 'string' && q.className ? '.' + q.className.trim().split(/\s+/).slice(0, 2).join('.') : ''));
+    var d = document.createElement('div'); d.id = 'sillageDbg';
+    d.style.cssText = 'position:fixed;left:8px;right:8px;bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:2147483646;background:#b5491f;color:#fff;font:12px/1.35 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap';
+    d.textContent = 'Trop large : ' + Math.round(worst.right) + ' px / écran ' + vw + ' px\n' + path.join(' < ') + '\n« ' + (e.textContent || '').trim().slice(0, 60) + ' »';
+    d.addEventListener('click', function () { d.remove(); });
+    document.body.appendChild(d);
+  }
+  setInterval(overflowCheck, 3000);
+
   // ---- Fichiers : export image, CSV, GPX -----------------------------------
   // La WebView ne sait ni télécharger (<a download>) ni partager des fichiers (navigator.share
   // absent sur Android) : on écrit le fichier dans le cache de l'app puis on ouvre la feuille
