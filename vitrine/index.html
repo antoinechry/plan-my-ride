@@ -46,6 +46,19 @@ a{color:#23629A}a:hover{color:#14201B}
 .sl-rvpop{animation:sl-pop linear both;animation-timeline:view();animation-range:entry 0% cover 30%}
 .sl-rvdraw{stroke-dasharray:1000;animation:sl-draw linear both;animation-timeline:view();animation-range:entry 0% cover 55%}
 }
+@media (max-width: 760px){
+.sl-stage{display:flex;flex-direction:column}
+.sl-mapbox{order:1}
+.sl-tl{order:2;position:static !important;margin:8px;grid-template-columns:repeat(12,56px) !important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sl-verdict{order:3}
+.sl-hnotif{order:4}
+.sl-hc{position:static !important;width:auto !important;margin:0 8px 8px}
+.sl-attr{bottom:6px !important}
+.sl-days{grid-template-columns:repeat(5,minmax(112px,1fr)) !important;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.sl-navlink{display:none}
+.sl-hour{font-size:24px !important}
+.sl-scrollimg img{min-width:720px}
+}
 @media (prefers-reduced-motion: reduce){
 *,*::before,*::after{animation:none !important;transition:none !important}
 }
@@ -69,10 +82,10 @@ a{color:#23629A}a:hover{color:#14201B}
 <span style="font-weight: 800; font-size: 26px; letter-spacing: -0.03em">Sillage</span>
 </a>
 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 22px; font-size: 15px; font-weight: 600">
-<a href="#ecrans" style="text-decoration: none; color: #14201B">L'app</a>
-<a href="#modeles" style="text-decoration: none; color: #14201B">Modèles météo</a>
-<a href="#ultra" style="text-decoration: none; color: #14201B">Ultra</a>
-<a href="#velotaf" style="text-decoration: none; color: #14201B">Vélotaf</a>
+<a class="sl-navlink" href="#ecrans" style="text-decoration: none; color: #14201B">L'app</a>
+<a class="sl-navlink" href="#modeles" style="text-decoration: none; color: #14201B">Modèles météo</a>
+<a class="sl-navlink" href="#ultra" style="text-decoration: none; color: #14201B">Ultra</a>
+<a class="sl-navlink" href="#velotaf" style="text-decoration: none; color: #14201B">Vélotaf</a>
 <a href="#telecharger" style="text-decoration: none; background: #E0A21B; color: #14201B; padding: 11px 20px; border-radius: 999px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; font-weight: 700">Télécharger</a>
 </div>
 </nav>
@@ -94,8 +107,9 @@ a{color:#23629A}a:hover{color:#14201B}
 
 <!-- MAP STAGE : col du Marais -->
 <div style="max-width: 1200px; margin: 48px auto 0; padding: 0 24px">
-<div class="sl-in" style="animation-delay: .35s; position: relative; border-radius: 24px; overflow: hidden; background: #2C3B31; border: 1px solid #CDD4CE">
-<svg viewBox="0 0 1150 640" style="width: 100%; display: block" role="img" aria-label="Vue satellite de la boucle Annecy, rive est du lac, Thônes, col du Marais, Faverges et rive ouest : la météo défile heure par heure, de 6 h à 17 h">
+<div class="sl-in sl-stage" style="animation-delay: .35s; position: relative; border-radius: 24px; overflow: hidden; background: #2C3B31; border: 1px solid #CDD4CE">
+<div class="sl-mapbox" style="position: relative">
+<svg id="sl-hero-svg" viewBox="0 0 1150 640" style="width: 100%; display: block" role="img" aria-label="Vue satellite de la boucle Annecy, rive est du lac, Thônes, col du Marais, Faverges et rive ouest : la météo défile heure par heure, de 6 h à 17 h">
 <image href="img/annecy-ortho-ign.jpg" x="0" y="0" width="1150" height="640" preserveAspectRatio="none"></image>
 <rect width="1150" height="640" fill="#0B1410" opacity="0.18"></rect>
 <path id="sl-hero-trace" class="sl-trace" pathLength="1000" d="M601.2 77.2 Q601.2 77.2 600.8 76.6 Q600.3 76.1 599.8 75.5 Q599.2 74.9 598.6 74.0 Q598.0 73.1 597.1 72.1 Q596.2 71.2 595.1 70.0 Q594.1 68.9 593.4 68.0 Q592.7 67.1 592.1 66.4 Q591.5 65.7 590.8 65.0 Q590.1 64.3 589.4 63.6 Q588.8 63.0 588.1 62.5 Q587.5 62.1 586.9 61.6 Q586.3 61.1 585.7 60.6 Q585.2 60.1 584.7 59.5 Q584.3 59.0 583.9 58.3 Q583.5 57.7 583.2 57.0 Q583.0 56.3 582.7 55.5 Q582.4 54.8 582.1 54.0 Q581.8 53.2 581.7 52.7 Q581.7 52.1 581.9 51.6 Q582.0 51.0 582.7 50.4 Q583.4 49.8 584.8 49.2 Q586.1 48.6 587.6 48.0 Q589.1 47.5 590.7 46.9 Q592.3 46.3 593.9 45.7 Q595.4 45.1 596.5 44.6 Q597.6 44.2 598.8 43.7 Q599.9 43.3 600.9 42.9 Q602.0 42.5 603.2 42.0 Q604.4 41.6 605.8 41.0 Q607.3 40.5 608.9 39.9 Q610.5 39.4 611.9 39.2 Q613.3 38.9 614.9 38.8 Q616.5 38.6 618.6 38.4 Q620.8 38.3 623.2 38.1 Q625.5 38.0 628.2 37.7 Q630.8 37.5 633.3 37.1 Q635.9 36.7 638.5 36.4 Q641.1 36.0 642.9 36.0 Q644.7 36.0 646.1 36.3 Q647.5 36.5 648.7 37.5 Q649.8 38.5 651.1 40.5 Q652.3 42.5 653.4 44.8 Q654.5 47.1 655.6 49.5 Q656.6 51.9 657.6 54.1 Q658.6 56.3 659.8 58.5 Q661.0 60.7 662.1 62.1 Q663.3 63.6 664.3 64.7 Q665.3 65.9 666.4 67.1 Q667.5 68.3 668.6 69.9 Q669.8 71.5 670.6 72.8 Q671.5 74.1 672.6 75.6 Q673.7 77.0 675.3 79.1 Q676.8 81.3 678.1 83.3 Q679.4 85.3 680.6 87.0 Q681.8 88.7 682.9 90.3 Q684.0 91.9 684.6 93.3 Q685.3 94.6 685.8 95.6 Q686.2 96.6 686.7 97.5 Q687.1 98.4 687.6 99.3 Q688.1 100.2 688.7 101.1 Q689.3 102.0 690.0 102.9 Q690.7 103.8 691.2 104.5 Q691.7 105.2 692.1 106.1 Q692.6 107.0 693.1 107.9 Q693.5 108.8 693.9 109.7 Q694.3 110.6 694.6 111.4 Q694.9 112.2 695.2 113.0 Q695.6 113.8 696.0 114.5 Q696.4 115.2 696.9 116.0 Q697.5 116.8 698.1 117.7 Q698.7 118.6 699.5 119.9 Q700.3 121.2 701.1 122.7 Q702.0 124.3 703.0 126.2 Q704.0 128.1 705.1 130.4 Q706.2 132.8 707.5 135.2 Q708.9 137.6 710.1 139.7 Q711.3 141.8 712.6 143.8 Q713.8 145.8 715.1 147.5 Q716.3 149.2 717.7 150.6 Q719.0 152.1 720.6 153.5 Q722.1 155.0 724.2 156.4 Q726.3 157.9 728.6 159.0 Q730.8 160.2 733.1 161.1 Q735.3 162.0 737.7 162.3 Q740.2 162.6 742.2 162.3 Q744.3 162.0 745.9 161.3 Q747.6 160.5 749.0 159.7 Q750.4 158.8 752.0 157.9 Q753.5 157.0 754.7 156.1 Q756.0 155.2 757.1 154.1 Q758.3 153.1 759.7 151.8 Q761.1 150.5 762.5 149.1 Q763.8 147.7 765.2 146.2 Q766.6 144.7 768.0 143.0 Q769.5 141.3 771.1 139.7 Q772.7 138.0 774.0 136.7 Q775.4 135.3 776.8 133.8 Q778.2 132.3 780.4 129.0 Q782.6 125.8 785.0 122.2 Q787.4 118.7 789.7 114.8 Q792.0 111.0 794.3 106.5 Q796.7 102.0 798.9 97.6 Q801.2 93.2 802.4 90.6 Q803.7 88.1 804.7 86.5 Q805.8 84.9 807.2 84.0 Q808.7 83.1 810.0 83.1 Q811.4 83.2 812.9 83.5 Q814.3 83.7 815.6 84.0 Q817.0 84.3 818.7 84.4 Q820.5 84.4 822.2 84.2 Q823.9 84.0 825.6 83.6 Q827.3 83.3 829.3 83.0 Q831.3 82.7 833.8 82.6 Q836.3 82.4 838.7 82.3 Q841.0 82.1 843.3 82.1 Q845.5 82.0 847.7 82.1 Q849.9 82.1 851.8 82.1 Q853.8 82.0 855.7 81.8 Q857.7 81.6 859.6 81.4 Q861.5 81.2 863.6 80.9 Q865.6 80.6 867.8 79.9 Q869.9 79.3 872.4 78.5 Q874.9 77.8 876.9 77.1 Q878.9 76.4 881.0 75.8 Q883.1 75.3 885.4 74.7 Q887.6 74.2 889.8 73.8 Q892.0 73.3 894.9 72.5 Q897.8 71.7 901.9 70.3 Q906.0 68.9 910.5 67.3 Q914.9 65.7 919.5 64.2 Q924.1 62.6 928.7 61.1 Q933.4 59.7 936.9 58.7 Q940.4 57.7 942.8 57.3 Q945.3 57.0 947.2 56.9 Q949.1 56.9 950.7 57.2 Q952.3 57.6 954.5 58.8 Q956.7 60.0 959.1 61.3 Q961.4 62.6 963.7 64.1 Q966.0 65.5 968.3 67.1 Q970.7 68.6 972.7 69.9 Q974.8 71.3 975.8 71.9 Q976.8 72.5 978.2 73.4 Q979.6 74.3 981.0 75.2 Q982.3 76.1 983.8 77.4 Q985.2 78.7 986.8 80.2 Q988.5 81.6 990.5 83.8 Q992.6 85.9 994.3 87.9 Q996.1 89.9 997.9 91.9 Q999.7 93.9 1001.1 95.4 Q1002.5 96.9 1004.0 98.2 Q1005.4 99.6 1006.7 100.6 Q1008.1 101.6 1009.5 102.6 Q1010.9 103.7 1012.2 104.7 Q1013.4 105.7 1014.7 106.7 Q1016.0 107.7 1017.1 108.7 Q1018.3 109.7 1019.1 110.4 Q1020.0 111.1 1020.5 111.3 Q1021.1 111.6 1021.8 111.6 Q1022.5 111.6 1023.3 111.4 Q1024.0 111.3 1024.6 111.4 Q1025.1 111.4 1025.5 111.9 Q1025.8 112.4 1026.0 113.2 Q1026.2 114.0 1026.0 115.2 Q1025.8 116.3 1025.3 117.6 Q1024.9 119.0 1024.4 120.4 Q1023.9 121.9 1023.4 123.3 Q1023.0 124.8 1022.4 126.5 Q1021.9 128.2 1021.6 129.9 Q1021.2 131.6 1020.8 133.5 Q1020.5 135.3 1020.3 137.4 Q1020.2 139.4 1020.3 141.5 Q1020.3 143.6 1020.5 145.7 Q1020.8 147.8 1021.1 150.1 Q1021.4 152.3 1021.8 154.5 Q1022.3 156.6 1022.7 158.5 Q1023.1 160.3 1023.6 161.7 Q1024.1 163.2 1024.7 164.6 Q1025.2 166.0 1025.8 167.4 Q1026.3 168.8 1026.8 170.3 Q1027.3 171.8 1027.8 173.3 Q1028.3 174.9 1028.7 176.4 Q1029.2 177.9 1029.6 179.3 Q1030.0 180.6 1030.5 181.9 Q1031.0 183.1 1031.4 184.4 Q1031.8 185.6 1032.2 186.9 Q1032.7 188.2 1032.7 189.6 Q1032.7 191.1 1032.7 192.9 Q1032.7 194.8 1032.6 197.1 Q1032.5 199.4 1032.3 201.6 Q1032.2 203.9 1032.1 206.2 Q1032.1 208.5 1032.3 210.9 Q1032.6 213.3 1032.8 215.5 Q1032.9 217.6 1033.4 219.9 Q1033.9 222.1 1034.7 224.5 Q1035.5 226.9 1036.3 229.5 Q1037.0 232.1 1037.7 234.8 Q1038.3 237.4 1038.8 240.4 Q1039.3 243.3 1039.5 245.9 Q1039.7 248.5 1039.7 251.8 Q1039.7 255.0 1039.7 258.6 Q1039.6 262.2 1039.9 266.3 Q1040.3 270.4 1040.9 274.5 Q1041.5 278.6 1042.0 282.6 Q1042.5 286.6 1043.0 289.9 Q1043.5 293.2 1044.2 296.2 Q1044.9 299.1 1045.1 302.5 Q1045.4 306.0 1045.7 309.3 Q1045.9 312.6 1046.3 316.5 Q1046.8 320.4 1047.0 323.6 Q1047.3 326.8 1047.2 329.3 Q1047.2 331.8 1047.1 332.9 Q1047.0 334.0 1046.7 334.9 Q1046.5 335.7 1046.1 336.0 Q1045.7 336.3 1045.4 337.0 Q1045.0 337.7 1044.9 339.1 Q1044.8 340.5 1044.7 342.1 Q1044.7 343.7 1044.5 344.8 Q1044.3 345.9 1044.0 347.0 Q1043.7 348.1 1043.5 349.1 Q1043.3 350.0 1043.3 350.9 Q1043.4 351.8 1043.4 352.7 Q1043.5 353.5 1043.8 354.7 Q1044.0 355.8 1044.5 356.8 Q1045.0 357.9 1045.5 359.0 Q1046.0 360.1 1046.2 361.1 Q1046.4 362.2 1046.7 363.3 Q1047.1 364.4 1047.4 365.7 Q1047.7 367.0 1047.8 368.3 Q1047.9 369.7 1047.9 371.2 Q1047.9 372.7 1047.9 374.3 Q1048.0 375.9 1047.8 377.3 Q1047.6 378.8 1047.4 380.2 Q1047.3 381.7 1047.3 383.1 Q1047.3 384.5 1047.3 385.8 Q1047.4 387.1 1047.3 388.3 Q1047.3 389.5 1046.9 390.8 Q1046.6 392.1 1046.1 393.4 Q1045.6 394.7 1044.8 395.9 Q1044.0 397.2 1043.0 398.4 Q1042.0 399.5 1041.0 400.7 Q1040.0 401.8 1039.1 403.0 Q1038.2 404.1 1037.1 405.3 Q1036.0 406.5 1035.0 407.6 Q1034.0 408.7 1033.2 409.5 Q1032.3 410.4 1031.4 410.6 Q1030.4 410.9 1029.3 410.6 Q1028.2 410.2 1027.3 409.5 Q1026.5 408.9 1025.6 408.5 Q1024.7 408.1 1023.8 408.2 Q1022.9 408.4 1022.0 409.1 Q1021.1 409.7 1020.4 410.5 Q1019.8 411.3 1019.0 411.7 Q1018.2 412.2 1017.5 412.3 Q1016.7 412.5 1015.8 412.4 Q1015.0 412.3 1014.2 412.0 Q1013.4 411.6 1012.5 411.5 Q1011.6 411.4 1010.8 411.4 Q1010.0 411.5 1009.2 411.2 Q1008.4 411.0 1007.7 410.5 Q1007.0 410.0 1006.2 409.7 Q1005.5 409.3 1005.0 409.2 Q1004.5 409.1 1004.2 409.6 Q1003.9 410.1 1003.9 411.0 Q1003.8 411.9 1003.9 412.9 Q1004.1 413.9 1004.3 415.3 Q1004.5 416.6 1004.7 418.1 Q1004.8 419.6 1004.7 420.7 Q1004.7 421.8 1004.5 423.1 Q1004.2 424.3 1003.8 425.8 Q1003.3 427.3 1002.7 428.5 Q1002.0 429.8 1001.3 430.8 Q1000.6 431.7 999.8 432.7 Q999.0 433.6 998.3 434.5 Q997.6 435.4 997.1 436.2 Q996.5 437.0 995.9 437.9 Q995.2 438.8 994.8 439.8 Q994.3 440.8 994.0 442.2 Q993.8 443.6 993.5 445.0 Q993.3 446.4 993.0 447.9 Q992.7 449.4 992.4 451.2 Q992.1 452.9 991.7 454.6 Q991.2 456.4 990.6 458.3 Q990.1 460.1 989.3 462.2 Q988.5 464.2 987.6 466.2 Q986.8 468.2 986.1 470.2 Q985.3 472.2 984.7 474.2 Q984.0 476.2 983.5 477.9 Q983.0 479.6 982.8 481.0 Q982.5 482.3 982.4 483.7 Q982.3 485.0 982.3 486.0 Q982.4 486.9 982.4 487.7 Q982.4 488.5 982.0 489.3 Q981.7 490.1 980.9 491.0 Q980.0 492.0 978.8 493.0 Q977.5 493.9 975.7 495.1 Q973.9 496.3 972.0 497.5 Q970.2 498.8 968.7 500.0 Q967.2 501.3 965.8 502.9 Q964.5 504.4 963.5 506.0 Q962.5 507.6 962.1 509.0 Q961.7 510.4 961.4 511.8 Q961.1 513.2 961.0 514.5 Q960.9 515.8 960.8 517.0 Q960.7 518.2 960.6 519.2 Q960.4 520.2 959.7 521.1 Q958.9 522.0 957.8 522.7 Q956.6 523.5 955.2 524.0 Q953.9 524.6 952.1 524.6 Q950.4 524.7 948.4 524.7 Q946.5 524.7 945.0 524.7 Q943.5 524.7 942.3 524.6 Q941.1 524.4 939.8 524.1 Q938.6 523.8 937.7 523.4 Q936.8 523.0 935.9 522.3 Q935.1 521.7 934.0 521.0 Q933.0 520.2 931.7 519.4 Q930.4 518.6 929.2 517.8 Q928.0 517.0 926.5 516.0 Q925.0 515.0 923.4 513.8 Q921.7 512.6 919.5 511.2 Q917.3 509.8 913.3 508.0 Q909.3 506.2 904.2 504.4 Q899.1 502.7 894.2 501.4 Q889.3 500.0 884.8 499.2 Q880.3 498.4 876.4 497.8 Q872.6 497.1 870.7 497.0 Q868.8 496.9 867.6 496.6 Q866.4 496.3 864.3 495.0 Q862.1 493.6 858.3 490.2 Q854.5 486.8 849.3 481.9 Q844.2 477.1 839.2 472.3 Q834.1 467.5 829.1 462.5 Q824.0 457.6 819.9 453.1 Q815.7 448.7 813.3 446.1 Q811.0 443.5 810.0 442.4 Q809.0 441.2 808.0 440.0 Q807.1 438.8 806.8 437.9 Q806.5 437.1 806.3 436.5 Q806.2 435.9 806.1 435.5 Q805.9 435.0 806.1 434.0 Q806.2 433.0 806.8 432.1 Q807.4 431.1 807.9 430.0 Q808.4 429.0 809.1 427.5 Q809.8 426.1 810.5 425.2 Q811.2 424.4 811.6 424.3 Q812.0 424.2 811.6 424.3 Q811.2 424.4 810.5 425.2 Q809.8 426.1 809.1 427.5 Q808.3 429.0 807.2 429.4 Q806.0 429.9 804.7 430.0 Q803.4 430.0 802.5 430.1 Q801.5 430.2 800.5 429.4 Q799.4 428.6 797.3 427.1 Q795.2 425.5 793.2 424.1 Q791.2 422.6 788.9 420.6 Q786.5 418.5 783.8 415.8 Q781.1 413.1 778.7 410.2 Q776.2 407.4 774.8 404.8 Q773.4 402.1 772.2 397.1 Q771.0 392.1 770.0 386.0 Q769.0 380.0 768.1 373.9 Q767.3 367.9 766.4 361.4 Q765.5 355.0 764.3 347.2 Q763.1 339.4 762.0 334.0 Q760.8 328.7 760.2 324.7 Q759.6 320.8 759.4 316.9 Q759.3 312.9 759.4 309.4 Q759.4 305.9 759.8 304.0 Q760.2 302.1 760.4 300.2 Q760.6 298.3 760.3 296.6 Q760.1 294.9 759.2 293.8 Q758.3 292.6 757.2 291.8 Q756.2 291.0 754.2 290.8 Q752.3 290.5 749.6 290.7 Q746.8 290.9 743.9 291.2 Q740.9 291.4 737.3 291.3 Q733.6 291.2 727.9 290.4 Q722.2 289.6 716.4 287.8 Q710.5 286.1 705.6 284.0 Q700.6 281.9 696.0 279.8 Q691.4 277.8 686.5 275.3 Q681.6 272.8 678.5 270.7 Q675.5 268.7 673.2 267.0 Q670.8 265.3 668.2 262.9 Q665.6 260.4 662.9 257.5 Q660.1 254.6 658.3 252.2 Q656.5 249.8 654.3 247.1 Q652.0 244.4 649.8 241.8 Q647.5 239.1 645.5 236.9 Q643.4 234.6 641.0 231.5 Q638.6 228.3 636.0 224.6 Q633.5 220.9 631.6 217.1 Q629.7 213.3 628.0 209.5 Q626.3 205.7 624.5 202.0 Q622.7 198.4 621.4 196.0 Q620.1 193.6 619.2 191.9 Q618.4 190.2 617.6 188.9 Q616.7 187.7 616.0 186.6 Q615.3 185.5 615.1 184.2 Q614.8 182.9 615.0 181.5 Q615.1 180.1 615.3 177.9 Q615.5 175.7 615.7 173.3 Q615.9 170.9 616.0 168.5 Q616.1 166.1 616.1 163.9 Q616.0 161.8 615.9 159.4 Q615.8 157.1 615.8 155.3 Q615.8 153.4 615.9 151.7 Q616.1 150.0 616.1 147.9 Q616.2 145.9 616.3 143.9 Q616.4 141.9 616.3 140.1 Q616.3 138.4 616.0 136.4 Q615.8 134.4 615.5 132.0 Q615.3 129.7 615.0 127.4 Q614.8 125.2 614.6 123.1 Q614.4 121.0 614.1 118.6 Q613.9 116.2 613.8 114.0 Q613.8 111.8 614.0 109.3 Q614.1 106.7 614.5 104.0 Q614.8 101.3 615.0 98.5 Q615.3 95.8 615.4 93.4 Q615.4 91.0 615.0 89.1 Q614.6 87.1 613.6 85.9 Q612.7 84.7 611.3 83.7 Q609.9 82.7 608.4 81.8 Q606.9 80.8 605.5 80.0 Q604.1 79.1 603.2 78.5 Q602.2 77.8 601.7 77.4 Q601.1 77.0 600.8 76.8" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"></path>
@@ -119,20 +133,21 @@ a{color:#23629A}a:hover{color:#14201B}
 <div aria-hidden="true" data-a-style="skySun"></div>
 <canvas data-ref="windRef" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none"></canvas>
 <div aria-hidden="true" style="position: absolute; right: 20px; top: 14px; text-align: right; color: #FFFFFF; text-shadow: 0 2px 12px rgba(0,0,0,0.45); pointer-events: none">
-<div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: clamp(30px, 4.4vw, 56px); line-height: 1"><span data-t="hourLabel"></span></div>
+<div class="sl-hour" style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: clamp(30px, 4.4vw, 56px); line-height: 1"><span data-t="hourLabel"></span></div>
 <div style="font-size: 15px; font-weight: 700; margin-top: 4px"><span data-t="skyLabel"></span></div>
 </div>
-<div style="position: absolute; right: 12px; bottom: 92px; font-size: 10px; color: rgba(255,255,255,0.8); text-shadow: 0 1px 3px rgba(0,0,0,0.6)">Orthophoto © IGN · Licence ouverte</div>
+<div class="sl-attr" style="position: absolute; right: 12px; bottom: 92px; font-size: 10px; color: rgba(255,255,255,0.8); text-shadow: 0 1px 3px rgba(0,0,0,0.6)">Orthophoto © IGN · Licence ouverte</div>
+</div>
 
 <!-- notification -->
-<div class="sl-notif" style="position: absolute; left: 20px; top: 20px; width: min(320px, calc(100% - 40px)); box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(20,32,27,0.08), 0 4px 16px rgba(20,32,27,0.06)">
+<div class="sl-notif sl-hc sl-hnotif" style="position: absolute; left: 20px; top: 20px; width: min(320px, calc(100% - 40px)); box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(20,32,27,0.08), 0 4px 16px rgba(20,32,27,0.06)">
 <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4C5852; font-weight: 600"><span style="width: 20px; height: 20px; border-radius: 6px; background: #14201B; display: inline-flex; align-items: center; justify-content: center"><span style="width: 7px; height: 7px; border-radius: 50%; background: #E0A21B"></span></span>Sillage · la veille, 20:00</div>
 <p style="margin: 8px 0 2px; font-weight: 700; font-size: 15px">Demain 09:00 · Col du Marais</p>
 <p style="margin: 0; font-size: 14px; line-height: 1.4; color: #4C5852">Beau au départ, mais pluie au col vers 11 h. Pars à 7 h ou à 17 h : vent dans le dos.</p>
 </div>
 
 <!-- verdict card -->
-<div style="position: absolute; left: 20px; bottom: 96px; width: min(380px, calc(100% - 40px)); background: #FFFFFF; border-radius: 16px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(20,32,27,0.08), 0 4px 16px rgba(20,32,27,0.06); box-sizing: border-box" aria-live="polite">
+<div class="sl-hc sl-verdict" style="position: absolute; left: 20px; bottom: 96px; width: min(380px, calc(100% - 40px)); background: #FFFFFF; border-radius: 16px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(20,32,27,0.08), 0 4px 16px rgba(20,32,27,0.06); box-sizing: border-box" aria-live="polite">
 <div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: #4C5852">Départ <span data-t="hourLabel"></span> · Col du Marais · 64,7 km</div>
 <p style="margin: 8px 0 0; font-weight: 800; font-size: 21px; line-height: 1.2"><span data-t="v.title"></span></p>
 <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; color: #4C5852">
@@ -143,7 +158,7 @@ a{color:#23629A}a:hover{color:#14201B}
 </div>
 
 <!-- timeline -->
-<div role="group" aria-label="Heure de départ" style="position: absolute; left: 12px; right: 12px; bottom: 12px; background: rgba(20,32,27,0.78); backdrop-filter: blur(8px); border-radius: 16px; padding: 6px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; overflow-x: auto">
+<div class="sl-tl" role="group" aria-label="Heure de départ" style="position: absolute; left: 12px; right: 12px; bottom: 12px; background: rgba(20,32,27,0.78); backdrop-filter: blur(8px); border-radius: 16px; padding: 6px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; overflow-x: auto">
 <div data-for="f1" style="display: contents"></div>
 </div>
 </div>
@@ -461,7 +476,7 @@ a{color:#23629A}a:hover{color:#14201B}
 <h3 style="margin: 0; font-size: clamp(24px, 2.6vw, 34px); font-weight: 800; letter-spacing: -0.02em">Le planning jour par jour, dans l'app</h3>
 <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; color: #A3AEA8">Chasing the sun · 5 jours · départ dim. 27 sept.</span>
 </div>
-<div role="group" aria-label="Choisir la journée" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px">
+<div class="sl-days" role="group" aria-label="Choisir la journée" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px">
 <div data-for="f2" style="display: contents"></div>
 </div>
 <div style="background: #FFFFFF; border-radius: 16px; overflow-x: auto">
@@ -499,7 +514,7 @@ a{color:#23629A}a:hover{color:#14201B}
 <h3 style="margin: 0; font-size: clamp(22px, 2.4vw, 30px); font-weight: 800; letter-spacing: -0.02em">Ce que l'app te montre</h3>
 <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; color: #4C5852">21,6 km près de Brest · aller 7 h 30 · retour 17 h</span>
 </div>
-<div style="border-radius: 24px; overflow: hidden; border: 1px solid #CDD4CE; background: #FFFFFF; max-width: 1000px; margin: 0 auto">
+<div class="sl-scrollimg" style="border-radius: 24px; overflow-x: auto; border: 1px solid #CDD4CE; background: #FFFFFF; max-width: 1000px; margin: 0 auto">
 <img src="img/velotaf-brest.jpg" alt="Vélotaf dans Sillage, trajet « Maison ↔ Travail », lundi 26 octobre : aller 7 h 30 → 8 h 25, au sec, beau trajet, ressenti 12 à 14 °C, vent de dos ; retour 17 h → 17 h 59, rafales à 60 km/h. Deux cartes avec la température le long du trajet, puis deux semaines de vélotaf, une pastille verte, dorée ou rouge pour l'aller et le retour de chaque jour." style="display: block; width: 100%; height: auto">
 </div>
 <figcaption style="margin-top: 12px; font-size: 13px; color: #4C5852; text-align: center">Export image de l'app, tel quel · météo Météo-France (AROME, ARPEGE) via Open-Meteo · © OpenStreetMap</figcaption>
@@ -601,6 +616,12 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     var self = this;
+    var fitHero = function () {
+      var sv = document.getElementById('sl-hero-svg');
+      if (sv) sv.setAttribute('viewBox', window.innerWidth < 760 ? '500 14 600 600' : '0 0 1150 640');
+    };
+    fitHero();
+    window.addEventListener('resize', fitHero);
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!reduce) {
       this.timer = setInterval(function () {
