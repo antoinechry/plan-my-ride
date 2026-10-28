@@ -644,7 +644,7 @@ body:not(.admin) .me-btns .adm{display:none}
 }
 /* grand écran : verdict à gauche, carte à droite (pages Sortie et Ultra) */
 @media (min-width:1100px){
-  body:not([data-mode="taf"]) #results{display:grid!important;grid-template-columns:minmax(360px,500px) minmax(0,1fr);align-items:start}
+  body:not([data-mode="taf"]) #results:not([hidden]){display:grid!important;grid-template-columns:minmax(360px,500px) minmax(0,1fr);align-items:start}
   body:not([data-mode="taf"]) #results>*{grid-column:1/-1}
   body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{grid-column:1;grid-row:2}
   body:not([data-mode="taf"]) #results>#mapCard{grid-column:2;grid-row:2}
@@ -4998,6 +4998,9 @@ async function libInit() {
         LIB.list = LIB.list.filter(x => x.id !== id); if (LIB.current === id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} } }
       libRender(); }
     localStorage.setItem('pmr-own-routes', '1'); } } catch (e) {}
+  // aucun dernier parcours connu (effacé, autre appareil…) : on rouvre le plus récent du compte plutôt qu'un écran vide
+  if (!S.P) { const own = LIB.list.filter(x => x.remote); let taf = ''; try { taf = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {}
+    const r = own.find(x => S.mode === 'taf' || x.id !== taf) || own[0]; if (r) await libOpen(r.id); }
   for (const m of LIB.list.filter(x => x.local && !x.remote)) {
     try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); if (!rec) continue;
       const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, pts: rec.pts }, { onConflict: 'user_id,id' });
