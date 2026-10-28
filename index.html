@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>/* accessibilité (28/10/2026) : couleurs (daltonismes, contraste élevé), animations réduites, police très lisible ; localStorage pmr-a11y */(function(){try{var d=document.documentElement,a=JSON.parse(localStorage.getItem('pmr-a11y')||'{}')||{};if(/^(deutan|tritan|mono)$/.test(a.cvd))d.dataset.cvd=a.cvd;if(a.motion==='reduce')d.dataset.motion='reduce';if(a.font==='hyper'){d.dataset.font='hyper';var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap';document.head.appendChild(l)}}catch(e){}})()</script>
 
 <title>Sillage</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -427,8 +428,8 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   .wk .t span{font-size:12.5px}
 }
 .vdot{flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--line)}
-.vdot.l0{background:#2f9e44}.vdot.l1{background:#e8a200}.vdot.l2{background:#d6382e}.vdot.lx{background:var(--line)}
-.vtxt{font-weight:600}.vtxt.l0{color:#2f9e44}.vtxt.l1{color:#b97b00}.vtxt.l2{color:#d6382e}
+.vdot.l0{background:var(--lv0)}.vdot.l1{background:var(--lv1)}.vdot.l2{background:var(--lv2)}.vdot.lx{background:var(--line)}
+.vtxt{font-weight:600}.vtxt.l0{color:var(--lv0t)}.vtxt.l1{color:var(--lv1t)}.vtxt.l2{color:var(--lv2t)}
 .taf-perday{margin:2px 0 8px}
 .taf-days{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;margin-bottom:12px;font-size:13px}
 .taf-days input{min-width:0;width:100%}
@@ -567,7 +568,7 @@ body.lib-open{overflow:hidden}
 .out-item .lp-open{grid-column:1/-1}
 .out-v{display:flex;align-items:center;gap:7px;color:var(--ink)!important;font-weight:700;font-size:14.5px!important}
 .out-pill{flex:0 0 10px;width:10px;height:10px;border-radius:5px;background:var(--tail)}
-.out-pill.o{background:var(--sun)}.out-pill.r{background:var(--head)}.out-pill.n{background:var(--line)}
+.out-pill.o{background:var(--mid)}.out-pill.r{background:var(--head)}.out-pill.n{background:var(--line)}
 .out-best{color:var(--accent)!important;font-weight:600}
 .out-sec{margin:22px auto 8px;font-size:15px;font-weight:700}
 .out-note{margin-top:16px}
@@ -652,6 +653,29 @@ body:not(.admin) .me-btns .adm{display:none}
   body:not([data-mode="taf"]) #map{height:520px}
 }
 #meLang,#meDist,#meTemp{grid-template-columns:1fr 1fr}
+/* Accessibilité (28/10/2026) : palettes pour les daltonismes et contraste élevé (html[data-cvd]), niveaux vert / orange / rouge
+   en variables (--lv*), animations réduites (html[data-motion]), police très lisible (html[data-font]). Les règles
+   « sombre » ont une spécificité plus forte que les règles claires : elles redonnent toutes les mêmes variables. */
+:root{--lv0:#2f9e44;--lv1:#e8a200;--lv2:#d6382e;--lv0t:#2f9e44;--lv1t:#b97b00;--lv2t:#d6382e;--mid:var(--sun)}
+:root[data-cvd="deutan"]{--tail:#0072b2;--head:#d55e00;--warm:#d55e00;--rain:#4aa3df;--cross:#979797;--lv0:#0072b2;--lv1:#f0e442;--lv2:#d55e00;--lv0t:#0072b2;--lv1t:#7a6a00;--lv2t:#b84f00;--mid:#f0e442}
+:root[data-cvd="tritan"]{--tail:#00838f;--head:#d81b60;--warm:#d81b60;--rain:#3e86c0;--cross:#979797;--lv0:#00838f;--lv1:#f48fb1;--lv2:#b71c1c;--lv0t:#00737d;--lv1t:#ad1457;--lv2t:#b71c1c;--mid:#f48fb1}
+:root[data-cvd="mono"]{--bg:#ffffff;--panel:#ffffff;--ink:#000000;--muted:#262626;--line:#6b6b6b;--accent:#0b3d75;--accent-ink:#ffffff;--head:#000000;--tail:#7a7a7a;--warm:#000000;--rain:#1f5f99;--cross:#c8c8c8;--lv0:#ffffff;--lv1:#8a8a8a;--lv2:#000000;--lv0t:#000000;--lv1t:#000000;--lv2t:#000000;--mid:#8a8a8a}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"])[data-cvd="deutan"]{--tail:#56b4e9;--head:#f28e2b;--warm:#f28e2b;--rain:#9ad2f5;--cross:#808080;--lv0:#56b4e9;--lv1:#f0e442;--lv2:#f28e2b;--lv0t:#7cc6f0;--lv1t:#f0e442;--lv2t:#f6a55c;--mid:#f0e442}
+  :root:not([data-theme="light"])[data-cvd="tritan"]{--tail:#4dd0e1;--head:#ff6b9a;--warm:#ff6b9a;--rain:#5ba3da;--cross:#808080;--lv0:#4dd0e1;--lv1:#f8bbd0;--lv2:#ff4d4d;--lv0t:#4dd0e1;--lv1t:#f8bbd0;--lv2t:#ff7a7a;--mid:#f8bbd0}
+  :root:not([data-theme="light"])[data-cvd="mono"]{--bg:#000000;--panel:#0d0d0d;--ink:#ffffff;--muted:#e6e6e6;--line:#a0a0a0;--accent:#a8d4ff;--accent-ink:#000000;--head:#ffffff;--tail:#8c8c8c;--warm:#ffffff;--rain:#8cc3ec;--cross:#4a4a4a;--lv0:#000000;--lv1:#8c8c8c;--lv2:#ffffff;--lv0t:#ffffff;--lv1t:#ffffff;--lv2t:#ffffff;--mid:#8c8c8c}}
+:root[data-theme="dark"][data-cvd="deutan"]{--tail:#56b4e9;--head:#f28e2b;--warm:#f28e2b;--rain:#9ad2f5;--cross:#808080;--lv0:#56b4e9;--lv1:#f0e442;--lv2:#f28e2b;--lv0t:#7cc6f0;--lv1t:#f0e442;--lv2t:#f6a55c;--mid:#f0e442}
+:root[data-theme="dark"][data-cvd="tritan"]{--tail:#4dd0e1;--head:#ff6b9a;--warm:#ff6b9a;--rain:#5ba3da;--cross:#808080;--lv0:#4dd0e1;--lv1:#f8bbd0;--lv2:#ff4d4d;--lv0t:#4dd0e1;--lv1t:#f8bbd0;--lv2t:#ff7a7a;--mid:#f8bbd0}
+:root[data-theme="dark"][data-cvd="mono"]{--bg:#000000;--panel:#0d0d0d;--ink:#ffffff;--muted:#e6e6e6;--line:#a0a0a0;--accent:#a8d4ff;--accent-ink:#000000;--head:#ffffff;--tail:#8c8c8c;--warm:#ffffff;--rain:#8cc3ec;--cross:#4a4a4a;--lv0:#000000;--lv1:#8c8c8c;--lv2:#ffffff;--lv0t:#ffffff;--lv1t:#ffffff;--lv2t:#ffffff;--mid:#8c8c8c}
+:root[data-cvd="mono"] .card,:root[data-cvd="mono"] .me-card{border-color:var(--line)}
+:root[data-cvd="mono"] .rel.c{color:var(--muted)}
+:root[data-motion="reduce"] *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+:root[data-font="hyper"]{--f-display:"Atkinson Hyperlegible",system-ui,sans-serif;--f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif}
+#meMotion,#meFont{grid-template-columns:1fr 1fr}
+.me-cvd{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 2px;font-size:13px;color:var(--muted)}
+.me-cvd span{display:inline-flex;align-items:center;gap:6px}
+.me-cvd i{display:inline-block;width:22px;height:8px;border-radius:4px}
+.me-cvd i.vdot{width:12px;height:12px;border-radius:50%;margin-right:2px}
 </style>
 </head>
 <body>
@@ -750,6 +774,14 @@ body:not(.admin) .me-btns .adm{display:none}
   <div class="me-card"><h3>Mes réglages par mode</h3><p class="hint">Utilisés pour calculer tes horaires de passage. Chaque mode garde les siens.</p><div id="meModes"></div></div>
   <div class="me-card"><h3>Affichage</h3>
     <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
+    <span class="al-l">Couleurs</span>
+    <select id="meCvd" class="me-sel" aria-label="Couleurs"><option value="">Standard</option><option value="deutan">Daltonisme rouge-vert (deutéranopie, protanopie)</option><option value="tritan">Daltonisme bleu-jaune (tritanopie)</option><option value="mono">Contraste élevé, noir et blanc</option></select>
+    <div class="me-cvd" aria-hidden="true"><span><i style="background:var(--tail)"></i>Vent de dos</span><span><i style="background:var(--head)"></i>Vent de face</span><span><i class="vdot l0"></i><i class="vdot l1"></i><i class="vdot l2"></i>Bon, moyen, difficile</span></div>
+    <p class="hint">Change les couleurs du vent, des pastilles, de la carte et des graphiques. Les pictogrammes et les mots restent toujours affichés.</p>
+    <span class="al-l">Animations</span>
+    <div class="seg2 me-theme" id="meMotion" role="group" aria-label="Animations"><button type="button" data-v="">Normales</button><button type="button" data-v="reduce">Réduites</button></div>
+    <span class="al-l">Police</span>
+    <div class="seg2 me-theme" id="meFont" role="group" aria-label="Police"><button type="button" data-v="">Sillage (Archivo)</button><button type="button" data-v="hyper">Très lisible</button></div>
     <span class="al-l">Langue</span>
     <div class="seg2 me-theme" id="meLang" role="group" aria-label="Langue · Language"><button type="button" data-l="fr" lang="fr">Français</button><button type="button" data-l="en" lang="en">English</button></div>
     <span class="al-l">Distances et vitesses</span>
@@ -2066,17 +2098,30 @@ function drawCloudCeiling(c, bins, X, x0, y0, pw, ph) {
   o.globalCompositeOperation = 'destination-in'; o.fillStyle = g; o.fillRect(0, 0, pw, sh);
   c.drawImage(off, x0, y0, pw, sh);
 }
+/* Accessibilité (28/10/2026) : palette choisie dans Moi (html[data-cvd], posé en tête de page) ; animations réduites
+   (html[data-motion] ou réglage de l'appareil). Échelles du vent, des températures et de la pluie propres à chaque palette. */
+const CVD = document.documentElement.dataset.cvd || '';
+const reducedMotion = () => document.documentElement.dataset.motion === 'reduce' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 function mix(a, b, f) { const A = hexToRgb(a), B = hexToRgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * f)).join(',')})`; }
 function windColor(head) { const c = cssVar('--cross'); return head >= 0 ? mix(c, cssVar('--head'), clamp((head - 3) / 22, 0, 1)) : mix(c, cssVar('--tail'), clamp((-head - 3) / 22, 0, 1)); }
-const TEMP_STOPS = [[-5, '#5b6fd6'], [5, '#3fa7d6'], [12, '#4fbf8f'], [18, '#e3c341'], [25, '#ee8a2f'], [33, '#d6382e']];
+const TEMP_SETS = { '': [[-5, '#5b6fd6'], [5, '#3fa7d6'], [12, '#4fbf8f'], [18, '#e3c341'], [25, '#ee8a2f'], [33, '#d6382e']],
+  deutan: [[-5, '#2c3e9e'], [5, '#4a7fd0'], [12, '#9fc3ea'], [18, '#f3c08a'], [25, '#e07b39'], [33, '#a33a00']],
+  tritan: [[-5, '#00505a'], [5, '#00838f'], [12, '#7fcfd6'], [18, '#f6b3c8'], [25, '#e0457a'], [33, '#8c0030']],
+  mono: [[-5, '#e6e6e6'], [5, '#c2c2c2'], [12, '#9a9a9a'], [18, '#6e6e6e'], [25, '#3c3c3c'], [33, '#000000']] };
+const TEMP_STOPS = TEMP_SETS[CVD] || TEMP_SETS[''];
 function tempColor(t) {
   if (t <= TEMP_STOPS[0][0]) return TEMP_STOPS[0][1];
   for (let i = 1; i < TEMP_STOPS.length; i++) if (t <= TEMP_STOPS[i][0]) { const [a, ca] = TEMP_STOPS[i - 1], [b, cb] = TEMP_STOPS[i]; return mix(ca, cb, (t - a) / (b - a)); }
   return TEMP_STOPS[TEMP_STOPS.length - 1][1];
 }
-function rainColor(p) { return p < 0.1 ? cssVar('--cross') : mix('#9cc7ef', '#123f8c', clamp(Math.log10(p * 10) / Math.log10(80), 0, 1)); }
+function rainColor(p) { return p < 0.1 ? cssVar('--cross') : mix(CVD === 'mono' ? '#cfcfcf' : '#9cc7ef', CVD === 'mono' ? '#000000' : '#123f8c', clamp(Math.log10(p * 10) / Math.log10(80), 0, 1)); }
 // Couleurs franches (lisibles sur le vert des fonds de carte) ; 4e valeur = couleur du texte posé dessus
-const WIND_SCALE = [[0, '#0f8a76', T("Calme"), '#fff'], [10, '#4f8f12', T("Faible"), '#fff'], [20, '#c99200', T("Modéré"), '#15202a'], [30, '#e06a00', T("Assez fort"), '#fff'], [40, '#c8231a', T("Fort"), '#fff'], [50, '#7d1f94', T("Très fort"), '#fff']];
+const WIND_COLS = { '': [['#0f8a76', '#fff'], ['#4f8f12', '#fff'], ['#c99200', '#15202a'], ['#e06a00', '#fff'], ['#c8231a', '#fff'], ['#7d1f94', '#fff']],
+  deutan: [['#8fd0f5', '#15202a'], ['#2b7bba', '#fff'], ['#f0e442', '#15202a'], ['#e69f00', '#15202a'], ['#d55e00', '#fff'], ['#000000', '#fff']],
+  tritan: [['#9fe0e6', '#15202a'], ['#00838f', '#fff'], ['#f8bbd0', '#15202a'], ['#f06292', '#fff'], ['#c2185b', '#fff'], ['#4a0020', '#fff']],
+  mono: [['#f2f2f2', '#000'], ['#c4c4c4', '#000'], ['#969696', '#000'], ['#666666', '#fff'], ['#333333', '#fff'], ['#000000', '#fff']] };
+const WIND_LBL = [T("Calme"), T("Faible"), T("Modéré"), T("Assez fort"), T("Fort"), T("Très fort")];
+const WIND_SCALE = (WIND_COLS[CVD] || WIND_COLS['']).map((c, i) => [i * 10, c[0], WIND_LBL[i], c[1]]);
 // Flèche de vent : flèche colorée à fin contour noir dans un rond blanc de taille fixe
 const WARROW = 'M12 1.5 L20 21 L12 16 L4 21 Z';
 const ringSize = () => 30;
@@ -2514,7 +2559,7 @@ function flowEngine(o) {
   E.spawn = p => { const f = E.field; p.x = Math.random() * f.w; p.y = Math.random() * f.h; p.age = Math.floor(Math.random() * 80); p.max = 50 + Math.floor(Math.random() * 60); return p; };
   E.frame = () => {
     const f = E.field, cv = E.cv; if (!f || !cv || !o.allowed()) { E.raf = 0; return; }
-    const c = cv.getContext('2d'), still = !$('#animOn').checked || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const c = cv.getContext('2d'), still = !$('#animOn').checked || reducedMotion();
     if (document.hidden || !E.vis) { E.raf = requestAnimationFrame(E.frame); return; }
     // traînées : on efface doucement l'image précédente
     c.globalCompositeOperation = 'destination-in'; c.fillStyle = 'rgba(0,0,0,0.92)'; c.fillRect(0, 0, f.w, f.h);
@@ -2691,7 +2736,15 @@ function wrapText(c, text, maxW) {
    en thème clair) → expFull / expWide / expStory (dessin synchrone ; l'image complète est d'abord mise en page
    sur un canvas de 1 px pour connaître sa hauteur). PNG ×2, partage natif sur téléphone, sinon téléchargement. */
 const EXP_LV = [T("Belles conditions"), T("À surveiller"), T("Conditions difficiles")];
-function expPal(dark) {
+const EXP_CVD = {
+  deutan: { l: { head: '#d55e00', tail: '#0072b2', lv: [['#dcecf8', '#0072b2'], ['#fbf6c4', '#6b5c00'], ['#fbe3d2', '#b84f00']] },
+    d: { head: '#f28e2b', tail: '#56b4e9', lv: [['#12324a', '#7cc6f0'], ['#3a3610', '#f0e442'], ['#3d2410', '#f6a55c']] } },
+  tritan: { l: { head: '#d81b60', tail: '#00838f', lv: [['#d9f1f3', '#00737d'], ['#fce4ec', '#ad1457'], ['#f9dada', '#b71c1c']] },
+    d: { head: '#ff6b9a', tail: '#4dd0e1', lv: [['#0f3338', '#4dd0e1'], ['#3d1a28', '#f8bbd0'], ['#3d1515', '#ff7a7a']] } },
+  mono: { l: { head: '#000000', tail: '#7a7a7a', lv: [['#ececec', '#000000'], ['#bdbdbd', '#000000'], ['#000000', '#ffffff']] },
+    d: { head: '#ffffff', tail: '#8c8c8c', lv: [['#262626', '#ffffff'], ['#8c8c8c', '#000000'], ['#ffffff', '#000000']] } } };
+function expPal(dark) { const P = expPal0(dark), o = EXP_CVD[CVD]; return o ? Object.assign(P, o[dark ? 'd' : 'l']) : P; }
+function expPal0(dark) {
   const fd = cssVar('--f-display'), fm = cssVar('--f-mono');
   if (dark) return { dark: true, fd, fm, bg: '#14201b', card: '#1b2621', ink: '#f1f3f0', muted: '#a3aea8', line: '#33433b', band: '#1b2621', bandInk: '#f1f3f0', bandMuted: '#a3aea8',
     brand: '#e0a21b', rain: '#5ba3da', rainTxt: '#8cc3ec', head: '#f08a5d', tail: '#6fcf97', lv: [['#173826', '#6fcf97'], ['#3a2d14', '#f2c25a'], ['#3d2219', '#f08a5d']] };
@@ -5300,6 +5353,21 @@ $('#meTemp').addEventListener('click', e => { const b = e.target.closest('button
 $('#meLang').addEventListener('click', e => { const b = e.target.closest('button[data-l]'); if (b) setLang(b.dataset.l); });
 $('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); });
 $('#meHelp').addEventListener('click', () => $('#helpBtn').click());
+/* Accessibilité (28/10/2026) : couleurs, animations, police. Gardés dans localStorage pmr-a11y ({ cvd, motion, font }),
+   appliqués en tête de page ; chaque changement recharge la page (échelles de couleur du script), puis rouvre Moi. */
+function a11yGet() { try { return JSON.parse(localStorage.getItem('pmr-a11y') || '{}') || {}; } catch (e) { return {}; } }
+function a11ySet(ch) {
+  const a = { ...a11yGet(), ...ch }; for (const k of Object.keys(a)) if (!a[k]) delete a[k];
+  try { if (Object.keys(a).length) localStorage.setItem('pmr-a11y', JSON.stringify(a)); else localStorage.removeItem('pmr-a11y'); sessionStorage.setItem('pmr-open-me', '1'); } catch (e) {}
+  location.reload();
+}
+{ const a = a11yGet(); $('#meCvd').value = CVD;
+  for (const b of document.querySelectorAll('#meMotion button')) b.setAttribute('aria-pressed', String(b.dataset.v === (a.motion === 'reduce' ? 'reduce' : '')));
+  for (const b of document.querySelectorAll('#meFont button')) b.setAttribute('aria-pressed', String(b.dataset.v === (a.font === 'hyper' ? 'hyper' : ''))); }
+$('#meCvd').addEventListener('change', () => a11ySet({ cvd: $('#meCvd').value }));
+$('#meMotion').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b && b.getAttribute('aria-pressed') !== 'true') a11ySet({ motion: b.dataset.v }); });
+$('#meFont').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b && b.getAttribute('aria-pressed') !== 'true') a11ySet({ font: b.dataset.v }); });
+try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pmr-open-me'); if (!document.body.classList.contains('gated')) setTimeout(meOpen, 0); } } catch (e) {}
 $('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());

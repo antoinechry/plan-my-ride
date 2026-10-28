@@ -849,5 +849,19 @@ window.PMR_I18N = {
     "Story 9:16": "Story 9:16",
     "Pour partager depuis le téléphone": "To share from your phone",
     "Image PNG de l'aller, du retour et des deux semaines": "PNG image of the outbound and return trips and the two weeks",
+    // accessibilité (28/10/2026)
+    "Couleurs": "Colours",
+    "Standard": "Standard",
+    "Daltonisme rouge-vert (deutéranopie, protanopie)": "Red-green colour blindness (deuteranopia, protanopia)",
+    "Daltonisme bleu-jaune (tritanopie)": "Blue-yellow colour blindness (tritanopia)",
+    "Contraste élevé, noir et blanc": "High contrast, black and white",
+    "Bon, moyen, difficile": "Good, fair, tough",
+    "Change les couleurs du vent, des pastilles, de la carte et des graphiques. Les pictogrammes et les mots restent toujours affichés.": "Changes the colours of the wind, the dots, the map and the charts. Icons and words are always shown too.",
+    "Animations": "Animations",
+    "Normales": "Normal",
+    "Réduites": "Reduced",
+    "Police": "Font",
+    "Sillage (Archivo)": "Sillage (Archivo)",
+    "Très lisible": "Extra legible",
   }
 };
