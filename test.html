@@ -4557,7 +4557,7 @@ const isWorkDay = d => d.getDay() >= 1 && d.getDay() <= 5;
 async function tafLoad(id) {
   let rec = null;
   try { rec = await idbRun('pts', 'readonly', st => st.get(id)); } catch (e) {}
-  if (!rec) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; } }
+  if (!rec) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; } }
   if (!rec) return null;
   try { return prepare(unpackPts(rec.pts)); } catch (e) { return null; }
 }
@@ -4950,11 +4950,12 @@ function routeWxNote(used) {
   const id = typeof LIB !== 'undefined' && LIB.current; if (!id || !used || S._wxNoted === id + '|' + used) return;
   S._wxNoted = id + '|' + used;
   logOnce('wx-' + S.mode + '-' + used, 'wx', { detail: String(used).slice(0, 40), route_id: id });
-  sbIfLogged().then(sb => { if (sb) sb.from('routes').update({ wx: String(used).slice(0, 40), wx_at: new Date().toISOString() }).eq('id', id).then(() => {}, () => {}); }).catch(() => {});
+  sbIfLogged().then(sb => { if (sb) sb.from('routes').update({ wx: String(used).slice(0, 40), wx_at: new Date().toISOString() }).eq('user_id', SB_UID).eq('id', id).then(() => {}, () => {}); }).catch(() => {});
 }
+var SB_UID; // compte connecté : les parcours lus ou modifiés depuis l'app sont toujours ceux de ce compte (même pour un admin)
 async function sbIfLogged() {
   if (!hasSbToken()) return null;
-  try { const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession(); return session ? sb : null; } catch (e) { return null; }
+  try { const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession(); if (session) SB_UID = session.user.id; return session ? sb : null; } catch (e) { return null; }
 }
 function idb() {
   if (!LIB.db) LIB.db = new Promise((ok, ko) => {
@@ -5051,7 +5052,7 @@ async function libRename() {
   $('#libRenRow').hidden = true; if (!m || !name || name === m.name) return;
   libUpsert({ id, name });
   try { const meta = await idbRun('meta', 'readonly', st => st.get(id)); if (meta) await idbRun('meta', 'readwrite', st => st.put({ ...meta, name })); } catch (e) {}
-  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ name }).eq('id', id).then(() => {});
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ name }).eq('user_id', SB_UID).eq('id', id).then(() => {});
   S.baseName = name; S.name = S.rev ? T("{0} (sens inverse)", [name]) : name; $('#routeName').textContent = name;
   libRender();
 }
@@ -5073,7 +5074,7 @@ async function libOpen(id) {
   try { rec = await idbRun('pts', 'readonly', st => st.get(id)); } catch (e) {}
   if (!rec) {
     const sb = await sbIfLogged();
-    if (sb) { setStatus(T("Chargement du parcours…"), 'load'); const { data } = await sb.from('routes').select('pts').eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; }
+    if (sb) { setStatus(T("Chargement du parcours…"), 'load'); const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; }
     if (rec) { try { await idbRun('pts', 'readwrite', st => st.put(rec)); await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at })); libUpsert({ id, local: true }); } catch (e) {} }
   }
   if (!rec) { setStatus(T("Ce parcours n'est plus disponible."), 'err'); return; }
@@ -5081,12 +5082,12 @@ async function libOpen(id) {
   try { loadRoute(unpackPts(rec.pts), m.name, revGet(id)); } catch (e) { setStatus(e.message, 'err'); return; }
   const now = new Date().toISOString(); libUpsert({ id, used_at: now }); libRender();
   try { await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: now })); } catch (e) {}
-  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ used_at: now }).eq('id', id).then(() => {});
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ used_at: now }).eq('user_id', SB_UID).eq('id', id).then(() => {});
 }
 async function libDelete(id) {
   const m = LIB.list.find(x => x.id === id); if (!m) return;
   try { await idbRun('pts', 'readwrite', st => st.delete(id)); await idbRun('meta', 'readwrite', st => st.delete(id)); } catch (e) {}
-  const sb = await sbIfLogged(); if (sb) await sb.from('routes').delete().eq('id', id);
+  const sb = await sbIfLogged(); if (sb) await sb.from('routes').delete().eq('user_id', SB_UID).eq('id', id);
   LIB.list = LIB.list.filter(x => x.id !== id);
   if (LIB.current === id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} }
   libRender();
@@ -5100,7 +5101,7 @@ async function libInit() {
   if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
   // Compte : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
   const sb = await sbIfLogged(); if (!sb) return;
-  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at').order('used_at', { ascending: false }).limit(200);
+  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at').eq('user_id', SB_UID).order('used_at', { ascending: false }).limit(200);
   if (error) return;
   // parcours supprimés par un admin (page Admin) : retirés de ce navigateur au lieu d'être renvoyés au compte
   for (const r of (data || []).filter(r => r.deleted_at)) {
@@ -5111,6 +5112,15 @@ async function libInit() {
   for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; libUpsert({ ...m, remote: true }); }
   libRender();
   if (!S.P && last && LIB.list.some(x => x.id === last)) await libOpen(last);
+  // une seule fois : un admin voyait les parcours de tous les comptes ; ceux qu'il a ouverts sont restés dans son navigateur.
+  // On les retire au lieu de les recopier dans son compte (pour un compte non admin, la requête ne renvoie que ses propres parcours).
+  try { if (!localStorage.getItem('pmr-own-routes')) { const ids = LIB.list.filter(x => x.local && !x.remote).map(x => x.id);
+    if (ids.length) { const { data: oth, error: e3 } = await sb.from('routes').select('id,user_id').in('id', ids.slice(0, 200)); if (e3) throw e3;
+      for (const id of new Set((oth || []).filter(r => r.user_id !== SB_UID).map(r => r.id))) {
+        try { await idbRun('pts', 'readwrite', st => st.delete(id)); await idbRun('meta', 'readwrite', st => st.delete(id)); } catch (e) {}
+        LIB.list = LIB.list.filter(x => x.id !== id); if (LIB.current === id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} } }
+      libRender(); }
+    localStorage.setItem('pmr-own-routes', '1'); } } catch (e) {}
   for (const m of LIB.list.filter(x => x.local && !x.remote)) {
     try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); if (!rec) continue;
       const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, pts: rec.pts }, { onConflict: 'user_id,id' });
@@ -5160,7 +5170,7 @@ async function lpFillThumbs() { // miniatures manquantes : depuis le navigateur,
   if (LP.fetching) return; LP.fetching = true; const t = lpThumbs(); let changed = false; const miss = [];
   for (const m of LIB.list) { if (t[m.id]) continue; let rec = null; try { rec = await idbRun('pts', 'readonly', st => st.get(m.id)); } catch (e) {}
     if (rec && rec.pts && rec.pts.length > 1) { thumbSave(m.id, rec.pts); changed = true; } else if (m.remote) miss.push(m.id); }
-  if (miss.length) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('id,pts').in('id', miss.slice(0, 30)); for (const r of data || []) if (r.pts && r.pts.length > 1) { thumbSave(r.id, r.pts); changed = true; } } }
+  if (miss.length) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('id,pts').eq('user_id', SB_UID).in('id', miss.slice(0, 30)); for (const r of data || []) if (r.pts && r.pts.length > 1) { thumbSave(r.id, r.pts); changed = true; } } }
   LP.fetching = false; if (changed && !$('#libPage').hidden) lpRender();
 }
 function lpRender() {
@@ -5185,7 +5195,7 @@ async function lpRename(id, name) {
   const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
   libUpsert({ id, name });
   try { const meta = await idbRun('meta', 'readonly', st => st.get(id)); if (meta) await idbRun('meta', 'readwrite', st => st.put({ ...meta, name })); } catch (e) {}
-  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ name }).eq('id', id).then(() => {});
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ name }).eq('user_id', SB_UID).eq('id', id).then(() => {});
   if (id === LIB.current) { S.baseName = name; S.name = S.rev ? T("{0} (sens inverse)", [name]) : name; $('#routeName').textContent = name; try { chipsRender(); } catch (e) {} }
   libRender();
 }
@@ -5252,7 +5262,7 @@ function withRoute(R, fn) { // simulation sur un autre parcours que celui ouvert
 async function outPts(m) {
   if (OUT.pts[m.id]) return OUT.pts[m.id];
   let rec = null; try { rec = await idbRun('pts', 'readonly', st => st.get(m.id)); } catch (e) {}
-  if (!rec && m.remote) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('id', m.id).maybeSingle(); if (data && data.pts) { rec = { id: m.id, pts: data.pts }; try { await idbRun('pts', 'readwrite', st => st.put(rec)); } catch (e) {} } } }
+  if (!rec && m.remote) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', m.id).maybeSingle(); if (data && data.pts) { rec = { id: m.id, pts: data.pts }; try { await idbRun('pts', 'readwrite', st => st.put(rec)); } catch (e) {} } } }
   if (!rec || !rec.pts || rec.pts.length < 2) return null;
   if (!lpThumbs()[m.id]) thumbSave(m.id, rec.pts);
   const P = prepare(unpackPts(rec.pts)); return (OUT.pts[m.id] = { P, samples: outSamples(P) });
