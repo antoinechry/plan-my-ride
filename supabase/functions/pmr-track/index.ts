@@ -5,9 +5,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 // Site web : la fonction déduit une localisation approximative (pays, région, département, ville) de l'adresse IP
 // via un service de géolocalisation (ipapi.co, à défaut ipwho.is). L'adresse IP n'est jamais stockée ni renvoyée ;
 // une localisation est gardée 1 h en mémoire par IP pour limiter les appels au service.
-// App iPhone / Android (depuis le 29/10/2026) : aucune localisation, seulement la plateforme. L'app est reconnue
-// par l'origine de la WebView Capacitor (capacitor://localhost sur iPhone, https://localhost sur Android)
-// ou par le champ `platform` envoyé par la page.
+// App iPhone / Android (depuis le 29/10/2026) : aucune localisation, seulement la plateforme, envoyée par la page
+// (`platform` = window.SILLAGE_NATIVE posé par native.js) ; à défaut, origine capacitor:// = iPhone.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,12 +20,11 @@ type Geo = { country: string | null; region: string | null; dept: string | null;
 const NONE: Geo = { country: null, region: null, dept: null, city: null };
 const CACHE = new Map<string, { at: number; geo: Geo }>();
 
-// Plateforme : app native d'après l'origine de la WebView, sinon ce que la page déclare, sinon le web.
+// Plateforme : ce que déclare la page (window.SILLAGE_NATIVE dans l'app), sinon l'origine Capacitor de l'iPhone,
+// sinon le web. L'origine https://app.sillage-ride.eu (Android) servira aussi à la version web : elle ne suffit pas.
 function platformOf(req: Request, declared: unknown): 'web' | 'ios' | 'android' {
-  const o = (req.headers.get('origin') || '').toLowerCase();
-  if (o === 'capacitor://localhost' || o === 'ionic://localhost') return 'ios';
-  if (o === 'https://localhost' || o === 'http://localhost') return declared === 'ios' ? 'ios' : 'android';
   if (declared === 'ios' || declared === 'android') return declared;
+  if ((req.headers.get('origin') || '').toLowerCase().startsWith('capacitor://')) return 'ios';
   return 'web';
 }
 

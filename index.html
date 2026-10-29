@@ -4660,11 +4660,12 @@ function visitorId() {
   return v;
 }
 function track(event, extra) {
-  if (IS_TEST || (ACC.row && ACC.row.is_admin) || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+  if (IS_TEST || (ACC.row && ACC.row.is_admin) || !/^(https?|capacitor):$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
   const row = { visitor: visitorId(), event, mode: S.mode === 'ultra' ? 'ultra' : 'ride',
-    device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) };
+    device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', platform: window.SILLAGE_NATIVE || 'web', ...(extra || {}) };
   const hdr = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
-  // fonction pmr-track : ajoute pays / région / département / ville déduits de l'IP (jamais stockée) ;
+  // fonction pmr-track : ajoute pays / région / département / ville déduits de l'IP (jamais stockée), sur le web seulement
+  // (app iPhone / Android : `platform`, aucune localisation, depuis le 29/10/2026) ;
   // si elle ne répond pas, enregistrement direct sans localisation
   const direct = () => fetch(SB_URL + '/rest/v1/pmr_visits', { method: 'POST', keepalive: true, headers: { ...hdr, Prefer: 'return=minimal' }, body: JSON.stringify(row) }).catch(() => {});
   try {

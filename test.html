@@ -396,6 +396,11 @@ dialog.login h2{margin:0 0 4px;font-size:17px}
 dialog.login input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
 dialog.login .err{color:#c0392b;font-size:13px;margin:0}
 dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.me-del{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+.me-del .linkbtn{color:var(--head);font-weight:600;font-size:14px;min-height:40px}
+.del-dlg .del-txt{margin:0;font-size:14px;line-height:1.5}
+.del-dlg .btn.del-go{background:var(--head);border-color:var(--head);color:#fff;font-weight:700}
+.del-dlg .btn.del-go:disabled{opacity:.6}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .stat.wind{flex-direction:row;align-items:center;gap:10px;grid-column:span 2}
 .stat.wind canvas{flex:none}
@@ -788,7 +793,8 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 <section class="libpage" id="mePage" hidden aria-labelledby="meTitle">
   <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
   <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
-    <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin-test.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div></div>
+    <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin-test.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div>
+    <p class="me-del"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
   <div class="me-card"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
     <select id="meTaf" class="me-sel" aria-label="Trajet de vélotaf par défaut"></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
@@ -1225,6 +1231,20 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
     <p class="err" id="pwErr" hidden></p>
     <div class="acts"><button type="button" class="btn" id="pwCancel">Annuler</button><button type="submit" class="btn primary" id="pwGo">Enregistrer</button></div>
   </form>
+</dialog>
+<dialog class="login del-dlg" id="delDlg" aria-labelledby="delTitle">
+  <form id="delForm">
+    <h2 id="delTitle">Supprimer mon compte</h2>
+    <p class="del-txt">Ton compte, tes parcours, tes alertes météo et ton inscription à la lettre d'info seront effacés définitivement. Ce n'est pas réversible.</p>
+    <input type="password" id="delPw" autocomplete="current-password" placeholder="Ton mot de passe, pour confirmer" maxlength="200" required>
+    <p class="err" id="delErr" role="alert" hidden></p>
+    <div class="acts"><button type="button" class="btn" id="delCancel">Annuler</button><button type="submit" class="btn del-go" id="delGo">Supprimer définitivement</button></div>
+  </form>
+  <div id="delDone" hidden>
+    <h2>Compte supprimé</h2>
+    <p class="del-txt">Toutes tes données ont été effacées. Merci d'avoir roulé avec Sillage.</p>
+    <div class="acts"><button type="button" class="btn primary" id="delOk">OK</button></div>
+  </div>
 </dialog>
 <div class="drop-overlay" id="dropOverlay" hidden>Déposez le fichier GPX</div>
 
@@ -4783,11 +4803,12 @@ function visitorId() {
   return v;
 }
 function track(event, extra) {
-  if (IS_TEST || (ACC.row && ACC.row.is_admin) || !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+  if (IS_TEST || (ACC.row && ACC.row.is_admin) || !/^(https?|capacitor):$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
   const row = { visitor: visitorId(), event, mode: S.mode === 'ultra' ? 'ultra' : 'ride',
-    device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', ...(extra || {}) };
+    device: matchMedia('(pointer:coarse)').matches ? 'mobile' : 'desktop', platform: window.SILLAGE_NATIVE || 'web', ...(extra || {}) };
   const hdr = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
-  // fonction pmr-track : ajoute pays / région / département / ville déduits de l'IP (jamais stockée) ;
+  // fonction pmr-track : ajoute pays / région / département / ville déduits de l'IP (jamais stockée), sur le web seulement
+  // (app iPhone / Android : `platform`, aucune localisation, depuis le 29/10/2026) ;
   // si elle ne répond pas, enregistrement direct sans localisation
   const direct = () => fetch(SB_URL + '/rest/v1/pmr_visits', { method: 'POST', keepalive: true, headers: { ...hdr, Prefer: 'return=minimal' }, body: JSON.stringify(row) }).catch(() => {});
   try {
@@ -5521,6 +5542,39 @@ try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pm
 $('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
+/* Suppression du compte (essai du 29/10/2026, exigée par l'App Store et Google Play) : mot de passe demandé,
+   fonction edge delete-account (efface le compte Auth : cascade sur toutes les tables, contact Brevo retiré),
+   puis ce navigateur est vidé (session, parcours, caches) en gardant langue, thème, unités et affichage. */
+$('#meDel').addEventListener('click', () => {
+  $('#delForm').hidden = false; $('#delDone').hidden = true; $('#delErr').hidden = true;
+  $('#delPw').value = ''; $('#delGo').disabled = false; $('#delGo').textContent = T('Supprimer définitivement');
+  $('#delDlg').showModal(); $('#delPw').focus();
+});
+$('#delCancel').addEventListener('click', () => $('#delDlg').close());
+$('#delOk').addEventListener('click', () => location.reload());
+$('#delDlg').addEventListener('close', () => { if (!$('#delDone').hidden) location.reload(); });
+$('#delForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = t => { $('#delErr').textContent = t; $('#delErr').hidden = false; $('#delGo').disabled = false; $('#delGo').textContent = T('Supprimer définitivement'); };
+  $('#delErr').hidden = true; $('#delGo').disabled = true; $('#delGo').textContent = T('Suppression…');
+  try {
+    const sb = await sbIfLogged(); if (!sb) return err(T("connecte-toi d'abord."));
+    const { error } = await sb.functions.invoke('delete-account', { body: { password: $('#delPw').value } });
+    if (error) {
+      let code = ''; try { const j = await error.context.json(); code = j.error || ''; } catch (x) {}
+      if (code === 'password') return err(T('Mot de passe incorrect.'));
+      if (code === 'last_admin') return err(T("Tu es le seul administrateur : nomme d'abord un autre administrateur."));
+      return err(T('Suppression impossible : {0}', [code || error.message]));
+    }
+    try { const r = await navigator.serviceWorker?.getRegistration('./'); const p = r && await r.pushManager.getSubscription(); if (p) await p.unsubscribe(); } catch (x) {}
+    try { await sb.auth.signOut({ scope: 'local' }); } catch (x) {}
+    const KEEP = ['pmr-lang', 'pmr-theme', 'pmr-units', 'pmr-a11y', 'pmr-help-seen'];
+    try { for (const k of Object.keys(localStorage)) if ((k.startsWith('pmr-') && !KEEP.includes(k)) || k === SB_TOKEN_KEY) localStorage.removeItem(k); } catch (x) {}
+    try { sessionStorage.clear(); } catch (x) {}
+    try { indexedDB.deleteDatabase('pmr'); } catch (x) {}
+    $('#delForm').hidden = true; $('#delDone').hidden = false; $('#delOk').focus();
+  } catch (x) { err(T('Suppression impossible : {0}', [x.message || x])); }
+});
 /* Alertes météo (essai du 25/10/2026) : notifications Web Push. Le service worker sw.js affiche les notifications ;
    la fonction edge push-alerts garde les abonnements (push_subs) et envoie chaque soir à 20 h (ou matin à 7 h)
    l'alerte du parcours choisi (réglages dans push_alerts, une ligne par compte, écrite ici). */

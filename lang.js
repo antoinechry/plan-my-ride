@@ -863,5 +863,15 @@ window.PMR_I18N = {
     "Police": "Font",
     "Sillage (Archivo)": "Sillage (Archivo)",
     "Très lisible": "Extra legible",
+    "Supprimer mon compte": "Delete my account",
+    "Ton compte, tes parcours, tes alertes météo et ton inscription à la lettre d'info seront effacés définitivement. Ce n'est pas réversible.": "Your account, routes, weather alerts and newsletter subscription will be erased for good. This cannot be undone.",
+    "Ton mot de passe, pour confirmer": "Your password, to confirm",
+    "Supprimer définitivement": "Delete permanently",
+    "Suppression…": "Deleting…",
+    "Compte supprimé": "Account deleted",
+    "Toutes tes données ont été effacées. Merci d'avoir roulé avec Sillage.": "All your data has been erased. Thanks for riding with Sillage.",
+    "Mot de passe incorrect.": "Wrong password.",
+    "Tu es le seul administrateur : nomme d'abord un autre administrateur.": "You are the only administrator: make someone else an administrator first.",
+    "Suppression impossible : {0}": "Could not delete: {0}",
   }
 };
