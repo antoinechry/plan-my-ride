@@ -47,7 +47,9 @@ export function route(pts: number[][]) {
 export type Series = { t0: number; pr: number[]; app: number[]; ws: number[]; wd: number[]; gust: number[]; code: number[] };
 export async function weather(smp: { lat: number; lon: number }[], from: string, to: string, arome: boolean): Promise<Series[]> {
   const vars = 'apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m';
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${smp.map(s => s.lat.toFixed(4)).join(',')}&longitude=${smp.map(s => s.lon.toFixed(4)).join(',')}`
+  // abonnement Open-Meteo « API Standard » (depuis le 29/10/2026) : clé du secret OPENMETEO_API_KEY, sinon API gratuite
+  const key = (Deno.env.get('OPENMETEO_API_KEY') || '').trim();
+  const url = `https://${key ? 'customer-api' : 'api'}.open-meteo.com/v1/forecast?${key ? 'apikey=' + encodeURIComponent(key) + '&' : ''}latitude=${smp.map(s => s.lat.toFixed(4)).join(',')}&longitude=${smp.map(s => s.lon.toFixed(4)).join(',')}`
     + `&hourly=${vars}${arome ? '&models=' + AROME : ''}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
   const j = await res.json();
