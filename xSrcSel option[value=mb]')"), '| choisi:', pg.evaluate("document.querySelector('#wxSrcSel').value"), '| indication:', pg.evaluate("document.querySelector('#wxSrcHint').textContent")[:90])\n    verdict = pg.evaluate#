@@ -1,0 +1,1 @@
+    print('menu mb:', pg.evaluate("!!document.querySelector('("(document.querySelector('#verdict')||{}).textContent || ''")

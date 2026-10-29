@@ -98,8 +98,9 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 #planSpeedSlot #manualSettings > .priv{grid-column:1 / -1;order:2}
 #planSpeedSlot #windField{order:1}
 #planSpeedSlot output{white-space:nowrap}
+#planSpeedSlot>*,#planSpeedSlot #manualSettings>*,#planSpeedSlot input[type=range]{min-width:0;max-width:100%}
 @media (max-width:900px){#planSpeedSlot{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:560px){#planSpeedSlot{grid-template-columns:1fr}}
+@media (max-width:560px){#planSpeedSlot{grid-template-columns:minmax(0,1fr)}}
 .plan-note{padding:0 14px;margin:0 0 10px}
 .plan-scroll{overflow-x:auto}
 .plan-table{min-width:700px}
@@ -310,6 +311,18 @@ tr.night td:first-child{box-shadow:inset 3px 0 0 var(--elev-line)}
 .dropzone svg{width:46px;height:46px;color:var(--accent)}
 .dropzone strong{font-family:var(--f-display);font-size:20px;font-weight:600}
 .dropzone span{color:var(--muted);font-size:14px}
+.dz-touch{display:none}
+/* écran tactile : plein écran par le bouton ⛶ sous le zoom seulement ; en plein écran, bouton « Fermer » bien visible en haut à droite */
+@media (pointer:coarse){#fsBtn{display:none!important}}
+html.native #fsBtn{display:none!important}
+.fs-close{display:none!important}
+/* écran tactile, plein écran : la carte seule sur toute la page (sous la barre d'état), commandes décalées sous l'encoche */
+@media (pointer:coarse){#mapCard.map-fs>:not(#map){display:none!important}#mapCard.map-fs{padding:0}#mapCard.map-fs #map{flex:1}#mapCard.map-fs .leaflet-top{top:env(safe-area-inset-top,0px)}#mapCard.map-fs .leaflet-bottom{bottom:env(safe-area-inset-bottom,0px)}}
+html.native #mapCard.map-fs>:not(#map){display:none!important}html.native #mapCard.map-fs{padding:0}html.native #mapCard.map-fs #map{flex:1}html.native #mapCard.map-fs .leaflet-top{top:env(safe-area-inset-top,0px)}html.native #mapCard.map-fs .leaflet-bottom{bottom:env(safe-area-inset-bottom,0px)}
+#mapCard.map-fs .fs-close{display:inline-flex!important;align-items:center;gap:6px;height:40px;padding:0 14px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font:700 15px var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer}
+#mapCard.map-fs .fs-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
+@media (pointer:coarse){.dz-desk{display:none}.dz-touch{display:inline}}
+html.native .dz-desk{display:none}html.native .dz-touch{display:inline}
 .empty ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
 .empty ul b{color:var(--ink);font-weight:600}
 footer{max-width:1440px;margin:24px auto 0;font-size:12.5px;color:var(--muted)}
@@ -470,10 +483,10 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 #stats.duo-stats .sd-ttl{display:flex;align-items:baseline;gap:10px;padding:0 2px}
 #stats.duo-stats .sd-ttl b{font-size:17px}
 #stats.duo-stats .sd-ttl span{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
-#stats.duo-stats .stats{grid-template-columns:1fr 1fr 1.5fr;grid-auto-flow:row dense}
+#stats.duo-stats .stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr);grid-auto-flow:row dense}
 #stats.duo-stats .stat.wind{grid-column:3;grid-row:1 / span 2}
 @media (min-width:1281px){#stats.duo-stats .stat.wind{flex-direction:column;justify-content:center;gap:4px}#stats.duo-stats .stat.wind .wtxt{align-items:center;text-align:center}}
-@media (max-width:1280px){#stats.duo-stats .stats{grid-template-columns:1fr 1fr}#stats.duo-stats .stat.wind{grid-column:1 / -1;grid-row:auto}}
+@media (max-width:1280px){#stats.duo-stats .stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#stats.duo-stats .stat.wind{grid-column:1 / -1;grid-row:auto}}
 #stats.duo-stats .stat .v{font-size:23px}
 @media (max-width:820px){#stats.duo-stats{grid-template-columns:1fr}}
 /* ---- résumé en lignes à pictogrammes (toutes tailles) ---- */
@@ -499,7 +512,7 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
   .tabbar .ic{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .15s}
   .tabbar [aria-current="page"] .ic{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   .tabbar [aria-current="page"]{color:var(--accent)}
-  aside.settings{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:1000;max-height:86dvh;overflow:auto;overscroll-behavior:contain;border-radius:18px 18px 0 0;border-bottom:0;padding:0 18px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .25s ease;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+  aside.settings{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:1000;max-height:86dvh;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;border-radius:18px 18px 0 0;border-bottom:0;padding:0 18px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .25s ease;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
   body.sheet-open aside.settings{transform:none}
   body.sheet-open{overflow:hidden}
   .sheet-head{display:flex;position:sticky;top:0;z-index:2;background:var(--panel);align-items:center;justify-content:space-between;padding:16px 0 10px;margin-bottom:-6px}
@@ -658,6 +671,29 @@ body:not(.admin) .me-btns .adm{display:none}
   body:not([data-mode="taf"]) #map{height:520px}
 }
 #meLang,#meDist,#meTemp{grid-template-columns:1fr 1fr}
+/* réglages rapides en carte (maquette A, 26/10/2026) : parcours en titre, puis départ | vitesse | réglages ; rien ne déborde */
+#chips.qs{flex-direction:column;flex-wrap:nowrap;gap:0;overflow:hidden;margin:0;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+#chips.qs .chip{all:unset;box-sizing:border-box;cursor:pointer;color:var(--ink);-webkit-tap-highlight-color:transparent}
+#chips.qs .chip:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#chips.qs .chip:active{background:var(--bg)}
+#chips.qs svg{flex:none;width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#chips.qs .qs-route{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line);font:700 16px var(--f-display)}
+#chips.qs .qs-route span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chips.qs .qs-chev{color:var(--muted)}
+#chips.qs .qs-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto}
+#chips.qs .qs-cell{display:flex;flex-direction:column;gap:1px;padding:9px 14px 10px;border-right:1px solid var(--line);min-width:0}
+#chips.qs .qs-cell small{font:600 11px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#chips.qs .qs-cell b{font:600 15px var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* panneau des réglages : rien de plus large que lui (sinon il glisse de côté) */
+aside.settings>*,aside.settings input,aside.settings select{min-width:0;max-width:100%}
+aside.settings #startRow>*{min-width:0;flex:1 1 0}
+/* téléphone : rien ne doit élargir la page (sur iPhone, un bloc trop large décalait tout de côté) */
+@media (max-width:700px){main>*,#results>*,.card,.stats,.stat{min-width:0;max-width:100%}.stat .v,.stat .s{overflow-wrap:anywhere}.plan-scroll{max-width:100%}}
+#chips.qs .qs-cell .qs-num{font-family:var(--f-mono);font-weight:500}
+@media (max-width:360px){#chips.qs .qs-cell{padding-inline:10px}#chips.qs .qs-set{padding:0 12px}}
+@media (min-width:701px){#chips.qs{max-width:560px}}
+#chips.qs .qs-set{display:flex;align-items:center;justify-content:center;padding:0 18px;color:var(--accent)}
+#chips.qs .qs-set svg{width:22px;height:22px}
 /* Accessibilité (28/10/2026) : palettes pour les daltonismes et contraste élevé (html[data-cvd]), niveaux vert / orange / rouge
    en variables (--lv*), animations réduites (html[data-motion]), police très lisible (html[data-font]). Les règles
    « sombre » ont une spécificité plus forte que les règles claires : elles redonnent toutes les mêmes variables. */
@@ -744,7 +780,7 @@ body:not(.admin) .me-btns .adm{display:none}
 </section>
 <section class="libpage" id="outPage" hidden aria-labelledby="outTitle">
   <div class="lp-head"><h2 id="outTitle">Mes sorties</h2><button type="button" class="btn small pg-x">Fermer</button></div>
-  <p class="hint lp-count">Tes parcours classés du plus au moins favorable selon la météo AROME (Météo-France).</p>
+  <p class="hint lp-count">Tes parcours classés du plus au moins favorable selon la météo, avec pour chacun le modèle le plus précis à cet endroit.</p>
   <div class="lp-tools">
     <div class="seg2 out-days" id="outDays" role="group" aria-label="Jour de la sortie"></div>
     <label class="out-when">Départ à <input type="time" id="outTime" step="900"> <span id="outPace"></span></label>
@@ -752,7 +788,7 @@ body:not(.admin) .me-btns .adm{display:none}
   <p class="out-prog" id="outProg" aria-live="polite"></p>
   <ol class="lp-list" id="outList"></ol>
   <div id="outLong"></div>
-  <p class="hint out-note">AROME : modèle fin de Météo-France sur 2 jours, puis ARPEGE jusqu'à 4 jours. Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
+  <p class="hint out-note">Météo : le modèle le plus précis à l'endroit de chaque parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, ECMWF hors des zones couvertes…). Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
 </section>
 <section class="libpage" id="mePage" hidden aria-labelledby="meTitle">
   <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
@@ -919,7 +955,7 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="field">
       <label class="label" for="wxSrcSel">Source météo</label>
       <select id="wxSrcSel">
-        <option value="mb">meteoblue</option>
+        <option value="loc">📍 Le plus précis selon le lieu</option>
         <option value="arome">AROME (Météo-France)</option>
         <option value="met">MET Norway</option>
         <option value="om">Open-Meteo (automatique)</option>
@@ -931,14 +967,24 @@ body:not(.admin) .me-btns .adm{display:none}
           <option value="dmi">HARMONIE · DMI (Danemark, nord de l'Europe)</option>
           <option value="ukmo">Met Office (Royaume-Uni)</option>
           <option value="ecmwf">ECMWF (centre européen)</option>
+          <option value="geo">AROME · GeoSphere (Autriche, Alpes de l'Est)</option>
+          <option value="chmi">ALADIN · CHMI (Tchéquie, Europe centrale)</option>
         </optgroup>
         <optgroup label="Amérique du Nord">
           <option value="gfs">GFS + HRRR · NOAA (États-Unis)</option>
           <option value="nbm">NBM · NOAA (États-Unis, risque de pluie)</option>
           <option value="gem">GEM · Environnement Canada</option>
+          <option value="nam">NAM · NOAA (États-Unis, 2 jours et demi)</option>
+        </optgroup>
+        <optgroup label="Asie">
+          <option value="jma">JMA (Japon)</option>
+          <option value="cma">GRAPES · CMA (Chine)</option>
+        </optgroup>
+        <optgroup label="Modèles d'intelligence artificielle">
+          <option value="aifs">AIFS · ECMWF (IA)</option>
+          <option value="aigfs">AIGFS · NOAA (IA)</option>
         </optgroup>
       </select>
-      <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Sillage est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
       <p class="hint" id="wxSrcHint"></p>
       <div class="wxuse priv" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
@@ -948,17 +994,19 @@ body:not(.admin) .me-btns .adm{display:none}
     <div class="status load" id="status" hidden></div>
 
     <section class="empty" id="empty">
-      <h2>Importez votre trace GPX</h2>
-      <p>Sillage calcule votre heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là : vent de face ou de dos, pluie, température, soleil.</p>
+      <h2>Importe ta trace GPX</h2>
+      <p>Sillage calcule ton heure de passage à chaque point du parcours et affiche la météo prévue à cet endroit, à cette heure-là&nbsp;: vent de face ou de dos, pluie, température, soleil.</p>
       <label class="dropzone" for="file">
         <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 36c6-2 9-10 15-10s7 7 12 7 7-5 9-8"/><circle cx="6" cy="36" r="3"/><circle cx="42" cy="25" r="3"/><path d="M24 4v14M18 12l6 6 6-6"/></svg>
-        <strong>Déposez un fichier .gpx ici</strong>
-        <span>ou cliquez pour le choisir sur votre ordinateur</span>
+        <strong class="dz-desk">Dépose un fichier .gpx ici</strong>
+        <span class="dz-desk">ou clique pour le choisir sur ton ordinateur</span>
+        <strong class="dz-touch">Choisir un fichier .gpx</strong>
+        <span class="dz-touch">dans tes fichiers, iCloud Drive, Google Drive…</span>
       </label>
       <ul>
         <li><b>Strava</b> : itinéraire → Exporter le GPX</li>
         <li><b>Komoot</b> : tour → Télécharger → Fichier GPX</li>
-        <li><b>Garmin Connect, RideWithGPS, Openrunner</b> : exportez le parcours au format GPX</li>
+        <li><b>Garmin Connect, RideWithGPS, Openrunner</b> : exporte le parcours au format GPX</li>
       </ul>
     </section>
 
@@ -1151,7 +1199,7 @@ body:not(.admin) .me-btns .adm{display:none}
       <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
       <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet de vélotaf, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
     </ol>
-    <p class="note">Météo au choix («&nbsp;Source météo&nbsp;»)&nbsp;: meteoblue, la plus précise (quelques chargements par mois), AROME de Météo-France, très fin sur la France (4 jours), les modèles nationaux voisins (Allemagne, Suisse, Italie, Benelux, Royaume-Uni…), ECMWF, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
+    <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
 </dialog>
@@ -1491,9 +1539,26 @@ const OM_MODELS = {
     hint: T("National Blend of Models du service météo américain : synthèse corrigée de plusieurs modèles (2,5 km, États-Unis contigus, mise à jour toutes les heures), avec risque de pluie, jusqu'à 11 jours") },
   gem: { name: 'GEM (Environnement Canada)', models: ['gem_seamless', 'cmc_gem_seamless'], days: 10, org: T("Environnement et Changement climatique Canada"), url: 'https://meteo.gc.ca', mdl: 'GEM HRDPS, RDPS, global',
     hint: T("Service météo canadien : HRDPS (2,5 km, Canada et nord des États-Unis) sur 2 jours, RDPS (10 km, Amérique du Nord) jusqu'à 3 jours et demi, puis GEM mondial (15 km) jusqu'à 10 jours") },
+  // Ajoutés le 26/10/2026 (identifiants vérifiés en direct sur l'API Open-Meteo ce jour-là). Écartés car sans données ce jour-là :
+  // kma_seamless (Corée), bom_access_global (Australie), gfs_graphcast025. `fill` : variables manquantes (rafales, ressenti…)
+  // toujours complétées par Open-Meteo automatique.
+  geo: { name: 'AROME (GeoSphere Austria)', models: ['geosphere_seamless'], days: 15, org: 'GeoSphere Austria', url: 'https://www.geosphere.at', mdl: 'AROME, ECMWF',
+    hint: T("Service météo autrichien : AROME (2,5 km, Autriche et Alpes de l'Est) sur 2 jours et demi, puis ECMWF jusqu'à 15 jours") },
+  chmi: { name: 'ALADIN (CHMI)', models: ['chmi_aladin_seamless'], days: 15, org: 'CHMI', url: 'https://www.chmi.cz', mdl: 'ALADIN, ECMWF',
+    hint: T("Service météo tchèque : ALADIN (1 à 2,3 km, Tchéquie et Europe centrale) sur 3 jours, puis ECMWF jusqu'à 15 jours") },
+  nam: { name: 'NAM (NOAA)', models: ['ncep_nam_conus'], days: 3, org: 'NOAA', url: 'https://www.noaa.gov', mdl: 'NAM',
+    hint: T("Modèle régional du service météo américain : NAM (3 km, États-Unis contigus), 2 jours et demi") },
+  jma: { name: 'JMA (Japon)', models: ['jma_seamless'], days: 11, org: T("Agence météorologique du Japon"), url: 'https://www.jma.go.jp', mdl: 'MSM, GSM',
+    hint: T("Service météo japonais : MSM (5 km, Japon et ses abords) sur 4 jours, puis GSM mondial (20 km) jusqu'à 11 jours") },
+  cma: { name: 'GRAPES (CMA)', models: ['cma_grapes_global'], days: 5, org: T("Administration météorologique de Chine"), url: 'https://www.cma.gov.cn', mdl: 'GRAPES',
+    hint: T("Modèle mondial du service météo chinois : GRAPES (15 km), 5 jours") },
+  aifs: { name: 'AIFS (ECMWF, IA)', models: ['ecmwf_aifs025_single'], days: 15, fill: true, org: 'ECMWF', url: 'https://www.ecmwf.int', mdl: 'AIFS',
+    hint: T("Modèle d'intelligence artificielle du centre européen (25 km), jusqu'à 15 jours : bon à moyenne échéance, peu de détail local. Sans rafales : reprises d'Open-Meteo") },
+  aigfs: { name: 'AIGFS (NOAA, IA)', models: ['ncep_aigfs025'], days: 16, fill: true, org: 'NOAA', url: 'https://www.noaa.gov', mdl: 'AIGFS',
+    hint: T("Modèle d'intelligence artificielle du service météo américain (25 km), jusqu'à 16 jours. Sans rafales, ressenti ni ensoleillement : repris d'Open-Meteo") },
 };
 const OM_PROB = new Set(Object.values(OM_MODELS).filter(m => m.prob).flatMap(m => m.models)); // modèles qui donnent le risque de pluie
-const WX_SRC = { mb: 'meteoblue', arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
+const WX_SRC = { loc: T("Le plus précis selon le lieu"), arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
 for (const [k, m] of Object.entries(OM_MODELS)) WX_SRC[k] = m.name;
 const WX_KEYS = Object.keys(WX_SRC);
 // Horizon de chaque source (jours à partir d'aujourd'hui) : au-delà, Open-Meteo prend le relais.
@@ -1534,15 +1599,44 @@ function gustFill(wx, alt) {
   });
   return any;
 }
+// Source « Le plus précis selon le lieu » (`loc`, par défaut depuis le 26/10/2026) : pour chaque point du parcours, le modèle
+// gratuit le plus fin à cet endroit (zones approximatives, des plus petites aux plus grandes), puis celui de la majorité des points.
+// Hors des zones couvertes par un modèle régional (Amérique latine, Afrique, Moyen-Orient, Asie hors Japon, Océanie) : ECMWF.
+function locKey(la, lo) {
+  if (la > 41.3 && la < 43.1 && lo > 8.5 && lo < 9.6) return 'arome';                              // Corse
+  if (la > 45.8 && la < 47.85 && lo > 5.9 && lo < 10.5 && !(la < 46.5 && lo < 7)) return 'ch';   // Suisse et abords (Alpes françaises : AROME)
+  if (la > 46.35 && la < 49.05 && lo > 9.5 && lo < 17.2 && !(la > 47.6 && lo < 12.9)) return 'geo'; // Autriche, Alpes de l'Est (Bavière : ICON)
+  if (la > 48.55 && la < 51.06 && lo > 12.1 && lo < 18.9) return 'chmi';                           // Tchéquie
+  if (la > 35.5 && la < 47.1 && lo > 7.5 && lo < 18.6 && !(la > 43.5 && lo < 7.7)) return 'it';    // Italie, Slovénie, Istrie
+  if (la > 50 && la < 61 && lo > -11 && lo < 1.5 && !(la < 51 && lo > 1)) return 'ukmo';           // Royaume-Uni, Irlande
+  if (la > 41.3 && la < 51.2 && lo > -5.2 && lo < 9.6) return 'arome';                             // France et abords
+  if (la >= 51.2 && la < 53.7 && lo > 2.5 && lo < 7.3) return 'knmi';                              // Belgique du Nord, Pays-Bas
+  if (la > 63 && la < 67 && lo > -25 && lo < -13) return 'dmi';                                    // Islande
+  if (la > 54.4 && la < 72 && lo > 4 && lo < 32) return 'met';                                     // Scandinavie, Danemark, pays baltes
+  if (la > 34 && la < 72 && lo > -11 && lo < 45) return 'icon';                                    // reste de l'Europe (ICON-EU)
+  if (la > 24 && la < 46 && lo > 122 && lo < 146) return 'jma';                                    // Japon
+  if (lo > -141 && lo < -52 && ((la >= 49 && lo < -95) || (la >= 47.5 && lo >= -95))) return 'gem'; // Canada
+  if ((la > 24 && la < 50 && lo > -125 && lo < -66) || (la > 51 && la < 72 && lo > -170 && lo < -129) || (la > 18 && la < 23 && lo > -161 && lo < -154)) return 'gfs'; // États-Unis
+  return 'ecmwf';
+}
+// Choix pour des points et une date de départ : au-delà de l'horizon du modèle régional, ECMWF (15 jours), puis Open-Meteo.
+function locPick(smp, from, today) {
+  const n = {}; let k = 'ecmwf', best = 0;
+  for (const p of smp) { const c = locKey(p.lat, p.lon); n[c] = (n[c] || 0) + 1; if (n[c] > best) { best = n[c]; k = c; } }
+  const days = from && today ? Math.round((new Date(from).setHours(12, 0, 0, 0) - new Date(today).setHours(12, 0, 0, 0)) / 864e5) : 0;
+  if (days >= WX_DAYS[k]) k = days < WX_DAYS.ecmwf ? 'ecmwf' : 'om';
+  return k;
+}
+// Identifiant Open-Meteo du choix (Mes sorties : un seul appel Open-Meteo par parcours ; MET Norway → son modèle nordique)
+const locModel = k => k === 'met' ? 'metno_seamless' : OM_MODELS[k] ? OM_MODELS[k].models[0] : null;
 // Points sans température sur la fenêtre demandée (zone non couverte) ?
 const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if (isNaN(L.temp[j])) n++; return n > 0; });
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
-  const logged = hasSbToken();
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
-  if (WX_KEYS.includes(v) && (v !== 'mb' || logged)) return v;
-  return logged ? 'mb' : 'arome';
+  if (WX_KEYS.includes(v)) return v; // meteoblue retiré le 29/10/2026 : un ancien choix « mb » revient au plus précis selon le lieu
+  return 'loc';
 }
 // Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
 const MB_PICTO = [null, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 1, 1, 45, 45, 45, 3, 3, 3, 3, 61, 71, 65, 75, 95, 95, 75, 95, 80, 85, 61, 71, 67];
@@ -1781,7 +1875,7 @@ async function getWeather(src, from, to, today) {
     const needAlt = src === 'mb' ? to > end : to >= end;
     let alt = needAlt ? await om().catch(() => null) : null, part = 0;
     // modèle régional : trous comblés par Open-Meteo automatique (parcours hors de la zone du modèle)
-    if (OM_MODELS[src] && omGaps(r.wx)) {
+    if (OM_MODELS[src] && (OM_MODELS[src].fill || omGaps(r.wx))) {
       const b = alt || await om().catch(() => null);
       if (b){ part = omFill(r.wx, b); if (part && !alt) alt = b; }
     }
@@ -1809,10 +1903,9 @@ for (const [k, m] of Object.entries(OM_MODELS)) if (k !== 'arome') {
 const wxParts = used => { const p = String(used || 'om').split('+').filter(k => WX_TXT[k]); return p.some(k => OM_MODELS[k]) ? p.filter(k => k !== 'om') : p; };
 function wxCreditTxt() { return T("Météo {0}", [wxParts(S.wxUsed).map(k => WX_TXT[k]).join(T(" et "))]); }
 function renderWxSrc() {
-  const src = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
-  sel.value = src;
-  sel.querySelector('option[value="mb"]').textContent = logged ? 'meteoblue' : '🔒 meteoblue';
-  if (logged) $('#wxLock').hidden = true;
+  const src0 = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
+  const src = src0 === 'loc' ? (S.wxPick || (S.P && wxSmp().length ? locPick(wxSmp()) : 'om')) : src0;
+  sel.value = src0;
   const used = S.wxUsed || src, I = S.wxInfo, name = WX_SRC[src];
   let h;
   if (src === 'mb') {
@@ -1836,6 +1929,8 @@ function renderWxSrc() {
     }
     h += T(". Vent à 10 m.");
   }
+  if (src0 === 'loc') h = S.P ? T("📍 Pour ce parcours : {0}. {1}", [WX_SRC[src], h])
+    : T("Choisit tout seul le modèle gratuit le plus précis à l'endroit du parcours : AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, ECMWF hors des zones couvertes…");
   $('#wxSrcHint').textContent = h;
   $('#wxCredit').innerHTML = wxParts(used).map(k => WX_LINK[k]).join(T(" et "));
   renderWxUse(src, logged, S.wxFallback ? null : I);
@@ -2072,7 +2167,8 @@ async function run() {
   for (const d of week.filter(isWorkDay)) { const o = tafSolve(tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), false); endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
-  const src = wxSrc();
+  const src0 = wxSrc(), src = src0 === 'loc' ? locPick(wxSmp(), from, today) : src0;
+  S.wxPick = src0 === 'loc' ? src : '';
   const key = src + ':' + wxSmp().length + ':' + wxSmp()[0].lat + ':' + wxTrk().total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to) + ':' + ymd(today);
   let note = '';
   if (from > maxDay) {
@@ -2088,7 +2184,10 @@ async function run() {
     } catch (err) {
       if (id !== runId) return;
       S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
-      note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.") : err.message]);
+      // limite d'Open-Meteo : message à part (sans répéter « essaie une autre source »)
+      if (/daily api request limit/i.test(err.message)) note = T("Météo indisponible : Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway ou meteoblue dans « Source météo ». Les horaires restent calculés.");
+      else if (/minutely|hourly api request limit|limit exceeded/i.test(err.message)) note = T("Météo indisponible : Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute. Les horaires restent calculés.");
+      else note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.") : err.message]);
     }
   }
   if (id !== runId) return;
@@ -2360,8 +2459,11 @@ function setMapFs(on) {
   $('#fsBtn').textContent = on ? T("Quitter le plein écran") : T("Plein écran");
   const a = document.querySelector('.fs-btn');
   if (a) { a.innerHTML = on ? FS_ICON_OUT : FS_ICON_IN; a.title = on ? T("Quitter le plein écran (Échap)") : T("Plein écran"); }
-  if (on) { const rq = card.requestFullscreen || card.webkitRequestFullscreen; if (rq) try { const r = rq.call(card); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  // écran tactile : plein écran « maison » seulement (la classe suffit) ; le plein écran du système
+  // ajoutait sur iPhone son propre bandeau « Balayez vers le bas pour quitter » et coupait la carte
+  if (on && !MAP_TOUCH) { const rq = card.requestFullscreen || card.webkitRequestFullscreen; if (rq) try { const r = rq.call(card); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
   else if (fsEl()) { const ex = document.exitFullscreen || document.webkitExitFullscreen; try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  if (map && MAP_TOUCH) { if (on) map.dragging.enable(); else map.dragging.disable(); }
   if (map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 60);
 }
 const toggleMapFs = () => setMapFs(!$('#mapCard').classList.contains('map-fs'));
@@ -2379,9 +2481,13 @@ function makeBases() {
     'Satellite (Esri)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr + ', Maxar, Earthstar Geographics' })
   };
 }
+// écran tactile : pointeur « coarse », ou l'app iPhone / Android (le simulateur d'iPhone se déclare parfois en pointeur fin)
+const MAP_TOUCH = matchMedia('(pointer: coarse)').matches || !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 function initMap() {
   if (typeof L === 'undefined') { $('#map').innerHTML = T("<p class=\"hint\" style=\"padding:16px\">La carte n'a pas pu se charger (connexion requise).</p>"); return; }
-  map = L.map('map', { zoomControl: true, attributionControl: true });
+  // Sur écran tactile (téléphone, tablette, app) : la carte ne capte plus le défilement de la page.
+  // Un doigt fait défiler la page ; zoom au pincement ou avec + / − ; déplacement à deux doigts, ou à un doigt en plein écran (bouton ⛶, setMapFs).
+  map = L.map('map', { zoomControl: true, attributionControl: true, scrollWheelZoom: !MAP_TOUCH, dragging: !MAP_TOUCH });
   // Fonds de carte sans clé d'API. OSM standard exige un Referer : il ne marche qu'une fois l'app servie en http(s).
   const osmAttr = T('© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>');
   const esriAttr = T('Tuiles © <a href="https://www.esri.com">Esri</a>');
@@ -2404,6 +2510,14 @@ function initMap() {
     L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); toggleMapFs(); });
     return d; } });
   map.addControl(new Fs());
+  // « Fermer » du plein écran : en haut à droite, au-dessus du choix du fond ; visible seulement en plein écran
+  const FsX = L.Control.extend({ options: { position: 'topright' }, onAdd() {
+    const b = L.DomUtil.create('button', 'fs-close'); b.type = 'button';
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' + T("Fermer");
+    L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, 'click', e => { L.DomEvent.preventDefault(e); setMapFs(false); });
+    return b; } });
+  const fsx = new FsX(); map.addControl(fsx);
+  const cor = fsx.getContainer().parentNode; cor.insertBefore(fsx.getContainer(), cor.firstChild);
   hoverMarker = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
 }
 function sampleValue(k) {
@@ -3217,7 +3331,7 @@ async function exportImage(fmt = 'full') {
     const c = out.getContext('2d'); c.scale(s, s);
     lay(c, M, A);
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
-    const base = (S.name || (M.mode === 'ultra' ? 'ultra' : M.mode === 'taf' ? 'velotaf' : T('sortie'))).replace(/[^\w\-]+/g, '_');
+    const base = (S.name || (M.mode === 'ultra' ? 'ultra' : M.mode === 'taf' ? 'velotaf' : T('sortie'))).replace(/[^\p{L}\p{N}_\-]+/gu, '_');
     const fname = `Sillage_${base}_${ymd(new Date(S.tl.start))}${fmt === 'full' ? '' : '_' + fmt}.png`;
     const file = new File([blob], fname, { type: 'image/png' });
     if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3492,7 +3606,7 @@ function exportCsv() {
   }
   const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = (S.name || (S.mode === 'ultra' ? 'ultra' : T('sortie'))).replace(/[^\w\-]+/g, '_') + T('_feuille_de_route') + '.csv';
+  a.download = (S.name || (S.mode === 'ultra' ? 'ultra' : T('sortie'))).replace(/[^\p{L}\p{N}_\-]+/gu, '_') + T('_feuille_de_route') + '.csv';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
@@ -3544,13 +3658,17 @@ const optKey = () => (S.mode === 'ultra' ? 'pmr-opt-ultra' : S.mode === 'taf' ? 
 const MODE_DEF = {
   ride: { time: '08:00', speed: 25, vam: 700, pause: 10, pauseMode: 'pct', pauseMin: 6, pauseEvery: 1, windOn: true, poiRadius: 500, laps: 1, lapPause: 10 },
   taf: { time: '07:45', speed: 20, vam: 600, pause: 5, pauseMode: 'pct', pauseMin: 3, pauseEvery: 1, windOn: true, poiRadius: 500, tafBack: '17:30', tafRet: '' },
-  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, pauseMode: 'pct', pauseMin: 15, pauseEvery: 1, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
+  ultra: { time: '07:00', speed: 22, vam: 600, pause: 20, pauseMode: 'min', pauseMin: 12, pauseEvery: 1, windOn: true, poiRadius: 500, planDays: 3, planSplit: 'km', planCustom: false, planTimes: [], planEnds: [] }
 };
 function saveOpt(o) { try { localStorage.setItem(optKey(), JSON.stringify({ ...o, date: S.mode === 'ultra' ? o.date : undefined })); } catch (e) {} }
 function initInputs() {
   const tm = new Date(); tm.setDate(tm.getDate() + 1);
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(optKey()) || '{}') || {}; } catch (e) {}
   const def = { ...MODE_DEF[S.mode], ...saved };
+  // Ultra : arrêts courts en minutes par heure (27/10/2026) ; une seule fois, un réglage en % est converti à l'identique (20 % = 12 min / h)
+  if (S.mode === 'ultra') { let done = false; try { done = !!localStorage.getItem('pmr-ultra-pmin'); localStorage.setItem('pmr-ultra-pmin', '1'); } catch (e) {}
+    if (!done && def.pauseMode !== 'min') { Object.assign(def, { pauseMode: 'min', pauseMin: Math.round((+def.pause || 0) * 0.6), pauseEvery: 1 });
+      try { localStorage.setItem(optKey(), JSON.stringify({ ...saved, pauseMode: 'min', pauseMin: def.pauseMin, pauseEvery: 1 })); } catch (e) {} } }
   $('#date').value = S.mode === 'ultra' && def.date && def.date >= ymd(new Date()) ? def.date : ymd(tm);
   if (S.mode === 'ride') { let rd = ''; try { rd = sessionStorage.getItem('pmr-ride-date') || ''; sessionStorage.removeItem('pmr-ride-date'); } catch (e) {}
     if (rd && rd >= ymd(new Date())) $('#date').value = rd; }
@@ -4036,14 +4154,10 @@ $('#poiRows').addEventListener('click', e => {
 const durShort = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
 $('#wxSrcSel').addEventListener('change', e => {
   const v = e.target.value;
-  // version publique : meteoblue verrouillé (version d'essai, débloqué plus tard avec un forfait)
-  if (v === 'mb' && !hasSbToken()) { e.target.value = wxSrc(); $('#wxLock').hidden = false; return; }
-  $('#wxLock').hidden = true;
   if (v === wxSrc()) return;
   try { localStorage.setItem('pmr-wxsrc', v); } catch (err) {}
   S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); schedule();
 });
-$('#wxLockOk').addEventListener('click', () => { $('#wxLock').hidden = true; });
 
 /* ---------- page Ultra : planification journalière ---------- */
 function cumUp() {
@@ -5060,8 +5174,12 @@ $('#file').addEventListener('change', e => { handleFile(e.target.files[0]); e.ta
 const isPhone = () => matchMedia('(max-width:700px)').matches;
 function sheetOpen(sel) {
   document.body.classList.add('sheet-open');
-  const el = sel && $(sel); if (el && $('#settings').contains(el)) setTimeout(() => el.scrollIntoView({ block: 'center' }), 60); else $('#settings').scrollTop = 0;
+  // défilement vertical seulement : scrollIntoView décalait aussi le panneau de côté (sur iPhone, impossible de revenir)
+  const st = $('#settings'), el = sel && $(sel); st.scrollLeft = 0;
+  if (el && st.contains(el)) setTimeout(() => { const r = el.getBoundingClientRect(), sr = st.getBoundingClientRect(); st.scrollTop += r.top - sr.top - (sr.height - r.height) / 2; st.scrollLeft = 0; }, 60);
+  else st.scrollTop = 0;
 }
+$('#settings').addEventListener('scroll', e => { if (e.currentTarget.scrollLeft) e.currentTarget.scrollLeft = 0; }, { passive: true });
 function sheetClose() { document.body.classList.remove('sheet-open'); }
 $('#sheetOk').addEventListener('click', sheetClose);
 $('#sheetBg').addEventListener('click', sheetClose);
@@ -5191,7 +5309,12 @@ async function outFetch(id, date, to, smp) { // limite par minute d'Open-Meteo :
   for (let k = 0; ; k++) {
     if (OUT.waitUntil > Date.now()) await new Promise(r => setTimeout(r, OUT.waitUntil - Date.now()));
     if (id !== OUT.run) throw new Error(T("annulé"));
-    try { return await fetchOM(date, to, AROME_MODEL, smp); }
+    try {
+      // modèle le plus précis à l'endroit du parcours ; trous (hors zone, fin d'horizon) comblés par Open-Meteo automatique
+      const k = locPick(smp, date, new Date()), model = locModel(k), wx = await fetchOM(date, to, model, smp);
+      if (model && omGaps(wx)) { const b = await fetchOM(date, to, null, smp).catch(() => null); if (b) omFill(wx, b); }
+      return wx;
+    }
     catch (e) {
       if (k < 2 && /limit|429/i.test(String(e.message))) {
         OUT.waitUntil = Math.max(OUT.waitUntil || 0, Date.now() + 62e3);
@@ -5289,14 +5412,19 @@ $('#mapOptsBtn').addEventListener('click', () => { const on = document.body.clas
 const CHIP_I = { route: '<path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/>', when: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   speed: '<path d="M4 16a8 8 0 0116 0M12 16l4-5"/>', set: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>' };
 function chipsRender() {
+  // carte « réglages rapides » (maquette A, 26/10/2026) : parcours en titre, puis départ | vitesse | réglages
   const box = $('#chips'); if (!box) return;
+  box.classList.add('qs');
   const d = $('#date').value ? new Date($('#date').value + 'T12:00') : null;
-  const when = (d ? dayFmt.format(d) + ' · ' : '') + ($('#time').value || '');
-  const c = (k, txt, target) => `<button type="button" class="chip" data-go="${target}"><svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg><span>${txt}</span></button>`;
-  box.innerHTML = c('route', S.name || T("Parcours"), '@lib')
-    + c('when', when, S.mode === 'ultra' ? '#planStartSlot' : '#startRow')
-    + c('speed', fV(+$('#speed').value, 1) + ' ' + UL.kmh, S.mode === 'ultra' ? '#planSpeedSlot' : '#speed')
-    + c('set', T("Réglages"), '');
+  const tm = $('#time').value || '';
+  const esc = v => String(v).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg>`;
+  box.innerHTML = `<button type="button" class="chip qs-route" data-go="@lib">${ico('route')}<span>${esc(S.name || T("Parcours"))}</span><svg class="qs-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`
+    + `<div class="qs-row">`
+    + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planStartSlot' : '#startRow'}"><small>${S.mode === 'taf' ? T("Aller") : T("Départ")}</small><b>${d ? esc(dayFmt.format(d)) + ' · ' : ''}<span class="qs-num">${esc(tm)}</span></b></button>`
+    + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planSpeedSlot' : '#speed'}"><small>${T("Vitesse")}</small><b class="qs-num">${fV(+$('#speed').value, 1)} ${UL.kmh}</b></button>`
+    + `<button type="button" class="chip qs-set" data-go="" aria-label="${T("Réglages")}" title="${T("Réglages")}">${ico('set')}</button>`
+    + `</div>`;
 }
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const t = b.dataset.go; if (t === '@lib') { lpOpen(); return; }
   if (t && !$('#settings').contains($(t))) { sheetClose(); $(t).scrollIntoView({ behavior: 'smooth', block: 'start' }); } else sheetOpen(t); });
@@ -5422,7 +5550,7 @@ try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pm
 $('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
-/* Suppression du compte (en ligne le 29/10/2026, exigée par l'App Store et Google Play) : mot de passe demandé,
+/* Suppression du compte (essai du 29/10/2026, exigée par l'App Store et Google Play) : mot de passe demandé,
    fonction edge delete-account (efface le compte Auth : cascade sur toutes les tables, contact Brevo retiré),
    puis ce navigateur est vidé (session, parcours, caches) en gardant langue, thème, unités et affichage. */
 $('#meDel').addEventListener('click', () => {

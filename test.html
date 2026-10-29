@@ -956,7 +956,6 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
       <label class="label" for="wxSrcSel">Source météo</label>
       <select id="wxSrcSel">
         <option value="loc">📍 Le plus précis selon le lieu</option>
-        <option value="mb">meteoblue</option>
         <option value="arome">AROME (Météo-France)</option>
         <option value="met">MET Norway</option>
         <option value="om">Open-Meteo (automatique)</option>
@@ -986,7 +985,6 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
           <option value="aigfs">AIGFS · NOAA (IA)</option>
         </optgroup>
       </select>
-      <div class="wxlock" id="wxLock" hidden role="status"><b>🔒 meteoblue verrouillé</b><span>Sillage est pour le moment en version d'essai. meteoblue, la source la plus précise (calculée au point exact et à son altitude), sera débloquée contre un forfait payant.</span><button type="button" class="btn small" id="wxLockOk">OK</button></div>
       <p class="hint" id="wxSrcHint"></p>
       <div class="wxuse priv" id="wxUse" hidden><div class="bar"><i></i></div><span></span></div>
     </div>
@@ -1201,7 +1199,7 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
       <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
       <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet de vélotaf, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
     </ol>
-    <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix meteoblue, la plus précise (quelques chargements par mois), une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
+    <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
 </dialog>
@@ -1560,7 +1558,7 @@ const OM_MODELS = {
     hint: T("Modèle d'intelligence artificielle du service météo américain (25 km), jusqu'à 16 jours. Sans rafales, ressenti ni ensoleillement : repris d'Open-Meteo") },
 };
 const OM_PROB = new Set(Object.values(OM_MODELS).filter(m => m.prob).flatMap(m => m.models)); // modèles qui donnent le risque de pluie
-const WX_SRC = { loc: T("Le plus précis selon le lieu"), mb: 'meteoblue', arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
+const WX_SRC = { loc: T("Le plus précis selon le lieu"), arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
 for (const [k, m] of Object.entries(OM_MODELS)) WX_SRC[k] = m.name;
 const WX_KEYS = Object.keys(WX_SRC);
 // Horizon de chaque source (jours à partir d'aujourd'hui) : au-delà, Open-Meteo prend le relais.
@@ -1636,9 +1634,8 @@ const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if 
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
-  const logged = hasSbToken();
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
-  if (WX_KEYS.includes(v) && (v !== 'mb' || logged)) return v;
+  if (WX_KEYS.includes(v)) return v; // meteoblue retiré le 29/10/2026 : un ancien choix « mb » revient au plus précis selon le lieu
   return 'loc';
 }
 // Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
@@ -1909,8 +1906,6 @@ function renderWxSrc() {
   const src0 = wxSrc(), logged = hasSbToken(), sel = $('#wxSrcSel');
   const src = src0 === 'loc' ? (S.wxPick || (S.P && wxSmp().length ? locPick(wxSmp()) : 'om')) : src0;
   sel.value = src0;
-  sel.querySelector('option[value="mb"]').textContent = logged ? 'meteoblue' : '🔒 meteoblue';
-  if (logged) $('#wxLock').hidden = true;
   const used = S.wxUsed || src, I = S.wxInfo, name = WX_SRC[src];
   let h;
   if (src === 'mb') {
@@ -4159,14 +4154,10 @@ $('#poiRows').addEventListener('click', e => {
 const durShort = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
 $('#wxSrcSel').addEventListener('change', e => {
   const v = e.target.value;
-  // version publique : meteoblue verrouillé (version d'essai, débloqué plus tard avec un forfait)
-  if (v === 'mb' && !hasSbToken()) { e.target.value = wxSrc(); $('#wxLock').hidden = false; return; }
-  $('#wxLock').hidden = true;
   if (v === wxSrc()) return;
   try { localStorage.setItem('pmr-wxsrc', v); } catch (err) {}
   S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); schedule();
 });
-$('#wxLockOk').addEventListener('click', () => { $('#wxLock').hidden = true; });
 
 /* ---------- page Ultra : planification journalière ---------- */
 function cumUp() {
