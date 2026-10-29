@@ -1419,6 +1419,23 @@ const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '
 // Open-Meteo : un seul appel pour tous les points d'échantillonnage (jusqu'à 16 jours). `model` : modèle imposé
 // (AROME_MODEL pour la source AROME : AROME France puis ARPEGE, 4 jours, sans probabilité de pluie).
 const AROME_MODEL = 'meteofrance_seamless';
+// Open-Meteo payant (abonnement « API Standard », depuis le 29/10/2026) : avec un compte connecté, les demandes passent par
+// la fonction edge `open-meteo` (clé côté serveur, cache partagé 30 min, compteur om_usage). Si le relais lui-même échoue
+// (pas d'en-tête x-om), ou sans compte, API gratuite en direct. Même réponse que fetch(url) dans tous les cas.
+async function omFetch(url, ms) {
+  const sig = () => (AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
+  if (hasSbToken()) {
+    try {
+      const sb = await sbIfLogged(), tok = sb && (await sb.auth.getSession()).data.session?.access_token;
+      if (tok) {
+        const r = await fetch(SB_URL + '/functions/v1/open-meteo', { method: 'POST', signal: sig(),
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ q: url.split('?')[1] || '' }) });
+        if (r.headers.get('x-om')) return r;
+      }
+    } catch (e) { if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw e; }
+  }
+  return fetch(url, { signal: sig() });
+}
 async function fetchOM(from, to, model, smp = wxSmp()) { // smp : points demandés (par défaut ceux du parcours ouvert)
   const vars = model && !(typeof OM_PROB !== 'undefined' && OM_PROB.has(model)) ? VARS.filter(v => v !== 'precipitation_probability') : VARS;
   const lat = smp.map(s => s.lat.toFixed(4)).join(',');
@@ -1426,7 +1443,7 @@ async function fetchOM(from, to, model, smp = wxSmp()) { // smp : points demand�
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${vars.join(',')}${model ? '&models=' + model : ''}&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${from}&end_date=${to}`;
   // 40 s au plus : si Open-Meteo ne répond pas, les horaires sont quand même calculés (sans météo)
   let res;
-  try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined }); }
+  try { res = await omFetch(url, 40000); }
   catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? T("Open-Meteo ne répond pas pour l'instant (réessaie dans quelques minutes).") : T("pas de connexion au service Open-Meteo.")); }
   const json = await res.json().catch(e => ({ _cut: e }));
   if (json._cut) throw new Error(T("Open-Meteo ne répond pas pour l'instant (réponse coupée, réessaie dans quelques minutes)."));
@@ -2521,7 +2538,7 @@ async function flowGrid(vb, d0, d1) {
   const meta = { N, lat0, lat1, lon0, lon1, d0, d1, bounds: L.latLngBounds([lat0, lon0], [lat1, lon1]) };
   const pr = (async () => {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${la.join(',')}&longitude=${lo.join(',')}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&timeformat=unixtime&timezone=GMT&start_date=${d0}&end_date=${d1}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined });
+    const res = await omFetch(url, 30000);
     const js = await res.json(), arr = Array.isArray(js) ? js : [js];
     if (!res.ok || arr.length !== N * N || arr.some(x => !x || !x.hourly)) throw new Error(T("réponse incomplète"));
     const t0 = arr[0].hourly.time[0], n = arr[0].hourly.time.length, u = new Float32Array(N * N * n), v = new Float32Array(N * N * n);

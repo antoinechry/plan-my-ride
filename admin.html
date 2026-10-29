@@ -71,7 +71,8 @@ h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:44px;letter-s
 .tabs a{padding:10px 16px;font-weight:600;font-size:15px;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs a[aria-current=page]{font-weight:700;color:var(--accent);border-bottom-color:var(--accent)}
 
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+#aKpis{grid-template-columns:repeat(5,minmax(0,1fr))}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
 .kpi .l{font-size:13px;color:var(--muted);font-weight:600}
 .kpi .v{font-family:var(--f-display);font-weight:700;font-size:34px;margin-top:2px;line-height:1.15;font-variant-numeric:tabular-nums}
@@ -481,15 +482,18 @@ const meter = (f, lab) => '<div class="meter" role="img" aria-label="' + esc(lab
 /* ---------- chargement ---------- */
 async function load(){
   const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
-  const [u, l, g, ev, vis, au] = await Promise.all([
+  const [u, l, g, ev, vis, au, om] = await Promise.all([
     sb.from('app_users').select('*').order('created_at', { ascending: true }),
     sb.from('tester_links').select('*').order('created_at', { ascending: false }),
     sb.from('usage_log').select('user_id,at,kind,credits').order('at', { ascending: false }).limit(10000),
     sb.from('activity_log').select('user_id,at,event,detail,km,device,mode,route_id').order('at', { ascending: false }).limit(10000),
     sb.from('pmr_visits').select('at,visitor,event,mode,device,km,country,region,dept,city').order('at', { ascending: false }).limit(5000),
-    sb.functions.invoke('admin-users', { body: { action: 'list' } }).catch(e => ({ error: e }))
+    sb.functions.invoke('admin-users', { body: { action: 'list' } }).catch(e => ({ error: e })),
+    // abonnement Open-Meteo « API Standard » (29/10/2026) : compteur du relais open-meteo, mois en cours
+    sb.from('om_usage').select('day,requests,hits,calls').gte('day', m0.getFullYear() + '-' + String(m0.getMonth() + 1).padStart(2, '0') + '-01')
   ]);
   if (u.error) throw u.error;
+  S.om = (om && om.data) || [];
   S.users = u.data || []; S.links = l.data || []; S.evAll = ev.data || []; S.vis = vis.data || []; S.useAll = g.data || [];
   S.col = {}; S.users.forEach((x, i) => S.col[x.user_id] = G_COL[i % G_COL.length]);
   // les plus récents d'abord dans la liste des comptes (l'ordre de création fixe les couleurs)
@@ -526,7 +530,17 @@ function renderKpis(){
     + k('GPX chargés', gpx.filter(recent).length + ' <small>/ 7 j</small>', routes + ' parcours en tout')
     + (mb ? '<div class="kpi"><div class="l">Crédits meteoblue</div><div class="v">' + nf1.format(mb.remaining / 1e6) + ' <small>M restants</small></div>'
         + meter(mb.remaining / mb.quota, Math.round(mb.remaining / mb.quota * 100) + ' % du forfait restant') + '</div>'
-      : k('Crédits meteoblue', '…', 'lecture du solde'));
+      : k('Crédits meteoblue', '…', 'lecture du solde'))
+    + omKpi();
+}
+// Open-Meteo « API Standard » : 1 million d'appels par mois (compteur om_usage du relais open-meteo)
+function omKpi(){
+  const rows = S.om || [], calls = rows.reduce((t, r) => t + Number(r.calls || 0), 0);
+  const req = rows.reduce((t, r) => t + (r.requests || 0), 0), hits = rows.reduce((t, r) => t + (r.hits || 0), 0), Q = 1e6;
+  const v = calls >= 1e4 ? nf1.format(calls / 1e3) + ' <small>k</small>' : String(Math.round(calls));
+  return '<div class="kpi"><div class="l">Appels Open-Meteo</div><div class="v">' + v + '</div>'
+    + meter(Math.max(0, 1 - calls / Q), (Math.round(calls / Q * 1000) / 10) + ' % du forfait utilisé')
+    + '<div class="s">ce mois · ' + nf1.format(Math.round(calls / Q * 1000) / 10) + ' % du forfait · ' + (req ? Math.round(hits / req * 100) : 0) + ' % en cache</div></div>';
 }
 function mbCell(u){
   const used = (S.use[u.user_id] || {}).mb || 0;
