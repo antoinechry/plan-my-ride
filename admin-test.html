@@ -327,7 +327,7 @@ dialog h2{margin-bottom:6px}
           </div>
           <div style="overflow-x:auto">
             <table class="acc">
-              <thead><tr><th scope="col">Compte</th><th scope="col">Statut</th><th scope="col">meteoblue ce mois</th><th scope="col">Activité</th><th scope="col" class="num">Parcours</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+              <thead><tr><th scope="col">Compte</th><th scope="col">Statut</th><th scope="col">Open-Meteo aujourd'hui</th><th scope="col">Activité</th><th scope="col" class="num">Parcours</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
               <tbody id="users"></tbody>
             </table>
           </div>
@@ -483,7 +483,8 @@ const meter = (f, lab) => '<div class="meter" role="img" aria-label="' + esc(lab
 /* ---------- chargement ---------- */
 async function load(){
   const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
-  const [u, l, g, ev, vis, au, om] = await Promise.all([
+  const today = new Date().toISOString().slice(0, 10);
+  const [u, l, g, ev, vis, au, om, omd] = await Promise.all([
     sb.from('app_users').select('*').order('created_at', { ascending: true }),
     sb.from('tester_links').select('*').order('created_at', { ascending: false }),
     sb.from('usage_log').select('user_id,at,kind,credits').order('at', { ascending: false }).limit(10000),
@@ -491,10 +492,13 @@ async function load(){
     sb.from('pmr_visits').select('at,visitor,event,mode,device,km,country,region,dept,city').order('at', { ascending: false }).limit(5000),
     sb.functions.invoke('admin-users', { body: { action: 'list' } }).catch(e => ({ error: e })),
     // abonnement Open-Meteo « API Standard » (29/10/2026) : compteur du relais open-meteo, mois en cours
-    sb.from('om_usage').select('day,requests,hits,calls').gte('day', m0.getFullYear() + '-' + String(m0.getMonth() + 1).padStart(2, '0') + '-01')
+    sb.from('om_usage').select('day,requests,hits,calls').gte('day', m0.getFullYear() + '-' + String(m0.getMonth() + 1).padStart(2, '0') + '-01'),
+    // quota Open-Meteo par compte et par jour UTC (app_users.quota_om, compteur om_user_day du relais)
+    sb.from('om_user_day').select('user_id,calls').eq('day', today)
   ]);
   if (u.error) throw u.error;
   S.om = (om && om.data) || [];
+  S.omDay = {}; ((omd && omd.data) || []).forEach(r => S.omDay[r.user_id] = Number(r.calls) || 0);
   S.users = u.data || []; S.links = l.data || []; S.evAll = ev.data || []; S.vis = vis.data || []; S.useAll = g.data || [];
   S.col = {}; S.users.forEach((x, i) => S.col[x.user_id] = G_COL[i % G_COL.length]);
   // les plus récents d'abord dans la liste des comptes (l'ordre de création fixe les couleurs)
@@ -543,6 +547,13 @@ function omKpi(){
     + meter(Math.max(0, 1 - calls / Q), (Math.round(calls / Q * 1000) / 10) + ' % du forfait utilisé')
     + '<div class="s">ce mois · ' + nf1.format(Math.round(calls / Q * 1000) / 10) + ' % du forfait · ' + (req ? Math.round(hits / req * 100) : 0) + ' % en cache</div></div>';
 }
+// Prévisions Open-Meteo du jour (UTC) : appels décomptés par le relais pour ce compte, sur son quota quotidien
+function omCell(u){
+  const used = Math.round(S.omDay[u.user_id] || 0);
+  if (u.quota_om == null) return '<span class="muted">' + (used ? nf.format(used) + ' appels · ' : '') + 'sans limite</span>';
+  const q = u.quota_om;
+  return '<div class="mbcell">' + meter(q ? used / q : 1, used + ' appels sur ' + q) + '<span>' + nf.format(used) + ' / ' + nf.format(q) + '</span></div>';
+}
 function mbCell(u){
   const used = (S.use[u.user_id] || {}).mb || 0;
   if (u.quota_mb == null) return '<span class="muted">' + (used ? used + ' chargement' + (used > 1 ? 's' : '') + ' · ' : '') + 'sans quota</span>';
@@ -568,7 +579,7 @@ function userRows(u){
   let h = '<tr class="u' + (open ? ' open' : '') + '" data-id="' + u.user_id + '">'
     + '<td class="c-who"><div class="who"><span class="av" style="background:' + S.col[u.user_id] + '">' + esc(short(u).slice(0, 1).toUpperCase()) + '</span><span style="min-width:0"><b>' + esc(short(u)) + (self ? ' <span class="muted" style="font-weight:500">· toi</span>' : '') + '</b><span class="m">' + esc(sub) + (u.invite ? ' · testeur' : '') + '</span></span></div></td>'
     + '<td class="c-st">' + statusBadge(u) + '</td>'
-    + '<td class="c-mb">' + mbCell(u) + '</td>'
+    + '<td class="c-mb">' + omCell(u) + '</td>'
     + '<td class="c-act">' + actCell(u) + '</td>'
     + '<td class="c-rt num"><b>' + (a.routes || 0) + '</b></td>'
     + '<td class="c-more" style="text-align:right"><button type="button" class="more" data-a="more" aria-expanded="' + open + '" aria-label="Actions pour ' + esc(short(u)) + '">⋯</button></td></tr>';
@@ -576,7 +587,7 @@ function userRows(u){
   const mine = S.ev.filter(e => e.user_id === u.user_id), gpx = mine.filter(e => e.event === 'gpx'), use = S.use[u.user_id] || { mb: 0, cr: 0 };
   h += '<tr class="ux" data-id="' + u.user_id + '"><td colspan="6"><div class="uxbtns">'
     + (S.pwOpen === u.user_id ? '' : '<button type="button" class="b sm" data-a="pw">Changer le mot de passe</button>')
-    + '<span class="qbox">Quota meteoblue <input type="number" min="0" max="9999" data-q="quota_mb" value="' + (u.quota_mb == null ? '' : u.quota_mb) + '" placeholder="∞" aria-label="Quota meteoblue par mois"> / mois</span>'
+    + '<span class="qbox">Quota Open-Meteo <input type="number" min="0" max="1000000" step="100" data-q="quota_om" value="' + (u.quota_om == null ? '' : u.quota_om) + '" placeholder="∞" aria-label="Quota Open-Meteo par jour"> appels / jour</span>'
     + '<label class="tgl"><input type="checkbox" data-k="pmr"' + (u.pmr ? ' checked' : '') + '> Accès Sillage</label>'
     + (self ? '' : '<button type="button" class="b sm" data-a="admin">' + (u.is_admin ? 'Retirer admin' : 'Rendre admin') + '</button>')
     + (u.status === 'blocked' ? '<button type="button" class="b sm" data-a="ok">Réactiver le compte</button>' : self ? '' : '<button type="button" class="b sm bad" data-a="block">Bloquer le compte</button>')
