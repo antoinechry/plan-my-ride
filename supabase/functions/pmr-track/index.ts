@@ -1,11 +1,13 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-// Plan My Ride : mesure d'audience de la version publique (table `pmr_visits`).
-// La page envoie { event: 'visit' | 'gpx', visitor, mode, device, km? } avec la clé publique (anon).
-// La fonction déduit une localisation approximative (pays, région, département, ville) de l'adresse IP de la
-// requête via un service de géolocalisation (ipapi.co, à défaut ipwho.is), puis enregistre la ligne.
-// L'adresse IP n'est jamais stockée ni renvoyée. Une localisation est gardée 1 h en mémoire par IP pour
-// limiter les appels au service.
+// Sillage (ex-Plan My Ride) : mesure d'audience (table `pmr_visits`).
+// La page envoie { event: 'visit' | 'gpx', visitor, mode, device, km?, platform? } avec la clé publique (anon).
+// Site web : la fonction déduit une localisation approximative (pays, région, département, ville) de l'adresse IP
+// via un service de géolocalisation (ipapi.co, à défaut ipwho.is). L'adresse IP n'est jamais stockée ni renvoyée ;
+// une localisation est gardée 1 h en mémoire par IP pour limiter les appels au service.
+// App iPhone / Android (depuis le 29/10/2026) : aucune localisation, seulement la plateforme. L'app est reconnue
+// par l'origine de la WebView Capacitor (capacitor://localhost sur iPhone, https://localhost sur Android)
+// ou par le champ `platform` envoyé par la page.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +18,17 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
 type Geo = { country: string | null; region: string | null; dept: string | null; city: string | null };
+const NONE: Geo = { country: null, region: null, dept: null, city: null };
 const CACHE = new Map<string, { at: number; geo: Geo }>();
+
+// Plateforme : app native d'après l'origine de la WebView, sinon ce que la page déclare, sinon le web.
+function platformOf(req: Request, declared: unknown): 'web' | 'ios' | 'android' {
+  const o = (req.headers.get('origin') || '').toLowerCase();
+  if (o === 'capacitor://localhost' || o === 'ionic://localhost') return 'ios';
+  if (o === 'https://localhost' || o === 'http://localhost') return declared === 'ios' ? 'ios' : 'android';
+  if (declared === 'ios' || declared === 'android') return declared;
+  return 'web';
+}
 
 // Département français tiré du code postal (Corse : 2A / 2B ; outre-mer : 3 chiffres).
 function deptFrom(country: string | null, postal: string | null): string | null {
@@ -28,14 +40,13 @@ function deptFrom(country: string | null, postal: string | null): string | null 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 80) : null);
 
 async function locate(ip: string): Promise<Geo> {
-  const none: Geo = { country: null, region: null, dept: null, city: null };
-  if (!ip) return none;
+  if (!ip) return NONE;
   const hit = CACHE.get(ip);
   if (hit && Date.now() - hit.at < 3600e3) return hit.geo;
-  let geo = none;
+  let geo = NONE;
   const get = async (url: string) => {
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 2500);
-    try { const r = await fetch(url, { signal: ctl.signal, headers: { 'User-Agent': 'plan-my-ride' } }); return r.ok ? await r.json() : null; }
+    try { const r = await fetch(url, { signal: ctl.signal, headers: { 'User-Agent': 'sillage' } }); return r.ok ? await r.json() : null; }
     catch (_) { return null; } finally { clearTimeout(tm); }
   };
   const a = await get(`https://ipapi.co/${encodeURIComponent(ip)}/json/`) as Record<string, unknown> | null;
@@ -65,12 +76,16 @@ Deno.serve(async (req: Request) => {
   const mode = body.mode === 'ultra' ? 'ultra' : 'ride';
   const device = body.device === 'mobile' ? 'mobile' : 'desktop';
   const km = typeof body.km === 'number' && isFinite(body.km) && body.km >= 0 && body.km < 20000 ? Math.round(body.km) : null;
+  const platform = platformOf(req, body.platform);
 
-  const ip = (req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim();
-  const geo = await locate(ip);
+  let geo = NONE;
+  if (platform === 'web') {
+    const ip = (req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim();
+    geo = await locate(ip);
+  }
 
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  const { error } = await sb.from('pmr_visits').insert({ event, visitor, mode, device, km, ...geo });
+  const { error } = await sb.from('pmr_visits').insert({ event, visitor, mode, device, km, platform, ...geo });
   if (error) return json({ error: 'db', detail: error.message }, 500);
-  return json({ ok: true });
+  return json({ ok: true, platform });
 });
