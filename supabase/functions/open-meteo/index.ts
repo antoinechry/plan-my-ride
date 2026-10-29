@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
     db.from('app_users').select('quota_om,status').eq('user_id', who.sub).maybeSingle(),
     db.from('om_user_day').select('calls').eq('user_id', who.sub).eq('day', day).maybeSingle(),
   ]);
-  const quota = acc && acc.status === 'active' ? acc.quota_om : 0; // compte en attente, bloqué ou sans fiche : rien
+  const quota = acc && (acc.status === 'active' || acc.status === 'guest') ? acc.quota_om : 0; // en attente, bloqué ou sans fiche : rien ; invités (visite sans compte) : leur propre quota
   if (quota != null && Number(used?.calls || 0) + n > quota) {
     return out(JSON.stringify({ error: true, reason: 'quota', relay: true, used: Number(used?.calls || 0), quota }), 429, { 'x-om': 'quota' });
   }

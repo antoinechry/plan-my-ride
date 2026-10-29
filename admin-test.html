@@ -499,7 +499,10 @@ async function load(){
   if (u.error) throw u.error;
   S.om = (om && om.data) || [];
   S.omDay = {}; ((omd && omd.data) || []).forEach(r => S.omDay[r.user_id] = Number(r.calls) || 0);
-  S.users = u.data || []; S.links = l.data || []; S.evAll = ev.data || []; S.vis = vis.data || []; S.useAll = g.data || [];
+  // visites sans compte (comptes invités, 29/10/2026) : à part, hors des comptes et des statistiques
+  const all = u.data || []; S.guests = all.filter(x => x.status === 'guest'); const gIds = new Set(S.guests.map(x => x.user_id));
+  S.guestEv = (ev.data || []).filter(e => gIds.has(e.user_id));
+  S.users = all.filter(x => x.status !== 'guest'); S.links = l.data || []; S.evAll = (ev.data || []).filter(e => !gIds.has(e.user_id)); S.vis = vis.data || []; S.useAll = g.data || [];
   S.col = {}; S.users.forEach((x, i) => S.col[x.user_id] = G_COL[i % G_COL.length]);
   // les plus récents d'abord dans la liste des comptes (l'ordre de création fixe les couleurs)
   S.users.sort((a, b) => a.created_at < b.created_at ? 1 : -1);
@@ -529,7 +532,8 @@ function renderKpis(){
   const routes = Object.values(S.auth).reduce((t, a) => t + (a.routes || 0), 0);
   const k = (l, v, s, cls) => '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s ' + (cls || '') + '">' + s + '</div>' : '') + '</div>';
   const mb = S.mb;
-  $('kpis').innerHTML = k('Comptes actifs', act.length, 'dont ' + act.filter(u => who7.has(u.user_id)).length + ' venus cette semaine')
+  const g7 = new Set((S.guestEv || []).filter(e => new Date(e.at) > Date.now() - 7 * DAY).map(e => e.user_id)).size;
+  $('kpis').innerHTML = k('Comptes actifs', act.length, 'dont ' + act.filter(u => who7.has(u.user_id)).length + ' venus cette semaine · ' + g7 + ' visite' + (g7 > 1 ? 's' : '') + ' sans compte en 7 j')
     + k('À valider', pend, pend ? 'demande à traiter' : 'rien en attente', pend ? 'warn' : 'good')
     + k('Ouvertures', opens.filter(recent).length + ' <small>/ 7 j</small>', opens.length + ' sur 30 jours')
     + k('GPX chargés', gpx.filter(recent).length + ' <small>/ 7 j</small>', routes + ' parcours en tout')

@@ -717,6 +717,28 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 .me-cvd span{display:inline-flex;align-items:center;gap:6px}
 .me-cvd i{display:inline-block;width:22px;height:8px;border-radius:4px}
 .me-cvd i.vdot{width:12px;height:12px;border-radius:50%;margin-right:2px}
+/* Visite sans compte (29/10/2026) : body.guest */
+body.guest .no-guest{display:none!important}
+body:not(.guest) .guest-only{display:none!important}
+.gate-guest{width:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);text-align:center}
+.gate-guest .btn{width:100%}
+.gate-guest .note{margin-top:6px}
+.guest-band{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 auto;padding:8px 16px;background:color-mix(in srgb,var(--brand) 16%,var(--panel));border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink)}
+.guest-band b{font-weight:700}
+.guest-band .lnk{background:none;border:0;padding:0;font:inherit;font-weight:600;color:var(--accent);text-decoration:underline;cursor:pointer}
+.guest-band .gb-acts{display:flex;gap:12px;margin-left:auto}
+dialog.guest-dlg{max-width:520px}
+dialog.guest-dlg .g-rules{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:10px}
+dialog.guest-dlg .g-rules li{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+dialog.guest-dlg .g-rules b{display:block;margin-bottom:2px}
+dialog.guest-dlg .g-rules span{color:var(--muted)}
+dialog.guest-dlg .g-msg{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--head) 12%,var(--panel));color:var(--ink);font-weight:600}
+dialog.guest-dlg .g-left{margin:0 0 10px;font-weight:700;color:var(--ink)}
+dialog.guest-dlg .ft{justify-content:flex-end}
+.guest-lock{padding:16px;border:1px dashed var(--line);border-radius:12px;background:var(--panel);list-style:none}
+.guest-lock b{display:block;margin-bottom:4px}
+.guest-lock p{margin:0 0 10px;color:var(--muted);font-size:14px}
+body.guest #libPage .lp-tools,body.guest #outPage .lp-tools,body.guest #outPage .out-note,body.guest #outPage .lp-count{display:none}
 </style>
 </head>
 <body>
@@ -747,10 +769,13 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
         <button type="submit" class="btn primary" id="guGo">Créer mon compte</button>
       </form>
       <p class="err" id="gateErr" hidden></p>
+      <div class="gate-guest"><button type="button" class="btn" id="gateGuest">Découvrir sans compte</button>
+        <p class="note">3 traces par semaine, sans rien enregistrer.</p></div>
     </div>
   </div>
 </div>
 <div class="test-band" id="testBand" hidden>🧪 <b>Version test</b> : nouveautés en essai avant la mise en ligne. Mêmes parcours et réglages que la version normale. <a href="./">Revenir à la version normale</a></div>
+<div class="guest-band guest-only" id="guestBand"></div>
 <header class="top">
   <div class="brand">
     <h1><svg class="mark" width="40" height="36" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkTop"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkTop)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</h1>
@@ -794,14 +819,16 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 <section class="libpage" id="mePage" hidden aria-labelledby="meTitle">
   <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
   <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
-    <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin-test.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div>
-    <p class="me-del"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
-  <div class="me-card"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
+    <div class="me-btns guest-only"><button type="button" class="btn small primary" data-guest-up>Créer mon compte gratuit</button><button type="button" class="btn small" id="meGuestRules">Ce que permet la visite</button><button type="button" class="btn small" id="meGuestEnd">Terminer la visite</button></div>
+    <div class="me-btns no-guest"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin-test.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div>
+    <p class="me-del no-guest"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
+  <div class="me-card no-guest"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
     <select id="meTaf" class="me-sel" aria-label="Trajet de vélotaf par défaut"></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
     <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
-    <p class="al-why" id="alWhy" hidden></p>
-    <div id="alBox">
+    <div class="guest-lock guest-only"><b>Avec un compte gratuit</b><p>Choisis un parcours enregistré et reçois sa météo la veille au soir ou le matin même.</p><button type="button" class="btn small primary" data-guest-up>Créer mon compte gratuit</button></div>
+    <p class="al-why no-guest" id="alWhy" hidden></p>
+    <div id="alBox" class="no-guest">
       <div class="me-btns al-dev"><button type="button" class="btn small primary" id="alOn">Activer sur cet appareil</button><span class="al-state" id="alState"></span></div>
       <label class="al-l" for="alRoute">Parcours</label>
       <select id="alRoute" class="me-sel"></select>
@@ -929,7 +956,7 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
       <p class="hint">Boucle à faire plusieurs fois (circuit, tours d'un parc…) : la météo de chaque tour s'affiche sous la carte. Pause : entre deux tours.</p>
       <p class="lap-err" id="lapErr" role="alert" hidden></p>
     </div>
-    <div class="taf-box" id="tafField" hidden>
+    <div class="taf-box no-guest" id="tafField" hidden>
       <div class="field">
         <label class="label" for="tafRet">Trace du retour</label>
         <select id="tafRet"></select>
@@ -955,7 +982,7 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
     <hr class="sep">
     <div class="field">
       <label class="label" for="wxSrcSel">Source météo</label>
-      <select id="wxSrcSel">
+      <select id="wxSrcSel" class="no-guest">
         <option value="loc">📍 Le plus précis selon le lieu</option>
         <option value="arome">AROME (Météo-France)</option>
         <option value="met">MET Norway</option>
@@ -1204,6 +1231,22 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
   </div>
   <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
 </dialog>
+<dialog class="help guest-dlg" id="guestDlg" aria-labelledby="guestTitle">
+  <div class="hd"><h2 id="guestTitle">Bienvenue sur Sillage</h2><button type="button" class="x" id="guestX" aria-label="Fermer">×</button></div>
+  <div class="bd">
+    <p class="g-msg" id="guestMsg" hidden></p>
+    <p>Tu découvres Sillage sans compte. Voici ce que tu peux faire&nbsp;:</p>
+    <ul class="g-rules">
+      <li><b>Sortie et Vélotaf</b><span>3 traces par semaine, avec un chargement météo par trace. Tu peux ensuite changer la date ou l'heure de départ 2 fois.</span></li>
+      <li><b>Ultra</b><span>1 trace par semaine, à une seule date et heure de départ, avec le découpage par nombre de jours.</span></li>
+      <li><b>Vélotaf</b><span>La météo d'aujourd'hui, de demain et d'après-demain.</span></li>
+      <li><b>Rien n'est enregistré</b><span>Tes traces ne sont pas gardées&nbsp;: elles disparaissent quand tu quittes la page.</span></li>
+    </ul>
+    <p class="g-left" id="guestLeft"></p>
+    <p>Avec un compte gratuit&nbsp;: autant de traces que tu veux, gardées sur tous tes appareils, deux semaines de vélotaf, Mes sorties et les alertes météo.</p>
+  </div>
+  <div class="ft"><button type="button" class="btn" data-guest-up>Créer mon compte gratuit</button><button type="button" class="btn primary" id="guestOk" autofocus>C'est parti</button></div>
+</dialog>
 <dialog class="exp-dlg" id="expDlg" aria-labelledby="expTitle">
   <h2 id="expTitle">Exporter l'image</h2>
   <p class="hint">Choisis le format de l'image.</p>
@@ -1349,6 +1392,11 @@ function hashMode(hs) { return hs === '#ultra' ? 'ultra' : hs === '#velotaf' ? '
   history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
 } catch (e) {} })();
 const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind', name: '', mode: hashMode(location.hash), trip: 0 };
+// Visite sans compte (29/10/2026) : compte invité (fonction guest-start) dont les identifiants sont gardés dans pmr-guest.
+// Les règles (3 traces par semaine, 1 trace Ultra, 2 changements de date ou d'heure, Vélotaf sur 3 jours, rien d'enregistré)
+// sont appliquées par la page ; le serveur limite les prévisions par jour (quota_om) et refuse parcours et alertes.
+var GUEST = (() => { try { return !!localStorage.getItem('pmr-guest') && !!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'); } catch (e) { return false; } })();
+if (GUEST) document.body.classList.add('guest');
 
 /* ---------- géométrie ---------- */
 function hav(a, b) {
@@ -1637,6 +1685,7 @@ const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if 
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
+  if (GUEST) return 'loc'; // visite sans compte : toujours le modèle le plus précis selon le lieu
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
   if (WX_KEYS.includes(v)) return v; // meteoblue retiré le 29/10/2026 : un ancien choix « mb » revient au plus précis selon le lieu
   return 'loc';
@@ -2170,6 +2219,7 @@ async function run() {
   for (const d of week.filter(isWorkDay)) { const o = tafSolve(tafOpt({ ...opt0, date: ymd(d) }, ymd(d)), false); endMax = Math.max(endMax, simulate(startMs(o), o, false).end); }
   const to = new Date(endMax + 6 * 3600e3); to.setHours(0, 0, 0, 0);
   if (to > maxDay) to.setTime(maxDay.getTime());
+  if (GUEST && S.mode === 'ultra') to.setTime(maxDay.getTime()); // invité : une seule météo, le nombre de jours change sans recharger
   const src0 = wxSrc(), src = src0 === 'loc' ? locPick(wxSmp(), from, today) : src0;
   S.wxPick = src0 === 'loc' ? src : '';
   const key = src + ':' + wxSmp().length + ':' + wxSmp()[0].lat + ':' + wxTrk().total.toFixed(3) + ':' + ymd(from) + ':' + ymd(to) + ':' + ymd(today);
@@ -2211,6 +2261,7 @@ async function run() {
     return { date: ymd(d), go: o.time, arr: o.arrTarget, back: o.tafBack, trips: S.laps && S.laps.taf ? lapSummaries(r) : [] };
   });
   renderAll(opts, opt);
+  GU_PREV['#date'] = $('#date').value; GU_PREV['#time'] = $('#time').value; if (GUEST) guestBand();
 }
 
 function setStatus(msg, kind) {
@@ -3646,6 +3697,7 @@ function handleFile(file) {
     try {
       // On travaille sur la trace simplifiée (celle qui est enregistrée) : rouvrir le parcours donne exactement les mêmes calculs.
       const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts));
+      if (GUEST && !guestUse(routeId(packPts(pts)), S.mode)) return; // visite sans compte : 3 traces par semaine (+ 1 Ultra)
       loadRoute(pts, name, false);
       libSave(pts, name); // fixe LIB.current avant sa première attente
       revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
@@ -3722,6 +3774,9 @@ function applyModeUI() {
   if (!taf && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   $('label[for="date"]').textContent = taf ? T("Premier jour") : T("Départ"); $('label[for="time"]').textContent = taf ? T("Départ de l'aller") : T("Heure");
   if (!taf) { $('#weekCard').hidden = true; }
+  // visite sans compte : Vélotaf limité à aujourd'hui, demain et après-demain
+  { const d = $('#date'), t0 = new Date(), t2 = new Date(); t2.setDate(t2.getDate() + 2);
+    if (GUEST && taf) { d.min = ymd(t0); d.max = ymd(t2); } else { d.removeAttribute('max'); } }
   tafPerDayUI();
   $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Vélotaf : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
   document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Vélotaf") : 'Sillage');
@@ -3731,6 +3786,8 @@ function switchMode(m) {
   saveOpt(readOpt()); // réglages de la page qu'on quitte
   const from = S.mode; S.mode = m;
   applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
+  // visite sans compte : la trace ouverte compte aussi pour la nouvelle page (une trace Ultra par semaine en plus des 3)
+  if (GUEST && S.P && LIB.current && !guestUse(LIB.current, m)) guestUnload();
   schedule();
   try { tafRouteSwitch(from, m); } catch (e) {}
   logOnce('mode-' + m, 'mode');
@@ -4580,8 +4637,9 @@ function tafBackMs(t0, opt) {
 // les 5 prochains jours ouvrés (aujourd'hui compris)
 // 14 jours à partir du premier jour choisi (#date)
 function weekDays(start) {
-  const out = [], d = new Date((start || ymd(new Date())) + 'T00:00');
-  for (let k = 0; k < 14; k++) { out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+  // visite sans compte : aujourd'hui, demain et après-demain seulement
+  const out = [], d = new Date((GUEST ? ymd(new Date()) : start || ymd(new Date())) + 'T00:00');
+  for (let k = 0; k < (GUEST ? 3 : 14); k++) { out.push(new Date(d)); d.setDate(d.getDate() + 1); }
   return out;
 }
 const isWorkDay = d => d.getDay() >= 1 && d.getDay() <= 5;
@@ -4638,6 +4696,7 @@ const vdot = v => `<span class="vdot ${v.lvl < 0 ? 'lx' : 'l' + v.lvl}" aria-hid
 function renderWeek() {
   const on = S.mode === 'taf' && !!S.laps && S.laps.taf && !!S.tl;
   $('#weekCard').hidden = !on; if (!on) return;
+  $('#weekCard .card-head h2').textContent = GUEST ? T("Trois jours de vélotaf") : T("Deux semaines de vélotaf");
   const opt = readOpt(), sel = TAF.sel;
   const fmtS = new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' });
   $('#weekHint').textContent = T("À partir du {0}, {1}. Clique sur un jour pour le détail.", [fmtS.format(new Date(opt.date + 'T12:00')), opt.tafPerDay ? T("avec les heures de chaque jour") : T("aux mêmes heures")]);
@@ -4846,7 +4905,7 @@ $('#helpX').addEventListener('click', closeHelp);
 $('#helpOk').addEventListener('click', closeHelp);
 $('#helpDlg').addEventListener('cancel', e => { e.preventDefault(); closeHelp(); });
 $('#helpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) closeHelp(); });
-try { if (!localStorage.getItem(HELP_KEY)) setTimeout(() => { if (!document.body.classList.contains('gated') && ACC.row && !ACC.row.is_admin) openHelp(); }, 2500); } catch (e) {}
+try { if (!localStorage.getItem(HELP_KEY) && !GUEST) setTimeout(() => { if (!document.body.classList.contains('gated') && ACC.row && !ACC.row.is_admin) openHelp(); }, 2500); } catch (e) {}
 // Accès privé : connexion par mot de passe (compte unique), déconnexion ; la page se recharge pour changer de mode.
 $('#loginLink').addEventListener('click', e => { e.preventDefault(); $('#loginErr').hidden = true; $('#loginDlg').showModal(); $('#loginEmail').focus(); });
 $('#loginCancel').addEventListener('click', () => $('#loginDlg').close());
@@ -4933,7 +4992,12 @@ async function accessCheck() {
     if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} gateShow('in'); return; }
     const { data } = await sb.from('app_users').select('status,pmr,is_admin,prenom,quota_mb').eq('user_id', session.user.id).maybeSingle();
     ACC.row = data || null;
-    if (!data || data.status !== 'active' || !data.pmr) {
+    const guest = !!data && data.status === 'guest';
+    if (guest !== GUEST) { // visite sans compte : le drapeau du navigateur suit le compte (une seule fois, puis rechargement)
+      let again = false; try { again = !!sessionStorage.getItem('pmr-guest-fix'); sessionStorage.setItem('pmr-guest-fix', '1'); if (guest) localStorage.setItem('pmr-guest', localStorage.getItem('pmr-guest') || '{}'); else localStorage.removeItem('pmr-guest'); } catch (e) {}
+      if (!again) { location.reload(); return; }
+    }
+    if (!data || (data.status !== 'active' && !guest) || !data.pmr) {
       const pend = !data || data.status === 'pending';
       ACC.email = session.user.email || '';
       $('#gateResend').hidden = !pend; $('#gateResendMsg').hidden = true;
@@ -4946,6 +5010,7 @@ async function accessCheck() {
     }
     document.body.classList.remove('gated');
     document.body.classList.toggle('admin', !!data.is_admin);
+    if (guest) guestHello();
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
     try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); sessionStorage.setItem('pmr-act-mode-' + S.mode, '1'); logAct('open'); } } catch (e) {}
     if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
@@ -4957,6 +5022,7 @@ $('#gateIn').addEventListener('submit', async e => {
     const sb = await sbClient();
     const { error } = await sb.auth.signInWithPassword({ email: $('#giEmail').value.trim(), password: $('#giPw').value });
     if (error) throw error;
+    try { localStorage.removeItem('pmr-guest'); } catch (e) {}
     location.reload();
   } catch (err) { gateErr(/invalid/i.test(String(err.message)) ? T("E-mail ou mot de passe incorrect.") : T("Connexion impossible : {0}", [err.message || err])); $('#giGo').disabled = false; }
 });
@@ -4977,6 +5043,7 @@ $('#gateUp').addEventListener('submit', async e => {
       : j.error === 'password' ? T("Mot de passe trop court (8 caractères minimum).") : j.error === 'email' ? T("Adresse e-mail invalide.") : T("Création impossible, réessaie."));
     const sb = await sbClient();
     const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw error;
+    try { localStorage.removeItem('pmr-guest'); } catch (e) {}
     location.reload();
   } catch (err) { gateErr(err.message || String(err)); $('#guGo').disabled = false; }
 });
@@ -4992,13 +5059,105 @@ $('#gateResend').addEventListener('click', async () => {
   m.hidden = false; setTimeout(() => { b.disabled = false; }, 120000);
 });
 $('#gateOut').addEventListener('click', async () => { try { const sb = await sbClient(); await sb.auth.signOut(); } catch (e) {} try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); });
+/* ---------- visite sans compte (29/10/2026) ----------
+   Compte invité créé par la fonction guest-start (identifiants dans pmr-guest, repris s'il en existe déjà un).
+   Compteurs dans pmr-guest-use (navigateur, sur 7 jours glissants) : une entrée par trace et par type
+   (std = Sortie / Vélotaf, ultra), avec le nombre de changements de date ou d'heure. */
+const GU_LIM = { std: 3, ultra: 1 }, GU_DAYS = 7, GU_CH = 2, GU_PREV = {};
+const guKind = m => (m === 'ultra' ? 'ultra' : 'std');
+function guList() { let l = []; try { l = JSON.parse(localStorage.getItem('pmr-guest-use') || '[]') || []; } catch (e) {} const lim = Date.now() - GU_DAYS * 864e5; return l.filter(x => x && x.at > lim); }
+function guSave(l) { try { localStorage.setItem('pmr-guest-use', JSON.stringify(l.slice(-20))); } catch (e) {} }
+const guLeft = k => Math.max(0, GU_LIM[k] - guList().filter(x => x.k === k).length);
+function guNext(k) { const l = guList().filter(x => x.k === k).sort((a, b) => a.at - b.at); return l.length ? new Date(l[0].at + GU_DAYS * 864e5) : null; }
+const guCur = () => guList().find(x => x.id === LIB.current && x.k === guKind(S.mode));
+function guestUse(id, m) {
+  const k = guKind(m), l = guList();
+  if (l.some(x => x.id === id && x.k === k)) return true; // trace déjà comptée cette semaine (rechargée) : rien de plus
+  if (l.filter(x => x.k === k).length >= GU_LIM[k]) {
+    const nx = guNext(k), when = nx ? new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' }).format(nx) : '';
+    guestDlg(k === 'ultra' ? T("Tu as déjà chargé ta trace Ultra de la semaine. La prochaine sera possible le {0}.", [when])
+      : T("Tu as déjà chargé tes 3 traces de la semaine. La prochaine sera possible le {0}.", [when]));
+    return false;
+  }
+  l.push({ id, k, at: Date.now(), ch: 0 }); guSave(l); guestBand(); return true;
+}
+function guestUnload() {
+  S.P = null; S.tl = null; LIB.current = ''; $('#results').hidden = true; $('#empty').hidden = false; setStatus('');
+}
+function guestLeftTxt() {
+  const a = guLeft('std'), u = guLeft('ultra');
+  return T("Cette semaine, il te reste {0} trace{1} Sortie ou Vélotaf et {2} trace Ultra.", [a, a > 1 ? 's' : '', u]);
+}
+function guestBand() {
+  if (!GUEST) return;
+  const x = guCur(), ch = x && x.k === 'std' ? GU_CH - (x.ch || 0) : null;
+  $('#guestBand').innerHTML = `<span><b>${escH(T("Visite sans compte"))}</b> · ${escH(guestLeftTxt())}${ch != null && S.wxBase ? ' ' + escH(T("Changements de date ou d'heure pour cette trace : {0}.", [Math.max(0, ch)])) : ''}</span>`
+    + `<span class="gb-acts"><button type="button" class="lnk" data-guest-rules>${escH(T("Ce que permet la visite"))}</button><button type="button" class="lnk" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></span>`;
+}
+function guestDlg(msg) {
+  $('#guestMsg').hidden = !msg; $('#guestMsg').textContent = msg || '';
+  $('#guestTitle').textContent = msg ? T("Visite sans compte") : T("Bienvenue sur Sillage");
+  $('#guestLeft').textContent = guestLeftTxt();
+  if (!$('#guestDlg').open) $('#guestDlg').showModal();
+}
+function guestHello() {
+  guestBand();
+  try { if (sessionStorage.getItem('pmr-guest-hi')) return; sessionStorage.setItem('pmr-guest-hi', '1'); } catch (e) {}
+  setTimeout(() => guestDlg(''), 600);
+}
+const guestLock = (title, txt) => `<li class="guest-lock"><b>${escH(title)}</b><p>${escH(txt)}</p><button type="button" class="btn small primary" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></li>`;
+async function guestEnd(toSignup) { // termine la visite ; vers la création de compte si demandé
+  try { const sb = await sbClient(); await sb.auth.signOut({ scope: 'local' }); } catch (e) {}
+  try { localStorage.removeItem(SB_TOKEN_KEY); if (toSignup) localStorage.removeItem('pmr-guest'); sessionStorage.removeItem('pmr-guest-hi'); } catch (e) {}
+  if (toSignup) location.hash = 'inscription';
+  location.reload();
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-guest-up]')) { e.preventDefault(); guestEnd(true); }
+  else if (e.target.closest('[data-guest-rules]')) guestDlg('');
+});
+$('#guestOk').addEventListener('click', () => $('#guestDlg').close());
+$('#guestX').addEventListener('click', () => $('#guestDlg').close());
+$('#meGuestRules').addEventListener('click', () => guestDlg(''));
+$('#meGuestEnd').addEventListener('click', () => guestEnd(false));
+// 2 changements de date ou d'heure par trace (Sortie, Vélotaf) une fois la météo chargée ; Ultra : date et heure figées
+for (const sel of ['#date', '#time']) {
+  const el = $(sel);
+  el.addEventListener('focusin', () => { GU_PREV[sel] = el.value; });
+  el.addEventListener('change', e => {
+    const prev = GU_PREV[sel];
+    if (!GUEST || !S.P || !S.wxBase || !LIB.current || prev == null || prev === el.value) { GU_PREV[sel] = el.value; return; }
+    const l = guList(), x = l.find(y => y.id === LIB.current && y.k === guKind(S.mode));
+    const msg = S.mode === 'ultra' ? T("Sans compte, une trace Ultra garde la date et l'heure de départ de son premier chargement. Avec un compte gratuit, tu les changes librement.")
+      : x && (x.ch || 0) >= GU_CH ? T("Sans compte, tu peux changer la date ou l'heure de départ 2 fois par trace. Avec un compte gratuit, tu les changes librement.") : '';
+    if (msg) { e.stopImmediatePropagation(); el.value = prev; setStatus(msg, 'err'); return; }
+    if (x) { x.ch = (x.ch || 0) + 1; guSave(l); }
+    GU_PREV[sel] = el.value; guestBand();
+  }, true);
+}
+// écran d'accès : « Découvrir sans compte »
+$('#gateGuest').addEventListener('click', async () => {
+  const b = $('#gateGuest'); b.disabled = true; gateErr('');
+  try {
+    const sb = await sbClient();
+    let cred = null; try { cred = JSON.parse(localStorage.getItem('pmr-guest') || 'null'); } catch (e) {}
+    if (cred && cred.email && cred.password) { const { error } = await sb.auth.signInWithPassword({ email: cred.email, password: cred.password }); if (!error) { location.reload(); return; } }
+    const r = await fetch(SB_URL + '/functions/v1/guest-start', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: '{}' });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error === 'limit' ? T("Trop de visites sans compte depuis cette connexion aujourd'hui. Crée un compte gratuit, ou réessaie demain.")
+      : T("La visite sans compte n'est pas disponible pour l'instant. Réessaie dans un moment."));
+    try { localStorage.setItem('pmr-guest', JSON.stringify({ email: j.email, password: j.password })); sessionStorage.removeItem('pmr-guest-hi'); } catch (e) {}
+    const { error } = await sb.auth.signInWithPassword({ email: j.email, password: j.password }); if (error) throw error;
+    location.reload();
+  } catch (err) { gateErr(err.message || String(err)); b.disabled = false; }
+});
 accessCheck();
 // Dernière source météo utilisée sur le parcours courant (colonne routes.wx, lue par la carte des GPX de la page Admin)
 function routeWxNote(used) {
   const id = typeof LIB !== 'undefined' && LIB.current; if (!id || !used || S._wxNoted === id + '|' + used) return;
   S._wxNoted = id + '|' + used;
   logOnce('wx-' + S.mode + '-' + used, 'wx', { detail: String(used).slice(0, 40), route_id: id });
-  sbIfLogged().then(sb => { if (sb) sb.from('routes').update({ wx: String(used).slice(0, 40), wx_at: new Date().toISOString() }).eq('user_id', SB_UID).eq('id', id).then(() => {}, () => {}); }).catch(() => {});
+  if (!GUEST) sbIfLogged().then(sb => { if (sb) sb.from('routes').update({ wx: String(used).slice(0, 40), wx_at: new Date().toISOString() }).eq('user_id', SB_UID).eq('id', id).then(() => {}, () => {}); }).catch(() => {});
 }
 var SB_UID; // compte connecté : les parcours lus ou modifiés depuis l'app sont toujours ceux de ce compte (même pour un admin)
 async function sbIfLogged() {
@@ -5042,6 +5201,7 @@ function routeId(packed) { // empreinte du tracé : le même GPX rechargé ne cr
 }
 
 async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
+  if (GUEST) { if (setCurrent) LIB.current = routeId(packPts(raw)); return; } // visite sans compte : rien n'est enregistré
   try {
     const pts = packPts(raw), id = routeId(pts), now = new Date().toISOString();
     const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now };
@@ -5141,6 +5301,7 @@ async function libDelete(id) {
   libRender();
 }
 async function libInit() {
+  if (GUEST) return; // visite sans compte : pas de parcours enregistrés
   try { for (const m of await idbRun('meta', 'readonly', st => st.getAll())) libUpsert({ ...m, local: true }); } catch (e) {}
   let last = ''; try { last = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
   let tafDef = ''; try { tafDef = S.mode === 'taf' ? localStorage.getItem('pmr-taf-route') || '' : ''; } catch (e) {} // Vélotaf : trajet par défaut
@@ -5225,6 +5386,7 @@ async function lpFillThumbs() { // miniatures manquantes : depuis le navigateur,
   LP.fetching = false; if (changed && !$('#libPage').hidden) lpRender();
 }
 function lpRender() {
+  if (GUEST) { $('#lpCount').textContent = ''; $('#lpList').innerHTML = guestLock(T("Tes traces ne sont pas enregistrées"), T("Sans compte, une trace disparaît quand tu quittes la page. Avec un compte gratuit, tu retrouves tous tes parcours ici et sur tes autres appareils.")); return; }
   const t = lpThumbs(), n = LIB.list.length, q = fold($('#lpQ').value).trim().split(/\s+/).filter(Boolean);
   $('#lpCount').textContent = n ? T('{0} parcours ', [n]) + (hasSbToken() ? T("dans ton compte, sur tous tes appareils.") : T("sur ce navigateur.")) : '';
   let items = LIB.list.filter(r => q.every(w => fold(r.name).includes(w)));
@@ -5392,6 +5554,7 @@ function outRender(res, long) {
 }
 function outOpen() {
   pageOpen('outPage', '#tabOut');
+  if (GUEST) { $('#outProg').textContent = ''; $('#outLong').innerHTML = ''; $('#outList').innerHTML = guestLock(T("Mes sorties, avec un compte gratuit"), T("Tous tes parcours enregistrés, classés du plus au moins favorable selon la météo du jour choisi.")); return; }
   logOnce('out', 'out');
   const o = outOpt(); if (!$('#outTime').value) $('#outTime').value = o.time || '08:00';
   outDaysRender(); outRun();
@@ -5525,7 +5688,8 @@ function meSet(m, k, v) {
 }
 function meRender() {
   let who = ''; try { const t = JSON.parse(localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token') || 'null'); who = t && t.user ? t.user.email : ''; } catch (e) {}
-  $('#meWho').textContent = who ? T("Connecté avec {0}.{1}", [who, LIB.list.length ? T(" {0} parcours dans ton compte.", [LIB.list.length]) : '']) : T("Pas connecté.");
+  if (GUEST) who = '';
+  $('#meWho').textContent = GUEST ? T("Tu visites Sillage sans compte : rien n'est enregistré.") : who ? T("Connecté avec {0}.{1}", [who, LIB.list.length ? T(" {0} parcours dans ton compte.", [LIB.list.length]) : '']) : T("Pas connecté.");
   const row = (m, k, label, min, max, step, v, unit) => `<div class="me-row"><label for="me-${m}-${k}">${label}</label><output id="me-${m}-${k}-o">${unit(v)}</output>
     <input type="range" id="me-${m}-${k}" data-m="${m}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
   const kmh = v => fV(+v, 1) + ' ' + UL.kmh, mh = v => fE(+v) + ' ' + UL.mh, mn = v => v + ' min / h';
