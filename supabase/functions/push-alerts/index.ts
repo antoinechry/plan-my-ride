@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendPush, vapidGenerate, type VapidKeys, type Sub } from './webpush.ts';
 import { localParts, zoned, addDays, isoWd, route, weather, ride, verdict, score, tr, LANGS, unitsOf, cv } from './forecast.ts';
 
