@@ -770,7 +770,7 @@ body.guest #libPage .lp-tools,body.guest #outPage .lp-tools,body.guest #outPage 
       </form>
       <p class="err" id="gateErr" hidden></p>
       <div class="gate-guest"><button type="button" class="btn" id="gateGuest">Découvrir sans compte</button>
-        <p class="note">3 traces par semaine, sans rien enregistrer.</p></div>
+        <p class="note">Une trace par visite, sans rien enregistrer.</p></div>
     </div>
   </div>
 </div>
@@ -1056,7 +1056,7 @@ body.guest #libPage .lp-tools,body.guest #outPage .lp-tools,body.guest #outPage 
         <label class="arrows-toggle"><input type="checkbox" id="arrowsOn" checked> Flèches de vent</label>
         <label class="arrows-toggle"><input type="checkbox" id="skyOn" checked> Ciel</label>
         <label class="arrows-toggle"><input type="checkbox" id="animOn" checked> Animation</label>
-        <label class="arrows-toggle" id="flowOnLbl"><input type="checkbox" id="flowOn"> Vent animé</label>
+        <label class="arrows-toggle no-guest" id="flowOnLbl"><input type="checkbox" id="flowOn"> Vent animé</label>
         <div class="seg trip-seg" role="group" aria-label="Trajet affiché sur la carte" id="tripSeg" hidden>
           <button type="button" data-trip="0" aria-pressed="true">Aller</button>
           <button type="button" data-trip="1" aria-pressed="false">Retour</button>
@@ -1069,7 +1069,7 @@ body.guest #libPage .lp-tools,body.guest #outPage .lp-tools,body.guest #outPage 
         </div>
       </div>
       <div id="map"></div>
-      <div class="flow-bar" id="flowBar" hidden>
+      <div class="flow-bar no-guest" id="flowBar" hidden>
         <span class="flow-lbl">Vent à <b id="flowLbl"></b> <span class="hint" id="flowPos"></span></span>
         <input type="range" id="flowT" min="0" max="1" step="1" aria-label="Heure du vent animé">
         <button type="button" class="btn small" id="flowDep" title="Revenir à l'heure de départ">Mon départ</button>
@@ -1115,7 +1115,7 @@ body.guest #libPage .lp-tools,body.guest #outPage .lp-tools,body.guest #outPage 
     </section>
 
     <section class="card" id="tafDuo" hidden>
-      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><span class="hint" id="duoHint"></span><label class="arrows-toggle"><input type="checkbox" id="flowOn2"> Vent animé</label><button class="btn small" id="exportImg2" type="button" title="Image PNG de l'aller, du retour et des deux semaines">Exporter l'image</button></div>
+      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><span class="hint" id="duoHint"></span><label class="arrows-toggle no-guest"><input type="checkbox" id="flowOn2"> Vent animé</label><button class="btn small" id="exportImg2" type="button" title="Image PNG de l'aller, du retour et des deux semaines">Exporter l'image</button></div>
       <div class="duo">
         <div class="duo-col"><div class="duo-head" id="duoHead0"></div><div class="duo-map" id="duoMap0"></div><canvas data-wx="0" aria-label="Météo de l'aller"></canvas></div>
         <div class="duo-col"><div class="duo-head" id="duoHead1"></div><div class="duo-map" id="duoMap1"></div><canvas data-wx="1" aria-label="Météo du retour"></canvas></div>
@@ -1237,13 +1237,14 @@ body.guest #libPage .lp-tools,body.guest #outPage .lp-tools,body.guest #outPage 
     <p class="g-msg" id="guestMsg" hidden></p>
     <p>Tu découvres Sillage sans compte. Voici ce que tu peux faire&nbsp;:</p>
     <ul class="g-rules">
-      <li><b>Sortie et Vélotaf</b><span>3 traces par semaine, avec un chargement météo par trace. Tu peux ensuite changer la date ou l'heure de départ 2 fois.</span></li>
-      <li><b>Ultra</b><span>1 trace par semaine, à une seule date et heure de départ, avec le découpage par nombre de jours.</span></li>
-      <li><b>Vélotaf</b><span>La météo d'aujourd'hui, de demain et d'après-demain.</span></li>
+      <li><b>Sortie et Vélotaf</b><span>1 trace par visite, à une seule date et heure de départ. En Vélotaf, la météo d'aujourd'hui, de demain et d'après-demain.</span></li>
+      <li><b>Ultra</b><span>1 trace par visite, à une seule date et heure de départ, avec le découpage par nombre de jours. Ravitos et hébergements sur les 100 premiers km.</span></li>
+      <li><b>Météo</b><span>MET Norway (Institut météorologique norvégien), sur les 400 premiers km du parcours et les 9 prochains jours.</span></li>
+      <li><b>Export image</b><span>Avec un filigrane Sillage.</span></li>
       <li><b>Rien n'est enregistré</b><span>Tes traces ne sont pas gardées&nbsp;: elles disparaissent quand tu quittes la page.</span></li>
     </ul>
     <p class="g-left" id="guestLeft"></p>
-    <p>Avec un compte gratuit&nbsp;: autant de traces que tu veux, gardées sur tous tes appareils, deux semaines de vélotaf, Mes sorties et les alertes météo.</p>
+    <p>Avec un compte gratuit&nbsp;: autant de traces que tu veux, gardées sur tous tes appareils, une vingtaine de modèles météo, deux semaines de vélotaf, Mes sorties et les alertes météo.</p>
   </div>
   <div class="ft"><button type="button" class="btn" data-guest-up>Créer mon compte gratuit</button><button type="button" class="btn primary" id="guestOk" autofocus>C'est parti</button></div>
 </dialog>
@@ -1685,7 +1686,7 @@ const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if 
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
-  if (GUEST) return 'loc'; // visite sans compte : toujours le modèle le plus précis selon le lieu
+  if (GUEST) return 'met'; // visite sans compte : MET Norway, gratuit pour nous
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
   if (WX_KEYS.includes(v)) return v; // meteoblue retiré le 29/10/2026 : un ancien choix « mb » revient au plus précis selon le lieu
   return 'loc';
@@ -1882,10 +1883,11 @@ async function metRelay(miss) {
   return miss.map((p, i) => { const x = j.points[i], at = x.at || Date.now();
     return { at, exp: Math.max(Date.now() + MET_TTL, x.exp || 0), q: metCompact(x.data, p) }; });
 }
+const GUEST_KM = 400, GUEST_POI_KM = 100; // visite sans compte : météo et ravitos limités au début du parcours
 async function fetchMET() {
-  const P = wxTrk(), m = clamp(Math.ceil(P.total / MET_KM) + 1, 2, MET_MAX), pts = [];
+  const P = wxTrk(), tot = GUEST ? Math.min(P.total, GUEST_KM) : P.total, m = clamp(Math.ceil(tot / MET_KM) + 1, 2, MET_MAX), pts = [];
   for (let k = 0, i = 0; k < m; k++) {
-    const target = P.total * k / (m - 1);
+    const target = tot * k / (m - 1);
     while (i < P.n - 1 && P.d[i] < target) i++;
     pts.push({ km: P.d[i], lat: +P.pts[i].lat.toFixed(3), lon: +P.pts[i].lon.toFixed(3), asl: P.hasEle ? Math.round(P.es[i] / 10) * 10 : null });
   }
@@ -1909,12 +1911,17 @@ async function fetchMET() {
     cache = { ...cache, ...(await MET_PENDING.get(rk)) };
   }
   const L = pts.map(p => metSeries(cache[metKey(p)].q, p));
-  return { wx: wxSmp().map(s => mbSample(s, pts, L)), points: pts.length, at: Math.min(...pts.map(p => cache[metKey(p)].at)) };
+  return { wx: wxSmp().map(s => (GUEST && s.km > GUEST_KM + 1 ? null : mbSample(s, pts, L))), points: pts.length, at: Math.min(...pts.map(p => cache[metKey(p)].at)) };
 }
 
 // Prévisions de la source choisie. meteoblue (7 jours), AROME (4 jours) et MET Norway (9 jours) : au-delà de leur
 // horizon, Open-Meteo prend le relais (S.wxAlt) ; en cas d'échec, tout passe sur Open-Meteo avec une note.
 async function getWeather(src, from, to, today) {
+  if (GUEST) { // visite sans compte : MET Norway seulement (gratuit), sans relais Open-Meteo
+    const end = new Date(today); end.setDate(end.getDate() + WX_DAYS.met - 1);
+    if (from > end) throw new Error(T("sans compte, la météo couvre les {0} prochains jours.", [WX_DAYS.met]));
+    const r = await fetchMET(); return { wx: r.wx, alt: null, used: 'met', info: r };
+  }
   const om = () => fetchOM(ymd(from), ymd(to));
   if (src === 'om' || !WX_DAYS[src]) return { wx: await om(), used: 'om' };
   if (src === 'mb' && !hasSbToken()) return { wx: await om(), used: 'om', fallback: 'nolog' };
@@ -2241,6 +2248,7 @@ async function run() {
       if (err.quota) note = T("Météo indisponible : tu as utilisé toutes tes prévisions du jour. Le compteur repart à zéro demain ; d'ici là, les parcours déjà chargés gardent leur météo. Les horaires restent calculés.");
       else if (/daily api request limit/i.test(err.message)) note = T("Météo indisponible : Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway dans « Source météo ». Les horaires restent calculés.");
       else if (/minutely|hourly api request limit|limit exceeded/i.test(err.message)) note = T("Météo indisponible : Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute. Les horaires restent calculés.");
+      else if (GUEST) note = T("Météo indisponible : {0} Les horaires restent calculés.", [String(err.message || err)]);
       else note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.") : err.message]);
     }
   }
@@ -2251,6 +2259,7 @@ async function run() {
   if (optArr !== opt) { opt = tafSolve(optArr, true); t0 = startMs(opt); } // puis avec le vent
   S.tl = simulate(t0, opt, true);
   tafDepShow(opt);
+  if (GUEST && S.wx && S.P.total > GUEST_KM + 1) note = note || T("Sans compte, la météo couvre les {0} premiers km du parcours.", [fD(GUEST_KM, 0)]);
   if (S.wx && S.tl.st.missKm > 0.5) note = note || T("La fin du parcours ({0} km) dépasse l'horizon des prévisions.", [fD(S.tl.st.missKm, 0)]);
   setStatus(note, note ? 'err' : '');
   const opts = S.wx ? cand.map(c => { const r = simulate(startMs(opt, c), opt, true); return { time: c, r, sc: score(r.st, S.P.total) }; }) : [];
@@ -2689,7 +2698,7 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
    l'espace sur des cases de 10 px. Un moteur par carte (`flowEngine`) : carte principale (heure du curseur sous la
    carte, point du cycliste à cette heure) et cartes Aller / Retour du Vélotaf (heure du milieu du trajet). */
 const FLOW = { on: false, t: null, start: null, a: 0, rider: null, status: '', main: null };
-try { FLOW.on = localStorage.getItem('pmr-flow') !== '0'; } catch (e) {}
+try { FLOW.on = !GUEST && localStorage.getItem('pmr-flow') !== '0'; } catch (e) {} // visite sans compte : pas de vent animé (grilles Open-Meteo)
 $('#flowOn').checked = FLOW.on; $('#flowOn2').checked = FLOW.on;
 const flowAllowed = () => !!map && !!S.tl && S.mode !== 'taf' && FLOW.on;
 function flowSpan() {
@@ -2984,6 +2993,17 @@ function xMark(c, x, y, h, P, ground) {
   c.strokeStyle = P.brand; c.lineWidth = 3.5; c.stroke(new Path2D('M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36'));
   c.fillStyle = P.brand; c.beginPath(); c.arc(70, 48, 8, 0, 7); c.fill();
   c.strokeStyle = P.rain; c.lineWidth = 5; c.stroke(new Path2D('M28 82l-3 9M41 82l-3 9M54 82l-3 9'));
+  c.restore();
+}
+// visite sans compte : filigrane en biais sur toute l'image (logo + « Sillage · sillage-ride.eu »)
+function expWatermark(c, W, H, dark) {
+  const P = expPal(dark), step = 230, txt = 'Sillage · sillage-ride.eu';
+  c.save(); c.globalAlpha = dark ? 0.16 : 0.13; c.translate(W / 2, H / 2); c.rotate(-0.42);
+  c.font = xF(800, 22, P.fd); c.textBaseline = 'middle'; c.fillStyle = P.ink;
+  const R = Math.hypot(W, H) / 2 + step;
+  for (let y = -R, row = 0; y < R; y += step * 0.62, row++) for (let x = -R + (row % 2) * step / 2; x < R; x += step) {
+    xMark(c, x, y - 22, 44, P, P.bg); c.fillText(txt, x + 50, y);
+  }
   c.restore();
 }
 function xPlain(h) { const d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent.replace(/\s+/g, ' ').trim(); }
@@ -3385,6 +3405,7 @@ async function exportImage(fmt = 'full') {
     const out = document.createElement('canvas'); out.width = W * s; out.height = H * s;
     const c = out.getContext('2d'); c.scale(s, s);
     lay(c, M, A);
+    if (GUEST) expWatermark(c, W, H, fmt === 'story');
     const blob = await new Promise(ok => out.toBlob(ok, 'image/png'));
     const base = (S.name || (M.mode === 'ultra' ? 'ultra' : M.mode === 'taf' ? 'velotaf' : T('sortie'))).replace(/[^\p{L}\p{N}_\-]+/gu, '_');
     const fname = `Sillage_${base}_${ymd(new Date(S.tl.start))}${fmt === 'full' ? '' : '_' + fmt}.png`;
@@ -3776,7 +3797,8 @@ function applyModeUI() {
   if (!taf) { $('#weekCard').hidden = true; }
   // visite sans compte : Vélotaf limité à aujourd'hui, demain et après-demain
   { const d = $('#date'), t0 = new Date(), t2 = new Date(); t2.setDate(t2.getDate() + 2);
-    if (GUEST && taf) { d.min = ymd(t0); d.max = ymd(t2); } else { d.removeAttribute('max'); } }
+    const t8 = new Date(); t8.setDate(t8.getDate() + 8);
+    if (GUEST) { d.min = ymd(t0); d.max = ymd(taf ? t2 : t8); } else { d.removeAttribute('max'); } }
   tafPerDayUI();
   $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Vélotaf : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
   document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Vélotaf") : 'Sillage');
@@ -3993,7 +4015,7 @@ const routeSig = () => {
 
 async function poiEnsure(force) {
   if (!S.P || S.mode !== 'ultra') return;
-  const radius = +$('#poiRadius').value || 500, key = routeSig() + '|' + radius;
+  const radius = +$('#poiRadius').value || 500, gCut = GUEST && S.P.total > GUEST_POI_KM, key = routeSig() + '|' + radius + (gCut ? '|g' + GUEST_POI_KM : '');
   if (POI.key === key && !force) return; // déjà cherché (ou en cours) pour cette trace et ce rayon
   const seq = ++POI.seq;
   if (POI.ctl) POI.ctl.abort();
@@ -4003,9 +4025,12 @@ async function poiEnsure(force) {
   let cached = null;
   try { cached = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
   if (seq !== POI.seq) return;
-  if (cached && Date.now() - cached.at < 14 * 864e5) { POI.list = attachToRoute(cached.items).filter(p => p.off <= radius); POI.loading = ''; renderPois(); return; }
+  const inKm = p => !gCut || p.km <= GUEST_POI_KM + 1;
+  if (cached && Date.now() - cached.at < 14 * 864e5) { POI.list = attachToRoute(cached.items).filter(p => p.off <= radius && inKm(p)); POI.loading = ''; renderPois(); return; }
   // Trace simplifiée à ~1/5 du rayon : on interroge un rayon un peu plus large, puis on ne garde que les lieux à moins du rayon.
-  const tol = clamp(radius / 5000, 0.04, 0.3), chunks = routeForQuery(S.P, tol), qRadius = Math.round(radius + tol * 1000);
+  // visite sans compte : seulement les GUEST_POI_KM premiers km
+  let PQ = S.P; if (gCut) { let n = 0; while (n < S.P.n - 1 && S.P.d[n] < GUEST_POI_KM) n++; PQ = { pts: S.P.pts, d: S.P.d, n: n + 1 }; }
+  const tol = clamp(radius / 5000, 0.04, 0.3), chunks = routeForQuery(PQ, tol), qRadius = Math.round(radius + tol * 1000);
   const seen = new Map(); let next = 0, done = 0, failed = 0, lastErr = null;
   const progress = () => { POI.loading = chunks.length > 1 ? T("Recherche des lieux le long de la trace… ({0}/{1} portions)", [done, chunks.length]) : T("Recherche des lieux le long de la trace…"); };
   progress(); renderPoiStatus();
@@ -4028,7 +4053,7 @@ async function poiEnsure(force) {
         seen.set(id, { id, lat, lon, g: cls[0], type: cls[1], name: tags.name || tags.brand || '', oh: tags.opening_hours || '',
           web: tags.website || tags['contact:website'] || '', tel: tags.phone || tags['contact:phone'] || '' });
       }
-      POI.list = attachToRoute([...seen.values()]).filter(p => p.off <= radius);
+      POI.list = attachToRoute([...seen.values()]).filter(p => p.off <= radius && inKm(p));
       if (done < chunks.length) progress();
       renderPois(); // affichage au fur et à mesure
     }
@@ -4113,7 +4138,8 @@ function poiStatusAt(p, t) {
 }
 
 function renderPoiStatus() {
-  const el = $('#poiStatus'), msg = POI.loading ? POI.loading + (POI.waiting ? T(" Le service OpenStreetMap est chargé : on attend un créneau libre.") : '') : POI.error;
+  const el = $('#poiStatus'), msg = POI.loading ? POI.loading + (POI.waiting ? T(" Le service OpenStreetMap est chargé : on attend un créneau libre.") : '') : POI.error
+    || (GUEST && S.P && S.P.total > GUEST_POI_KM ? T("Sans compte, les ravitos et hébergements sont cherchés sur les {0} premiers km.", [fD(GUEST_POI_KM, 0)]) : '');
   el.hidden = !msg; el.textContent = msg || ''; el.className = 'poi-status' + (POI.error ? ' err' : '');
   if (POI.error) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.style.marginLeft = '8px'; b.textContent = T("Réessayer"); b.addEventListener('click', () => poiEnsure(true)); el.append(b); }
 }
@@ -5059,24 +5085,23 @@ $('#gateResend').addEventListener('click', async () => {
   m.hidden = false; setTimeout(() => { b.disabled = false; }, 120000);
 });
 $('#gateOut').addEventListener('click', async () => { try { const sb = await sbClient(); await sb.auth.signOut(); } catch (e) {} try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); });
-/* ---------- visite sans compte (29/10/2026) ----------
+/* ---------- visite sans compte (29/10/2026, règles revues le même jour) ----------
    Compte invité créé par la fonction guest-start (identifiants dans pmr-guest, repris s'il en existe déjà un).
-   Compteurs dans pmr-guest-use (navigateur, sur 7 jours glissants) : une entrée par trace et par type
-   (std = Sortie / Vélotaf, ultra), avec le nombre de changements de date ou d'heure. */
-const GU_LIM = { std: 3, ultra: 1 }, GU_DAYS = 7, GU_CH = 2, GU_PREV = {};
+   Par visite (onglet ouvert, sessionStorage pmr-guest-use) : 1 trace Sortie / Vélotaf et 1 trace Ultra, à la date et à
+   l'heure de leur premier chargement. Météo MET Norway (gratuite) sur les GUEST_KM premiers km ; ravitos sur les
+   GUEST_POI_KM premiers km ; pas de vent animé ; export image avec filigrane. */
+const GU_LIM = { std: 1, ultra: 1 }, GU_CH = 0, GU_PREV = {};
 const guKind = m => (m === 'ultra' ? 'ultra' : 'std');
-function guList() { let l = []; try { l = JSON.parse(localStorage.getItem('pmr-guest-use') || '[]') || []; } catch (e) {} const lim = Date.now() - GU_DAYS * 864e5; return l.filter(x => x && x.at > lim); }
-function guSave(l) { try { localStorage.setItem('pmr-guest-use', JSON.stringify(l.slice(-20))); } catch (e) {} }
+function guList() { let l = []; try { l = JSON.parse(sessionStorage.getItem('pmr-guest-use') || '[]') || []; } catch (e) {} return l.filter(x => x && x.id); }
+function guSave(l) { try { sessionStorage.setItem('pmr-guest-use', JSON.stringify(l.slice(-10))); } catch (e) {} }
 const guLeft = k => Math.max(0, GU_LIM[k] - guList().filter(x => x.k === k).length);
-function guNext(k) { const l = guList().filter(x => x.k === k).sort((a, b) => a.at - b.at); return l.length ? new Date(l[0].at + GU_DAYS * 864e5) : null; }
 const guCur = () => guList().find(x => x.id === LIB.current && x.k === guKind(S.mode));
 function guestUse(id, m) {
   const k = guKind(m), l = guList();
   if (l.some(x => x.id === id && x.k === k)) return true; // trace déjà comptée cette semaine (rechargée) : rien de plus
   if (l.filter(x => x.k === k).length >= GU_LIM[k]) {
-    const nx = guNext(k), when = nx ? new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' }).format(nx) : '';
-    guestDlg(k === 'ultra' ? T("Tu as déjà chargé ta trace Ultra de la semaine. La prochaine sera possible le {0}.", [when])
-      : T("Tu as déjà chargé tes 3 traces de la semaine. La prochaine sera possible le {0}.", [when]));
+    guestDlg(k === 'ultra' ? T("Sans compte, tu peux charger une trace Ultra par visite. Avec un compte gratuit, tu en charges autant que tu veux.")
+      : T("Sans compte, tu peux charger une trace Sortie ou Vélotaf par visite. Avec un compte gratuit, tu en charges autant que tu veux."));
     return false;
   }
   l.push({ id, k, at: Date.now(), ch: 0 }); guSave(l); guestBand(); return true;
@@ -5086,12 +5111,11 @@ function guestUnload() {
 }
 function guestLeftTxt() {
   const a = guLeft('std'), u = guLeft('ultra');
-  return T("Cette semaine, il te reste {0} trace{1} Sortie ou Vélotaf et {2} trace Ultra.", [a, a > 1 ? 's' : '', u]);
+  return T("Pour cette visite, il te reste {0} trace Sortie ou Vélotaf et {1} trace Ultra.", [a, u]);
 }
 function guestBand() {
   if (!GUEST) return;
-  const x = guCur(), ch = x && x.k === 'std' ? GU_CH - (x.ch || 0) : null;
-  $('#guestBand').innerHTML = `<span><b>${escH(T("Visite sans compte"))}</b> · ${escH(guestLeftTxt())}${ch != null && S.wxBase ? ' ' + escH(T("Changements de date ou d'heure pour cette trace : {0}.", [Math.max(0, ch)])) : ''}</span>`
+  $('#guestBand').innerHTML = `<span><b>${escH(T("Visite sans compte"))}</b> · ${escH(guestLeftTxt())}</span>`
     + `<span class="gb-acts"><button type="button" class="lnk" data-guest-rules>${escH(T("Ce que permet la visite"))}</button><button type="button" class="lnk" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></span>`;
 }
 function guestDlg(msg) {
@@ -5128,8 +5152,7 @@ for (const sel of ['#date', '#time']) {
     const prev = GU_PREV[sel];
     if (!GUEST || !S.P || !S.wxBase || !LIB.current || prev == null || prev === el.value) { GU_PREV[sel] = el.value; return; }
     const l = guList(), x = l.find(y => y.id === LIB.current && y.k === guKind(S.mode));
-    const msg = S.mode === 'ultra' ? T("Sans compte, une trace Ultra garde la date et l'heure de départ de son premier chargement. Avec un compte gratuit, tu les changes librement.")
-      : x && (x.ch || 0) >= GU_CH ? T("Sans compte, tu peux changer la date ou l'heure de départ 2 fois par trace. Avec un compte gratuit, tu les changes librement.") : '';
+    const msg = S.mode === 'ultra' || !x || (x.ch || 0) >= GU_CH ? T("Sans compte, une trace garde la date et l'heure de départ de son premier chargement. Avec un compte gratuit, tu les changes librement.") : '';
     if (msg) { e.stopImmediatePropagation(); el.value = prev; setStatus(msg, 'err'); return; }
     if (x) { x.ch = (x.ch || 0) + 1; guSave(l); }
     GU_PREV[sel] = el.value; guestBand();

@@ -4,7 +4,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // ses identifiants ; la page s'y connecte et passe ainsi par le relais Open-Meteo (licence payante, quota du compte).
 // POST {} (clé anon) → { ok, email, password } ; 429 { error: 'limit' } au-delà de 10 comptes invités par jour et par
 // adresse IP (IP hachée avec un sel du jour, table guest_ip gardée 2 jours) ou de 1000 par jour en tout.
-// Le compte : app_users.status = 'guest', pmr = true, quota_om = 1000 appels par jour ; effacé après 30 jours
+// Le compte : app_users.status = 'guest', pmr = true, quota_om = 0 (mode démo, MET Norway seulement) ; effacé après 30 jours
 // d'inactivité (purge_old_data). Les règles de la visite (3 traces par semaine…) sont appliquées par la page.
 
 const CORS = {
@@ -19,7 +19,7 @@ async function sha(s: string) {
   const b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
   return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 }
-const GUEST_QUOTA = 1000, PER_IP = 10, PER_DAY = 1000;
+const GUEST_QUOTA = 0, PER_IP = 10, PER_DAY = 1000; // mode démo : météo MET Norway seulement, pas d'Open-Meteo
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
