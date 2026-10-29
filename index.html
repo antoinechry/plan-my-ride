@@ -724,11 +724,12 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 <div class="gate" id="gate">
   <div class="gate-card">
     <p class="gate-logo"><svg class="mark" width="50" height="45" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
-    <p class="gate-sub" id="gateSub">La météo sur ta trace, heure par heure. Accès réservé aux comptes autorisés.</p>
+    <p class="gate-sub" id="gateSub">La météo sur ta trace, heure par heure. Crée ton compte en une minute.</p>
     <p class="gate-lang"><button type="button" class="lnk" id="gateLang" data-l="en" lang="en">English</button></p>
     <div id="gateWait" hidden>
       <p class="note" id="gateWaitTxt"></p>
-      <div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn" id="gateRetry">Réessayer</button><button type="button" class="btn" id="gateOut">Se déconnecter</button></div>
+      <p class="note" id="gateResendMsg" hidden></p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><button type="button" class="btn primary" id="gateResend" hidden>Renvoyer l'e-mail</button><button type="button" class="btn" id="gateRetry">Réessayer</button><button type="button" class="btn" id="gateOut">Se déconnecter</button></div>
     </div>
     <div id="gateForms">
       <div class="gate-tabs" role="group" aria-label="Accès"><button type="button" data-g="in" aria-pressed="true">Se connecter</button><button type="button" data-g="up" aria-pressed="false">Créer un compte</button></div>
@@ -1495,6 +1496,8 @@ async function fetchOM(from, to, model, smp = wxSmp()) { // smp : points demand�
   catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? T("Open-Meteo ne répond pas pour l'instant (réessaie dans quelques minutes).") : T("pas de connexion au service Open-Meteo.")); }
   const json = await res.json().catch(e => ({ _cut: e }));
   if (json._cut) throw new Error(T("Open-Meteo ne répond pas pour l'instant (réponse coupée, réessaie dans quelques minutes)."));
+  // quota du compte (relais open-meteo, app_users.quota_om) : pas de repli sur l'API gratuite
+  if (json.reason === 'quota' && json.relay) { const e = new Error(T("quota de prévisions du jour atteint pour ton compte.")); e.quota = true; throw e; }
   if (!res.ok || json.error) throw new Error(json.reason || T("Le service météo a répondu {0}.", [res.status]));
   const arr = Array.isArray(json) ? json : [json];
   if (arr.some(L => !L || !L.hourly || !Array.isArray(L.hourly.time))) throw new Error(T("réponse incomplète d'Open-Meteo (réessaie dans quelques minutes)."));
@@ -2185,7 +2188,8 @@ async function run() {
       if (id !== runId) return;
       S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxNote = ''; S.wxFallback = '';
       // limite d'Open-Meteo : message à part (sans répéter « essaie une autre source »)
-      if (/daily api request limit/i.test(err.message)) note = T("Météo indisponible : Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway ou meteoblue dans « Source météo ». Les horaires restent calculés.");
+      if (err.quota) note = T("Météo indisponible : tu as utilisé toutes tes prévisions du jour. Le compteur repart à zéro demain ; d'ici là, les parcours déjà chargés gardent leur météo. Les horaires restent calculés.");
+      else if (/daily api request limit/i.test(err.message)) note = T("Météo indisponible : Open-Meteo a atteint sa limite de demandes de la journée pour ta connexion ; elle repart à zéro demain. En attendant, choisis MET Norway dans « Source météo ». Les horaires restent calculés.");
       else if (/minutely|hourly api request limit|limit exceeded/i.test(err.message)) note = T("Météo indisponible : Open-Meteo reçoit trop de demandes en ce moment ; réessaie dans une minute. Les horaires restent calculés.");
       else note = T("Météo indisponible : {0} Les horaires restent calculés. Tu peux aussi essayer une autre source météo.", [err.message === 'Failed to fetch' ? T("pas de connexion au service Open-Meteo.") : err.message]);
     }
@@ -4904,7 +4908,7 @@ function gateShow(mode, msg) {
 function gateTab(t) {
   document.querySelectorAll('#gate [data-g]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.g === t)));
   $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateErr').hidden = true;
-  $('#guInvite').textContent = INVITE ? T("🎟️ Invitation testeur : ton accès sera ouvert tout de suite.") : T("Ton compte sera ouvert après validation par l'administrateur.");
+  $('#guInvite').textContent = INVITE ? T("🎟️ Invitation testeur : ton accès sera ouvert tout de suite.") : T("Tu recevras un e-mail pour confirmer ton adresse : ton compte s'ouvre dès que tu touches le lien.");
   $('#guInvite').classList.toggle('ok', !!INVITE);
 }
 document.querySelectorAll('#gate [data-g]').forEach(b => b.addEventListener('click', () => gateTab(b.dataset.g)));
@@ -4930,9 +4934,14 @@ async function accessCheck() {
     const { data } = await sb.from('app_users').select('status,pmr,is_admin,prenom,quota_mb').eq('user_id', session.user.id).maybeSingle();
     ACC.row = data || null;
     if (!data || data.status !== 'active' || !data.pmr) {
+      const pend = !data || data.status === 'pending';
+      ACC.email = session.user.email || '';
+      $('#gateResend').hidden = !pend; $('#gateResendMsg').hidden = true;
+      $('#gateRetry').textContent = pend ? T("J'ai confirmé") : T('Réessayer');
       gateShow('wait', data && data.status === 'blocked' ? T("Ton compte est suspendu. Contacte l'administrateur.")
         : data && data.status === 'active' ? T("Ton compte n'a pas encore accès à Sillage. L'administrateur peut l'ouvrir depuis sa page Admin.")
-        : T("Merci {0} ! Ton compte est créé et attend la validation de l'administrateur. Réessaie un peu plus tard.", [(data && data.prenom) || '']));
+        : data && data.prenom ? T("Presque fini {0} ! On t'a envoyé un e-mail à {1} : touche le lien « Confirmer mon adresse » pour ouvrir ton compte, puis reviens ici.", [data.prenom, ACC.email])
+        : T("Presque fini ! On t'a envoyé un e-mail à {0} : touche le lien « Confirmer mon adresse » pour ouvrir ton compte, puis reviens ici.", [ACC.email]));
       return;
     }
     document.body.classList.remove('gated');
@@ -4962,7 +4971,7 @@ $('#gateUp').addEventListener('submit', async e => {
   const email = $('#guEmail').value.trim(), password = $('#guPw').value;
   try {
     const r = await fetch(SB_URL + '/functions/v1/app-signup', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, prenom: $('#guName').value.trim(), code: INVITE }) });
+      body: JSON.stringify({ email, password, prenom: $('#guName').value.trim(), code: INVITE, lang: LANG }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.ok) throw new Error(j.error === 'exists' ? T("Un compte existe déjà avec cet e-mail : connecte-toi.") : j.error === 'code' ? T("Ce lien d'invitation n'est plus valable. Demande-en un nouveau.")
       : j.error === 'password' ? T("Mot de passe trop court (8 caractères minimum).") : j.error === 'email' ? T("Adresse e-mail invalide.") : T("Création impossible, réessaie."));
@@ -4972,6 +4981,16 @@ $('#gateUp').addEventListener('submit', async e => {
   } catch (err) { gateErr(err.message || String(err)); $('#guGo').disabled = false; }
 });
 $('#gateRetry').addEventListener('click', () => location.reload());
+// Compte en attente de confirmation de l'adresse (inscription ouverte, 29/10/2026) : nouveau lien par e-mail (2 min d'écart au plus côté serveur).
+$('#gateResend').addEventListener('click', async () => {
+  const b = $('#gateResend'), m = $('#gateResendMsg'); b.disabled = true;
+  try {
+    await fetch(SB_URL + '/functions/v1/app-signup', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'resend', email: ACC.email, lang: LANG }) });
+    m.textContent = T("C'est envoyé. Pense à regarder dans les indésirables.");
+  } catch (e) { m.textContent = T("Envoi impossible, réessaie dans un moment."); }
+  m.hidden = false; setTimeout(() => { b.disabled = false; }, 120000);
+});
 $('#gateOut').addEventListener('click', async () => { try { const sb = await sbClient(); await sb.auth.signOut(); } catch (e) {} try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} location.reload(); });
 accessCheck();
 // Dernière source météo utilisée sur le parcours courant (colonne routes.wx, lue par la carte des GPX de la page Admin)
@@ -5316,7 +5335,7 @@ async function outFetch(id, date, to, smp) { // limite par minute d'Open-Meteo :
       return wx;
     }
     catch (e) {
-      if (k < 2 && /limit|429/i.test(String(e.message))) {
+      if (k < 2 && !e.quota && /limit|429/i.test(String(e.message))) {
         OUT.waitUntil = Math.max(OUT.waitUntil || 0, Date.now() + 62e3);
         if (id === OUT.run) $('#outProg').textContent = T("Open-Meteo limite les demandes par minute : reprise automatique dans une minute…");
         continue;
