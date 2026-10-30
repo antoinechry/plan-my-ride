@@ -48,6 +48,8 @@ fs.writeFileSync(path.join(WWW, 'vendor', 'fonts.css'), fontCss);
 // 3. Fichiers de la page
 cp(path.join(ROOT, 'lang.js'), path.join(WWW, 'lang.js'));
 for (const f of fs.readdirSync(path.join(ROOT, 'icons'))) cp(path.join(ROOT, 'icons', f), path.join(WWW, 'icons', f));
+// traces d'exemple du mode démo (dossier demo/, s'il existe)
+if (fs.existsSync(path.join(ROOT, 'demo'))) for (const f of fs.readdirSync(path.join(ROOT, 'demo'))) if (f.endsWith('.gpx')) cp(path.join(ROOT, 'demo', f), path.join(WWW, 'demo', f));
 cp(path.join(APP, 'native', 'native.js'), path.join(WWW, 'native.js'));
 
 // 4. La page, adaptée à l'app

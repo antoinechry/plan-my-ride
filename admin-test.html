@@ -577,11 +577,14 @@ function statusBadge(u){
   if (!u.pmr) return '<span class="badge noacc">Sans accès</span>';
   return u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge active">Actif</span>';
 }
+// offre du compte (30/10/2026) : Sillage.cc + (plan full, plus_until dans le futur, admin) ou gratuit
+const isPlus = u => u.plan === 'full' || u.is_admin || (u.plus_until && new Date(u.plus_until) > new Date());
+const planTxt = u => isPlus(u) ? (u.plan !== 'full' && !u.is_admin && u.plus_until ? 'Sillage.cc + jusqu’au ' + dFmt.format(new Date(u.plus_until)) : 'Sillage.cc +') : 'gratuit';
 function userRows(u){
   const self = u.user_id === S.me.id, open = S.open === u.user_id, a = S.auth[u.user_id] || {};
   const sub = (u.email || '') ;
   let h = '<tr class="u' + (open ? ' open' : '') + '" data-id="' + u.user_id + '">'
-    + '<td class="c-who"><div class="who"><span class="av" style="background:' + S.col[u.user_id] + '">' + esc(short(u).slice(0, 1).toUpperCase()) + '</span><span style="min-width:0"><b>' + esc(short(u)) + (self ? ' <span class="muted" style="font-weight:500">· toi</span>' : '') + '</b><span class="m">' + esc(sub) + (u.invite ? ' · testeur' : '') + '</span></span></div></td>'
+    + '<td class="c-who"><div class="who"><span class="av" style="background:' + S.col[u.user_id] + '">' + esc(short(u).slice(0, 1).toUpperCase()) + '</span><span style="min-width:0"><b>' + esc(short(u)) + (self ? ' <span class="muted" style="font-weight:500">· toi</span>' : '') + '</b><span class="m">' + esc(sub) + (u.invite ? ' · testeur' : '') + ' · ' + planTxt(u) + '</span></span></div></td>'
     + '<td class="c-st">' + statusBadge(u) + '</td>'
     + '<td class="c-mb">' + omCell(u) + '</td>'
     + '<td class="c-act">' + actCell(u) + '</td>'
@@ -593,6 +596,7 @@ function userRows(u){
     + (S.pwOpen === u.user_id ? '' : '<button type="button" class="b sm" data-a="pw">Changer le mot de passe</button>')
     + '<span class="qbox">Quota Open-Meteo <input type="number" min="0" max="1000000" step="100" data-q="quota_om" value="' + (u.quota_om == null ? '' : u.quota_om) + '" placeholder="∞" aria-label="Quota Open-Meteo par jour"> appels / jour</span>'
     + '<label class="tgl"><input type="checkbox" data-k="pmr"' + (u.pmr ? ' checked' : '') + '> Accès Sillage</label>'
+    + '<button type="button" class="b sm" data-a="plan">' + (u.plan === 'full' ? 'Repasser en compte gratuit' : 'Passer en Sillage.cc +') + '</button>'
     + (self ? '' : '<button type="button" class="b sm" data-a="admin">' + (u.is_admin ? 'Retirer admin' : 'Rendre admin') + '</button>')
     + (u.status === 'blocked' ? '<button type="button" class="b sm" data-a="ok">Réactiver le compte</button>' : self ? '' : '<button type="button" class="b sm bad" data-a="block">Bloquer le compte</button>')
     + '<span class="saved" data-s></span></div>'
@@ -677,6 +681,7 @@ async function onUsers(e){
     if (k === 'more'){ S.open = S.open === id ? null : id; S.pwOpen = null; renderUsers(); return; }
     if (k === 'ok'){ if (await save(id, { status: 'active', pmr: true, validated_at: new Date().toISOString() })){ render(); flash(id, 'Compte ouvert'); } return; }
     if (k === 'block' && !self){ if (await save(id, { status: 'blocked' })){ render(); flash(id, 'Compte bloqué'); } return; }
+    if (k === 'plan'){ const v = u.plan === 'full' ? 'free' : 'full'; if (await save(id, { plan: v })){ renderUsers(); flash(id, v === 'full' ? 'Sillage.cc +' : 'Compte gratuit'); } return; }
     if (k === 'admin' && !self){ if (await save(id, { is_admin: !u.is_admin })){ renderUsers(); flash(id, u.is_admin ? 'Admin' : 'Admin retiré'); } return; }
     if (k === 'pw'){ S.pwOpen = id; renderUsers(); const i = document.querySelector('tr.ux[data-id="' + id + '"] [data-pw]'); if (i) i.focus(); return; }
     if (k === 'pwcancel'){ S.pwOpen = null; renderUsers(); return; }
