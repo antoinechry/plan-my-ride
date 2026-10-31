@@ -6216,12 +6216,52 @@ function pmTilesInView() {
 function pmAddItems(items) {
   for (const it of items) if (!PM.osm.has(it.ref)) PM.osm.set(it.ref, it);
 }
+/* Base de départ (31/10/2026) : points OSM importés côté serveur (tables osm_poi / osm_tiles, fonction osm-import,
+   France et frontières, rafraîchis chaque semaine). Un carré couvert par la base y est lu ; ailleurs, Overpass en direct. */
+const PM_REST = SB_URL + '/rest/v1/', PM_RH = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+PM.cov = null; PM.covAt = 0;
+async function pmCoverage() {
+  if (PM.cov && Date.now() - PM.covAt < 10 * 60e3) return PM.cov;
+  const out = [];
+  try {
+    for (let off = 0; off < 5000; off += 1000) {
+      const r = await fetch(PM_REST + 'osm_tiles?select=s,w,n,e&status=eq.done&order=key&offset=' + off + '&limit=1000', { headers: PM_RH });
+      if (!r.ok) break;
+      const j = await r.json(); out.push(...j); if (j.length < 1000) break;
+    }
+  } catch (e) {}
+  PM.cov = out; PM.covAt = Date.now(); return out;
+}
+function pmCovered(k) {
+  const [a, o] = k.split(':').map(Number), la = (a + 0.5) * PM_TILE, lo = (o + 0.5) * PM_TILE;
+  return (PM.cov || []).some(c => la >= c.s && la < c.n && lo >= c.w && lo < c.e);
+}
+async function pmFromBase(k) {
+  const [a, o] = k.split(':').map(Number), s = (a * PM_TILE).toFixed(4), n = ((a + 1) * PM_TILE).toFixed(4), w = (o * PM_TILE).toFixed(4), e = ((o + 1) * PM_TILE).toFixed(4);
+  const items = [];
+  for (let off = 0; off < 20000; off += 1000) {
+    const r = await fetch(PM_REST + `osm_poi?select=id,type,name,lat,lon,t&lat=gte.${s}&lat=lt.${n}&lon=gte.${w}&lon=lt.${e}&order=id&offset=${off}&limit=1000`, { headers: PM_RH });
+    if (!r.ok) throw new Error('base ' + r.status);
+    const j = await r.json();
+    for (const p of j) if (PM_TYPES[p.type]) items.push({ src: 'osm', ref: p.id, type: p.type, name: p.name || '', lat: p.lat, lon: p.lon, tags: { ...(p.t || {}), ...(p.name ? { name: p.name } : {}) } });
+    if (j.length < 1000) break;
+  }
+  return items;
+}
 async function pmLoadOsm() {
   if (!PM.map || PM.map.getZoom() < PM_MINZ) { pmStatus(); return; }
   const keys = pmTilesInView().slice(0, 36);
   PM.queue = PM.queue.filter(k => keys.includes(k)); // on oublie les carrés qui ne sont plus à l'écran
+  await pmCoverage();
   for (const k of keys) {
     if (PM.tiles.has(k) || PM.busy.has(k) || PM.queue.includes(k)) continue;
+    if (pmCovered(k)) { // base Sillage : lecture directe, sans passer par Overpass
+      PM.busy.add(k); PM.running++; pmStatus();
+      pmFromBase(k).then(items => { PM.tiles.set(k, true); PM.failed = 0; pmAddItems(items); })
+        .catch(() => { PM.cov = []; PM.queue.push(k); }) // base injoignable : Overpass
+        .finally(() => { PM.busy.delete(k); PM.running--; pmRender(); pmPump(); });
+      continue;
+    }
     PM.busy.add(k);
     let rec = null; try { rec = await idbRun('pois', 'readonly', st => st.get('pm1|' + k)); } catch (e) {}
     PM.busy.delete(k);
