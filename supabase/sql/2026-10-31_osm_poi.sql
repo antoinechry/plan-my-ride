@@ -116,3 +116,25 @@ revoke all on function public.osm_web_put(text, text, jsonb, boolean, boolean) f
 grant execute on function public.osm_web_put(text, text, jsonb, boolean, boolean) to anon, authenticated;
 -- Pour un nouvel import : insert into public.osm_import_token values (encode(gen_random_bytes(24), 'hex'), now() + interval '6 hours');
 -- Après l'import : delete from public.osm_import_token;
+
+-- Types de la page Ultra (31/10/2026) : stations-service, hébergements, pharmacies, petits commerces (boucherie, traiteur, kiosque)
+-- et biergarten, importés en plus des 8 types de la carte. osm_tiles.ultra_at = carré complété pour la page Ultra.
+alter table public.osm_tiles add column if not exists ultra_at timestamptz;
+create or replace function public.osm_web_put2(p_token text, p_key text, p_rows jsonb, p_types text[], p_first boolean, p_last boolean)
+returns int language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.osm_import_token where token = p_token and expires_at > now()) then raise exception 'token'; end if;
+  if not exists (select 1 from public.osm_tiles where key = p_key) then raise exception 'tile'; end if;
+  if jsonb_array_length(p_rows) > 3000 then raise exception 'too many rows'; end if;
+  if p_first then delete from public.osm_poi where tile = p_key and type = any(p_types); end if;
+  insert into public.osm_poi (id, type, name, lat, lon, t, tile, updated_at)
+  select r->>'id', r->>'type', left(r->>'name', 120), (r->>'lat')::float8, (r->>'lon')::float8, coalesce(r->'t', '{}'::jsonb), p_key, now()
+  from jsonb_array_elements(p_rows) r
+  where r->>'id' ~ '^(node|way|relation)/[0-9]+$' and r->>'type' = any(p_types)
+    and r->>'type' in ('bivouac','boulangerie','fontaine','epicerie','atelier','abri','cafe','recharge','carburant','hebergement','pharmacie','commerce')
+  on conflict (id) do nothing; -- un point déjà connu sous un type de la carte garde ce type
+  if p_last then update public.osm_tiles set ultra_at = now() where key = p_key; end if;
+  return 0;
+end $$;
+revoke all on function public.osm_web_put2(text, text, jsonb, text[], boolean, boolean) from public;
+grant execute on function public.osm_web_put2(text, text, jsonb, text[], boolean, boolean) to anon, authenticated;

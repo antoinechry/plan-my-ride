@@ -499,6 +499,7 @@ window.PMR_I18N = {
     "Ravitos, photos, feux : ajouté au temps de roulage.": "Food, photos, traffic lights: added to the riding time.",
     "Ravitos, photos, feux : {0} min toutes les {1} h de pédalage, soit +{2} % au temps de roulage.": "Food, photos, traffic lights: {0} min every {1} h of riding, i.e. +{2} % on riding time.",
     "Recherche des lieux le long de la trace…": "Searching for places along the track…",
+    "Lecture des lieux… ({0} %)": "Loading places… ({0}%)",
     "Recherche des lieux le long de la trace… ({0}/{1} portions)": "Searching for places along the track… ({0}/{1} sections)",
     "Rechercher les lieux": "Search for places",
     "Rechercher un parcours": "Search routes",
