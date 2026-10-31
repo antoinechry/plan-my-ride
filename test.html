@@ -6602,7 +6602,7 @@ function pmRender() {
   if (!PM.map || !PM.layer) return;
   PM.layer.clearLayers();
   const b = PM.map.getBounds().pad(0.1), replaced = new Set(), cnt = {};
-  let nO = 0, nU = 0;
+  let nO = 0, nU = 0, nV = 0;
   const usr = [...PM.usr.values()];
   for (const it of usr) if (it.poi.osm_ref && it.poi.status === 'valid') replaced.add(it.poi.osm_ref);
   if (PM.src.osm && PM.map.getZoom() >= PM_MINZ - 1) {
@@ -6612,7 +6612,8 @@ function pmRender() {
       cnt[it.type] = (cnt[it.type] || 0) + 1;
       if (!PM.on.has(it.type)) continue;
       if (shown >= PM_MAX_OSM) { PM.cap = true; continue; }
-      L.marker([it.lat, it.lon], { icon: pmIcon(it), keyboard: true, title: (it.name || pmKind(it.tags) || PM_TYPES[it.type].lbl) + ' · OpenStreetMap', riseOnHover: true })
+      if (PM.ver.has(it.ref)) nV++;
+      L.marker([it.lat, it.lon], { icon: pmIcon(it), keyboard: true, title: (it.name || pmKind(it.tags) || PM_TYPES[it.type].lbl) + ' · OpenStreetMap' + (PM.ver.has(it.ref) ? ' · ' + T("vérifié par les cyclistes") : ''), riseOnHover: true })
         .on('click', () => pmShow(it)).addTo(PM.layer);
       shown++;
     }
@@ -6626,7 +6627,7 @@ function pmRender() {
       .on('click', () => pmShow(it)).addTo(PM.layer);
     nU++;
   }
-  $('#pmCntOsm').textContent = PM.map.getZoom() < PM_MINZ ? T("zoome pour les voir") : T("{0} points · données libres", [nO]);
+  $('#pmCntOsm').textContent = PM.map.getZoom() < PM_MINZ ? T("zoome pour les voir") : nV ? T("{0} points · dont {1} vérifié(s) ✓", [nO, nV]) : T("{0} points · données libres", [nO]);
   $('#pmCntUsr').textContent = T("{0} points · avis et photos", [nU]);
   const showCnt = PM.map.getZoom() >= PM_MINZ;
   for (const el of document.querySelectorAll('#pmChips [data-k]')) {

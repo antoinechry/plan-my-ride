@@ -1056,6 +1056,8 @@ window.PMR_I18N = {
     "Publier l'avis": "Post the review",
     "Publier le point": "Post the place",
     "Recentrer sur mon parcours": "Back to my route",
+    "vérifié par les cyclistes": "checked by cyclists",
+    "{0} points · dont {1} vérifié(s) ✓": "{0} places · {1} checked ✓",
     "Vérifié par les cyclistes": "Checked by cyclists",
     "Toi": "You",
     "Pain": "Bakery",
