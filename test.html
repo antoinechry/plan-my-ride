@@ -57,6 +57,27 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:0 32px}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+/* tendance sur 5 semaines (ensemble GFS, essai admin du 31/10/2026) */
+.tr-lead{margin:0;padding:12px 14px;font-size:15px;line-height:1.45}
+.tr-lead b{font-weight:700}
+.tr-list{max-height:460px;overflow:auto;border-top:1px solid var(--line);position:relative}
+.tr-wk{font-family:var(--f-display);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 4px;position:sticky;top:0;background:var(--panel);z-index:1}
+.tr-row{display:grid;grid-template-columns:78px 58px minmax(60px,1fr) 64px 70px 12px;gap:10px;align-items:center;padding:6px 14px;border-bottom:1px solid var(--line);font-size:13px;cursor:default}
+.tr-row.on{background:color-mix(in srgb,var(--sun) 18%,transparent);box-shadow:inset 3px 0 0 var(--sun)}
+.tr-d b{display:block;font-weight:600;white-space:nowrap}
+.tr-d span,.tr-n,.tr-r small,.tr-w small{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.tr-n{color:var(--ink);font-size:12px;white-space:nowrap}
+.tr-bar{position:relative;height:14px}
+.tr-bar i{position:absolute;top:4px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--muted) 30%,transparent)}
+.tr-bar b{position:absolute;top:2px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--rain),var(--sun),var(--head))}
+.tr-r,.tr-w{display:flex;flex-direction:column;line-height:1.15;white-space:nowrap}
+.tr-r span{font-family:var(--f-mono);font-weight:500;font-size:12px}
+.tr-w span{display:flex;align-items:center;gap:3px;font-family:var(--f-mono);font-size:12px}
+.tr-w .arrow{width:14px;height:14px}
+.tr-c{width:10px;height:10px;border-radius:50%;background:var(--lv0)}
+.tr-c.c1{background:var(--lv1)}.tr-c.c2{background:var(--lv2)}
+.tr-note{margin:0;padding:10px 14px 14px}
+@media (max-width:520px){.tr-row{grid-template-columns:56px 48px minmax(24px,1fr) 58px 44px 10px;gap:6px;padding:6px 10px;font-size:12px}.tr-wk{padding:10px 10px 4px}}
 .label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted);font-weight:600}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1241,6 +1262,13 @@ body.pm-placing .pm-add,body.pm-placing .pm-legend{display:none}
       </div>
     </section>
 
+    <section class="card" id="trendCard" hidden>
+      <div class="card-head"><h2>Tendance sur 5 semaines</h2><span class="hint">Essai admin · 31 scénarios du modèle GFS</span></div>
+      <p class="tr-lead" id="trendLead"></p>
+      <div class="tr-list" id="trendList"></div>
+      <p class="hint tr-note">Au-delà d'une dizaine de jours, ce n'est plus une prévision heure par heure mais une tendance : la barre montre où tombent la plupart des 31 scénarios de l'ensemble GFS (NOAA, maille de 50 km), le trait foncé le scénario médian. Pluie = part des scénarios avec au moins 1 mm sur la journée. La confiance baisse quand les scénarios ne sont pas d'accord.</p>
+    </section>
+
     <section class="card" id="lapCard" hidden>
       <div class="card-head"><h2>Météo tour par tour</h2><span class="hint" id="lapCardHint"></span></div>
       <div class="plan-scroll">
@@ -1688,7 +1716,7 @@ async function omFetch(url, ms) {
       const sb = await sbIfLogged(), tok = sb && (await sb.auth.getSession()).data.session?.access_token;
       if (tok) {
         const r = await fetch(SB_URL + '/functions/v1/open-meteo', { method: 'POST', signal: sig(),
-          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ q: url.split('?')[1] || '' }) });
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ q: url.split('?')[1] || '', ...(url.includes('ensemble-api') ? { api: 'ensemble' } : {}) }) });
         if (r.headers.get('x-om')) return r;
       }
     } catch (e) { if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw e; }
@@ -2409,6 +2437,7 @@ async function run() {
   if (from > maxDay) {
     S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxFallback = '';
     note = T("Les prévisions s'arrêtent le {0}. Choisissez une date de départ plus proche pour avoir la météo.", [dayFmt.format(maxDay)]);
+    if (MB_ADMIN && !LIM && S.mode !== 'taf') note = T("Les prévisions détaillées s'arrêtent le {0} : voir la tendance sur 5 semaines plus bas.", [dayFmt.format(maxDay)]);
   } else if (key !== S.wxKey) {
     setStatus(T("Récupération des prévisions {0} le long du parcours…", [WX_SRC[src]]), 'load');
     try {
@@ -2444,6 +2473,7 @@ async function run() {
     return { date: ymd(d), go: o.time, arr: o.arrTarget, back: o.tafBack, trips: S.laps && S.laps.taf ? lapSummaries(r) : [] };
   });
   renderAll(opts, opt);
+  trendUpdate();
 }
 
 function setStatus(msg, kind) {
@@ -2570,6 +2600,127 @@ function whenTxt(t, ref) {
 }
 
 /* ---------- rendu ---------- */
+/* ---------- tendance sur 5 semaines (essai admin du 31/10/2026) ----------
+   API Ensemble d'Open-Meteo, modèle GFS Ensemble 0,5° (gfs05 : 31 scénarios, 35 jours ; données jusqu'à J+33 environ),
+   valeurs par jour pour chaque scénario, sur 3 points du parcours (5 au-delà de 300 km), arrondis au quart de degré
+   (maille de 50 km : même requête et même cache pour des parcours voisins). Par jour et par scénario : max / min sur les
+   points, pluie moyenne ; puis quantiles sur les scénarios. Seulement pour les admins (MB_ADMIN), pages Sortie et Ultra. */
+const TREND_MODEL = 'gfs05', TREND_DAYS = 35, TREND_TTL = 3 * 3600e3, TREND_LS = 'pmr-trend1';
+const TREND_VARS = ['temperature_2m_max', 'temperature_2m_min', 'apparent_temperature_min', 'precipitation_sum', 'wind_speed_10m_max', 'wind_direction_10m_dominant'];
+const TREND = { url: '', days: null, err: '', req: 0 };
+const trendQ = (a, p) => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y), i = (s.length - 1) * p, k = Math.floor(i); return s[k] + ((s[k + 1] ?? s[k]) - s[k]) * (i - k); };
+function trendUrl() {
+  const smp = wxSmp(); if (!smp || !smp.length) return '';
+  const n = Math.min(smp.length, wxTrk().total > 300 ? 5 : 3), seen = new Set(), pts = [];
+  for (let i = 0; i < n; i++) { const s = smp[Math.round(i * (smp.length - 1) / Math.max(1, n - 1))];
+    const la = (Math.round(s.lat * 4) / 4).toFixed(2), lo = (Math.round(s.lon * 4) / 4).toFixed(2);
+    if (!seen.has(la + ',' + lo)) { seen.add(la + ',' + lo); pts.push([la, lo]); } }
+  let tz = 'GMT'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'GMT'; } catch (e) {}
+  return `https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${pts.map(p => p[0]).join(',')}&longitude=${pts.map(p => p[1]).join(',')}`
+    + `&daily=${TREND_VARS.join(',')}&models=${TREND_MODEL}&forecast_days=${TREND_DAYS}&wind_speed_unit=kmh&timezone=${encodeURIComponent(tz)}`;
+}
+// Réponse de l'API → une ligne par jour : quantiles sur les scénarios
+function trendStats(json) {
+  const L = Array.isArray(json) ? json : [json], d0 = L[0] && L[0].daily;
+  if (!d0 || !Array.isArray(d0.time)) throw new Error(T("réponse incomplète d'Open-Meteo."));
+  const base = 'temperature_2m_max', suf = Object.keys(d0).filter(k => k === base || k.startsWith(base + '_member')).map(k => k.slice(base.length));
+  const mid = L[Math.floor(L.length / 2)].daily, today = new Date(); today.setHours(0, 0, 0, 0);
+  const g = (d, v, s, i) => { const a = d[v + s]; const x = a ? a[i] : null; return x == null ? NaN : x; };
+  const days = [];
+  d0.time.forEach((date, i) => {
+    const tx = [], tn = [], ap = [], pr = [], ws = [];
+    let u = 0, v = 0, nd = 0;
+    for (const s of suf) {
+      let a = -Infinity, b = Infinity, c = Infinity, p = 0, pn = 0, w = -Infinity, ok = true;
+      for (const l of L) { const d = l.daily, x = g(d, 'temperature_2m_max', s, i), y = g(d, 'temperature_2m_min', s, i);
+        if (isNaN(x) || isNaN(y)) { ok = false; break; }
+        a = Math.max(a, x); b = Math.min(b, y);
+        const z = g(d, 'apparent_temperature_min', s, i); if (!isNaN(z)) c = Math.min(c, z);
+        const q = g(d, 'precipitation_sum', s, i); if (!isNaN(q)) { p += q; pn++; }
+        const ww = g(d, 'wind_speed_10m_max', s, i); if (!isNaN(ww)) w = Math.max(w, ww); }
+      if (!ok) continue;
+      tx.push(a); tn.push(b); if (isFinite(c)) ap.push(c); if (pn) pr.push(p / pn); if (isFinite(w)) ws.push(w);
+      const dir = g(mid, 'wind_direction_10m_dominant', s, i); if (!isNaN(dir)) { u += Math.sin(dir * Math.PI / 180); v += Math.cos(dir * Math.PI / 180); nd++; }
+    }
+    if (tx.length < 5) return;
+    const wet = pr.filter(x => x >= 1), lead = Math.round((new Date(date + 'T00:00') - today) / 864e5);
+    const spread = trendQ(tx, .9) - trendQ(tx, .1), rainP = pr.length ? wet.length / pr.length : 0;
+    let conf = spread < 3.5 && lead <= 10 ? 0 : spread < 7 ? 1 : 2;
+    if (lead > 14) conf = Math.max(conf, 1);
+    if (lead > 7 && rainP > .3 && rainP < .7) conf = Math.max(conf, 1);
+    days.push({ date, lead, n: tx.length, tn10: trendQ(tn, .1), tn50: trendQ(tn, .5), tx50: trendQ(tx, .5), tx90: trendQ(tx, .9),
+      ap50: trendQ(ap, .5), rainN: wet.length, nPr: pr.length, rainP, wetMm: wet.length ? wet.reduce((x, y) => x + y, 0) / wet.length : 0,
+      ws50: trendQ(ws, .5), ws90: trendQ(ws, .9), dir: nd ? (Math.atan2(u, v) * 180 / Math.PI + 360) % 360 : NaN, dirR: nd ? Math.hypot(u, v) / nd : 0, conf });
+  });
+  return days;
+}
+async function trendFetch(url) {
+  try { const c = JSON.parse(localStorage.getItem(TREND_LS) || 'null'); if (c && c.url === url && Date.now() - c.at < TREND_TTL && Array.isArray(c.days)) return c.days; } catch (e) {}
+  let res; try { res = await omFetch(url, 40000); }
+  catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? T("Open-Meteo ne répond pas pour l'instant.") : T("pas de connexion au service Open-Meteo.")); }
+  const json = await res.json().catch(() => null);
+  if (!json) throw new Error(T("réponse coupée d'Open-Meteo."));
+  if (json.reason === 'quota' && json.relay) throw new Error(T("quota de prévisions du jour atteint pour ton compte."));
+  if (!res.ok || json.error) throw new Error(json.reason || T("Le service météo a répondu {0}.", [res.status]));
+  const days = trendStats(json);
+  try { localStorage.setItem(TREND_LS, JSON.stringify({ url, at: Date.now(), days })); } catch (e) {}
+  return days;
+}
+const TR_CONF = LANG === 'fr' ? ['bonne', 'moyenne', 'faible'] : ['good', 'medium', 'low']; // sans T : « faible » est déjà traduit « light » (vent)
+async function trendUpdate() {
+  const card = $('#trendCard'); if (!card) return;
+  const on = MB_ADMIN && !LIM && S.P && S.mode !== 'taf';
+  card.hidden = !on; if (!on) return;
+  const url = trendUrl(), id = ++TREND.req;
+  if (url !== TREND.url || !TREND.days) {
+    $('#trendLead').textContent = T("Chargement de la tendance (31 scénarios)…"); $('#trendList').innerHTML = '';
+    try { TREND.days = await trendFetch(url); TREND.url = url; TREND.err = ''; }
+    catch (e) { if (id !== TREND.req) return; TREND.days = null; TREND.url = ''; $('#trendLead').textContent = T("Tendance indisponible : {0}", [e.message || e]); return; }
+    if (id !== TREND.req) return;
+  }
+  trendRender();
+}
+function trendRender() {
+  const days = TREND.days; if (!days || !days.length) return;
+  const tl = S.tl, ride = new Set();
+  if (tl) { const a = new Date(tl.start); a.setHours(0, 0, 0, 0); for (const t = a; t.getTime() <= tl.end; t.setDate(t.getDate() + 1)) ride.add(ymd(t)); }
+  const lo = Math.min(...days.map(d => d.tn10)), hi = Math.max(...days.map(d => d.tx90)), X = x => ((x - lo) / Math.max(1, hi - lo) * 100).toFixed(1);
+  const df = new Intl.DateTimeFormat(LOC, { weekday: 'short', day: 'numeric', month: 'numeric' }), wf = new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' });
+  const dt = d => new Date(d.date + 'T12:00');
+  let html = '', first = true;
+  for (const d of days) {
+    if (first || dt(d).getDay() === 1) html += `<div class="tr-wk">${first ? T("Cette semaine") : T("Semaine du {0}", [wf.format(dt(d))])}${first ? ` · ${UL.C} · ${UL.mm} · ${UL.kmh}` : ''}</div>`;
+    first = false;
+    const rp = Math.round(d.rainP * 100), dirTxt = isFinite(d.dir) && d.dirR > .35 ? compass(d.dir) : 'var.';
+    html += `<div class="tr-row${ride.has(d.date) ? ' on' : ''}" data-d="${d.date}" title="${T("Températures (scénarios du milieu) : {0} à {1} °C · {2} scénarios sur {3} avec de la pluie · confiance {4}", [fT(d.tn50), fT(d.tx50), d.rainN, d.nPr, TR_CONF[d.conf]])}">`
+      + `<div class="tr-d"><b>${df.format(dt(d))}</b><span>${d.lead ? 'J+' + d.lead : T("auj.")}</span></div>`
+      + `<div class="tr-n">${fT(d.tn50)} / ${fT(d.tx50)}°</div>`
+      + `<div class="tr-bar"><i style="left:${X(d.tn10)}%;width:${(X(d.tx90) - X(d.tn10)).toFixed(1)}%"></i><b style="left:${X(d.tn50)}%;width:${Math.max(2, X(d.tx50) - X(d.tn50)).toFixed(1)}%"></b></div>`
+      + `<div class="tr-r"><span style="color:${rp >= 50 ? 'var(--rain)' : rp >= 25 ? 'var(--ink)' : 'var(--muted)'}">💧 ${rp} %</span>${rp >= 20 ? `<small>~${fR(d.wetMm)} ${UL.mm}</small>` : ''}</div>`
+      + `<div class="tr-w"><span>${isFinite(d.dir) && d.dirR > .35 ? arrowSvg((d.dir + 180) % 360, windStrength(d.ws50)[1]) : ''}${fV(d.ws50)}</span><small>${dirTxt}</small></div>`
+      + `<span class="tr-c c${d.conf}" title="${T("Confiance {0}", [TR_CONF[d.conf]])}"></span></div>`;
+  }
+  $('#trendList').innerHTML = html;
+  // phrase de tête : les jours de la sortie
+  const rd = days.filter(d => ride.has(d.date)), last = days[days.length - 1];
+  let lead;
+  if (!tl) lead = '';
+  else if (!rd.length) lead = tl.start > dt(last).getTime() ? T("Ta sortie est trop loin : la tendance s'arrête le {0}.", [wf.format(dt(last))]) : T("La tendance commence aujourd'hui.");
+  else {
+    const tn = Math.min(...rd.map(d => d.tn50)), tx = Math.max(...rd.map(d => d.tx50)), ap = Math.min(...rd.map(d => d.ap50));
+    const wr = rd.reduce((a, d) => d.rainP > a.rainP ? d : a, rd[0]), wv = rd.reduce((a, d) => d.ws50 > a.ws50 ? d : a, rd[0]), cf = Math.max(...rd.map(d => d.conf));
+    const when = rd.length > 1 ? T("Du {0} au {1}", [wf.format(dt(rd[0])), wf.format(dt(rd[rd.length - 1]))]) : T("Le {0}", [wf.format(dt(rd[0]))]);
+    const rainTxt = wr.rainP < .2 ? T("plutôt au sec ({0} scénarios sur {1} avec de la pluie)", [wr.rainN, wr.nPr])
+      : wr.rainP < .5 ? T("pluie possible ({0} scénarios sur {1})", [wr.rainN, wr.nPr]) : T("pluie probable ({0} scénarios sur {1})", [wr.rainN, wr.nPr]);
+    const windTxt = isFinite(wv.dir) && wv.dirR > .35 ? T("vent du {0}, environ {1} km/h au plus fort", [compass(wv.dir), fV(wv.ws50)]) : T("vent variable, environ {0} km/h au plus fort", [fV(wv.ws50)]);
+    lead = T("<b>{0}</b> (J+{1}) : {2} à {3} °C, ressenti au plus froid {4} °C ; {5} ; {6}. Confiance <b>{7}</b>{8}", [when, rd[0].lead, fT(tn), fT(tx), fT(ap), rainTxt, windTxt, TR_CONF[cf],
+      cf ? T(" : une tendance, à revoir quand la date approche.") : '.']);
+  }
+  $('#trendLead').innerHTML = lead;
+  const row = $('#trendList .tr-row.on'), box = $('#trendList');
+  if (row && box) box.scrollTop = Math.max(0, row.offsetTop - 34);
+}
+
 function renderAll(opts, opt) {
   renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderPlan(); renderLaps(); renderWeek();
 }
@@ -5222,7 +5373,7 @@ async function accessCheck() {
     }
     document.body.classList.remove('gated');
     document.body.classList.toggle('admin', !!data.is_admin);
-    { const was = wxSrc(); mbAdmin(!!data.is_admin); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } }
+    { const was = wxSrc(); mbAdmin(!!data.is_admin); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } trendUpdate(); }
     if (guest) guestHello();
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
     try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); sessionStorage.setItem('pmr-act-mode-' + S.mode, '1'); logAct('open'); } } catch (e) {}

@@ -5,6 +5,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // POST { q } avec le jeton de session d'un compte connecté (rôle « authenticated » ; la clé publique seule est refusée).
 //   q = la chaîne de requête de /v1/forecast (latitude=…&longitude=…&hourly=…), sans clé.
 //   → réponse JSON d'Open-Meteo telle quelle (même statut), en-tête x-om: hit | miss.
+// POST { q, api: 'ensemble' } (depuis le 31/10/2026, tendance sur 5 semaines des admins) : même chose avec /v1/ensemble
+//   (customer-ensemble-api), cache 3 h ; appels estimés × nombre de scénarios (31 pour gfs05) ; admins actifs seulement.
 // POST { ping: true } → { ok, status } : vérifie que la clé est acceptée (petite requête, jamais la clé renvoyée).
 // Cache partagé entre tous les comptes : table om_cache (clé = SHA-256 de q), 30 min.
 // Compteur : om_usage (demandes, réponses du cache, appels décomptés par Open-Meteo, estimés comme eux :
@@ -24,7 +26,10 @@ const out = (body: string, status: number, extra: Record<string, string> = {}) =
 const err = (e: string, status: number) => out(JSON.stringify({ error: true, reason: e, relay: true }), status);
 
 const API = 'https://customer-api.open-meteo.com/v1/forecast';
-const TTL = 30 * 60e3;
+const API_ENS = 'https://customer-ensemble-api.open-meteo.com/v1/ensemble';
+const TTL = 30 * 60e3, TTL_ENS = 3 * 3600e3;
+// Scénarios par modèle d'ensemble (Open-Meteo compte chaque scénario comme un lieu de plus, à peu près)
+const ENS_MEMBERS: Record<string, number> = { gfs05: 31, gfs025: 31, gfs_seamless: 31, gem_global: 21, ecmwf_ifs025: 51, ecmwf_aifs025: 51, icon_seamless: 40 };
 const MAX_BODY = 4_000_000;
 
 function claims(jwt: string): { role?: string; sub?: string } {
@@ -34,14 +39,15 @@ async function sha(s: string) {
   const b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
   return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 }
-function calls(q: string) {
+function calls(q: string, ens = false) {
   const p = new URLSearchParams(q);
   const loc = (p.get('latitude') || '').split(',').filter(Boolean).length || 1;
-  const vars = (p.get('hourly') || '').split(',').filter(Boolean).length || 1;
+  const vars = ((p.get('hourly') || '') + ',' + (p.get('daily') || '')).split(',').filter(Boolean).length || 1;
+  const mem = ens ? (p.get('models') || '').split(',').filter(Boolean).reduce((a, m) => a + (ENS_MEMBERS[m] || 31), 0) || 31 : 1;
   let days = Number(p.get('forecast_days')) || 7;
   const a = p.get('start_date'), b = p.get('end_date');
   if (a && b) days = Math.round((Date.parse(b) - Date.parse(a)) / 864e5) + 1;
-  return loc * Math.max(1, vars / 10) * Math.max(1, days / 14);
+  return loc * mem * Math.max(1, vars / 10) * Math.max(1, days / 14);
 }
 
 Deno.serve(async (req: Request) => {
@@ -63,29 +69,31 @@ Deno.serve(async (req: Request) => {
   }
 
   const q = typeof body.q === 'string' ? body.q : '';
+  const ens = body.api === 'ensemble';
   if (!q || q.length > 12000 || !/^latitude=[-0-9.,]+&longitude=[-0-9.,]+&[A-Za-z0-9_=&,.:%-]+$/.test(q) || /(^|&)apikey=/i.test(q)) return err('query', 400);
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  const k = await sha(q);
+  const k = await sha((ens ? 'ens|' : '') + q);
   const { data: hit } = await db.from('om_cache').select('body,exp').eq('key', k).maybeSingle();
   if (hit && Date.parse(hit.exp) > Date.now()) {
     await db.rpc('om_count', { n: 0, hit: true }).then(() => {}, () => {});
     return out(hit.body, 200, { 'x-om': 'hit' });
   }
 
-  const n = calls(q);
+  const n = calls(q, ens);
   const day = new Date().toISOString().slice(0, 10);
   const [{ data: acc }, { data: used }] = await Promise.all([
-    db.from('app_users').select('quota_om,status').eq('user_id', who.sub).maybeSingle(),
+    db.from('app_users').select('quota_om,status,is_admin').eq('user_id', who.sub).maybeSingle(),
     db.from('om_user_day').select('calls').eq('user_id', who.sub).eq('day', day).maybeSingle(),
   ]);
   const quota = acc && (acc.status === 'active' || acc.status === 'guest') ? acc.quota_om : 0; // en attente, bloqué ou sans fiche : rien ; invités (visite sans compte) : leur propre quota
+  if (ens && !(acc && acc.status === 'active' && acc.is_admin)) return err('forbidden', 403); // tendance : essai réservé aux admins
   if (quota != null && Number(used?.calls || 0) + n > quota) {
     return out(JSON.stringify({ error: true, reason: 'quota', relay: true, used: Number(used?.calls || 0), quota }), 429, { 'x-om': 'quota' });
   }
 
   let r: Response;
-  try { r = await fetch(`${API}?${q}&apikey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(35000) }); }
+  try { r = await fetch(`${ens ? API_ENS : API}?${q}&apikey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(35000) }); }
   catch (_) { return err('upstream', 504); }
   const t = await r.text();
   // attendus avant de répondre (le moteur peut s'arrêter dès la réponse envoyée)
@@ -93,7 +101,7 @@ Deno.serve(async (req: Request) => {
     db.rpc('om_count', { n, hit: false }).then(() => {}, () => {}),
     r.ok ? db.rpc('om_user_add', { uid: who.sub, n }).then(() => {}, () => {}) : null,
     r.ok && t.length < MAX_BODY
-      ? db.from('om_cache').upsert({ key: k, body: t, exp: new Date(Date.now() + TTL).toISOString(), updated_at: new Date().toISOString() }).then(() => {}, () => {})
+      ? db.from('om_cache').upsert({ key: k, body: t, exp: new Date(Date.now() + (ens ? TTL_ENS : TTL)).toISOString(), updated_at: new Date().toISOString() }).then(() => {}, () => {})
       : null,
   ]);
   return out(t, r.status, { 'x-om': 'miss' });
