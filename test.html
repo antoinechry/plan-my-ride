@@ -77,6 +77,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margi
 .tr-c{width:10px;height:10px;border-radius:50%;background:var(--lv0)}
 .tr-c.c1{background:var(--lv1)}.tr-c.c2{background:var(--lv2)}
 .tr-note{margin:0;padding:10px 14px 14px}
+.tr-sw{margin-left:auto}
 @media (max-width:520px){.tr-row{grid-template-columns:56px 48px minmax(24px,1fr) 58px 44px 10px;gap:6px;padding:6px 10px;font-size:12px}.tr-wk{padding:10px 10px 4px}}
 .label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted);font-weight:600}
 button,input,select{font:inherit;color:inherit}
@@ -1263,10 +1264,10 @@ body.pm-placing .pm-add,body.pm-placing .pm-legend{display:none}
     </section>
 
     <section class="card" id="trendCard" hidden>
-      <div class="card-head"><h2>Tendance sur 5 semaines</h2><span class="hint">Essai admin · 31 scénarios du modèle GFS</span></div>
+      <div class="card-head"><h2>Tendance sur 5 semaines</h2><span class="hint">Essai admin · 31 scénarios du modèle GFS</span><label class="switch tr-sw"><input type="checkbox" id="trendListOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher la liste</label></div>
       <p class="tr-lead" id="trendLead"></p>
       <div class="tr-list" id="trendList"></div>
-      <p class="hint tr-note">Au-delà d'une dizaine de jours, ce n'est plus une prévision heure par heure mais une tendance : la barre montre où tombent la plupart des 31 scénarios de l'ensemble GFS (NOAA, maille de 50 km), le trait foncé le scénario médian. Pluie = part des scénarios avec au moins 1 mm sur la journée. La confiance baisse quand les scénarios ne sont pas d'accord.</p>
+      <p class="hint tr-note" id="trendNote">Au-delà d'une dizaine de jours, ce n'est plus une prévision heure par heure mais une tendance : la barre montre où tombent la plupart des 31 scénarios de l'ensemble GFS (NOAA, maille de 50 km), le trait foncé le scénario médian. Pluie = part des scénarios avec au moins 1 mm sur la journée. La confiance baisse quand les scénarios ne sont pas d'accord.</p>
     </section>
 
     <section class="card" id="lapCard" hidden>
@@ -2672,6 +2673,12 @@ async function trendFetch(url) {
   try { localStorage.setItem(TREND_LS, JSON.stringify({ url, at: Date.now(), days })); } catch (e) {}
   return days;
 }
+// « Afficher la liste » : masque les lignes par jour et la note (la phrase de tête reste) ; localStorage pmr-trend-list
+function applyTrendList() { const on = $('#trendListOn').checked; $('#trendList').hidden = $('#trendNote').hidden = !on;
+  try { localStorage.setItem('pmr-trend-list', on ? '1' : '0'); } catch (e) {}
+  if (on) { const row = $('#trendList .tr-row.on'); if (row) $('#trendList').scrollTop = Math.max(0, row.offsetTop - 34); } }
+try { if (localStorage.getItem('pmr-trend-list') === '0') $('#trendListOn').checked = false; } catch (e) {}
+$('#trendListOn').addEventListener('change', applyTrendList); applyTrendList();
 const TR_CONF = LANG === 'fr' ? ['bonne', 'moyenne', 'faible'] : ['good', 'medium', 'low']; // sans T : « faible » est déjà traduit « light » (vent)
 async function trendUpdate() {
   const card = $('#trendCard'); if (!card) return;
