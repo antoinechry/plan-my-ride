@@ -862,6 +862,10 @@ body.pm-placing .pm-loc{bottom:16px}
 .pm-pin.usr{background:var(--c);border:2.5px solid #fff;box-shadow:0 0 0 1px var(--c),0 3px 8px rgba(20,32,27,.25)}
 .pm-pin.usr svg{width:19px;height:19px;stroke:#fff;stroke-width:2.2}
 .pm-pin.pend{position:relative}
+.pm-pin.osm.ver{position:relative;border-style:solid;background:color-mix(in srgb,var(--c) 26%,rgba(255,255,255,.75))}
+.pm-pin.osm.ver::after{content:"";position:absolute;right:-5px;top:-5px;width:13px;height:13px;border-radius:999px;border:2px solid #fff;background:var(--tail) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/9px no-repeat}
+.pm-ver{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--tail)}
+.pm-ver svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .pm-pin.pend::after{content:"";position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:999px;background:var(--brand);border:2px solid #fff}
 .pm-icon{background:none;border:0}
 .pm-sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;max-height:78%;overflow:auto;overscroll-behavior:contain;background:var(--panel);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(20,32,27,.12);padding:10px 16px 20px}
@@ -6422,7 +6426,7 @@ const PM_SHORT_EN = { fontaine: 'Water', boulangerie: 'Bakery', epicerie: 'Shop'
 if (LANG === 'en') for (const k in PM_SHORT_EN) if (PM_TYPES[k]) PM_TYPES[k].s = PM_SHORT_EN[k];
 const PM_TILE = 0.1, PM_MINZ = 12, PM_TTL = 7 * 864e5, PM_MAX_OSM = 450;
 const PM_PHOTO = SB_URL + '/storage/v1/object/public/poi-photos/';
-const PM = { map: null, layer: null, route: null, routeSig: null, me: null, tiles: new Map(), busy: new Set(), queue: [], running: 0, failed: 0,
+const PM = { ver: new Map(), map: null, layer: null, route: null, routeSig: null, me: null, tiles: new Map(), busy: new Set(), queue: [], running: 0, failed: 0,
   osm: new Map(), usr: new Map(), usrBox: '', on: new Set(PM_ORDER), src: { osm: true, usr: true }, sel: null, placing: false, form: null, cap: false };
 try { const v = JSON.parse(localStorage.getItem('pmr-pm-types') || 'null'); if (Array.isArray(v)) PM.on = new Set(v.filter(k => PM_TYPES[k])); } catch (e) {}
 const pmSvg = (d, cls) => `<svg viewBox="0 0 24 24" aria-hidden="true"${cls ? ` class="${cls}"` : ''}><path d="${d}"/></svg>`;
@@ -6582,6 +6586,9 @@ async function pmLoadUsr(force) {
   if (error) { PM.usrBox = ''; return; }
   for (const [id, it] of PM.usr) if (it.poi.lat >= s && it.poi.lat <= n && it.poi.lon >= w && it.poi.lon <= e) PM.usr.delete(id);
   for (const p of data || []) PM.usr.set(p.id, { src: 'usr', key: 'p:' + p.id, type: p.type, name: p.name, lat: p.lat, lon: p.lon, poi: p });
+  // points OpenStreetMap vérifiés par les cyclistes (avis validés + « toujours là »), rpc poi_verified
+  const vr = await sb.rpc('poi_verified', { s, w, n, e });
+  if (!vr.error) for (const v of vr.data || []) PM.ver.set(v.poi_key, v);
   pmRender();
 }
 
@@ -6589,7 +6596,7 @@ async function pmLoadUsr(force) {
 function pmIcon(it) {
   const t = PM_TYPES[it.type], u = it.src === 'usr', sz = u ? 34 : 26;
   return L.divIcon({ className: 'pm-icon', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
-    html: `<span class="pm-pin ${u ? 'usr' : 'osm'}${u && it.poi.status === 'pending' ? ' pend' : ''}" style="--c:${t.col}">${pmSvg(t.d)}</span>` });
+    html: `<span class="pm-pin ${u ? 'usr' : 'osm'}${u && it.poi.status === 'pending' ? ' pend' : ''}${!u && PM.ver.has(it.ref) ? ' ver' : ''}" style="--c:${t.col}">${pmSvg(t.d)}</span>` });
 }
 function pmRender() {
   if (!PM.map || !PM.layer) return;
@@ -6949,7 +6956,8 @@ function pmShow(it) {
   const own = u && p.user_id === SB_UID;
   pmSheet(`<div class="pm-sh"><div>
       <div class="pm-badges"><span class="pm-tb${u ? '' : ' osm'}" style="--c:${t.col}">${pmSvg(t.d)}${escH(t.lbl)}</span>
-        <span class="pm-src">${u ? escH(p.author ? T("Ajouté par {0}", [p.author]) : T("Ajouté par un cycliste")) : escH(T("Source : OpenStreetMap"))}</span></div>
+        <span class="pm-src">${u ? escH(p.author ? T("Ajouté par {0}", [p.author]) : T("Ajouté par un cycliste")) : escH(T("Source : OpenStreetMap"))}</span>
+        <span class="pm-ver" id="pmVer"${!u && PM.ver.has(it.ref) ? '' : ' hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${escH(T("Vérifié par les cyclistes"))}</span></div>
       <h3 id="pmSheetTitle">${escH(title)}</h3>
       ${!u && it.name && pmKind(it.tags) ? `<span class="pm-src">${escH(pmKind(it.tags))}</span>` : ''}
     </div><button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Fermer"))}">✕</button></div>
@@ -6976,6 +6984,11 @@ async function pmLoadDetail(it) {
   ]);
   if (PM.sel !== it) return;
   const revs = rv.data || [], c = (ck.data || [])[0] || { ok: 0, ko: 0, last_ok: null, mine: null }, t = PM_TYPES[it.type];
+  if (it.src !== 'usr') { // même règle que poi_verified : « oui » + avis validés > « non »
+    const ok = c.ok + revs.filter(r => r.status === 'valid').length, ver = ok > c.ko;
+    if (ver !== PM.ver.has(it.ref)) { if (ver) PM.ver.set(it.ref, { poi_key: it.ref, ok, ko: c.ko }); else PM.ver.delete(it.ref); pmRender(); }
+    const vb = $('#pmVer'); if (vb) vb.hidden = !ver;
+  }
   const yes = t.yes || T("Oui, toujours là"), no = t.no || T("Non, disparu");
   const state = c.last_ok ? T("Confirmé {0}", [pmAgo(c.last_ok)]) : T("Pas encore confirmé");
   $('#pmVotes').innerHTML = `<p style="display:flex;justify-content:space-between;gap:8px"><b>${escH(T("Toujours là ?"))}</b><span class="pm-msg">${escH(state)}${c.ko ? ' · ' + escH(T("{0} « non »", [c.ko])) : ''}</span></p>
@@ -6985,7 +6998,7 @@ async function pmLoadDetail(it) {
   $('#pmRevHead').textContent = revs.length ? T("Avis · {0} / 5 · {1} avis", [avg ? avg.toLocaleString(LOC, { maximumFractionDigits: 1 }) : '–', revs.length]) : T("Pas encore d'avis");
   $('#pmRevBtn').textContent = revs.length ? T("Laisser un avis") : T("Laisser le premier avis");
   $('#pmRevs').innerHTML = revs.map(r => `<li class="pm-rev"><div>
-      <div class="who"><span>${escH(r.author || T("Un·e cycliste"))}</span><small>${escH(pmAgo(r.created_at))}</small></div>
+      <div class="who"><span>${escH(r.user_id === SB_UID ? T("Toi") : (r.author || T("Un·e cycliste")))}</span><small>${escH(pmAgo(r.created_at))}</small></div>
       ${r.rating ? `<span class="stars" aria-label="${escH(T("{0} sur 5", [r.rating]))}">${pmStars(r.rating)}</span>` : ''}
       ${r.comment ? `<p>${escH(r.comment)}</p>` : ''}
       <div class="pm-meta"><span>${r.status === 'pending' ? escH(T("en validation")) : ''}</span>
