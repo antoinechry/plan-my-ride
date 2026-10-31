@@ -2658,7 +2658,13 @@ async function trendFetch(url) {
   try { const c = JSON.parse(localStorage.getItem(TREND_LS) || 'null'); if (c && c.url === url && Date.now() - c.at < TREND_TTL && Array.isArray(c.days)) return c.days; } catch (e) {}
   let res; try { res = await omFetch(url, 40000); }
   catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? T("Open-Meteo ne répond pas pour l'instant.") : T("pas de connexion au service Open-Meteo.")); }
-  const json = await res.json().catch(() => null);
+  let json = await res.json().catch(() => null);
+  // L'abonnement « API Standard » ne donne pas l'API Ensemble (offre Professional) : pour l'essai admin,
+  // API gratuite en direct (usage non commercial, limitée à la minute ; vérifié le 31/10/2026)
+  if (json && json.error && /professional|enterprise/i.test(String(json.reason || ''))) {
+    try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined }); json = await res.json().catch(() => null); }
+    catch (e) { throw new Error(T("pas de connexion au service Open-Meteo.")); }
+  }
   if (!json) throw new Error(T("réponse coupée d'Open-Meteo."));
   if (json.reason === 'quota' && json.relay) throw new Error(T("quota de prévisions du jour atteint pour ton compte."));
   if (!res.ok || json.error) throw new Error(json.reason || T("Le service météo a répondu {0}.", [res.status]));
