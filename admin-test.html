@@ -274,6 +274,50 @@ dialog h2{margin-bottom:6px}
   .ret td.num:nth-child(3)::after{content:' j actifs';font-weight:400;color:var(--muted)}.ret td.num:nth-child(4)::after{content:' GPX';color:var(--muted)}
   .seg{width:100%}.seg button{flex:1;padding:0 8px}
 }
+/* Points et avis (essai du 31/10/2026) */
+.tabs .cnt{display:inline-block;min-width:20px;padding:1px 7px;margin-left:6px;border-radius:999px;background:var(--brand);color:#14201b;font-family:var(--f-mono);font-size:12px;font-weight:600;text-align:center}
+.pkpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:700px){.pkpis{grid-template-columns:1fr}}
+.pbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.pchips{display:flex;flex-wrap:wrap;gap:8px}
+.plist{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
+.pit{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px}
+.pit .dot{width:44px;height:44px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center}
+.pit .dot svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pit .main{flex:999 1 300px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pit .nm{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.pit .nm b{font-size:17px}
+.pit .ty{font-size:13px;font-weight:600;color:var(--muted)}
+.pit .meta{font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+.pit .txt{font-size:14.5px;line-height:1.45;overflow-wrap:anywhere}
+.pit .stars{font-family:var(--f-mono);color:var(--warn)}
+.pit .ph{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--line)}
+.pit .acts{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.pst{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.pst.pending{background:var(--warn-soft);color:var(--warn)}
+.pst.valid{background:var(--ok-soft);color:var(--ok)}
+.pst.removed{background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
+.b.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.b.bad.ask{background:var(--bad);border-color:var(--bad);color:#fff}
+.prep{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--bad);border:1px solid var(--bad);border-radius:999px;padding:2px 8px}
+.pdup{flex:1 1 100%;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.pdup .warn{display:flex;gap:8px;align-items:flex-start;background:var(--warn-soft);border-radius:8px;padding:10px 12px}
+.pdup .warn b{display:block;color:var(--warn)}
+.pdup .warn span{font-size:14px;color:var(--muted)}
+.pcands{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.pcand{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+.pcand[aria-checked=true]{border:2px solid var(--accent)}
+.pcand .r{width:20px;height:20px;flex:none;border-radius:999px;border:2px solid var(--muted);margin-top:2px;box-sizing:border-box}
+.pcand[aria-checked=true] .r{border:6px solid var(--accent)}
+.pcand b{display:block}
+.pcand small{display:block;font-size:13px;color:var(--muted);line-height:1.35}
+.pmerge{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.pmerge .h{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;padding-bottom:4px}
+.prow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;min-height:40px;border-top:1px solid var(--line);padding:6px 0}
+.prow .k{flex:0 0 96px;font-size:13px;font-weight:600;color:var(--muted)}
+.prow .v{flex:999 1 220px;min-width:0;font-size:14px;overflow-wrap:anywhere}
+.psrc{flex:none;font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.05em;padding:3px 8px;border-radius:999px}
+.psrc.S{background:var(--ink);color:var(--brand)}.psrc.O{background:var(--track);color:var(--ink)}.psrc.B{border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -310,6 +354,7 @@ dialog h2{margin-bottom:6px}
     <nav class="tabs" aria-label="Sections de la supervision">
       <a href="#" data-tab="over" aria-current="page">Vue d'ensemble</a>
       <a href="#analytics" data-tab="ana">Analytics</a>
+      <a href="#points" data-tab="poi">Points et avis<span class="cnt" id="poiCnt" hidden></span></a>
     </nav>
 
     <!-- ===== Vue d'ensemble ===== -->
@@ -404,6 +449,14 @@ dialog h2{margin-bottom:6px}
         <div class="ch"><h2 id="h-ret">Qui revient ?</h2><span class="muted" id="retSub" style="font-size:14px"></span></div>
         <div style="overflow-x:auto"><table class="ret"><thead><tr><th>Compte</th><th id="retTh">30 derniers jours</th><th class="num">Jours actifs</th><th class="num">GPX</th><th class="pm">Mode préféré</th></tr></thead><tbody id="retBody"></tbody></table></div>
       </section>
+    </div>
+    <!-- ===== Points et avis (essai du 31/10/2026) ===== -->
+    <div id="poi" hidden style="display:flex;flex-direction:column;gap:18px">
+      <p class="msg" style="margin:0;font-size:15px">Tout ce que les cyclistes ajoutent est visible tout de suite sur la carte de l'app, avec la mention « en cours de validation ». Tu valides ou tu retires quand tu as le temps.</p>
+      <section class="kpis pkpis" id="pKpis" aria-label="À traiter"></section>
+      <div class="pbar"><div class="seg" id="pSub" role="group" aria-label="Contenu"><button type="button" data-sub="points" aria-pressed="true">Points</button><button type="button" data-sub="reviews" aria-pressed="false">Avis</button></div><div class="pchips" id="pFilters" role="group" aria-label="Filtre"></div></div>
+      <p class="msg err" id="pMsg" aria-live="polite" style="margin:0"></p>
+      <ul class="plist" id="pList"></ul>
     </div>
   </div>
 </main>
@@ -1012,18 +1065,205 @@ $('period').addEventListener('click', e => { const b = e.target.closest('[data-p
 let rzT = 0; addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => { if (S.tab === 'ana' && S.me) renderAna(); }, 200); });
 $('noAdm').addEventListener('change', e => { S.noAdm = e.target.checked; renderAna(); });
 
+/* ---------- Points et avis (essai du 31/10/2026) ----------
+   Points ajoutés par les cyclistes (poi) et avis (poi_review) : visibles tout de suite dans l'app, l'admin valide ou retire quand il a le temps.
+   Doublons : pour un point en validation, recherche des points OSM du même type à moins de 200 m (relais osm-overpass) ;
+   l'admin choisit le bon, compose le point fusionné champ par champ, puis poi_merge : le point Sillage validé remplace le point OSM. */
+const PT = {
+  fontaine: ['Eau potable', '#1c87d6', 'M12 3C9 8 6 11 6 15a6 6 0 0 0 12 0c0-4-3-7-6-12z'],
+  boulangerie: ['Boulangerie', '#b87a0e', 'M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v7H4zM8.5 11v3M12 11v3M15.5 11v3'],
+  epicerie: ['Épicerie', '#2f9e5a', 'M4 9h16l-2 10H6zM8 9l3-5M16 9l-3-5M10 13v3M14 13v3'],
+  bivouac: ['Bivouac', '#7048c8', 'M3 20 12 4l9 16zM12 4v16M9 20l3-6 3 6'],
+  abri: ['Abri', '#8a6a3e', 'M3 11l9-7 9 7M6 9v11h12V9M10 20v-5h4v5'],
+  cafe: ['Café · resto', '#e2602a', 'M5 9h11v5a5 5 0 0 1-11 0zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3'],
+  atelier: ['Atelier vélo', '#d2337e', 'M14.5 5.5a4 4 0 0 0 4 4L10 18a2.1 2.1 0 0 1-3-3l8.5-8.5M17 3l4 4'],
+  recharge: ['Recharge', '#1a9696', 'M13 12a5 5 0 1 1-10 0 5 5 0 1 1 10 0zM6.5 12h.1M9.5 12h.1M18 21V4M16.4 6 18 3.5 19.6 6M18 16l-2.5-2.5V12M18 13l2.5-2.5V9']
+};
+const P = { pois: [], revs: [], sub: 'points', filter: 'pending', dup: {}, choice: {}, pick: {}, ask: '', loaded: false, err: '', q: [], busy: false };
+const PHOTO = SUPABASE_URL + '/storage/v1/object/public/poi-photos/';
+const pSvg = d => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"/></svg>';
+const pAgo = iso => { const s = (Date.now() - new Date(iso)) / 1000; return s < 3600 ? 'il y a ' + Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 ? 'il y a ' + Math.round(s / 3600) + ' h' : s < 86400 * 30 ? 'il y a ' + Math.round(s / 86400) + ' j' : new Date(iso).toLocaleDateString('fr-FR'); };
+const pDist = (a, b, c, d) => { const R = Math.PI / 180, x = (d - b) * R * Math.cos((a + c) / 2 * R), y = (c - a) * R; return Math.round(Math.sqrt(x * x + y * y) * 6371000); };
+function pClassify(t) {
+  const a = t.amenity || '', s = t.shop || '', tr = t.tourism || '';
+  if (a === 'drinking_water' || a === 'water_point' || ((a === 'fountain' || t.man_made === 'water_tap') && t.drinking_water === 'yes')) return 'fontaine';
+  if (s === 'bakery' || s === 'pastry') return 'boulangerie';
+  if (/^(convenience|supermarket|general|greengrocer|farm)$/.test(s)) return 'epicerie';
+  if (tr === 'camp_site' || tr === 'camp_pitch') return 'bivouac';
+  if (tr === 'wilderness_hut' || tr === 'alpine_hut' || (a === 'shelter' && !/public_transport|parking|field/.test(t.shelter_type || ''))) return 'abri';
+  if (/^(cafe|restaurant|fast_food|pub|bar)$/.test(a)) return 'cafe';
+  if (s === 'bicycle' || a === 'bicycle_repair_station') return 'atelier';
+  if (a === 'device_charging_station' || (a === 'charging_station' && /^(yes|designated)$/.test(t.bicycle || ''))) return 'recharge';
+  return null;
+}
+function pKind(t) {
+  const K = { drinking_water: "Point d'eau potable", water_point: "Point d'eau", fountain: 'Fontaine', cafe: 'Café', restaurant: 'Restaurant', fast_food: 'Restauration rapide', pub: 'Pub', bar: 'Bar', shelter: 'Abri', bicycle_repair_station: 'Station de réparation', charging_station: 'Borne de recharge', device_charging_station: 'Prise de recharge',
+    bakery: 'Boulangerie', pastry: 'Pâtisserie', convenience: 'Supérette', supermarket: 'Supermarché', general: 'Épicerie', greengrocer: 'Primeur', farm: 'Vente à la ferme', bicycle: 'Magasin de vélo',
+    camp_site: 'Camping', camp_pitch: 'Emplacement de bivouac', wilderness_hut: 'Abri', alpine_hut: 'Refuge' };
+  return K[t.amenity] || K[t.shop] || K[t.tourism] || (t.man_made === 'water_tap' ? "Robinet d'eau potable" : '');
+}
+async function pLoad() {
+  const [a, b] = await Promise.all([
+    sb.from('poi').select('*').order('created_at', { ascending: false }).limit(1000),
+    sb.from('poi_review').select('*').order('created_at', { ascending: false }).limit(1000)
+  ]);
+  if (a.error || b.error) { P.err = (a.error || b.error).message; P.pois = []; P.revs = []; }
+  else { P.err = ''; P.pois = a.data || []; P.revs = b.data || []; }
+  P.loaded = true; pBadge(); if (S.tab === 'poi') pRender();
+  for (const p of P.pois) if (p.status === 'pending' && !P.dup[p.id]) { P.dup[p.id] = { state: 'wait', list: [] }; P.q.push(p); }
+  pDupPump();
+}
+function pBadge() {
+  const n = P.pois.filter(p => p.status === 'pending').length + P.revs.filter(r => r.status === 'pending').length;
+  $('poiCnt').textContent = n || ''; $('poiCnt').hidden = !n;
+}
+async function pDupPump() {
+  if (P.busy) return; P.busy = true;
+  while (P.q.length) {
+    const p = P.q.shift(), d = P.dup[p.id]; d.state = 'load'; if (S.tab === 'poi') pRender();
+    const q = `[out:json][timeout:25];
+(
+nwr(around:200,${p.lat},${p.lon})["amenity"~"^(drinking_water|water_point|cafe|restaurant|fast_food|pub|bar|shelter|bicycle_repair_station|device_charging_station|fountain|charging_station)$"];
+nwr(around:200,${p.lat},${p.lon})["man_made"="water_tap"];
+nwr(around:200,${p.lat},${p.lon})["shop"~"^(bakery|pastry|convenience|supermarket|general|greengrocer|farm|bicycle)$"];
+nwr(around:200,${p.lat},${p.lon})["tourism"~"^(camp_site|camp_pitch|wilderness_hut|alpine_hut)$"];
+);
+out center tags;`;
+    try {
+      const r = await fetch(SUPABASE_URL + '/functions/v1/osm-overpass', { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ q }) });
+      const j = await r.json();
+      if (!r.ok || !Array.isArray(j.elements)) throw new Error('osm');
+      const taken = new Set(P.pois.filter(x => x.osm_ref && x.id !== p.id).map(x => x.osm_ref));
+      d.list = j.elements.map(e => ({ ref: e.type + '/' + e.id, tags: e.tags || {}, lat: e.lat ?? e.center?.lat, lon: e.lon ?? e.center?.lon }))
+        .filter(e => isFinite(e.lat) && pClassify(e.tags) === p.type && !taken.has(e.ref))
+        .map(e => ({ ...e, m: pDist(p.lat, p.lon, e.lat, e.lon) })).sort((x, y) => x.m - y.m).slice(0, 4);
+      d.state = 'done';
+    } catch (e) { d.state = 'err'; }
+    if (S.tab === 'poi') pRender();
+  }
+  P.busy = false;
+}
+function pStatus(st, merged) {
+  return '<span class="pst ' + st + '">' + (st === 'valid' ? (merged ? '✓ Fusionné · remplace le point OSM' : '✓ Validé') : st === 'removed' ? '✕ Retiré' : '◷ En validation · visible') + '</span>';
+}
+function pActs(kind, x) {
+  const ask = P.ask === kind + x.id;
+  if (x.status !== 'pending') return '<button type="button" class="b sm" data-undo="' + kind + '" data-id="' + x.id + '">Annuler</button>';
+  const canVal = kind === 'r' || !(P.dup[x.id] && P.dup[x.id].list.length);
+  return (canVal ? '<button type="button" class="b sm ok" data-val="' + kind + '" data-id="' + x.id + '">✓ Valider</button>' : '')
+    + '<button type="button" class="b sm bad' + (ask ? ' ask' : '') + '" data-rm="' + kind + '" data-id="' + x.id + '">' + (ask ? 'Confirmer le retrait' : 'Retirer') + '</button>';
+}
+function pDupHtml(p) {
+  const d = P.dup[p.id];
+  if (!d || p.status !== 'pending') return '';
+  if (d.state === 'wait' || d.state === 'load') return '<div class="pdup"><span class="muted" style="font-size:13px">Recherche de doublons dans OpenStreetMap…</span></div>';
+  if (d.state === 'err') return '<div class="pdup"><span class="muted" style="font-size:13px">Recherche de doublons impossible (OpenStreetMap injoignable). <button type="button" class="b xs" data-redup="' + p.id + '">Réessayer</button></span></div>';
+  if (!d.list.length) return '';
+  const ch = P.choice[p.id] || '', c = d.list.find(e => e.ref === ch);
+  let h = '<div class="pdup"><div class="warn"><span style="font-size:18px" aria-hidden="true">⚠</span><div><b>Attention, risque de doublon</b><span>Choisis le point OpenStreetMap qui correspond. Une fois fusionné et validé, le point Sillage le remplace sur la carte.</span></div></div>'
+    + '<div class="pcands" role="radiogroup" aria-label="Point en doublon">'
+    + d.list.map(e => '<button type="button" class="pcand" role="radio" aria-checked="' + (ch === e.ref) + '" data-pick="' + p.id + '" data-ref="' + esc(e.ref) + '"><span class="r"></span><span><b>' + esc(e.tags.name || pKind(e.tags) || PT[p.type][0]) + '</b><small>OSM · à ' + e.m + ' m · ' + esc(pKind(e.tags)) + '</small>'
+      + '<small>' + esc([e.tags.opening_hours && 'horaires', (e.tags.phone || e.tags.website) && 'contact', e.tags.drinking_water === 'yes' && 'eau potable : oui', e.tags.seasonal && 'saisonnier'].filter(Boolean).join(' · ') || 'peu d\'infos') + '</small></span></button>').join('')
+    + '<button type="button" class="pcand" role="radio" aria-checked="' + (ch === 'none') + '" data-pick="' + p.id + '" data-ref="none"><span class="r"></span><span><b>Aucun, ce n\'est pas un doublon</b><small>Garder les deux points ; le point Sillage est validé seul.</small></span></button></div>';
+  if (c) {
+    const O = { name: c.tags.name || '', hours: c.tags.opening_hours || '', contact: [c.tags.phone, c.tags.website].filter(Boolean).join(' · '), details: [pKind(c.tags), c.tags.description].filter(Boolean).join(' · ') };
+    const Sx = { name: p.name || '', hours: p.hours || '', contact: p.contact || '', details: p.details || '' };
+    const rows = [['name', 'Nom'], ['hours', 'Horaires'], ['contact', 'Contact'], ['details', 'Infos']];
+    h += '<div class="pmerge"><div class="h">Point fusionné · ce qui est gardé</div>';
+    for (const [k, l] of rows) {
+      const a = Sx[k], b = O[k]; if (!a && !b) continue;
+      if (k === 'details' && a && b) { h += '<div class="prow"><span class="k">' + l + '</span><span class="v">' + esc(a + ' · ' + b) + '</span><span class="psrc B">LES DEUX</span></div>'; continue; }
+      const key = p.id + ':' + c.ref + ':' + k, src = a && b ? (P.pick[key] || 'S') : a ? 'S' : 'O';
+      h += '<div class="prow"><span class="k">' + l + '</span><span class="v">' + esc(src === 'S' ? a : b) + '</span><span class="psrc ' + src + '">' + (src === 'S' ? 'SILLAGE' : 'OSM') + '</span>'
+        + (a && b ? '<button type="button" class="b xs" data-flip="' + esc(key) + '">' + (src === 'S' ? 'Prendre celui d\'OSM' : 'Prendre celui de Sillage') + '</button>' : '') + '</div>';
+    }
+    const nS = P.revs.filter(r => r.poi_key === 'p:' + p.id && r.status !== 'removed').length, nO = P.revs.filter(r => r.poi_key === c.ref && r.status !== 'removed').length;
+    h += '<div class="prow"><span class="k">Avis et photos</span><span class="v">' + nS + ' côté Sillage, ' + nO + ' sur le point OSM : tous gardés</span><span class="psrc B">LES DEUX</span></div></div>';
+  }
+  h += '<div><button type="button" class="b" style="background:var(--brand);border-color:var(--brand);color:#14201b" data-merge="' + p.id + '"' + (ch ? '' : ' disabled') + '>' + (c ? 'Fusionner et valider' : ch === 'none' ? 'Pas un doublon, valider' : 'Choisis d\'abord une option') + '</button></div></div>';
+  return h;
+}
+function pRender() {
+  if (!P.loaded) { $('pList').innerHTML = '<li class="muted">Chargement…</li>'; return; }
+  if (P.err) { $('pList').innerHTML = '<li class="msg err">Lecture impossible : ' + esc(P.err) + (/relation|does not exist|schema cache/i.test(P.err) ? ' — le script supabase/sql/2026-10-31_poi.sql n\'est pas encore appliqué.' : '') + '</li>'; return; }
+  const pp = P.pois.filter(p => p.status === 'pending').length, pr = P.revs.filter(r => r.status === 'pending').length, rep = P.revs.filter(r => r.reports > 0 && r.status !== 'removed').length;
+  const k = (l, v, cls) => '<div class="kpi"><div class="l">' + l + '</div><div class="v"' + (cls ? ' style="color:var(--bad)"' : '') + '>' + v + '</div></div>';
+  $('pKpis').innerHTML = k('Points à valider', pp) + k('Avis à valider', pr) + k('Avis signalés', rep, rep > 0);
+  for (const b of $('pSub').querySelectorAll('[data-sub]')) b.setAttribute('aria-pressed', String(b.dataset.sub === P.sub));
+  const F = [['pending', 'À valider'], ['valid', 'Validés'], ['removed', 'Retirés'], ['all', 'Tout']].concat(P.sub === 'reviews' ? [['reported', 'Signalés']] : []);
+  if (P.sub === 'points' && P.filter === 'reported') P.filter = 'pending';
+  $('pFilters').innerHTML = F.map(([v, l]) => '<button type="button" class="chip" data-f="' + v + '" aria-pressed="' + (P.filter === v) + '">' + l + '</button>').join('');
+  const keep = x => P.filter === 'all' || (P.filter === 'reported' ? x.reports > 0 && x.status !== 'removed' : x.status === P.filter);
+  let html = '';
+  if (P.sub === 'points') {
+    html = P.pois.filter(keep).map(p => { const t = PT[p.type] || ['?', '#888', ''];
+      const nR = P.revs.filter(r => r.poi_key === 'p:' + p.id && r.status !== 'removed'), ph = nR.find(r => r.photo);
+      return '<li class="pit"><span class="dot" style="background:' + t[1] + '">' + pSvg(t[2]) + '</span><div class="main"><div class="nm"><b>' + esc(p.name) + '</b><span class="ty">' + esc(t[0]) + '</span></div>'
+        + '<span class="meta">Ajouté par ' + esc(p.author || 'un·e cycliste') + ' · ' + pAgo(p.created_at) + ' · ' + nR.length + ' avis</span>'
+        + (p.details ? '<span class="txt">' + esc(p.details) + '</span>' : '') + '</div>'
+        + (ph ? '<a href="' + esc(PHOTO + ph.photo) + '" target="_blank" rel="noopener"><img class="ph" src="' + esc(PHOTO + ph.photo) + '" alt="Photo jointe" loading="lazy"></a>' : '')
+        + pStatus(p.status, p.osm_ref) + '<div class="acts"><a class="b sm" href="https://www.openstreetmap.org/?mlat=' + p.lat + '&mlon=' + p.lon + '#map=18/' + p.lat + '/' + p.lon + '" target="_blank" rel="noopener">Voir</a>' + pActs('p', p) + '</div>' + pDupHtml(p) + '</li>'; }).join('');
+  } else {
+    const nm = r => r.poi_name || (P.pois.find(p => 'p:' + p.id === r.poi_key) || {}).name || r.poi_key;
+    html = P.revs.filter(keep).map(r => '<li class="pit"><div class="main"><div class="nm">' + (r.rating ? '<span class="stars" aria-label="' + r.rating + ' sur 5">' + '★★★★★'.slice(0, r.rating) + '☆☆☆☆☆'.slice(0, 5 - r.rating) + '</span>' : '')
+      + '<b style="font-size:15px">sur « ' + esc(nm(r)) + ' »</b>' + (/^p:/.test(r.poi_key) ? '' : '<span class="ty">point OSM</span>') + (r.reports > 0 ? '<span class="prep">⚑ Signalé ' + r.reports + ' fois</span>' : '') + '</div>'
+      + (r.comment ? '<span class="txt">' + esc(r.comment) + '</span>' : '') + '<span class="meta">Par ' + esc(r.author || 'un·e cycliste') + ' · ' + pAgo(r.created_at) + '</span></div>'
+      + (r.photo ? '<a href="' + esc(PHOTO + r.photo) + '" target="_blank" rel="noopener"><img class="ph" src="' + esc(PHOTO + r.photo) + '" alt="Photo jointe" loading="lazy"></a>' : '')
+      + pStatus(r.status) + '<div class="acts">' + pActs('r', r) + '</div></li>').join('');
+  }
+  $('pList').innerHTML = html || '<li class="card pad empty" style="text-align:center">Rien ici. Tout est à jour.</li>';
+}
+async function pSet(kind, id, status) {
+  const tb = kind === 'p' ? 'poi' : 'poi_review', arr = kind === 'p' ? P.pois : P.revs, x = arr.find(y => y.id === id);
+  const { error } = await sb.from(tb).update({ status, reviewed_at: status === 'pending' ? null : new Date().toISOString() }).eq('id', id);
+  if (error) { alertMsg(error.message); return; }
+  if (x) { x.status = status; x.reviewed_at = status === 'pending' ? null : new Date().toISOString(); }
+  P.ask = ''; pBadge(); pRender();
+}
+function alertMsg(m) { $('pMsg').textContent = 'Action impossible : ' + m; setTimeout(() => { $('pMsg').textContent = ''; }, 6000); }
+$('pList').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const id = b.dataset.id;
+  if (b.dataset.val) return pSet(b.dataset.val, id, 'valid');
+  if (b.dataset.rm) { if (P.ask !== b.dataset.rm + id) { P.ask = b.dataset.rm + id; return pRender(); } return pSet(b.dataset.rm, id, 'removed'); }
+  if (b.dataset.undo) {
+    const x = (b.dataset.undo === 'p' ? P.pois : P.revs).find(y => y.id === id);
+    if (b.dataset.undo === 'p' && x && x.osm_ref) { const { error } = await sb.rpc('poi_unmerge', { p_id: id }); if (error) return alertMsg(error.message); x.osm_ref = null; x.status = 'pending'; P.dup[id] = { state: 'wait', list: [] }; P.q.push(x); pBadge(); pRender(); return pDupPump(); }
+    return pSet(b.dataset.undo, id, 'pending');
+  }
+  if (b.dataset.redup) { const p = P.pois.find(y => y.id === b.dataset.redup); P.dup[p.id] = { state: 'wait', list: [] }; P.q.push(p); return pDupPump(); }
+  if (b.dataset.pick) { P.choice[b.dataset.pick] = b.dataset.ref; return pRender(); }
+  if (b.dataset.flip) { P.pick[b.dataset.flip] = (P.pick[b.dataset.flip] || 'S') === 'S' ? 'O' : 'S'; return pRender(); }
+  if (b.dataset.merge) {
+    const p = P.pois.find(y => y.id === b.dataset.merge), ch = P.choice[p.id]; if (!ch) return;
+    if (ch === 'none') return pSet('p', p.id, 'valid');
+    const c = P.dup[p.id].list.find(x => x.ref === ch); if (!c) return;
+    const O = { name: c.tags.name || '', hours: c.tags.opening_hours || '', contact: [c.tags.phone, c.tags.website].filter(Boolean).join(' · '), details: [pKind(c.tags), c.tags.description].filter(Boolean).join(' · ') };
+    const Sx = { name: p.name || '', hours: p.hours || '', contact: p.contact || '', details: p.details || '' };
+    const val = k => { if (k === 'details') return [Sx.details, O.details].filter(Boolean).join(' · ').slice(0, 500); const a = Sx[k], o = O[k]; return a && o ? ((P.pick[p.id + ':' + c.ref + ':' + k] || 'S') === 'S' ? a : o) : (a || o); };
+    b.disabled = true;
+    const { error } = await sb.rpc('poi_merge', { p_id: p.id, p_osm: c.ref, p_name: val('name').slice(0, 80), p_hours: val('hours').slice(0, 200), p_contact: val('contact').slice(0, 200), p_details: val('details') });
+    if (error) { b.disabled = false; return alertMsg(error.message); }
+    await pLoad();
+  }
+});
+$('pSub').addEventListener('click', e => { const b = e.target.closest('[data-sub]'); if (!b) return; P.sub = b.dataset.sub; P.ask = ''; pRender(); });
+$('pFilters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; P.filter = b.dataset.f; P.ask = ''; pRender(); });
+
 /* ---------- onglets ---------- */
 function setTab(t){
   S.tab = t;
-  $('over').hidden = t !== 'over'; $('ana').hidden = t !== 'ana';
+  $('over').hidden = t !== 'over'; $('ana').hidden = t !== 'ana'; $('poi').hidden = t !== 'poi';
   $('hOver').hidden = t !== 'over'; $('hAna').hidden = t !== 'ana';
   for (const a of document.querySelectorAll('.tabs a')) if (a.dataset.tab === t) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   if (t === 'ana' && S.me) renderAna();
+  if (t === 'poi' && S.me) pRender();
   if (t === 'over' && G.map) setTimeout(() => G.map.invalidateSize(), 30);
 }
-addEventListener('hashchange', () => setTab(location.hash === '#analytics' ? 'ana' : 'over'));
+const hashTab = () => location.hash === '#analytics' ? 'ana' : location.hash === '#points' ? 'poi' : 'over';
+addEventListener('hashchange', () => setTab(hashTab()));
 document.querySelector('.tabs').addEventListener('click', e => { const a = e.target.closest('[data-tab]'); if (!a) return; e.preventDefault();
-  history.replaceState(null, '', a.dataset.tab === 'ana' ? '#analytics' : location.pathname + location.search); setTab(a.dataset.tab); });
+  history.replaceState(null, '', a.dataset.tab === 'ana' ? '#analytics' : a.dataset.tab === 'poi' ? '#points' : location.pathname + location.search); setTab(a.dataset.tab); });
 
 async function init(){
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
@@ -1034,10 +1274,11 @@ async function init(){
   const { data: me } = await sb.from('app_users').select('is_admin,status').eq('user_id', S.me.id).maybeSingle();
   if (!me || !me.is_admin || me.status !== 'active'){ deny('Cette page est réservée aux administrateurs.'); return; }
   $('app').hidden = false;
-  setTab(location.hash === '#analytics' ? 'ana' : 'over');
+  setTab(hashTab());
   try { await load(); } catch(e){ $('users').innerHTML = '<tr><td colspan="6" class="msg err" style="padding:14px 20px">Lecture impossible : ' + esc(e.message || e) + '</td></tr>'; }
   gLoad().catch(e => { $('glist').innerHTML = '<li class="muted">Carte : ' + esc(e.message || e) + '</li>'; });
   mbBalance();
+  pLoad().catch(e => { P.loaded = true; P.err = e.message || String(e); pRender(); });
 }
 init();
 })();

@@ -749,6 +749,110 @@ dialog.guest-dlg .ft{justify-content:flex-end}
 .guest-lock b{display:block;margin-bottom:4px}
 .guest-lock p{margin:0 0 10px;color:var(--muted);font-size:14px}
 body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,body.lim #outPage .out-note,body.lim #outPage .lp-count{display:none}
+/* Carte des points utiles (essai du 31/10/2026) */
+#mapPage{padding:0;overflow:hidden;display:flex;flex-direction:column}
+#mapPage[hidden]{display:none}
+#mapPage>*{max-width:none;margin-inline:0}
+.pm-top{padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 10px;background:var(--bg);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.pm-top .lp-head h2{font-size:24px}
+.pm-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 2px}
+.pm-chips::-webkit-scrollbar{display:none}
+.pm-chip{flex:none;min-height:40px;padding:0 12px 0 8px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--f-body);white-space:nowrap;cursor:pointer;background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.pm-chip svg{width:18px;height:18px;fill:none;stroke:var(--c);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pm-chip[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+.pm-chip[aria-pressed="true"] svg{stroke:#fff}
+.pm-chip[aria-pressed="false"] span{text-decoration:line-through}
+.pm-mapwrap{position:relative;flex:1;min-height:0}
+.pm-map{position:absolute;inset:0;background:var(--elev)}
+.pm-note{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;margin:0;max-width:calc(100% - 120px);background:var(--ink);color:var(--bg);font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;text-align:center;pointer-events:none}
+.pm-ctl{position:absolute;right:12px;top:12px;z-index:5;display:flex;flex-direction:column;gap:8px}
+.pm-round{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.06)}
+.pm-round svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pm-round.busy{opacity:.5}
+.pm-mapwrap .leaflet-top.leaflet-right{top:112px}
+.pm-legend{position:absolute;left:12px;bottom:16px;z-index:5;width:200px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.06)}
+.pm-legend button{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 8px;border-radius:10px;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.pm-legend button[aria-pressed="true"]{background:var(--bg)}
+.pm-legend button[aria-pressed="false"]{opacity:.45}
+.pm-legend b{display:block;font-size:14px;font-weight:600}
+.pm-legend small{display:block;font-size:12px;color:var(--muted)}
+.pm-sw{width:20px;height:20px;border-radius:999px;flex:none}
+.pm-sw.osm{background:color-mix(in srgb,#1c87d6 18%,transparent);border:1.5px dashed color-mix(in srgb,#1c87d6 70%,transparent)}
+.pm-sw.usr{background:#1c87d6;border:2px solid #fff;box-shadow:0 0 0 1px #1c87d6}
+.pm-add{position:absolute;right:12px;bottom:16px;z-index:5;height:52px;padding:0 20px 0 16px;border-radius:999px;border:0;background:var(--brand);color:var(--brand-ink);display:flex;align-items:center;gap:8px;font:700 16px/1 var(--f-body);cursor:pointer;box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.14)}
+.pm-add svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+body.pm-placing .pm-add,body.pm-placing .pm-legend{display:none}
+.pm-aim{position:absolute;left:50%;top:50%;z-index:4;pointer-events:none;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%)}
+.pm-aim[hidden]{display:none}
+.pm-aim-pin{width:40px;height:40px;border-radius:999px;background:var(--pmc,#1c87d6);border:3px solid #fff;box-shadow:0 0 0 1px var(--pmc,#1c87d6),0 4px 10px rgba(20,32,27,.3);display:flex;align-items:center;justify-content:center}
+.pm-aim-pin svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pm-aim-stem{width:2px;height:14px;background:var(--ink)}
+.pm-aim-tip{position:absolute;top:-34px;white-space:nowrap;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+.pm-pin{display:flex;align-items:center;justify-content:center;border-radius:999px;box-sizing:border-box;width:100%;height:100%}
+.pm-pin svg{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pm-pin.osm{background:color-mix(in srgb,var(--c) 18%,rgba(255,255,255,.55));border:1.5px dashed color-mix(in srgb,var(--c) 70%,transparent)}
+.pm-pin.osm svg{width:15px;height:15px;stroke:var(--c);stroke-width:2.2}
+.pm-pin.usr{background:var(--c);border:2.5px solid #fff;box-shadow:0 0 0 1px var(--c),0 3px 8px rgba(20,32,27,.25)}
+.pm-pin.usr svg{width:19px;height:19px;stroke:#fff;stroke-width:2.2}
+.pm-pin.pend{position:relative}
+.pm-pin.pend::after{content:"";position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:999px;background:var(--brand);border:2px solid #fff}
+.pm-icon{background:none;border:0}
+.pm-sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;max-height:78%;overflow:auto;overscroll-behavior:contain;background:var(--panel);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(20,32,27,.12);padding:10px 16px 20px}
+.pm-sheet[hidden]{display:none}
+@media (min-width:701px){.pm-sheet{left:auto;right:16px;bottom:auto;top:16px;width:400px;max-height:calc(100% - 32px);border:1px solid var(--line);border-radius:18px}}
+.pm-sheet::before{content:"";display:block;width:40px;height:4px;border-radius:999px;background:var(--line);margin:0 auto 8px}
+.pm-sh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.pm-sh h3{margin:4px 0 2px;font-size:22px;line-height:1.2;font-weight:800}
+.pm-x{flex:none;width:40px;height:40px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-size:18px;line-height:1}
+.pm-badges{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.pm-tb{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px 0 8px;border-radius:999px;background:var(--c);color:#fff;font-size:13px;font-weight:700}
+.pm-tb.osm{background:color-mix(in srgb,var(--c) 14%,transparent);border:1px dashed var(--c);color:var(--ink)}
+.pm-tb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pm-src{font-size:13px;font-weight:600;color:var(--muted)}
+.pm-pending{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13px;font-weight:600;color:var(--lv1t);background:color-mix(in srgb,var(--brand) 16%,transparent);border-radius:8px;padding:6px 10px;width:fit-content}
+.pm-sub{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:12px 0 6px}
+.pm-box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:12px;font-size:14px;line-height:1.45}
+.pm-box p{margin:0}.pm-box p+p{margin-top:6px}
+.pm-row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.pm-vote{min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer}
+.pm-vote[aria-pressed="true"].ok{background:var(--tail);border-color:var(--tail);color:#fff}
+.pm-vote[aria-pressed="true"].ko{background:var(--head);border-color:var(--head);color:#fff}
+.pm-revs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pm-rev{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:10px}
+.pm-rev>div{flex:1;min-width:0}
+.pm-rev .who{display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:600}
+.pm-rev .who small{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);font-weight:500}
+.pm-rev .stars{font-family:var(--f-mono);color:var(--lv1t);font-size:13px}
+.pm-rev p{margin:4px 0 0;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.pm-rev img{width:72px;height:72px;object-fit:cover;border-radius:8px;flex:none;cursor:zoom-in}
+.pm-rev .pm-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:12px;color:var(--muted)}
+.pm-rev .linkbtn{font-size:12.5px;color:var(--muted)}
+.pm-acts{display:flex;gap:8px;margin-top:14px}
+.pm-acts .btn{min-height:48px;border-radius:999px;justify-content:center;font-size:15px}
+.pm-acts .btn.primary{flex:1}
+.pm-form{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.pm-form label>span,.pm-lbl{display:block;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.pm-form input[type=text],.pm-form textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:16px/1.35 var(--f-body);color:var(--ink);background:var(--bg)}
+.pm-form textarea{min-height:72px;resize:vertical}
+.pm-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pm-type{min-height:70px;padding:6px 2px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 12px/1.15 var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:center}
+.pm-type i{width:32px;height:32px;border-radius:999px;background:var(--c);display:flex;align-items:center;justify-content:center}
+.pm-type svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pm-type[aria-checked="true"]{background:var(--bg);border:2px solid var(--c)}
+.pm-stars{display:flex;gap:2px}
+.pm-stars button{width:42px;height:42px;border:0;background:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pm-stars svg{width:28px;height:28px;stroke-width:1.8;stroke-linejoin:round}
+.pm-ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pm-ph label{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1.5px dashed var(--muted);border-radius:10px;cursor:pointer;font-weight:600;font-size:14px}
+.pm-ph label svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pm-ph img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.pm-warn{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted);margin:0}
+.pm-msg{font-size:13.5px;margin:0;color:var(--muted)}
+.pm-msg.err{color:var(--head)}
+.pm-osm-link{display:inline-block;margin-top:12px;font-size:14px;font-weight:600}
+.pm-big{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
+.pm-big img{max-width:100%;max-height:100%;border-radius:8px}
+@media (max-width:420px){.pm-legend{width:170px}.pm-legend b{font-size:13px}}
 </style>
 </head>
 <body>
@@ -873,7 +977,28 @@ body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,bo
     <div class="seg2 me-theme" id="meTemp" role="group" aria-label="Température"><button type="button" data-u="c">°C</button><button type="button" data-u="f">°F</button></div>
     <div class="me-btns"><button type="button" class="btn small" id="meHelp">Mode d'emploi</button></div></div>
 </section>
-<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin-test.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
+<section class="libpage pm-page" id="mapPage" hidden aria-labelledby="pmTitle">
+  <div class="pm-top">
+    <div class="lp-head"><h2 id="pmTitle">Points utiles</h2><button type="button" class="btn small pg-x">Fermer</button></div>
+    <div class="pm-chips" id="pmChips" role="group" aria-label="Types de points"></div>
+  </div>
+  <div class="pm-mapwrap">
+    <div id="pmMap" class="pm-map"></div>
+    <p class="pm-note" id="pmNote" aria-live="polite" hidden></p>
+    <div class="pm-ctl">
+      <button type="button" class="pm-round" id="pmLocate" aria-label="Me localiser" title="Me localiser"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+      <button type="button" class="pm-round" id="pmRoute" aria-label="Recentrer sur mon parcours" title="Recentrer sur mon parcours" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></button>
+    </div>
+    <div class="pm-legend" role="group" aria-label="Sources des points">
+      <button type="button" id="pmSrcOsm" aria-pressed="true"><span class="pm-sw osm" aria-hidden="true"></span><span><b>OpenStreetMap</b><small id="pmCntOsm"></small></span></button>
+      <button type="button" id="pmSrcUsr" aria-pressed="true"><span class="pm-sw usr" aria-hidden="true"></span><span><b>Par les cyclistes</b><small id="pmCntUsr"></small></span></button>
+    </div>
+    <button type="button" class="pm-add" id="pmAdd"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ajouter</button>
+    <div class="pm-aim" id="pmAim" hidden aria-hidden="true"><span class="pm-aim-pin"></span><span class="pm-aim-stem"></span><span class="pm-aim-tip">Déplace la carte pour placer le repère</span></div>
+    <div class="pm-sheet" id="pmSheet" hidden role="dialog" aria-labelledby="pmSheetTitle"><div id="pmSheetBody"></div></div>
+  </div>
+</section>
+<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabMap"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21c-4-5-7-8-7-11.5a7 7 0 0 1 14 0C19 13 16 16 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>Carte</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin-test.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
@@ -5524,7 +5649,7 @@ async function lpRename(id, name) {
 }
 $('#lpAll').addEventListener('click', lpOpen);
 // Pages plein écran (Mes parcours, Mes sorties, Moi) : une seule ouverte à la fois, onglet du bas allumé.
-const PAGES = ['libPage', 'outPage', 'mePage'];
+const PAGES = ['libPage', 'outPage', 'mePage', 'mapPage'];
 function pageOpen(pid, tabSel) {
   sheetClose();
   for (const q of PAGES) { const el = document.getElementById(q); if (el) el.hidden = q !== pid; }
@@ -5992,6 +6117,509 @@ applyModeUI();
 renderWxSrc();
 initMap();
 libInit();
+/* ---------- Carte des points utiles (essai du 31/10/2026) ----------
+   Points OpenStreetMap chargés par carrés de 0,1° autour de la vue (Overpass, cache IndexedDB 7 jours), en pâle et pointillés ;
+   points ajoutés par les cyclistes (table poi) en couleur vive, visibles dès l'ajout avec « en cours de validation » ;
+   avis, note, photo (poi_review, espace poi-photos), « Toujours là ? » (poi_check / poi_checks), signalements (poi_report).
+   Un point Sillage validé et fusionné (poi.osm_ref) remplace le point OSM correspondant. */
+const PM_ORDER = ['fontaine', 'boulangerie', 'epicerie', 'bivouac', 'abri', 'cafe', 'atelier', 'recharge'];
+const PM_TYPES = {
+  fontaine:    { lbl: T("Eau potable"), col: '#1c87d6', d: 'M12 3C9 8 6 11 6 15a6 6 0 0 0 12 0c0-4-3-7-6-12z', hint: T("Potable ? Coupée l'hiver ?"), yes: T("Oui, ça coule"), no: T("Non, à sec") },
+  boulangerie: { lbl: T("Boulangerie"), col: '#b87a0e', d: 'M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v7H4zM8.5 11v3M12 11v3M15.5 11v3', hint: T("Ouvert le dimanche ? Bon pain ?") },
+  epicerie:    { lbl: T("Épicerie"), col: '#2f9e5a', d: 'M4 9h16l-2 10H6zM8 9l3-5M16 9l-3-5M10 13v3M14 13v3', hint: T("Horaires, ce qu'on y trouve…") },
+  bivouac:     { lbl: T("Bivouac"), col: '#7048c8', d: 'M3 20 12 4l9 16zM12 4v16M9 20l3-6 3 6', hint: T("Plat ? Abrité du vent ? Autorisé ?") },
+  abri:        { lbl: T("Abri"), col: '#8a6a3e', d: 'M3 11l9-7 9 7M6 9v11h12V9M10 20v-5h4v5', hint: T("Fermé ? Combien de places ?") },
+  cafe:        { lbl: T("Café · resto"), col: '#e2602a', d: 'M5 9h11v5a5 5 0 0 1-11 0zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3', hint: T("Accueil des cyclistes, eau, prise…") },
+  atelier:     { lbl: T("Atelier vélo"), col: '#d2337e', d: 'M14.5 5.5a4 4 0 0 0 4 4L10 18a2.1 2.1 0 0 1-3-3l8.5-8.5M17 3l4 4', hint: T("Pièces, chambres à air, accueil…") },
+  recharge:    { lbl: T("Recharge"), col: '#1a9696', d: 'M13 12a5 5 0 1 1-10 0 5 5 0 1 1 10 0zM6.5 12h.1M9.5 12h.1M18 21V4M16.4 6 18 3.5 19.6 6M18 16l-2.5-2.5V12M18 13l2.5-2.5V9', hint: T("Prise libre ? Payante ?") }
+};
+const PM_TILE = 0.1, PM_MINZ = 12, PM_TTL = 7 * 864e5, PM_MAX_OSM = 450;
+const PM_PHOTO = SB_URL + '/storage/v1/object/public/poi-photos/';
+const PM = { map: null, layer: null, route: null, routeSig: null, me: null, tiles: new Map(), busy: new Set(), queue: [], running: 0, failed: 0,
+  osm: new Map(), usr: new Map(), usrBox: '', on: new Set(PM_ORDER), src: { osm: true, usr: true }, sel: null, placing: false, form: null, cap: false };
+try { const v = JSON.parse(localStorage.getItem('pmr-pm-types') || 'null'); if (Array.isArray(v)) PM.on = new Set(v.filter(k => PM_TYPES[k])); } catch (e) {}
+const pmSvg = (d, cls) => `<svg viewBox="0 0 24 24" aria-hidden="true"${cls ? ` class="${cls}"` : ''}><path d="${d}"/></svg>`;
+const pmStars = n => '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+function pmAgo(iso) {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 3600) return T("il y a {0} min", [Math.max(1, Math.round(s / 60))]);
+  if (s < 86400) return T("il y a {0} h", [Math.round(s / 3600)]);
+  if (s < 86400 * 30) return T("il y a {0} j", [Math.round(s / 86400)]);
+  return new Date(iso).toLocaleDateString(LOC, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function pmClassify(t) {
+  const a = t.amenity || '', s = t.shop || '', tr = t.tourism || '';
+  if (a === 'drinking_water' || a === 'water_point' || ((a === 'fountain' || t.man_made === 'water_tap') && t.drinking_water === 'yes')) return 'fontaine';
+  if (s === 'bakery' || s === 'pastry') return 'boulangerie';
+  if (/^(convenience|supermarket|general|greengrocer|farm)$/.test(s)) return 'epicerie';
+  if (tr === 'camp_site' || tr === 'camp_pitch') return 'bivouac';
+  if (tr === 'wilderness_hut' || tr === 'alpine_hut' || (a === 'shelter' && !/public_transport|parking|field/.test(t.shelter_type || ''))) return 'abri';
+  if (/^(cafe|restaurant|fast_food|pub|bar)$/.test(a)) return 'cafe';
+  if (s === 'bicycle' || a === 'bicycle_repair_station') return 'atelier';
+  if (a === 'device_charging_station' || (a === 'charging_station' && /^(yes|designated)$/.test(t.bicycle || ''))) return 'recharge';
+  return null;
+}
+function pmKind(t) { // nom précis du lieu OSM, sous le type
+  const a = t.amenity, s = t.shop, tr = t.tourism;
+  const K = { drinking_water: T("Point d'eau potable"), water_point: T("Point d'eau"), fountain: T("Fontaine"), cafe: T("Café"), restaurant: 'Restaurant', fast_food: T("Restauration rapide"), pub: 'Pub', bar: 'Bar',
+    shelter: T("Abri"), bicycle_repair_station: T("Station de réparation"), charging_station: T("Borne de recharge"), device_charging_station: T("Prise de recharge") };
+  const SH = { bakery: T("Boulangerie"), pastry: T("Pâtisserie"), convenience: T("Supérette"), supermarket: T("Supermarché"), general: T("Épicerie"), greengrocer: T("Primeur"), farm: T("Vente à la ferme"), bicycle: T("Magasin de vélo") };
+  const TO = { camp_site: t.backcountry === 'yes' || t.camp_site === 'basic' ? T("Aire de bivouac") : 'Camping', camp_pitch: T("Emplacement de bivouac"), wilderness_hut: T("Abri"), alpine_hut: T("Refuge") };
+  return (a && K[a]) || (s && SH[s]) || (tr && TO[tr]) || (t.man_made === 'water_tap' ? T("Robinet d'eau potable") : '');
+}
+function pmQuery(b) {
+  return `[out:json][timeout:25][bbox:${b.map(x => x.toFixed(4)).join(',')}];
+(
+nwr["amenity"~"^(drinking_water|water_point|cafe|restaurant|fast_food|pub|bar|shelter|bicycle_repair_station|device_charging_station)$"];
+nwr["amenity"="fountain"]["drinking_water"="yes"];
+nwr["man_made"="water_tap"]["drinking_water"="yes"];
+nwr["amenity"="charging_station"]["bicycle"~"^(yes|designated)$"];
+nwr["shop"~"^(bakery|pastry|convenience|supermarket|general|greengrocer|farm|bicycle)$"];
+nwr["tourism"~"^(camp_site|camp_pitch|wilderness_hut|alpine_hut)$"];
+);
+out center tags;`;
+}
+function pmNote(txt) { const n = $('#pmNote'); if (!n) return; n.textContent = txt || ''; n.hidden = !txt; }
+function pmStatus() {
+  if (!PM.map) return;
+  if (PM.placing) return pmNote('');
+  if (PM.map.getZoom() < PM_MINZ) return pmNote(T("Zoome pour voir les points OpenStreetMap"));
+  if (PM.running || PM.queue.length) return pmNote(T("Chargement des points OpenStreetMap…"));
+  if (PM.failed) return pmNote(T("OpenStreetMap ne répond pas : réessaie dans un moment"));
+  if (PM.cap) return pmNote(T("Beaucoup de points ici : zoome pour tous les voir"));
+  pmNote('');
+}
+
+/* chargement des points OSM par carrés */
+function pmTilesInView() {
+  const b = PM.map.getBounds().pad(0.15), keys = [];
+  const a0 = Math.floor(b.getSouth() / PM_TILE), a1 = Math.floor(b.getNorth() / PM_TILE), o0 = Math.floor(b.getWest() / PM_TILE), o1 = Math.floor(b.getEast() / PM_TILE);
+  for (let a = a0; a <= a1; a++) for (let o = o0; o <= o1; o++) keys.push(a + ':' + o);
+  return keys;
+}
+function pmAddItems(items) {
+  for (const it of items) if (!PM.osm.has(it.ref)) PM.osm.set(it.ref, it);
+}
+async function pmLoadOsm() {
+  if (!PM.map || PM.map.getZoom() < PM_MINZ) { pmStatus(); return; }
+  const keys = pmTilesInView().slice(0, 36);
+  PM.queue = PM.queue.filter(k => keys.includes(k)); // on oublie les carrés qui ne sont plus à l'écran
+  for (const k of keys) {
+    if (PM.tiles.has(k) || PM.busy.has(k) || PM.queue.includes(k)) continue;
+    PM.busy.add(k);
+    let rec = null; try { rec = await idbRun('pois', 'readonly', st => st.get('pm1|' + k)); } catch (e) {}
+    PM.busy.delete(k);
+    if (rec && Date.now() - rec.at < PM_TTL) { PM.tiles.set(k, true); pmAddItems(rec.items); continue; }
+    PM.queue.push(k);
+  }
+  pmRender(); pmPump();
+}
+function pmPump() {
+  pmStatus();
+  while (PM.running < 2 && PM.queue.length) {
+    const k = PM.queue.shift(); PM.running++; PM.busy.add(k);
+    const [a, o] = k.split(':').map(Number);
+    overpassFetch(pmQuery([a * PM_TILE, o * PM_TILE, (a + 1) * PM_TILE, (o + 1) * PM_TILE]))
+      .then(els => {
+        const items = [];
+        for (const e of els || []) {
+          const tags = e.tags || {}, type = pmClassify(tags); if (!type) continue;
+          const lat = e.lat ?? e.center?.lat, lon = e.lon ?? e.center?.lon; if (!isFinite(lat) || !isFinite(lon)) continue;
+          items.push({ src: 'osm', ref: e.type + '/' + e.id, type, name: tags.name || '', lat, lon, tags });
+        }
+        PM.tiles.set(k, true); PM.failed = 0; pmAddItems(items);
+        idbRun('pois', 'readwrite', st => st.put({ key: 'pm1|' + k, at: Date.now(), items })).catch(() => {});
+      })
+      .catch(() => { PM.failed++; })
+      .finally(() => { PM.running--; PM.busy.delete(k); pmRender(); pmPump(); });
+  }
+}
+
+/* points des cyclistes (Supabase) */
+async function pmLoadUsr(force) {
+  if (!PM.map) return;
+  const sb = await sbIfLogged(); if (!sb) return;
+  const b = PM.map.getBounds(), q = 0.25;
+  const s = Math.floor((b.getSouth() - 0.1) / q) * q, n = Math.ceil((b.getNorth() + 0.1) / q) * q, w = Math.floor((b.getWest() - 0.1) / q) * q, e = Math.ceil((b.getEast() + 0.1) / q) * q;
+  const box = [s, w, n, e].join(',');
+  if (!force && box === PM.usrBox) return;
+  if (n - s > 8 || e - w > 12) return; // trop dézoomé : on garde ce qu'on a
+  PM.usrBox = box;
+  const { data, error } = await sb.from('poi').select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at')
+    .gte('lat', s).lte('lat', n).gte('lon', w).lte('lon', e).neq('status', 'removed').order('created_at', { ascending: false }).limit(800);
+  if (error) { PM.usrBox = ''; return; }
+  for (const [id, it] of PM.usr) if (it.poi.lat >= s && it.poi.lat <= n && it.poi.lon >= w && it.poi.lon <= e) PM.usr.delete(id);
+  for (const p of data || []) PM.usr.set(p.id, { src: 'usr', key: 'p:' + p.id, type: p.type, name: p.name, lat: p.lat, lon: p.lon, poi: p });
+  pmRender();
+}
+
+/* dessin */
+function pmIcon(it) {
+  const t = PM_TYPES[it.type], u = it.src === 'usr', sz = u ? 34 : 26;
+  return L.divIcon({ className: 'pm-icon', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+    html: `<span class="pm-pin ${u ? 'usr' : 'osm'}${u && it.poi.status === 'pending' ? ' pend' : ''}" style="--c:${t.col}">${pmSvg(t.d)}</span>` });
+}
+function pmRender() {
+  if (!PM.map || !PM.layer) return;
+  PM.layer.clearLayers();
+  const b = PM.map.getBounds().pad(0.1), replaced = new Set();
+  let nO = 0, nU = 0;
+  const usr = [...PM.usr.values()];
+  for (const it of usr) if (it.poi.osm_ref && it.poi.status === 'valid') replaced.add(it.poi.osm_ref);
+  if (PM.src.osm && PM.map.getZoom() >= PM_MINZ - 1) {
+    let shown = 0; PM.cap = false;
+    for (const it of PM.osm.values()) {
+      if (!PM.on.has(it.type) || replaced.has(it.ref) || !b.contains([it.lat, it.lon])) continue;
+      if (shown >= PM_MAX_OSM) { PM.cap = true; break; }
+      L.marker([it.lat, it.lon], { icon: pmIcon(it), keyboard: true, title: (it.name || pmKind(it.tags) || PM_TYPES[it.type].lbl) + ' · OpenStreetMap', riseOnHover: true })
+        .on('click', () => pmShow(it)).addTo(PM.layer);
+      shown++;
+    }
+    nO = shown;
+  }
+  if (PM.src.usr) for (const it of usr) {
+    if (!PM.on.has(it.type) || !b.contains([it.lat, it.lon])) continue;
+    L.marker([it.lat, it.lon], { icon: pmIcon(it), keyboard: true, zIndexOffset: 500, title: it.name + ' · ' + T("ajouté par un cycliste"), riseOnHover: true })
+      .on('click', () => pmShow(it)).addTo(PM.layer);
+    nU++;
+  }
+  $('#pmCntOsm').textContent = PM.map.getZoom() < PM_MINZ ? T("zoome pour les voir") : T("{0} points · données libres", [nO]);
+  $('#pmCntUsr').textContent = T("{0} points · avis et photos", [nU]);
+  pmStatus();
+}
+function pmChips() {
+  $('#pmChips').innerHTML = PM_ORDER.map(k => { const t = PM_TYPES[k];
+    return `<button type="button" class="pm-chip" data-k="${k}" aria-pressed="${PM.on.has(k)}" style="--c:${t.col}">${pmSvg(t.d)}<span>${escH(t.lbl)}</span></button>`; }).join('');
+}
+$('#pmChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-k]'); if (!b) return;
+  const k = b.dataset.k; if (PM.on.has(k)) PM.on.delete(k); else PM.on.add(k);
+  b.setAttribute('aria-pressed', String(PM.on.has(k)));
+  try { localStorage.setItem('pmr-pm-types', JSON.stringify([...PM.on])); } catch (e) {}
+  pmRender();
+});
+for (const [id, k] of [['#pmSrcOsm', 'osm'], ['#pmSrcUsr', 'usr']]) $(id).addEventListener('click', e => {
+  PM.src[k] = !PM.src[k]; e.currentTarget.setAttribute('aria-pressed', String(PM.src[k])); pmRender();
+});
+
+/* ouverture de la page */
+function pmRouteDraw() {
+  const P = S.P || null;
+  $('#pmRoute').hidden = !P;
+  if (P === PM.routeSig) return false;
+  PM.routeSig = P;
+  if (PM.route) { PM.route.remove(); PM.route = null; }
+  if (!P || !P.n) return false;
+  const step = Math.max(1, Math.ceil(P.n / 2500)), ll = [];
+  for (let i = 0; i < P.n; i += step) ll.push([P.pts[i].lat, P.pts[i].lon]);
+  ll.push([P.pts[P.n - 1].lat, P.pts[P.n - 1].lon]);
+  PM.route = L.layerGroup([
+    L.polyline(ll, { color: '#ffffff', weight: 8, opacity: 0.9, interactive: false }),
+    L.polyline(ll, { color: getComputedStyle(document.documentElement).getPropertyValue('--rain').trim() || '#3e86c0', weight: 4.5, opacity: 1, interactive: false })
+  ]).addTo(PM.map);
+  return true;
+}
+function pmFitRoute() { if (PM.route) PM.map.fitBounds(L.featureGroup(PM.route.getLayers()).getBounds(), { padding: [30, 30] }); }
+function pmInit() {
+  if (PM.map) return;
+  if (typeof L === 'undefined') { $('#pmMap').innerHTML = `<p class="hint" style="padding:16px">${escH(T("La carte n'a pas pu se charger (connexion requise)."))}</p>`; return; }
+  PM.map = L.map('pmMap', { zoomControl: !MAP_TOUCH, attributionControl: true });
+  const bases = makeBases(); let bn = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)');
+  try { const sv = localStorage.getItem('pmr-pm-base'); if (sv && bases[sv]) bn = sv; } catch (e) {}
+  bases[bn].addTo(PM.map);
+  L.control.layers(bases, null, { position: 'topright' }).addTo(PM.map);
+  PM.map.on('baselayerchange', e => { try { localStorage.setItem('pmr-pm-base', e.name); } catch (er) {} });
+  PM.layer = L.layerGroup().addTo(PM.map);
+  let v = null; try { v = JSON.parse(localStorage.getItem('pmr-pm-view') || 'null'); } catch (e) {}
+  if (v && isFinite(v.lat)) PM.map.setView([v.lat, v.lon], v.z); else PM.map.setView([46.6, 2.4], 6);
+  let tm = 0;
+  PM.map.on('moveend', () => {
+    const c = PM.map.getCenter(); try { localStorage.setItem('pmr-pm-view', JSON.stringify({ lat: +c.lat.toFixed(5), lon: +c.lng.toFixed(5), z: PM.map.getZoom() })); } catch (e) {}
+    pmRender(); clearTimeout(tm); tm = setTimeout(() => { pmLoadOsm(); pmLoadUsr(); }, 350);
+  });
+  pmChips();
+}
+function pmOpen() {
+  pageOpen('mapPage', '#tabMap');
+  pmInit(); if (!PM.map) return;
+  setTimeout(() => {
+    PM.map.invalidateSize();
+    const fresh = pmRouteDraw();
+    if (fresh && !PM.placing) pmFitRoute();
+    pmLoadOsm(); pmLoadUsr(true);
+  }, 30);
+}
+$('#tabMap').addEventListener('click', pmOpen);
+$('#pmRoute').addEventListener('click', pmFitRoute);
+$('#pmLocate').addEventListener('click', () => {
+  const b = $('#pmLocate');
+  if (!navigator.geolocation) return pmNote(T("Localisation indisponible sur cet appareil"));
+  b.classList.add('busy');
+  navigator.geolocation.getCurrentPosition(p => { // position utilisée seulement sur l'appareil, jamais envoyée
+    b.classList.remove('busy');
+    const ll = [p.coords.latitude, p.coords.longitude];
+    if (PM.me) PM.me.setLatLng(ll); else PM.me = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#3e86c0', fillOpacity: 1, interactive: false }).addTo(PM.map);
+    PM.map.setView(ll, Math.max(PM.map.getZoom(), 14));
+  }, () => { b.classList.remove('busy'); pmNote(T("Localisation refusée ou indisponible")); setTimeout(pmStatus, 3500); }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+});
+
+/* feuille du bas : fiche d'un point, ajout, avis */
+function pmSheet(html) { const s = $('#pmSheet'); $('#pmSheetBody').innerHTML = html; s.hidden = false; s.scrollTop = 0; }
+function pmSheetClose() { $('#pmSheet').hidden = true; PM.sel = null; if (PM.placing) pmPlacingOff(); }
+function pmCanWrite() { return !GUEST && hasSbToken(); }
+function pmGuestSheet() {
+  pmSheet(`<div class="pm-sh"><h3 id="pmSheetTitle">${escH(T("Avec un compte gratuit"))}</h3><button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Fermer"))}">✕</button></div>
+    <p class="pm-msg">${escH(T("Crée ton compte pour ajouter des points, laisser des avis et des photos. La carte reste consultable en démo."))}</p>
+    <div class="pm-acts"><button type="button" class="btn primary" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></div>`);
+}
+function pmInfoRows(it) {
+  const rows = [];
+  if (it.src === 'usr') {
+    const p = it.poi;
+    if (p.details) rows.push(escH(p.details));
+    if (p.hours) rows.push(`<b>${escH(T("Horaires"))} :</b> ${escH(p.hours)}`);
+    if (p.contact) rows.push(escH(p.contact));
+  } else {
+    const t = it.tags;
+    if (t.opening_hours) rows.push(`<b>${escH(T("Horaires"))} :</b> ${escH(t.opening_hours)}`);
+    const adr = [[t['addr:housenumber'], t['addr:street']].filter(Boolean).join(' '), t['addr:city']].filter(Boolean).join(', ');
+    if (adr) rows.push(escH(adr));
+    if (t.drinking_water === 'no') rows.push(escH(T("Eau non potable d'après OpenStreetMap")));
+    if (t.seasonal === 'yes' || t.seasonal) rows.push(escH(T("Saisonnier")));
+    if (t.fee === 'yes') rows.push(escH(T("Payant")));
+    if (t.website) rows.push(`<a href="${escH(/^https?:\/\//.test(t.website) ? t.website : 'https://' + t.website)}" target="_blank" rel="noopener">${escH(T("Site web"))}</a>`);
+    if (t.phone) rows.push(`<a href="tel:${escH(t.phone.replace(/\s/g, ''))}">${escH(t.phone)}</a>`);
+  }
+  return rows.length ? `<div class="pm-box">${rows.map(r => `<p>${r}</p>`).join('')}</div>` : '';
+}
+function pmShow(it) {
+  if (PM.placing) pmPlacingOff();
+  PM.sel = it;
+  const t = PM_TYPES[it.type], u = it.src === 'usr', p = it.poi;
+  const title = it.name || (u ? t.lbl : (pmKind(it.tags) || t.lbl));
+  const own = u && p.user_id === SB_UID;
+  pmSheet(`<div class="pm-sh"><div>
+      <div class="pm-badges"><span class="pm-tb${u ? '' : ' osm'}" style="--c:${t.col}">${pmSvg(t.d)}${escH(t.lbl)}</span>
+        <span class="pm-src">${u ? escH(p.author ? T("Ajouté par {0}", [p.author]) : T("Ajouté par un cycliste")) : escH(T("Source : OpenStreetMap"))}</span></div>
+      <h3 id="pmSheetTitle">${escH(title)}</h3>
+      ${!u && it.name && pmKind(it.tags) ? `<span class="pm-src">${escH(pmKind(it.tags))}</span>` : ''}
+    </div><button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Fermer"))}">✕</button></div>
+    ${u && p.status === 'pending' ? `<p class="pm-pending">${pmSvg('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2').replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"')}${escH(T("Point en cours de validation"))}</p>` : ''}
+    ${pmInfoRows(it)}
+    <div class="pm-box" id="pmVotes"><p class="pm-msg">${escH(T("Chargement…"))}</p></div>
+    <p class="pm-sub" id="pmRevHead">${escH(T("Avis"))}</p>
+    <ul class="pm-revs" id="pmRevs"></ul>
+    <div id="pmRevForm"></div>
+    <div class="pm-acts" id="pmActs"><button type="button" class="btn primary" id="pmRevBtn">${escH(T("Laisser un avis"))}</button></div>
+    ${u ? '' : `<a class="pm-osm-link" href="https://www.openstreetmap.org/${escH(it.ref)}" target="_blank" rel="noopener">${escH(T("Une info est fausse ? Corriger sur OpenStreetMap"))}</a>
+      <p class="hint" style="margin-top:8px">${escH(T("Données © les contributeurs d'OpenStreetMap, licence ODbL"))}</p>`}
+    ${own && p.status === 'pending' ? `<p style="margin-top:12px"><button type="button" class="linkbtn" id="pmDelMine">${escH(T("Supprimer mon point"))}</button></p>` : ''}`);
+  $('#pmRevBtn').addEventListener('click', () => pmCanWrite() ? pmReviewForm(it) : pmGuestSheet());
+  const dm = $('#pmDelMine'); if (dm) dm.addEventListener('click', () => pmDeleteMine(it, dm));
+  pmLoadDetail(it);
+}
+async function pmLoadDetail(it) {
+  const key = it.src === 'usr' ? it.key : it.ref, sb = await sbIfLogged();
+  if (!sb || PM.sel !== it) return;
+  const [rv, ck] = await Promise.all([
+    sb.from('poi_review').select('id,user_id,author,rating,comment,photo,status,created_at').eq('poi_key', key).neq('status', 'removed').order('created_at', { ascending: false }).limit(40),
+    sb.rpc('poi_checks', { keys: [key] })
+  ]);
+  if (PM.sel !== it) return;
+  const revs = rv.data || [], c = (ck.data || [])[0] || { ok: 0, ko: 0, last_ok: null, mine: null }, t = PM_TYPES[it.type];
+  const yes = t.yes || T("Oui, toujours là"), no = t.no || T("Non, disparu");
+  const state = c.last_ok ? T("Confirmé {0}", [pmAgo(c.last_ok)]) : T("Pas encore confirmé");
+  $('#pmVotes').innerHTML = `<p style="display:flex;justify-content:space-between;gap:8px"><b>${escH(T("Toujours là ?"))}</b><span class="pm-msg">${escH(state)}${c.ko ? ' · ' + escH(T("{0} « non »", [c.ko])) : ''}</span></p>
+    <div class="pm-row2"><button type="button" class="pm-vote ok" data-v="1" aria-pressed="${c.mine === true}">${escH(yes)}</button><button type="button" class="pm-vote ko" data-v="0" aria-pressed="${c.mine === false}">${escH(no)}</button></div>`;
+  const rated = revs.filter(r => r.rating);
+  const avg = rated.length ? (rated.reduce((s, r) => s + r.rating, 0) / rated.length) : 0;
+  $('#pmRevHead').textContent = revs.length ? T("Avis · {0} / 5 · {1} avis", [avg ? avg.toLocaleString(LOC, { maximumFractionDigits: 1 }) : '–', revs.length]) : T("Pas encore d'avis");
+  $('#pmRevBtn').textContent = revs.length ? T("Laisser un avis") : T("Laisser le premier avis");
+  $('#pmRevs').innerHTML = revs.map(r => `<li class="pm-rev"><div>
+      <div class="who"><span>${escH(r.author || T("Un·e cycliste"))}</span><small>${escH(pmAgo(r.created_at))}</small></div>
+      ${r.rating ? `<span class="stars" aria-label="${escH(T("{0} sur 5", [r.rating]))}">${pmStars(r.rating)}</span>` : ''}
+      ${r.comment ? `<p>${escH(r.comment)}</p>` : ''}
+      <div class="pm-meta"><span>${r.status === 'pending' ? escH(T("en validation")) : ''}</span>
+        ${r.user_id === SB_UID ? `<button type="button" class="linkbtn" data-del="${r.id}">${escH(T("Supprimer"))}</button>` : pmCanWrite() ? `<button type="button" class="linkbtn" data-rep="${r.id}">${escH(T("Signaler"))}</button>` : ''}</div>
+    </div>${r.photo ? `<img src="${escH(PM_PHOTO + r.photo)}" alt="${escH(T("Photo de {0}", [r.author || T("un·e cycliste")]))}" loading="lazy" data-big>` : ''}</li>`).join('');
+}
+$('#pmSheet').addEventListener('click', async e => {
+  if (e.target.closest('[data-pm-close]')) return pmSheetClose();
+  const img = e.target.closest('img[data-big]');
+  if (img) { const d = document.createElement('div'); d.className = 'pm-big'; d.innerHTML = `<img src="${escH(img.src)}" alt="${escH(img.alt)}">`; d.addEventListener('click', () => d.remove()); document.body.appendChild(d); return; }
+  const vb = e.target.closest('[data-v]');
+  if (vb && PM.sel) return pmVote(PM.sel, PM.sel.src === 'usr' ? PM.sel.key : PM.sel.ref, vb.dataset.v === '1');
+  const rep = e.target.closest('[data-rep]'), del = e.target.closest('[data-del]');
+  if (!rep && !del) return;
+  const sb = await sbIfLogged(); if (!sb) return;
+  if (rep) {
+    if (rep.dataset.ask !== '1') { rep.dataset.ask = '1'; rep.textContent = T("Confirmer le signalement"); return; }
+    const { error } = await sb.from('poi_report').insert({ review_id: rep.dataset.rep });
+    rep.replaceWith(Object.assign(document.createElement('span'), { textContent: error && !/duplicate|23505/.test(error.message + error.code) ? T("Signalement impossible") : T("Merci, c'est signalé") }));
+  } else {
+    if (del.dataset.ask !== '1') { del.dataset.ask = '1'; del.textContent = T("Confirmer la suppression"); return; }
+    const { error } = await sb.from('poi_review').delete().eq('id', del.dataset.del).eq('user_id', SB_UID);
+    if (!error && PM.sel) pmLoadDetail(PM.sel);
+  }
+});
+async function pmVote(it, key, ok) {
+  if (!pmCanWrite()) return pmGuestSheet();
+  const sb = await sbIfLogged(); if (!sb) return;
+  const { error } = await sb.from('poi_check').upsert({ poi_key: key, user_id: SB_UID, ok, at: new Date().toISOString() }, { onConflict: 'poi_key,user_id' });
+  if (error) { $('#pmVotes').insertAdjacentHTML('beforeend', `<p class="pm-msg err">${escH(T("Vote impossible pour le moment."))}</p>`); return; }
+  pmLoadDetail(it);
+}
+async function pmDeleteMine(it, btn) {
+  if (btn.dataset.ask !== '1') { btn.dataset.ask = '1'; btn.textContent = T("Confirmer la suppression"); return; }
+  const sb = await sbIfLogged(); if (!sb) return;
+  const { error } = await sb.from('poi').delete().eq('id', it.poi.id).eq('user_id', SB_UID);
+  if (error) { btn.textContent = T("Suppression impossible"); return; }
+  PM.usr.delete(it.poi.id); pmSheetClose(); pmRender();
+}
+
+/* note, texte, photo (formulaire commun à l'ajout et aux avis) */
+function pmStarsHtml(n) {
+  return `<div class="pm-stars" role="radiogroup" aria-label="${escH(T("Note sur 5"))}">${[1, 2, 3, 4, 5].map(i =>
+    `<button type="button" role="radio" aria-checked="${i === n}" data-star="${i}" aria-label="${escH(T("{0} sur 5", [i]))}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="${i <= n ? 'var(--brand)' : 'none'}" stroke="${i <= n ? 'var(--lv1t)' : 'var(--muted)'}"><path d="M12 3l2.6 5.6 6 .6-4.6 4 1.4 6L12 16l-5.4 3.2 1.4-6-4.6-4 6-.6z"/></svg></button>`).join('')}</div>`;
+}
+function pmRevFields(f, hint) {
+  return `<div><span class="pm-lbl">${escH(T("Ta note et ton avis · facultatif"))}</span>${pmStarsHtml(f.rating)}</div>
+    <label><span class="pm-lbl" style="position:absolute;left:-9999px">${escH(T("Ton avis"))}</span><textarea id="pmCom" maxlength="1000" placeholder="${escH(hint)}">${escH(f.comment || '')}</textarea></label>
+    <div class="pm-ph"><label><input type="file" accept="image/*" id="pmFile" hidden>${pmSvg('M4 8h3l2-3h6l2 3h3v11H4zM12 9.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z')}${escH(f.photo ? T("Changer la photo") : T("Ajouter une photo"))}</label>
+      ${f.photoUrl ? `<img src="${f.photoUrl}" alt="${escH(T("Aperçu de la photo"))}">` : ''}<span class="pm-msg" id="pmPhMsg"></span></div>`;
+}
+function pmBindRevFields(f, rerender) {
+  const box = $('#pmSheetBody');
+  box.querySelectorAll('[data-star]').forEach(b => b.addEventListener('click', () => { f.comment = $('#pmCom').value; f.rating = +b.dataset.star === f.rating ? 0 : +b.dataset.star; rerender(); }));
+  $('#pmCom').addEventListener('input', e => { f.comment = e.target.value; });
+  $('#pmFile').addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    $('#pmPhMsg').textContent = T("Préparation de la photo…");
+    try { f.photo = await pmPhoto(file); if (f.photoUrl) URL.revokeObjectURL(f.photoUrl); f.photoUrl = URL.createObjectURL(f.photo); f.comment = $('#pmCom').value; rerender(); }
+    catch (er) { $('#pmPhMsg').textContent = T("Cette image n'a pas pu être lue."); }
+  });
+}
+// Photo réduite à 1600 px et réenregistrée en JPEG : plus légère, et sans les données EXIF (position GPS de l'appareil photo).
+async function pmPhoto(file) {
+  let src;
+  try { src = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) { src = await new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ko; im.src = URL.createObjectURL(file); }); }
+  const w0 = src.width || src.naturalWidth, h0 = src.height || src.naturalHeight, k = Math.min(1, 1600 / Math.max(w0, h0));
+  const c = document.createElement('canvas'); c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  for (const q of [0.82, 0.7, 0.55]) {
+    const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', q));
+    if (blob && blob.size < 2.8e6) return blob;
+  }
+  throw new Error('photo');
+}
+async function pmPostReview(sb, key, name, f) {
+  let photo = null;
+  if (f.photo) {
+    photo = SB_UID + '/' + crypto.randomUUID() + '.jpg';
+    const { error } = await sb.storage.from('poi-photos').upload(photo, f.photo, { contentType: 'image/jpeg', upsert: false });
+    if (error) throw new Error(T("La photo n'a pas pu être envoyée."));
+  }
+  const comment = (f.comment || '').trim().slice(0, 1000) || null;
+  const { error } = await sb.from('poi_review').insert({ poi_key: key, poi_name: (name || '').slice(0, 120) || null, rating: f.rating || null, comment, photo });
+  if (error) throw new Error(T("L'avis n'a pas pu être enregistré."));
+}
+function pmReviewForm(it) {
+  const f = PM.form = { rating: 0, comment: '', photo: null, photoUrl: '' };
+  const draw = () => {
+    $('#pmActs').hidden = true;
+    $('#pmRevForm').innerHTML = `<div class="pm-form">${pmRevFields(f, PM_TYPES[it.type].hint)}<p class="pm-msg" id="pmFormMsg" aria-live="polite"></p>
+      <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" id="pmRevCancel">${escH(T("Annuler"))}</button><button type="button" class="btn primary" id="pmRevSend">${escH(T("Publier l'avis"))}</button></div></div>`;
+    pmBindRevFields(f, draw);
+    $('#pmRevCancel').addEventListener('click', () => { $('#pmRevForm').innerHTML = ''; $('#pmActs').hidden = false; });
+    $('#pmRevSend').addEventListener('click', async () => {
+      if (!f.rating && !(f.comment || '').trim() && !f.photo) { $('#pmFormMsg').textContent = T("Mets une note, un mot ou une photo."); return; }
+      const btn = $('#pmRevSend'); btn.disabled = true; $('#pmFormMsg').textContent = T("Envoi…");
+      try {
+        const sb = await sbIfLogged(); if (!sb) throw new Error(T("Connecte-toi pour laisser un avis."));
+        await pmPostReview(sb, it.src === 'usr' ? it.key : it.ref, it.name || (it.tags ? pmKind(it.tags) : ''), f);
+        $('#pmRevForm').innerHTML = `<p class="pm-msg">${escH(T("Merci ! Ton avis est publié."))}</p>`; $('#pmActs').hidden = false; pmLoadDetail(it);
+      } catch (er) { btn.disabled = false; $('#pmFormMsg').className = 'pm-msg err'; $('#pmFormMsg').textContent = er.message; }
+    });
+  };
+  draw();
+  $('#pmRevForm').scrollIntoView({ block: 'nearest' });
+}
+
+/* ajout d'un point : repère fixe au-dessus de la feuille, on déplace la carte dessous */
+function pmAimPos() {
+  const wrap = $('.pm-mapwrap'), W = wrap.clientWidth, H = wrap.clientHeight, wide = innerWidth > 700;
+  return wide ? { x: Math.round((W - 416) / 2), y: Math.round(H * 0.5) } : { x: Math.round(W / 2), y: Math.round(H * 0.3) };
+}
+function pmAimPlace() {
+  const a = $('#pmAim'), p = pmAimPos(), t = PM_TYPES[PM.form.type];
+  a.style.left = p.x + 'px'; a.style.top = p.y + 'px'; a.style.setProperty('--pmc', t.col);
+  a.querySelector('.pm-aim-pin').innerHTML = pmSvg(t.d);
+}
+function pmAimLatLng() { const p = pmAimPos(); return PM.map.containerPointToLatLng([p.x, p.y]); }
+function pmPlacingOff() {
+  PM.placing = false; document.body.classList.remove('pm-placing'); $('#pmAim').hidden = true;
+  if (PM.form && PM.form.photoUrl) URL.revokeObjectURL(PM.form.photoUrl);
+  pmStatus();
+}
+function pmAddStart() {
+  if (!PM.map) return;
+  if (!pmCanWrite()) return pmGuestSheet();
+  const was = PM.placing;
+  PM.sel = null; PM.placing = true; document.body.classList.add('pm-placing');
+  PM.form = { type: PM.form && PM.form.type || 'fontaine', name: '', details: '', rating: 0, comment: '', photo: null, photoUrl: '' };
+  $('#pmAim').hidden = false; pmAimPlace(); pmNote('');
+  if (!was) { const c = PM.map.getSize(), p = pmAimPos(); PM.map.panBy([c.x / 2 - p.x, c.y / 2 - p.y], { animate: false }); }
+  pmAddDraw();
+}
+function pmAddDraw() {
+  const f = PM.form, t = PM_TYPES[f.type];
+  pmSheet(`<div class="pm-sh"><div><h3 id="pmSheetTitle">${escH(T("Ajouter un point"))}</h3><span class="pm-src">${escH(T("Place le repère au bon endroit en déplaçant la carte."))}</span></div>
+      <button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Annuler"))}">✕</button></div>
+    <div class="pm-form">
+      <div><span class="pm-lbl" id="pmTypeLbl">${escH(T("Type de point"))}</span>
+        <div class="pm-types" role="radiogroup" aria-labelledby="pmTypeLbl">${PM_ORDER.map(k => { const x = PM_TYPES[k];
+          return `<button type="button" class="pm-type" role="radio" aria-checked="${k === f.type}" data-type="${k}" style="--c:${x.col}"><i>${pmSvg(x.d)}</i>${escH(x.lbl)}</button>`; }).join('')}</div></div>
+      <label><span>${escH(T("Nom du lieu"))}</span><input type="text" id="pmName" maxlength="80" value="${escH(f.name)}" placeholder="${escH(t.lbl)}"></label>
+      <label><span>${escH(T("Infos utiles · facultatif"))}</span><textarea id="pmDet" maxlength="500" placeholder="${escH(t.hint)}">${escH(f.details)}</textarea></label>
+      ${pmRevFields(f, T("Ton avis sur ce lieu"))}
+      ${f.type === 'bivouac' ? `<p class="pm-warn">${pmSvg('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5M12 16.5v.1').replace('<svg', '<svg width="18" height="18" style="flex:none" fill="none" stroke="var(--lv1t)" stroke-width="2"')}${escH(T("Le bivouac est réglementé selon les lieux (parcs, réserves, forêts). Indique si c'est autorisé ou toléré."))}</p>` : ''}
+      <p class="pm-msg">${escH(T("Ton point est visible tout de suite, avec la mention « en cours de validation » le temps qu'on le vérifie."))}</p>
+      <p class="pm-msg" id="pmFormMsg" aria-live="polite"></p>
+      <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" data-pm-close>${escH(T("Annuler"))}</button><button type="button" class="btn primary" id="pmAddSend">${escH(T("Publier le point"))}</button></div>
+    </div>`);
+  const keep = () => { f.name = $('#pmName').value; f.details = $('#pmDet').value; f.comment = $('#pmCom').value; };
+  $('#pmSheetBody').querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => { keep(); f.type = b.dataset.type; pmAimPlace(); pmAddDraw(); }));
+  pmBindRevFields(f, () => { keep(); pmAddDraw(); });
+  $('#pmAddSend').addEventListener('click', pmAddSend);
+}
+async function pmAddSend() {
+  const f = PM.form, t = PM_TYPES[f.type], btn = $('#pmAddSend'), msg = $('#pmFormMsg');
+  f.name = $('#pmName').value; f.details = $('#pmDet').value; f.comment = $('#pmCom').value;
+  btn.disabled = true; msg.className = 'pm-msg'; msg.textContent = T("Envoi…");
+  try {
+    const sb = await sbIfLogged(); if (!sb) throw new Error(T("Connecte-toi pour ajouter un point."));
+    const ll = pmAimLatLng(), name = (f.name.trim() || t.lbl).slice(0, 80);
+    const { data, error } = await sb.from('poi').insert({ type: f.type, name, lat: +ll.lat.toFixed(6), lon: +ll.lng.toFixed(6), details: f.details.trim().slice(0, 500) || null })
+      .select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').single();
+    if (error || !data) throw new Error(/row-level|policy|permission/i.test(error && error.message || '') ? T("Ton compte ne peut pas encore ajouter de point.") : T("Le point n'a pas pu être enregistré."));
+    const it = { src: 'usr', key: 'p:' + data.id, type: data.type, name: data.name, lat: data.lat, lon: data.lon, poi: data };
+    PM.usr.set(data.id, it);
+    let revErr = '';
+    if (f.rating || f.comment.trim() || f.photo) { try { await pmPostReview(sb, it.key, name, f); } catch (er) { revErr = er.message; } }
+    pmPlacingOff(); pmRender(); pmShow(it);
+    if (revErr) $('#pmRevForm').innerHTML = `<p class="pm-msg err">${escH(revErr)}</p>`;
+  } catch (er) { btn.disabled = false; msg.className = 'pm-msg err'; msg.textContent = er.message; }
+}
+$('#pmAdd').addEventListener('click', pmAddStart);
+addEventListener('resize', () => { if (PM.placing) pmAimPlace(); });
+// Échap (et retour Android) : ferme d'abord la feuille du bas, puis la page.
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || $('#mapPage').hidden || $('#pmSheet').hidden) return;
+  if (document.querySelector('.pm-big')) { document.querySelector('.pm-big').remove(); } else pmSheetClose();
+  e.stopImmediatePropagation(); e.preventDefault();
+}, true);
+
 })();
 </script>
 </body>
