@@ -791,6 +791,28 @@ body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,bo
 .pm-round{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.06)}
 .pm-round svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .pm-round.busy{opacity:.5}
+.pm-round.busy svg{animation:pmSpin 1.2s linear infinite}
+@keyframes pmSpin{to{transform:rotate(360deg)}}
+.pm-round.on{color:var(--accent)}
+.pm-round.on .pm-dot{fill:currentColor}
+.pm-round.head{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.pm-round .pm-nav{display:none}
+.pm-round.head .pm-nav{display:block;fill:currentColor}
+.pm-round.head .pm-cross{display:none}
+.pm-loc{position:absolute;right:12px;bottom:80px;z-index:5;width:48px;height:48px}
+.pm-loc svg{width:22px;height:22px}
+.pm-cmp svg{width:26px;height:26px;stroke:none;transition:transform .15s linear}
+.pm-cmp .n{fill:var(--head)}
+.pm-cmp .s{fill:var(--muted)}
+.pm-cmp.head{background:var(--accent);border-color:var(--accent)}
+.pm-cmp.head .n{fill:#fff}
+.pm-cmp.head .s{fill:color-mix(in srgb,#fff 55%,transparent)}
+.pm-note button{pointer-events:auto;margin-left:8px;border:0;border-radius:999px;background:var(--brand);color:var(--brand-ink);font:700 12.5px/1 var(--f-body);padding:5px 10px;cursor:pointer}
+.pm-me-ic{background:none;border:0}
+.pm-me{position:relative;display:block;width:22px;height:22px}
+.pm-me b{position:absolute;inset:0;border-radius:50%;background:#2f7fd0;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.pm-me i{position:absolute;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;background:conic-gradient(from -28deg,rgba(47,127,208,.45) 0 56deg,transparent 56deg);-webkit-mask:radial-gradient(circle,#000 25%,transparent 70%);mask:radial-gradient(circle,#000 25%,transparent 70%);display:none}
+.pm-me.dir i{display:block}
 .pm-mapwrap .leaflet-top.leaflet-right{top:112px}
 .pm-legend{position:absolute;left:12px;bottom:16px;z-index:5;width:200px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.06)}
 .pm-legend button{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 8px;border-radius:10px;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
@@ -804,6 +826,7 @@ body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,bo
 .pm-add{position:absolute;right:12px;bottom:16px;z-index:5;height:52px;padding:0 20px 0 16px;border-radius:999px;border:0;background:var(--brand);color:var(--brand-ink);display:flex;align-items:center;gap:8px;font:700 16px/1 var(--f-body);cursor:pointer;box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.14)}
 .pm-add svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
 body.pm-placing .pm-add,body.pm-placing .pm-legend{display:none}
+body.pm-placing .pm-loc{bottom:16px}
 .pm-aim{position:absolute;left:50%;top:50%;z-index:4;pointer-events:none;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%)}
 .pm-aim[hidden]{display:none}
 .pm-aim-pin{width:40px;height:40px;border-radius:999px;background:var(--pmc,#1c87d6);border:3px solid #fff;box-shadow:0 0 0 1px var(--pmc,#1c87d6),0 4px 10px rgba(20,32,27,.3);display:flex;align-items:center;justify-content:center}
@@ -1008,13 +1031,14 @@ body.pm-placing .pm-add,body.pm-placing .pm-legend{display:none}
     <div id="pmMap" class="pm-map"></div>
     <p class="pm-note" id="pmNote" aria-live="polite" hidden></p>
     <div class="pm-ctl">
-      <button type="button" class="pm-round" id="pmLocate" aria-label="Me localiser" title="Me localiser"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+      <button type="button" class="pm-round pm-cmp" id="pmCompass" aria-label="Orientation de la carte : nord en haut" title="Nord en haut · toucher pour orienter la carte dans ton sens de déplacement"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="n" d="M12 2.5l3.6 9.5H8.4z"/><path class="s" d="M12 21.5L8.4 12h7.2z"/></svg></button>
       <button type="button" class="pm-round" id="pmRoute" aria-label="Recentrer sur mon parcours" title="Recentrer sur mon parcours" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></button>
     </div>
     <div class="pm-legend" role="group" aria-label="Sources des points">
       <button type="button" id="pmSrcOsm" aria-pressed="true"><span class="pm-sw osm" aria-hidden="true"></span><span><b>OpenStreetMap</b><small id="pmCntOsm"></small></span></button>
       <button type="button" id="pmSrcUsr" aria-pressed="true"><span class="pm-sw usr" aria-hidden="true"></span><span><b>Par les cyclistes</b><small id="pmCntUsr"></small></span></button>
     </div>
+    <button type="button" class="pm-round pm-loc" id="pmLocate" aria-label="Me localiser" title="Me localiser"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="pm-cross"><circle cx="12" cy="12" r="6.5"/><circle class="pm-dot" cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></g><path class="pm-nav" d="M12 2.5l7 18-7-4-7 4z"/></svg></button>
     <button type="button" class="pm-add" id="pmAdd"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ajouter</button>
     <div class="pm-aim" id="pmAim" hidden aria-hidden="true"><span class="pm-aim-pin"></span><span class="pm-aim-stem"></span><span class="pm-aim-tip">Déplace la carte pour placer le repère</span></div>
     <div class="pm-sheet" id="pmSheet" hidden role="dialog" aria-labelledby="pmSheetTitle"><div id="pmSheetBody"></div></div>
@@ -6417,11 +6441,16 @@ nwr["tourism"~"^(camp_site|camp_pitch|wilderness_hut|alpine_hut)$"];
 );
 out center tags;`;
 }
-function pmNote(txt) { const n = $('#pmNote'); if (!n) return; n.textContent = txt || ''; n.hidden = !txt; }
+function pmNote(txt, btn) {
+  const n = $('#pmNote'); if (!n) return; n.textContent = txt || ''; n.hidden = !txt;
+  if (txt && btn) { const b = document.createElement('button'); b.type = 'button'; b.textContent = btn[0]; b.addEventListener('click', btn[1]); n.appendChild(b); }
+}
 function pmStatus() {
   if (!PM.map) return;
   if (PM.placing) return pmNote('');
-  if (PM.map.getZoom() < PM_MINZ) return pmNote(T("Zoome pour voir les points OpenStreetMap"));
+  if (PM.map.getZoom() < PM_MINZ) return PM.loc.watch == null && navigator.geolocation
+    ? pmNote(T("Zoome pour voir les points OpenStreetMap"), [T("Me localiser"), () => pmLocStart()])
+    : pmNote(T("Zoome pour voir les points OpenStreetMap"));
   if (PM.running || PM.queue.length) return pmNote(T("Chargement des points OpenStreetMap…"));
   if (PM.failed) return pmNote(T("OpenStreetMap ne répond pas : réessaie dans un moment"));
   if (PM.cap) return pmNote(T("Beaucoup de points ici : zoome pour tous les voir"));
@@ -6599,9 +6628,14 @@ function pmRouteDraw() {
 }
 function pmFitRoute() { if (PM.route) PM.map.fitBounds(L.featureGroup(PM.route.getLayers()).getBounds(), { padding: [30, 30] }); }
 function pmInit() {
-  if (PM.map) return;
-  if (typeof L === 'undefined') { $('#pmMap').innerHTML = `<p class="hint" style="padding:16px">${escH(T("La carte n'a pas pu se charger (connexion requise)."))}</p>`; return; }
-  PM.map = L.map('pmMap', { zoomControl: !MAP_TOUCH, attributionControl: true });
+  if (PM.map) return Promise.resolve();
+  if (typeof L === 'undefined') { $('#pmMap').innerHTML = `<p class="hint" style="padding:16px">${escH(T("La carte n'a pas pu se charger (connexion requise)."))}</p>`; return Promise.resolve(); }
+  return PM.initP || (PM.initP = pmRotLoad().then(rot => { if (!PM.map) pmInitMap(rot); }));
+}
+function pmInitMap(rot) {
+  PM.rot = rot; // carte tournante (leaflet-rotate) ; sans le module, la carte reste nord en haut
+  PM.map = L.map('pmMap', Object.assign({ zoomControl: !MAP_TOUCH, attributionControl: true },
+    rot ? { rotate: true, bearing: 0, rotateControl: false, touchRotate: true, shiftKeyRotate: true } : {}));
   const bases = makeBases(); let bn = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)');
   try { const sv = localStorage.getItem('pmr-pm-base'); if (sv && bases[sv]) bn = sv; } catch (e) {}
   bases[bn].addTo(PM.map);
@@ -6615,30 +6649,201 @@ function pmInit() {
     const c = PM.map.getCenter(); try { localStorage.setItem('pmr-pm-view', JSON.stringify({ lat: +c.lat.toFixed(5), lon: +c.lng.toFixed(5), z: PM.map.getZoom() })); } catch (e) {}
     pmRender(); clearTimeout(tm); tm = setTimeout(() => { pmLoadOsm(); pmLoadUsr(); }, 350);
   });
-  pmChips();
+  let tr = 0;
+  PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
+  PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow || L0.head) { L0.follow = false; L0.head = false; pmLocUI(); } });
+  PM.map.getContainer().addEventListener('touchstart', e => { if (e.touches.length > 1 && PM.loc.head) { PM.loc.head = false; pmLocUI(); } }, { passive: true });
+  pmChips(); pmCompassUI();
 }
-function pmOpen() {
+async function pmOpen() {
   pageOpen('mapPage', '#tabMap');
-  pmInit(); if (!PM.map) return;
+  await pmInit(); if (!PM.map || $('#mapPage').hidden) return;
   setTimeout(() => {
     PM.map.invalidateSize();
     const fresh = pmRouteDraw();
     if (fresh && !PM.placing) pmFitRoute();
     pmLoadOsm(); pmLoadUsr(true);
+    pmLocResume(!fresh);
   }, 30);
 }
 $('#tabMap').addEventListener('click', pmOpen);
 $('#pmRoute').addEventListener('click', pmFitRoute);
+/* Ma position et orientation de la carte (31/10/2026). Suivi continu (watchPosition) ; la position reste sur l'appareil.
+   Carte nord en haut ou tournée dans le sens de déplacement (boussole #pmCompass, comme Google Maps) : cap GPS quand on roule
+   (≥ 7 km/h), sinon cap calculé entre deux positions, sinon boussole de l'appareil. Rotation par leaflet-rotate 0.2.8 (jsDelivr,
+   chargé à l'ouverture de la carte ; rotateControl coupé pour les autres cartes). Bouton #pmLocate : suivre → sens de déplacement → suivre. */
+const PM_ROT_JS = 'https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js';
+let pmRotP = null;
+function pmRotLoad() {
+  if (pmRotP) return pmRotP;
+  if (typeof L === 'undefined' || !L.Browser.any3d) return (pmRotP = Promise.resolve(false));
+  const ld = loadScript(PM_ROT_JS).then(() => {
+    if (!L.Map.prototype.setBearing) return;
+    L.Map.mergeOptions({ rotateControl: false }); // sinon chaque nouvelle carte (Vélotaf, export image) aurait un bouton de rotation
+    const ini = L.Map.prototype.initialize; // le module plante sur L.map(el) sans options
+    L.Map.include({ initialize(id, o) { return ini.call(this, id, o || {}); } });
+  });
+  return (pmRotP = Promise.race([ld, sleep(5000)]).then(() => !!L.Map.prototype.setBearing, () => false));
+}
+PM.loc = { watch: null, follow: false, head: false, ll: null, acc: 0, prev: null, course: null, courseAt: 0, comp: null, compAt: 0, compOn: null, mk: null, circ: null, bt: 0, raf: 0, first: false, errShown: false };
+const pmWrap = a => ((a % 360) + 540) % 360 - 180; // écart d'angle ramené entre -180 et 180
+function pmBear() { return PM.map && PM.rot ? PM.map.getBearing() : 0; }
+function pmHeading() { // cap à afficher (degrés depuis le nord) ou null
+  const L0 = PM.loc, now = Date.now();
+  if (L0.course != null && now - L0.courseAt < 10000) return L0.course;
+  if (L0.comp != null && now - L0.compAt < 3000) return L0.comp;
+  return null;
+}
+function pmCompassUI() {
+  const b = $('#pmCompass'); if (!b) return;
+  const br = pmBear(), head = PM.loc.head;
+  b.querySelector('svg').style.transform = `rotate(${br.toFixed(1)}deg)`;
+  b.classList.toggle('head', head);
+  const t = head ? T("Carte dans ton sens de déplacement · toucher pour remettre le nord en haut")
+    : Math.abs(pmWrap(br)) > 0.5 ? T("Carte tournée · toucher pour remettre le nord en haut")
+    : T("Nord en haut · toucher pour orienter la carte dans ton sens de déplacement");
+  b.title = t; b.setAttribute('aria-label', T("Orientation de la carte") + ' : ' + t);
+  b.setAttribute('aria-pressed', head ? 'true' : 'false');
+}
+function pmLocUI() {
+  const b = $('#pmLocate'), L0 = PM.loc; if (!b) return;
+  b.classList.toggle('on', L0.watch != null && L0.follow && !L0.head);
+  b.classList.toggle('head', L0.watch != null && L0.head);
+  const t = L0.watch == null ? T("Me localiser") : !L0.follow ? T("Revenir sur ma position")
+    : L0.head || !PM.rot ? T("Me suivre, nord en haut") : T("Orienter la carte dans mon sens de déplacement");
+  b.title = t; b.setAttribute('aria-label', t);
+  pmCompassUI();
+}
+// rotation animée vers le cap visé (PM.loc.bt), image par image
+function pmBearTo(deg) {
+  const L0 = PM.loc; if (!PM.rot || !PM.map) return;
+  L0.bt = deg;
+  if (L0.raf) return;
+  const step = () => {
+    const cur = PM.map.getBearing(), d = pmWrap(L0.bt - cur);
+    if (Math.abs(d) < 0.4 || reducedMotion()) { PM.map.setBearing(L0.bt); L0.raf = 0; return; }
+    PM.map.setBearing(cur + d * 0.22); L0.raf = requestAnimationFrame(step);
+  };
+  L0.raf = requestAnimationFrame(step);
+}
+function pmMeDraw() {
+  const L0 = PM.loc; if (!PM.map || !L0.ll) return;
+  if (!L0.mk) {
+    L0.circ = L.circle(L0.ll, { radius: L0.acc, color: '#2f7fd0', weight: 1, opacity: .35, fillColor: '#2f7fd0', fillOpacity: .1, interactive: false }).addTo(PM.map);
+    L0.mk = L.marker(L0.ll, { icon: L.divIcon({ className: 'pm-me-ic', html: '<span class="pm-me"><i></i><b></b></span>', iconSize: [22, 22], iconAnchor: [11, 11] }),
+      interactive: false, keyboard: false, zIndexOffset: 2000 }).addTo(PM.map);
+  }
+  L0.mk.setLatLng(L0.ll); L0.circ.setLatLng(L0.ll).setRadius(Math.min(L0.acc, 3000));
+  const el = L0.mk.getElement(), me = el && el.querySelector('.pm-me'), h = pmHeading();
+  if (me) { me.classList.toggle('dir', h != null); if (h != null) me.querySelector('i').style.transform = `rotate(${(h + pmBear()).toFixed(1)}deg)`; }
+}
+function pmHeadTick() {
+  pmMeDraw();
+  const L0 = PM.loc, h = pmHeading();
+  if (L0.head && h != null) pmBearTo(-h);
+}
+function pmLocFix(p) {
+  const L0 = PM.loc, c = p.coords, ll = { lat: c.latitude, lon: c.longitude };
+  $('#pmLocate').classList.remove('busy'); L0.errShown = false;
+  if (c.speed != null && c.speed >= 2 && c.heading != null && !isNaN(c.heading)) { L0.course = c.heading; L0.courseAt = Date.now(); }
+  else if (L0.prev && hav(L0.prev, ll) > 0.015 && (c.accuracy || 99) < 30) { L0.course = bearing(L0.prev, ll); L0.courseAt = Date.now(); }
+  if (!L0.prev || hav(L0.prev, ll) > 0.015) L0.prev = ll;
+  L0.ll = [ll.lat, ll.lon]; L0.acc = c.accuracy || 0;
+  pmMeDraw();
+  if (L0.first) { L0.first = false; if (L0.follow) PM.map.setView(L0.ll, Math.max(PM.map.getZoom(), 15)); }
+  else if (L0.follow && !PM.placing) PM.map.panTo(L0.ll, { animate: !reducedMotion(), duration: 0.5 });
+  pmHeadTick(); pmStatus();
+}
+function pmLocErr(e) {
+  const L0 = PM.loc; $('#pmLocate').classList.remove('busy');
+  if (e && e.code === 1) { pmLocStop(); pmNote(T("Localisation refusée : autorise-la dans les réglages de ton navigateur ou de ton téléphone")); setTimeout(pmStatus, 5000); return; }
+  if (!L0.ll && !L0.errShown) { L0.errShown = true; pmNote(T("Position introuvable pour l'instant, on continue d'essayer…")); setTimeout(pmStatus, 4000); }
+}
+function pmLocStart(head) {
+  const L0 = PM.loc;
+  if (!navigator.geolocation || !PM.map) { pmNote(T("Localisation indisponible sur cet appareil")); setTimeout(pmStatus, 3500); return false; }
+  L0.follow = true; if (head) L0.head = true;
+  if (L0.watch == null) {
+    $('#pmLocate').classList.add('busy'); L0.first = true;
+    L0.watch = navigator.geolocation.watchPosition(pmLocFix, pmLocErr, { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 });
+  } else if (L0.ll) PM.map.setView(L0.ll, Math.max(PM.map.getZoom(), 15));
+  try { localStorage.setItem('pmr-pm-loc', '1'); } catch (e) {}
+  pmLocUI(); pmHeadTick(); return true;
+}
+function pmLocStop(pause) { // pause : page fermée ou appli en arrière-plan, on reprendra
+  const L0 = PM.loc;
+  if (L0.watch != null) navigator.geolocation.clearWatch(L0.watch);
+  L0.watch = null; $('#pmLocate').classList.remove('busy');
+  pmCompOff();
+  if (!pause) {
+    L0.follow = L0.head = false;
+    if (L0.mk) { L0.mk.remove(); L0.circ.remove(); L0.mk = L0.circ = null; }
+    L0.ll = null; try { localStorage.setItem('pmr-pm-loc', '0'); } catch (e) {}
+  }
+  pmLocUI();
+}
+// Reprise à l'ouverture de la carte : seulement si la personne s'est déjà localisée et que l'autorisation est déjà donnée.
+async function pmLocResume(follow) {
+  const L0 = PM.loc; if (L0.watch != null || !navigator.geolocation) return;
+  if (L0.paused) { L0.paused = false; const f = L0.follow, h = L0.head; pmLocStart(); L0.follow = f; L0.head = h; if (h) pmCompOn(); return pmLocUI(); }
+  let want = false; try { want = localStorage.getItem('pmr-pm-loc') === '1'; } catch (e) {}
+  if (!want) return pmStatus();
+  try { const st = await navigator.permissions.query({ name: 'geolocation' }); if (st.state !== 'granted') return; } catch (e) { return; }
+  if ($('#mapPage').hidden) return;
+  pmLocStart(); L0.follow = follow && !L0.ll; L0.first = L0.follow; if (L0.head) pmCompOn(); pmLocUI();
+}
+// Boussole de l'appareil (sert à l'arrêt ; en roulant, le cap GPS prend le dessus)
+function pmCompOn() {
+  if (PM.loc.compOn) return;
+  const ev = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'ondeviceorientation' in window ? 'deviceorientation' : '';
+  if (!ev) return;
+  let last = 0;
+  const h = e => {
+    let hd = null;
+    if (e.webkitCompassHeading != null && !isNaN(e.webkitCompassHeading)) hd = e.webkitCompassHeading;
+    else if (e.alpha != null && (e.absolute || ev === 'deviceorientationabsolute')) hd = 360 - e.alpha;
+    if (hd == null) return;
+    const so = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+    PM.loc.comp = (hd + so + 360) % 360; PM.loc.compAt = Date.now();
+    const t = performance.now(); if (t - last < 80) return; last = t;
+    pmHeadTick();
+  };
+  window.addEventListener(ev, h); PM.loc.compOn = { ev, h };
+}
+function pmCompOff() { const c = PM.loc.compOn; if (c) { window.removeEventListener(c.ev, c.h); PM.loc.compOn = null; } PM.loc.comp = null; }
+// iPhone : la boussole demande une autorisation, à appeler pendant l'appui sur le bouton
+function pmCompAsk() {
+  const D = window.DeviceOrientationEvent;
+  // (Chrome récent l'a aussi et peut répondre « refusé » sans appui : on écoute quand même, sans risque)
+  if (D && typeof D.requestPermission === 'function') return D.requestPermission().then(pmCompOn, pmCompOn);
+  pmCompOn(); return Promise.resolve();
+}
+function pmHeadOn() {
+  if (!PM.rot) { pmNote(T("La carte ne peut pas tourner ici (connexion requise)")); setTimeout(pmStatus, 3500); return; }
+  pmCompAsk(); pmLocStart(true);
+  pmNote(T("Carte orientée dans ton sens de déplacement")); setTimeout(pmStatus, 2500);
+}
+function pmNorth() {
+  PM.loc.head = false; pmBearTo(0); pmLocUI();
+  pmNote(T("Nord en haut")); setTimeout(pmStatus, 1800);
+}
 $('#pmLocate').addEventListener('click', () => {
-  const b = $('#pmLocate');
-  if (!navigator.geolocation) return pmNote(T("Localisation indisponible sur cet appareil"));
-  b.classList.add('busy');
-  navigator.geolocation.getCurrentPosition(p => { // position utilisée seulement sur l'appareil, jamais envoyée
-    b.classList.remove('busy');
-    const ll = [p.coords.latitude, p.coords.longitude];
-    if (PM.me) PM.me.setLatLng(ll); else PM.me = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#3e86c0', fillOpacity: 1, interactive: false }).addTo(PM.map);
-    PM.map.setView(ll, Math.max(PM.map.getZoom(), 14));
-  }, () => { b.classList.remove('busy'); pmNote(T("Localisation refusée ou indisponible")); setTimeout(pmStatus, 3500); }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  const L0 = PM.loc; if (!PM.map) return;
+  if (L0.watch == null || !L0.follow) { L0.head = false; return pmLocStart(); }
+  if (L0.head || !PM.rot) { pmNorth(); return; }
+  pmHeadOn();
+});
+$('#pmCompass').addEventListener('click', () => {
+  if (!PM.map) return;
+  if (PM.loc.head || Math.abs(pmWrap(pmBear())) > 0.5) return pmNorth();
+  pmHeadOn();
+});
+// Carte fermée ou appli en arrière-plan : on arrête le GPS et la boussole (batterie), on reprend en revenant.
+new MutationObserver(() => { if ($('#mapPage').hidden && PM.loc.watch != null) { PM.loc.paused = true; pmLocStop(true); } }).observe($('#mapPage'), { attributes: true, attributeFilter: ['hidden'] });
+document.addEventListener('visibilitychange', () => {
+  const L0 = PM.loc;
+  if (document.hidden) { if (L0.watch != null) { L0.paused = true; pmLocStop(true); } return; }
+  if (L0.paused && !$('#mapPage').hidden && PM.map) { L0.paused = false; const f = L0.follow, h = L0.head; pmLocStart(); L0.follow = f; L0.head = h; if (h) pmCompOn(); pmLocUI(); }
 });
 
 /* feuille du bas : fiche d'un point, ajout, avis */
@@ -6844,6 +7049,8 @@ function pmAddStart() {
   if (!PM.map) return;
   if (!pmCanWrite()) return pmGuestSheet();
   const was = PM.placing;
+  if (PM.loc.follow || PM.loc.head) { PM.loc.follow = PM.loc.head = false; pmLocUI(); }
+  if (PM.rot && PM.map.getBearing()) PM.map.setBearing(0);
   PM.sel = null; PM.placing = true; document.body.classList.add('pm-placing');
   PM.form = { type: PM.form && PM.form.type || 'fontaine', name: '', details: '', rating: 0, comment: '', photo: null, photoUrl: '' };
   $('#pmAim').hidden = false; pmAimPlace(); pmNote('');
