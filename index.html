@@ -1564,6 +1564,7 @@ const OM_PROB = new Set(Object.values(OM_MODELS).filter(m => m.prob).flatMap(m =
 const WX_SRC = { loc: T("Le plus précis selon le lieu"), arome: T("AROME (Météo-France)"), met: 'MET Norway', om: 'Open-Meteo' };
 for (const [k, m] of Object.entries(OM_MODELS)) WX_SRC[k] = m.name;
 const WX_KEYS = Object.keys(WX_SRC);
+WX_SRC.mb = 'meteoblue'; // hors WX_KEYS : réservé aux admins (MB_ADMIN), depuis le 31/10/2026
 // Horizon de chaque source (jours à partir d'aujourd'hui) : au-delà, Open-Meteo prend le relais.
 const WX_DAYS = { mb: MB_DAYS, met: 9 };
 for (const [k, m] of Object.entries(OM_MODELS)) WX_DAYS[k] = m.days;
@@ -1638,9 +1639,23 @@ const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
 function wxSrc() {
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
-  if (WX_KEYS.includes(v)) return v; // meteoblue retiré le 29/10/2026 : un ancien choix « mb » revient au plus précis selon le lieu
+  if (v === 'mb' && MB_ADMIN) return 'mb'; // meteoblue : comptes admin seulement (31/10/2026)
+  if (WX_KEYS.includes(v)) return v; // meteoblue retiré pour tous le 29/10/2026 : un ancien choix « mb » d'un non-admin revient au plus précis selon le lieu
   return 'loc';
 }
+// meteoblue réservé aux admins depuis le 31/10/2026 : option « meteoblue (admin) » ajoutée au menu après Open-Meteo.
+// Le statut admin est gardé dans le navigateur (pmr-mb-admin) pour le premier calcul, puis confirmé par accessCheck ;
+// la fonction serveur `meteoblue` refuse de toute façon les autres comptes.
+let MB_ADMIN = false; try { MB_ADMIN = localStorage.getItem('pmr-mb-admin') === '1'; } catch (e) {}
+function mbAdmin(on) {
+  MB_ADMIN = !!on;
+  try { on ? localStorage.setItem('pmr-mb-admin', '1') : localStorage.removeItem('pmr-mb-admin'); } catch (e) {}
+  const sel = $('#wxSrcSel'); if (!sel) return;
+  let o = sel.querySelector('option[value="mb"]');
+  if (on && !o) { o = document.createElement('option'); o.value = 'mb'; o.textContent = T("meteoblue (admin)"); (sel.querySelector('option[value="om"]') || sel.lastElementChild).after(o); }
+  else if (!on && o) o.remove();
+}
+mbAdmin(MB_ADMIN);
 // Pictogrammes horaires meteoblue (1–35) → code WMO (skyLabel), nébulosité (%) et soleil (min par heure de jour)
 const MB_PICTO = [null, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 1, 1, 45, 45, 45, 3, 3, 3, 3, 61, 71, 65, 75, 95, 95, 75, 95, 80, 85, 61, 71, 67];
 const MB_CC = [null, 5, 25, 25, 25, 25, 25, 50, 50, 50, 60, 60, 60, 5, 25, 25, 100, 100, 100, 80, 80, 80, 100, 100, 100, 100, 100, 100, 100, 100, 100, 70, 70, 100, 100, 100];
@@ -4946,6 +4961,7 @@ async function accessCheck() {
     }
     document.body.classList.remove('gated');
     document.body.classList.toggle('admin', !!data.is_admin);
+    { const was = wxSrc(); mbAdmin(!!data.is_admin); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } }
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
     try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); sessionStorage.setItem('pmr-act-mode-' + S.mode, '1'); logAct('open'); } } catch (e) {}
     if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);

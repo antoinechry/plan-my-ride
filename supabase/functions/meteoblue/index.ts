@@ -1,8 +1,8 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 // Plan My Ride : prévisions meteoblue (API « packages ») pour des points de la trace.
-// La clé METEOBLUE_API_KEY (secret Supabase) n'est jamais renvoyée au navigateur. Réservé aux comptes actifs ayant
-// l'accès Plan My Ride (table app_users), dans la limite de quota_mb chargements par mois (null = illimité) ;
+// La clé METEOBLUE_API_KEY (secret Supabase) n'est jamais renvoyée au navigateur. Réservé aux comptes admin actifs
+// (table app_users, depuis le 31/10/2026), dans la limite de quota_mb chargements par mois (null = illimité) ;
 // chaque chargement est compté dans usage_log avec ses crédits. Le solde du compte meteoblue (usage) est réservé aux admins.
 // POST { points: [{ lat, lon, asl? }], days } → { ok, days, pkg, points: [{ t[], temp[], app[], pr[], prob[], pic[], day[],
 //   ws[] (km/h), wd[], gust[] (km/h), cc[], sun[], sunUnit, asl, modelrun, updated }] }
@@ -49,7 +49,8 @@ Deno.serve(async (req: Request) => {
   if (userErr || !user) return json({ error: 'unauthorized' }, 401);
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const acc = await access(admin, user.id);
-  if (!acc || acc.status !== 'active' || !acc.pmr) return json({ error: 'forbidden' }, 403);
+  // Depuis le 31/10/2026 : meteoblue réservé aux admins actifs (retiré pour les autres comptes le 29/10/2026).
+  if (!acc || acc.status !== 'active' || !acc.is_admin) return json({ error: 'forbidden' }, 403);
   const key = Deno.env.get('METEOBLUE_API_KEY');
   if (!key) return json({ error: 'no_key' }, 503);
   const mask = (s: string) => s.split(key).join('***');
