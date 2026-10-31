@@ -779,11 +779,33 @@ body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,bo
 .pm-top .lp-head h2{font-size:24px}
 .pm-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 2px}
 .pm-chips::-webkit-scrollbar{display:none}
-.pm-chip{flex:none;min-height:40px;padding:0 12px 0 8px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--f-body);white-space:nowrap;cursor:pointer;background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.pm-chip{flex:none;min-height:40px;padding:0 12px 0 8px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--f-body);white-space:nowrap;cursor:pointer;background:var(--panel);color:var(--muted);border:1px solid var(--line);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .pm-chip svg{width:18px;height:18px;fill:none;stroke:var(--c);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .pm-chip[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
 .pm-chip[aria-pressed="true"] svg{stroke:#fff}
-.pm-chip[aria-pressed="false"] span{text-decoration:line-through}
+.pm-chip[aria-pressed="false"] .pm-l{text-decoration:line-through}
+.pm-ring{position:relative;display:flex}
+.pm-s{display:none}
+.pm-n{position:absolute;right:-9px;top:-7px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--ink);color:var(--bg);font:700 10.5px/18px var(--f-body);text-align:center;font-variant-numeric:tabular-nums}
+.pm-n:empty{display:none}
+.pm-chip:not(.pm-cnt) .pm-n{display:none}
+.pm-hbtn{display:flex;align-items:center;gap:6px}
+.pm-all{color:var(--accent)}
+@media (max-width:700px){
+  .pm-top{padding:calc(env(safe-area-inset-top,0px) + 10px) 4px 8px;gap:8px}
+  .pm-top .lp-head{padding:0 12px}
+  .pm-top .lp-head h2{font-size:22px}
+  .pm-chips{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:0;margin:0;padding:2px 0 0;overflow:visible}
+  .pm-chip{flex-direction:column;justify-content:flex-start;gap:4px;min-height:60px;padding:2px 0;border:0;border-radius:12px;background:transparent;color:var(--muted);font:600 10.5px/1.1 var(--f-body);letter-spacing:-.2px}
+  .pm-chip[aria-pressed="true"]{background:transparent;color:var(--ink);font-weight:700}
+  .pm-ring{width:40px;height:40px;border-radius:999px;align-items:center;justify-content:center;box-sizing:border-box;background:var(--panel);border:2px solid color-mix(in srgb,var(--c) 45%,transparent);transition:background .15s,transform .1s}
+  .pm-chip[aria-pressed="true"] .pm-ring{background:var(--c);border-color:var(--c)}
+  .pm-chip svg{width:20px;height:20px}
+  .pm-chip:active .pm-ring{transform:scale(.92)}
+  .pm-l{display:none}
+  .pm-s{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip}
+  .pm-chip.solo .pm-ring{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--c)}
+}
 .pm-mapwrap{position:relative;flex:1;min-height:0}
 .pm-map{position:absolute;inset:0;background:var(--elev)}
 .pm-note{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;margin:0;max-width:calc(100% - 120px);background:var(--ink);color:var(--bg);font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;text-align:center;pointer-events:none}
@@ -1024,7 +1046,7 @@ body.pm-placing .pm-loc{bottom:16px}
 </section>
 <section class="libpage pm-page" id="mapPage" hidden aria-labelledby="pmTitle">
   <div class="pm-top">
-    <div class="lp-head"><h2 id="pmTitle">Points utiles</h2><button type="button" class="btn small pg-x">Fermer</button></div>
+    <div class="lp-head"><h2 id="pmTitle">Points utiles</h2><span class="pm-hbtn"><button type="button" class="btn small pm-all" id="pmAll" hidden>Tout afficher</button><button type="button" class="btn small pg-x">Fermer</button></span></div>
     <div class="pm-chips" id="pmChips" role="group" aria-label="Types de points"></div>
   </div>
   <div class="pm-mapwrap">
@@ -6386,15 +6408,18 @@ libInit();
    Un point Sillage validé et fusionné (poi.osm_ref) remplace le point OSM correspondant. */
 const PM_ORDER = ['fontaine', 'boulangerie', 'epicerie', 'bivouac', 'abri', 'cafe', 'atelier', 'recharge'];
 const PM_TYPES = {
-  fontaine:    { lbl: T("Eau potable"), col: '#1c87d6', d: 'M12 3C9 8 6 11 6 15a6 6 0 0 0 12 0c0-4-3-7-6-12z', hint: T("Potable ? Coupée l'hiver ?"), yes: T("Oui, ça coule"), no: T("Non, à sec") },
-  boulangerie: { lbl: T("Boulangerie"), col: '#b87a0e', d: 'M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v7H4zM8.5 11v3M12 11v3M15.5 11v3', hint: T("Ouvert le dimanche ? Bon pain ?") },
-  epicerie:    { lbl: T("Épicerie"), col: '#2f9e5a', d: 'M4 9h16l-2 10H6zM8 9l3-5M16 9l-3-5M10 13v3M14 13v3', hint: T("Horaires, ce qu'on y trouve…") },
-  bivouac:     { lbl: T("Bivouac"), col: '#7048c8', d: 'M3 20 12 4l9 16zM12 4v16M9 20l3-6 3 6', hint: T("Plat ? Abrité du vent ? Autorisé ?") },
-  abri:        { lbl: T("Abri"), col: '#8a6a3e', d: 'M3 11l9-7 9 7M6 9v11h12V9M10 20v-5h4v5', hint: T("Fermé ? Combien de places ?") },
-  cafe:        { lbl: T("Café · resto"), col: '#e2602a', d: 'M5 9h11v5a5 5 0 0 1-11 0zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3', hint: T("Accueil des cyclistes, eau, prise…") },
-  atelier:     { lbl: T("Atelier vélo"), col: '#d2337e', d: 'M14.5 5.5a4 4 0 0 0 4 4L10 18a2.1 2.1 0 0 1-3-3l8.5-8.5M17 3l4 4', hint: T("Pièces, chambres à air, accueil…") },
-  recharge:    { lbl: T("Recharge"), col: '#1a9696', d: 'M4 7h13a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 17 17H4a1.5 1.5 0 0 1-1.5-1.5v-7A1.5 1.5 0 0 1 4 7zM21.5 10.5v3M11.5 9 8.5 12.2h4L9.5 15', hint: T("Prise libre ? Payante ?") }
+  fontaine:    { lbl: T("Eau potable"), s: T("Eau"), col: '#1c87d6', d: 'M12 3C9 8 6 11 6 15a6 6 0 0 0 12 0c0-4-3-7-6-12z', hint: T("Potable ? Coupée l'hiver ?"), yes: T("Oui, ça coule"), no: T("Non, à sec") },
+  boulangerie: { lbl: T("Boulangerie"), s: T("Pain"), col: '#b87a0e', d: 'M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v7H4zM8.5 11v3M12 11v3M15.5 11v3', hint: T("Ouvert le dimanche ? Bon pain ?") },
+  epicerie:    { lbl: T("Épicerie"), s: T("Épicerie"), col: '#2f9e5a', d: 'M4 9h16l-2 10H6zM8 9l3-5M16 9l-3-5M10 13v3M14 13v3', hint: T("Horaires, ce qu'on y trouve…") },
+  bivouac:     { lbl: T("Bivouac"), s: T("Bivouac"), col: '#7048c8', d: 'M3 20 12 4l9 16zM12 4v16M9 20l3-6 3 6', hint: T("Plat ? Abrité du vent ? Autorisé ?") },
+  abri:        { lbl: T("Abri"), s: T("Abri"), col: '#8a6a3e', d: 'M3 11l9-7 9 7M6 9v11h12V9M10 20v-5h4v5', hint: T("Fermé ? Combien de places ?") },
+  cafe:        { lbl: T("Café · resto"), s: T("Café"), col: '#e2602a', d: 'M5 9h11v5a5 5 0 0 1-11 0zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3', hint: T("Accueil des cyclistes, eau, prise…") },
+  atelier:     { lbl: T("Atelier vélo"), s: T("Atelier"), col: '#d2337e', d: 'M14.5 5.5a4 4 0 0 0 4 4L10 18a2.1 2.1 0 0 1-3-3l8.5-8.5M17 3l4 4', hint: T("Pièces, chambres à air, accueil…") },
+  recharge:    { lbl: T("Recharge"), s: T("Recharge"), col: '#1a9696', d: 'M4 7h13a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 17 17H4a1.5 1.5 0 0 1-1.5-1.5v-7A1.5 1.5 0 0 1 4 7zM21.5 10.5v3M11.5 9 8.5 12.2h4L9.5 15', hint: T("Prise libre ? Payante ?") }
 };
+// Noms courts de la ligne d'icônes (téléphone) ; en anglais, mots plus courts que les noms longs traduits
+const PM_SHORT_EN = { fontaine: 'Water', boulangerie: 'Bakery', epicerie: 'Shop', bivouac: 'Camp', abri: 'Shelter', cafe: 'Café', atelier: 'Repair', recharge: 'Charge' };
+if (LANG === 'en') for (const k in PM_SHORT_EN) if (PM_TYPES[k]) PM_TYPES[k].s = PM_SHORT_EN[k];
 const PM_TILE = 0.1, PM_MINZ = 12, PM_TTL = 7 * 864e5, PM_MAX_OSM = 450;
 const PM_PHOTO = SB_URL + '/storage/v1/object/public/poi-photos/';
 const PM = { map: null, layer: null, route: null, routeSig: null, me: null, tiles: new Map(), busy: new Set(), queue: [], running: 0, failed: 0,
@@ -6569,15 +6594,17 @@ function pmIcon(it) {
 function pmRender() {
   if (!PM.map || !PM.layer) return;
   PM.layer.clearLayers();
-  const b = PM.map.getBounds().pad(0.1), replaced = new Set();
+  const b = PM.map.getBounds().pad(0.1), replaced = new Set(), cnt = {};
   let nO = 0, nU = 0;
   const usr = [...PM.usr.values()];
   for (const it of usr) if (it.poi.osm_ref && it.poi.status === 'valid') replaced.add(it.poi.osm_ref);
   if (PM.src.osm && PM.map.getZoom() >= PM_MINZ - 1) {
     let shown = 0; PM.cap = false;
     for (const it of PM.osm.values()) {
-      if (!PM.on.has(it.type) || replaced.has(it.ref) || !b.contains([it.lat, it.lon])) continue;
-      if (shown >= PM_MAX_OSM) { PM.cap = true; break; }
+      if (replaced.has(it.ref) || !b.contains([it.lat, it.lon])) continue;
+      cnt[it.type] = (cnt[it.type] || 0) + 1;
+      if (!PM.on.has(it.type)) continue;
+      if (shown >= PM_MAX_OSM) { PM.cap = true; continue; }
       L.marker([it.lat, it.lon], { icon: pmIcon(it), keyboard: true, title: (it.name || pmKind(it.tags) || PM_TYPES[it.type].lbl) + ' · OpenStreetMap', riseOnHover: true })
         .on('click', () => pmShow(it)).addTo(PM.layer);
       shown++;
@@ -6585,26 +6612,65 @@ function pmRender() {
     nO = shown;
   }
   if (PM.src.usr) for (const it of usr) {
-    if (!PM.on.has(it.type) || !b.contains([it.lat, it.lon])) continue;
+    if (!b.contains([it.lat, it.lon])) continue;
+    cnt[it.type] = (cnt[it.type] || 0) + 1;
+    if (!PM.on.has(it.type)) continue;
     L.marker([it.lat, it.lon], { icon: pmIcon(it), keyboard: true, zIndexOffset: 500, title: it.name + ' · ' + T("ajouté par un cycliste"), riseOnHover: true })
       .on('click', () => pmShow(it)).addTo(PM.layer);
     nU++;
   }
   $('#pmCntOsm').textContent = PM.map.getZoom() < PM_MINZ ? T("zoome pour les voir") : T("{0} points · données libres", [nO]);
   $('#pmCntUsr').textContent = T("{0} points · avis et photos", [nU]);
+  const showCnt = PM.map.getZoom() >= PM_MINZ;
+  for (const el of document.querySelectorAll('#pmChips [data-k]')) {
+    const n = cnt[el.dataset.k] || 0; el.classList.toggle('pm-cnt', showCnt);
+    el.querySelector('.pm-n').textContent = showCnt && n ? (n > 99 ? '99+' : String(n)) : '';
+    el.setAttribute('aria-label', PM_TYPES[el.dataset.k].lbl + (showCnt ? ' · ' + T("{0} dans la vue", [n]) : ''));
+  }
   pmStatus();
 }
+/* Types de points (31/10/2026) : sur téléphone, une ligne de 8 ronds avec un nom court ; au-dessus de 700 px, des pastilles.
+   Pastille chiffrée = points de ce type dans la vue (même éteint). Appui long (ou clic droit) = ce type seul ; refaire = tout.
+   « Tout afficher » (#pmAll) quand des types sont éteints. */
 function pmChips() {
   $('#pmChips').innerHTML = PM_ORDER.map(k => { const t = PM_TYPES[k];
-    return `<button type="button" class="pm-chip" data-k="${k}" aria-pressed="${PM.on.has(k)}" style="--c:${t.col}">${pmSvg(t.d)}<span>${escH(t.lbl)}</span></button>`; }).join('');
+    return `<button type="button" class="pm-chip" data-k="${k}" aria-pressed="${PM.on.has(k)}" style="--c:${t.col}" title="${escH(t.lbl + ' · ' + T("appui long : seulement ce type"))}"><span class="pm-ring">${pmSvg(t.d)}<b class="pm-n" aria-hidden="true"></b></span><span class="pm-l">${escH(t.lbl)}</span><span class="pm-s" aria-hidden="true">${escH(t.s)}</span></button>`; }).join('');
+  pmChipsUI();
 }
+function pmChipsUI() {
+  const solo = PM.on.size === 1 ? [...PM.on][0] : null;
+  for (const b of document.querySelectorAll('#pmChips [data-k]')) {
+    const k = b.dataset.k; b.setAttribute('aria-pressed', String(PM.on.has(k))); b.classList.toggle('solo', k === solo);
+  }
+  $('#pmAll').hidden = PM.on.size === PM_ORDER.length;
+}
+function pmTypesSet(on, note) {
+  PM.on = new Set(on);
+  try { localStorage.setItem('pmr-pm-types', JSON.stringify([...PM.on])); } catch (e) {}
+  pmChipsUI(); pmRender();
+  if (note) { pmNote(note); clearTimeout(PM.noteT); PM.noteT = setTimeout(pmStatus, 2600); }
+}
+function pmSolo(k) {
+  if (PM.on.size === 1 && PM.on.has(k)) pmTypesSet(PM_ORDER, T("Tous les types"));
+  else pmTypesSet([k], T("Seulement : {0} · appui long pour tout remettre", [PM_TYPES[k].lbl]));
+  try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
+}
+let pmPress = null;
+$('#pmChips').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-k]'); if (!b) return;
+  clearTimeout(pmPress && pmPress.t);
+  pmPress = { k: b.dataset.k, x: e.clientX, y: e.clientY, long: false, t: setTimeout(() => { pmPress.long = true; pmSolo(b.dataset.k); }, 500) };
+});
+$('#pmChips').addEventListener('pointermove', e => { if (pmPress && Math.hypot(e.clientX - pmPress.x, e.clientY - pmPress.y) > 10) clearTimeout(pmPress.t); });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('#pmChips').addEventListener(ev, () => { if (pmPress) clearTimeout(pmPress.t); });
+$('#pmChips').addEventListener('contextmenu', e => { const b = e.target.closest('[data-k]'); if (!b) return; e.preventDefault(); if (!(pmPress && pmPress.long)) { pmSolo(b.dataset.k); pmPress = { long: true }; } });
 $('#pmChips').addEventListener('click', e => {
   const b = e.target.closest('[data-k]'); if (!b) return;
-  const k = b.dataset.k; if (PM.on.has(k)) PM.on.delete(k); else PM.on.add(k);
-  b.setAttribute('aria-pressed', String(PM.on.has(k)));
-  try { localStorage.setItem('pmr-pm-types', JSON.stringify([...PM.on])); } catch (e) {}
-  pmRender();
+  if (pmPress && pmPress.long) { pmPress = null; return; } // l'appui long a déjà agi
+  const k = b.dataset.k, on = new Set(PM.on); if (on.has(k)) on.delete(k); else on.add(k);
+  pmTypesSet(on);
 });
+$('#pmAll').addEventListener('click', () => pmTypesSet(PM_ORDER, T("Tous les types")));
 for (const [id, k] of [['#pmSrcOsm', 'osm'], ['#pmSrcUsr', 'usr']]) $(id).addEventListener('click', e => {
   PM.src[k] = !PM.src[k]; e.currentTarget.setAttribute('aria-pressed', String(PM.src[k])); pmRender();
 });
