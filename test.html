@@ -921,6 +921,13 @@ body.pm-placing .pm-loc{bottom:16px}
 .pm-msg{font-size:13.5px;margin:0;color:var(--muted)}
 .pm-msg.err{color:var(--head)}
 .pm-osm-link{display:inline-block;margin-top:12px;font-size:14px;font-weight:600}
+.pm-nav{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.pm-nav[hidden]{display:none}
+.pm-nav .nav-app{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font-weight:600;font-size:15px;text-decoration:none}
+.pm-nav .nav-app::after{content:'↗';color:var(--muted);font-weight:500}
+.pm-nav .hint{margin:2px 0 0}
+.nav-row{display:inline-block;margin-top:4px}
+.nav-row a{font-weight:600;white-space:nowrap}
 .pm-big{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
 .pm-big img{max-width:100%;max-height:100%;border-radius:8px}
 @media (max-width:420px){.pm-legend{width:170px}.pm-legend b{font-size:13px}}
@@ -4619,7 +4626,7 @@ function renderPois() {
     for (const p of shown) {
       const g = POI_GROUPS[p.g], closed = p.st.cls === 'closed';
       L.circleMarker([p.lat, p.lon], { pane: 'poiPane', radius: 7, color: '#ffffff', weight: 2, fillColor: g.col, fillOpacity: closed ? 0.35 : 0.95, opacity: closed ? 0.6 : 1 })
-        .bindTooltip(poiTip(p)).bindPopup(() => poiTip(p, true), { offset: [0, -4] }).addTo(POI.layer);
+        .bindTooltip(poiTip(p)).bindPopup(() => poiTip(p, true) + `<br><span class="nav-row">${escH(T("Y aller"))} : ${navApps(p.lat, p.lon, p.name).map(x => navA(x)).join(' · ')}</span>`, { offset: [0, -4] }).addTo(POI.layer);
     }
   }
   if (!POI.list.length) { $('#poiRows').innerHTML = POI.loading || POI.error ? '' : T("<tr><td colspan=\"5\" class=\"hint\">Aucun lieu trouvé dans ce rayon.</td></tr>"); return; }
@@ -4636,6 +4643,18 @@ function gmapsUrl(p) {
   return p.name ? `https://www.google.com/maps/search/${encodeURIComponent(p.name)}/@${ll},18z`
     : `https://www.google.com/maps/search/?api=1&query=${ll}`;
 }
+// Guidage vers un point : liens vers les applis de navigation (sans clé ni API, 01/11/2026).
+// L'ordre suit l'appareil : Plans d'abord sur iPhone / iPad / Mac, Google Maps ailleurs ; « Autre appli » (geo:) sur Android.
+const NAV_OS = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent) ? 'apple' : /Android/.test(navigator.userAgent) ? 'android' : 'other';
+function navApps(lat, lon, name) {
+  const ll = `${(+lat).toFixed(6)},${(+lon).toFixed(6)}`, nm = name ? encodeURIComponent(name) : '';
+  const g = { lbl: 'Google Maps', url: `https://www.google.com/maps/dir/?api=1&destination=${ll}&travelmode=bicycling` };
+  const a = { lbl: T("Plans (Apple)"), url: `https://maps.apple.com/?daddr=${ll}${nm ? '&q=' + nm : ''}&dirflg=w` };
+  const w = { lbl: 'Waze', url: `https://waze.com/ul?ll=${ll}&navigate=yes` };
+  const o = { lbl: T("Autre appli"), url: `geo:${ll}?q=${ll}${nm ? '(' + nm + ')' : ''}`, self: true };
+  return NAV_OS === 'apple' ? [a, g, w] : NAV_OS === 'android' ? [g, w, o] : [g, a, w];
+}
+const navA = (x, cls) => `<a${cls ? ` class="${cls}"` : ''} href="${escH(x.url)}"${x.self ? '' : ' target="_blank" rel="noopener"'}>${escH(x.lbl)}</a>`;
 const escH = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function poiTip(p, link) {
   const g = POI_GROUPS[p.g];
@@ -6968,11 +6987,13 @@ function pmShow(it) {
     <p class="pm-sub" id="pmRevHead">${escH(T("Avis"))}</p>
     <ul class="pm-revs" id="pmRevs"></ul>
     <div id="pmRevForm"></div>
-    <div class="pm-acts" id="pmActs"><button type="button" class="btn primary" id="pmRevBtn">${escH(T("Laisser un avis"))}</button></div>
+    <div class="pm-acts" id="pmActs"><button type="button" class="btn primary" id="pmRevBtn">${escH(T("Laisser un avis"))}</button><button type="button" class="btn" id="pmNavBtn" aria-expanded="false" aria-controls="pmNav">${escH(T("Y aller"))}</button></div>
+    <div class="pm-nav" id="pmNav" hidden>${navApps(it.lat, it.lon, title).map(x => navA(x, 'nav-app')).join('')}<p class="hint">${escH(T("Le guidage s'ouvre dans l'appli choisie."))}</p></div>
     ${u ? '' : `<a class="pm-osm-link" href="https://www.openstreetmap.org/${escH(it.ref)}" target="_blank" rel="noopener">${escH(T("Une info est fausse ? Corriger sur OpenStreetMap"))}</a>
       <p class="hint" style="margin-top:8px">${escH(T("Données © les contributeurs d'OpenStreetMap, licence ODbL"))}</p>`}
     ${own && p.status === 'pending' ? `<p style="margin-top:12px"><button type="button" class="linkbtn" id="pmDelMine">${escH(T("Supprimer mon point"))}</button></p>` : ''}`);
   $('#pmRevBtn').addEventListener('click', () => pmCanWrite() ? pmReviewForm(it) : pmGuestSheet());
+  $('#pmNavBtn').addEventListener('click', e => { const n = $('#pmNav'), op = n.hidden; n.hidden = !op; e.currentTarget.setAttribute('aria-expanded', op); if (op) n.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
   const dm = $('#pmDelMine'); if (dm) dm.addEventListener('click', () => pmDeleteMine(it, dm));
   pmLoadDetail(it);
 }
@@ -7090,7 +7111,7 @@ async function pmPostReview(sb, key, name, f) {
 function pmReviewForm(it) {
   const f = PM.form = { rating: 0, comment: '', photo: null, photoUrl: '' };
   const draw = () => {
-    $('#pmActs').hidden = true;
+    $('#pmActs').hidden = true; $('#pmNav').hidden = true;
     $('#pmRevForm').innerHTML = `<div class="pm-form">${pmRevFields(f, PM_TYPES[it.type].hint)}<p class="pm-msg" id="pmFormMsg" aria-live="polite"></p>
       <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" id="pmRevCancel">${escH(T("Annuler"))}</button><button type="button" class="btn primary" id="pmRevSend">${escH(T("Publier l'avis"))}</button></div></div>`;
     pmBindRevFields(f, draw);
