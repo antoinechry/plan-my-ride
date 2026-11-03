@@ -6275,6 +6275,8 @@ $('#meCvd').addEventListener('change', () => a11ySet({ cvd: $('#meCvd').value })
 $('#meMotion').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b && b.getAttribute('aria-pressed') !== 'true') a11ySet({ motion: b.dataset.v }); });
 $('#meFont').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b && b.getAttribute('aria-pressed') !== 'true') a11ySet({ font: b.dataset.v }); });
 try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pmr-open-me'); if (!document.body.classList.contains('gated')) setTimeout(meOpen, 0); } } catch (e) {}
+// lien direct vers la Carte (#carte, depuis le rail de la supervision, 03/11/2026)
+if (location.hash === '#carte') { history.replaceState(null, '', location.pathname + location.search); if (!document.body.classList.contains('gated')) setTimeout(pmOpen, 0); }
 $('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
