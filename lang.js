@@ -1142,6 +1142,20 @@ window.PMR_I18N = {
     "La trace de l'aller, dans l'autre sens · {0} km": "The outbound route, the other way round · {0} km",
     "Retour · travail → maison": "Return · work → home",
     "Trace de l'aller": "Outbound route",
-    "Pas encore d'autre parcours : importe un GPX.": "No other route yet: import a GPX."
+    "Pas encore d'autre parcours : importe un GPX.": "No other route yet: import a GPX.",
+    "Mes trajets : {0}, retour {1}. Modifier": "My commute: {0}, return {1}. Edit",
+    "à l'envers": "reversed",
+    "Trajet quotidien": "Everyday commute",
+    "Modifier": "Edit",
+    "Replier": "Collapse",
+    "Même trace, à l'envers": "Same route, reversed",
+    "{0} km et {1} par rapport à l'aller": "{0} km and {1} compared with the outbound trip",
+    "Les deux trajets sur la même carte": "Both trips on the same map",
+    "Échanger": "Swap",
+    "Mon trajet quotidien": "My everyday commute",
+    "S'ouvre tout seul en arrivant sur Vélotaf": "Opens by itself when you arrive in Commute",
+    "Maison": "Home",
+    "Travail": "Work",
+    "{0} min": "{0} min"
   }
 };

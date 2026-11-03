@@ -371,35 +371,63 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
 /* Vélotaf : bloc « Mes trajets » (maquette du 03/11/2026) */
 .card.tt{display:flex;flex-direction:column;gap:14px;padding:18px 20px}
 @media (max-width:700px){.card.tt{padding:14px}}
+.card.tt.closed{padding:10px 12px 10px 16px}
 .tt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .tt-head h2{margin:0}.tt-head .hint{margin:2px 0 0}
-.tt-def{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;min-height:32px;cursor:pointer}
-.tt-def input{width:18px;height:18px;accent-color:var(--accent)}
-.tt-grid{display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);gap:12px;align-items:stretch}
-.tt-card{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.tt-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.tt-tog{flex:none;min-height:44px;border-radius:999px;padding:0 16px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.tt-tog svg,.tt-bar .chev{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* replié : une ligne */
+.tt-bar{display:flex;align-items:center;gap:14px;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.tt-ico{flex:none;width:40px;height:40px;border-radius:10px;background:var(--bg)}
+.tt-sum{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tt-sum>span{display:flex;align-items:baseline;gap:8px;min-width:0}
+.tt-sum b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-sum .tt-sep{width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tt-daily{flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--bg);font-size:13px;font-weight:600;color:var(--tail)}
+.tt-daily svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.tt-more{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:999px;font-size:14px;font-weight:600}
+.tt-sum .tt-num{flex:none;white-space:nowrap}
+.tt-ico .case{stroke-width:4}.tt-ico .go{stroke-width:2.4}.tt-ico .ret{stroke-width:1.6;stroke-dasharray:3 2.5}.tt-ico .home,.tt-ico .work{stroke-width:1}
+.nw{white-space:nowrap}
+@media (max-width:700px){.tt-bar{gap:12px}.tt-sum{flex-direction:column;align-items:stretch;gap:3px}.tt-sum>span{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:6px;align-items:baseline}.tt-sum .lbl{font-size:10.5px}.tt-sum .tt-sep,.tt-sum .dt,.tt-daily{display:none}.tt-more{border:0;padding:0 4px;min-height:44px;color:var(--accent)}.tt-more .mt{display:none}.tt-more .chev{width:20px;height:20px}}
+.tt-opt .tt-num{flex:none;white-space:nowrap}
+/* déplié */
+.tt-body{display:grid;grid-template-columns:minmax(260px,420px) minmax(0,1fr);gap:24px;align-items:center}
+@media (max-width:820px){.tt-body{grid-template-columns:minmax(0,1fr);gap:12px}}
+.tt-map{width:100%;height:240px;border-radius:12px;background:var(--bg);display:block}
+@media (max-width:700px){.tt-map{height:170px}}
+.tt-map .go{fill:none;stroke:var(--rain);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.tt-map .ret{fill:none;stroke:var(--ink);stroke-width:3;stroke-dasharray:7 6;stroke-linecap:round;stroke-linejoin:round}
+.tt-map .case{fill:none;stroke:var(--panel);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.tt-map text{font:700 12px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.tt-map .home{fill:var(--tail);stroke:var(--panel);stroke-width:2}.tt-map .work{fill:var(--head);stroke:var(--panel);stroke-width:2}
+.tt-rows{display:flex;flex-direction:column;min-width:0}
+.tt-line{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 0}
+.tt-line svg.sw{width:36px;height:12px}
+.tt-line svg.sw .go{stroke:var(--rain);stroke-width:5;stroke-linecap:round}
+.tt-line svg.sw .ret{stroke:var(--ink);stroke-width:3.5;stroke-dasharray:6 5;stroke-linecap:round}
 .tt-lbl{font-family:var(--f-mono);font-size:11.5px;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
-.tt-row{display:flex;align-items:center;gap:12px;min-width:0}
-.tt-row .lp-thumb{flex-basis:56px;width:56px;height:56px}
-.lp-thumb circle.end{fill:var(--head)}
-.tt-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tt-txt{min-width:0;display:flex;flex-direction:column;gap:2px}
 .tt-txt b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt-num{font-family:var(--f-mono);font-size:13.5px;font-weight:500}
 .tt-txt .hint{margin:0;font-size:12.5px}
 .tt-chg{flex:none;min-height:44px;border-radius:999px;padding:0 16px;font-weight:600}
-.tt-seg{display:flex;padding:3px;gap:2px;border-radius:999px;background:var(--bg)}
-.tt-seg button{min-height:32px;padding:0 11px;border:0;border-radius:999px;background:none;color:var(--muted);font:600 13px var(--f-body);cursor:pointer}
-.tt-seg button[aria-checked="true"]{background:var(--panel);color:var(--ink);font-weight:700;box-shadow:0 0 0 1px var(--line)}
-.tt-rev{display:flex;align-items:center;gap:10px;margin:0;padding:10px 12px;border-radius:10px;background:var(--bg);font-size:14px}
-.tt-rev svg{flex:none;width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tt-swap{align-self:center;width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);display:grid;place-items:center;padding:0;cursor:pointer}
-.tt-swap:disabled{opacity:.4;cursor:default}
-.tt-swap svg,.tt-x svg,.tt-imp svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-@media (max-width:820px){.tt-grid{grid-template-columns:minmax(0,1fr)}.tt-swap{justify-self:center}.tt-swap svg{transform:rotate(90deg)}}
+.tt-mid{display:flex;align-items:center;gap:12px}.tt-mid::before,.tt-mid::after{content:"";flex:1 1 auto;height:1px;background:var(--line)}
+.tt-swap{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);display:inline-flex;align-items:center;gap:6px;font:600 13px var(--f-body);cursor:pointer}
+.tt-swap:disabled{opacity:.45;cursor:default}
+.tt-swap svg,.tt-x svg,.tt-imp svg,.tt-opt .rv{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tt-dsw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--line);cursor:pointer}
+.tt-dsw b{display:block;font-size:14px}.tt-dsw small{font-size:12.5px;color:var(--muted)}
+.tt-dsw input{appearance:none;-webkit-appearance:none;flex:none;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;margin:0;transition:background .15s}
+.tt-dsw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.tt-dsw input:checked{background:var(--tail)}.tt-dsw input:checked::after{left:21px}
+.tt-dsw input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lp-thumb circle.end{fill:var(--head)}
 dialog.tt-dlg{max-width:440px}
 .tt-dhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .tt-dhead h2{margin:0}
 .tt-x{width:44px;height:44px;border:0;border-radius:999px;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.tt-x svg{width:20px;height:20px}
 .tt-imp{width:100%;min-height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700}
 .tt-sub{margin:14px 0 6px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
 .tt-list{list-style:none;margin:0;padding:0;max-height:min(50vh,360px);overflow:auto;display:flex;flex-direction:column;gap:4px}
@@ -407,6 +435,7 @@ dialog.tt-dlg{max-width:440px}
 .tt-opt:hover,.tt-opt:focus-visible{background:var(--bg)}
 .tt-opt[aria-pressed="true"]{background:var(--bg);box-shadow:inset 0 0 0 1px var(--accent)}
 .tt-opt .lp-thumb{flex-basis:40px;width:40px;height:40px;border-radius:8px}
+.tt-opt .rvbox{flex:none;width:40px;height:40px;border-radius:8px;background:var(--bg);display:grid;place-items:center;color:var(--muted)}
 .tt-opt b{flex:1 1 auto;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tt-empty{padding:10px;color:var(--muted);font-size:14px}
 body[data-mode="taf"] #chips .qs-route{display:none}
@@ -1301,17 +1330,7 @@ body.pm-placing .pm-loc{bottom:16px}
 
     <div id="results" hidden style="display:flex;flex-direction:column;gap:20px;min-width:0">
     <div class="chips" id="chips" aria-label="Réglages rapides"></div>
-    <section class="card tt" id="tafTrips" aria-labelledby="ttTitle" hidden>
-      <div class="tt-head">
-        <div><h2 id="ttTitle">Mes trajets</h2><p class="hint">Une trace pour aller au travail, une pour rentrer. Elles se rouvrent toutes seules sur Vélotaf.</p></div>
-        <label class="tt-def"><input type="checkbox" id="ttDef"> Mon trajet de tous les jours</label>
-      </div>
-      <div class="tt-grid">
-        <div class="tt-card" id="ttGo"></div>
-        <button type="button" class="tt-swap" id="ttSwap" aria-label="Échanger l'aller et le retour" title="Échanger l'aller et le retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg></button>
-        <div class="tt-card" id="ttRet"></div>
-      </div>
-    </section>
+    <section class="card tt" id="tafTrips" aria-label="Mes trajets" hidden></section>
     <dialog class="exp-dlg tt-dlg" id="ttDlg" aria-labelledby="ttDlgT">
       <div class="tt-dhead"><h2 id="ttDlgT">Trace</h2><button type="button" class="tt-x" id="ttDlgX" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <button type="button" class="btn primary tt-imp no-guest" id="ttImp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Importer un GPX</button>
@@ -5233,33 +5252,62 @@ $('#tafBack').addEventListener('change', schedule);
    Aller / Retour. Aller = parcours ouvert (LIB.current) ; retour = même trace à l'envers (TAF.ret vide) ou un autre
    parcours (TAF.ret). « Changer » ouvre #ttDlg : importer un GPX (#file pour l'aller, #tafFile pour le retour) ou choisir
    dans Mes parcours. Échanger : le retour devient l'aller. « Mon trajet de tous les jours » = pmr-taf-route (page Moi). */
-const TT = { kind: 'go', tried: new Set() };
+const TT = { kind: 'go', tried: new Set(), open: null };
 function ttThumb(id, rev) {
   const th = lpThumbs()[id];
   if (!th) { if (id && !TT.tried.has(id)) { TT.tried.add(id); lpFillThumbs().then(() => tripsRender()); } return '<svg class="lp-thumb" viewBox="0 0 64 64" aria-hidden="true"><path class="ph" d="M14 46 C20 20 44 44 50 18"/></svg>'; }
   const e = th.d.split('L').pop().replace('M', '').trim().split(/\s+/).map(Number), a = rev ? e : th.s, b = rev ? th.s : e;
   return `<svg class="lp-thumb" viewBox="0 0 64 64" aria-hidden="true"><path d="${th.d}"/><circle class="end" cx="${b[0]}" cy="${b[1]}" r="3.5"/><circle cx="${a[0]}" cy="${a[1]}" r="3.5"/></svg>`;
 }
+// les deux trajets sur un même dessin (projection simple), d'après la trace calculée en Vélotaf (S.P = aller + retour)
+function ttMap(W, H, labels) {
+  const P = S.P; if (!(S.laps && S.laps.taf && P && P.pts)) return '';
+  const s1 = S.laps.start[1], pts = P.pts, c = Math.cos(pts[0].lat * RAD), xy = p => [p.lon * c, -p.lat];
+  const all = pts.map(xy), xs = all.map(q => q[0]), ys = all.map(q => q[1]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0 || 1e-6, h = Math.max(...ys) - y0 || 1e-6;
+  const pad = labels ? 30 : 6, k = Math.min((W - 2 * pad) / w, (H - 2 * pad) / h), ox = (W - w * k) / 2, oy = (H - h * k) / 2;
+  const pr = q => [Math.round((ox + (q[0] - x0) * k) * 10) / 10, Math.round((oy + (q[1] - y0) * k) * 10) / 10];
+  const path = (i0, i1) => { const st = Math.max(1, Math.floor((i1 - i0) / 160)), o = []; for (let i = i0; i < i1; i += st) o.push(pr(all[i])); o.push(pr(all[i1])); return 'M' + o.map(q => q.join(' ')).join('L'); };
+  const dg = path(0, s1 - 1), dr = TAF.ret ? path(s1, pts.length - 1) : '', home = pr(all[0]), work = pr(all[s1 - 1]);
+  const lab = (q, t) => `<text x="${q[0] + (q[0] > W - 90 ? -10 : 10)}" y="${q[1] + 4}" text-anchor="${q[0] > W - 90 ? 'end' : 'start'}">${t}</text>`;
+  return `${dr ? `<path class="case" d="${dr}"/><path class="ret" d="${dr}"/>` : ''}<path class="case" d="${dg}"/><path class="go" d="${dg}"/>`
+    + `<circle class="home" cx="${home[0]}" cy="${home[1]}" r="${labels ? 6 : 3.5}"/><circle class="work" cx="${work[0]}" cy="${work[1]}" r="${labels ? 6 : 3.5}"/>`
+    + (labels ? lab(home, T('Maison')) + lab(work, T('Travail')) : '');
+}
 const ttNum = m => `${fD(+m.km || 0)} ${UL.km} · D+ ${fE(+m.dplus || 0)} ${UL.m}`;
+const ttDur = h => { const m = Math.round(h * 60); return m < 60 ? T('{0} min', [m]) : durShort(h); };
+const ttDelta = h => { const m = Math.round(h * 60), a = Math.abs(m), t = a < 60 ? T('{0} min', [a]) : durShort(a / 60); return (m >= 0 ? '+' : '−') + t; };
 function tripsRender() {
   const box = document.getElementById('tafTrips'); if (!box) return;
   try {
     const go = LIB.list.find(x => x.id === LIB.current);
     box.hidden = !(S.mode === 'taf' && go); if (box.hidden) return;
     let def = ''; try { def = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {}
-    $('#ttDef').checked = def === go.id;
-    const ret = TAF.ret ? LIB.list.find(x => x.id === TAF.ret) : null, other = !!ret;
-    const chg = k => `<button type="button" class="btn small tt-chg" data-chg="${k}">${T("Changer")}</button>`;
-    $('#ttGo').innerHTML = `<span class="tt-lbl">${T("Aller · maison → travail")}</span>
-      <div class="tt-row">${ttThumb(go.id, false)}<div class="tt-txt"><b>${escH(go.name)}</b><span class="tt-num">${ttNum(go)}</span></div>${chg('go')}</div>`;
-    const seg = `<div class="tt-seg" role="radiogroup" aria-label="${T("Trace du retour")}"><button type="button" role="radio" data-ret="rev" aria-checked="${!other}">${T("À l'envers")}</button><button type="button" role="radio" data-ret="other" aria-checked="${other}">${T("Autre trace")}</button></div>`;
-    let body;
-    if (other) {
-      const dk = (+ret.km || 0) - (+go.km || 0);
-      body = `<div class="tt-row">${ttThumb(ret.id, false)}<div class="tt-txt"><b>${escH(ret.name)}</b><span class="tt-num">${ttNum(ret)}</span>${Math.abs(dk) >= 0.1 ? `<span class="hint">${T("{0} km par rapport à l'aller", [(dk > 0 ? '+' : '−') + fD(Math.abs(dk))])}</span>` : ''}</div>${chg('ret')}</div>`;
-    } else body = `<p class="tt-rev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></svg><span>${T("La trace de l'aller, dans l'autre sens · {0} km", [fD(+go.km || 0)])}</span></p>`;
-    $('#ttRet').innerHTML = `<div class="tt-top"><span class="tt-lbl">${T("Retour · travail → maison")}</span>${seg}</div>${body}`;
-    $('#ttSwap').disabled = !other;
+    const daily = def === go.id, ret = TAF.ret ? LIB.list.find(x => x.id === TAF.ret) : null;
+    if (TT.open == null) TT.open = !daily && !ret; // replié dès que les trajets sont réglés ; ouvert à la première visite
+    const days = S.laps && S.laps.taf && LAPS.days && LAPS.days.length === 2 ? LAPS.days : null;
+    const dk = ret ? (+ret.km || 0) - (+go.km || 0) : 0, dh = days ? days[1].h - days[0].h : 0;
+    const map = ttMap(40, 40, false), ico = map ? `<svg class="tt-ico" viewBox="0 0 40 40" aria-hidden="true">${map}</svg>` : ttThumb(go.id, false).replace('lp-thumb', 'lp-thumb tt-ico');
+    const chev = up => `<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="${up ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'}"/></svg>`;
+    box.classList.toggle('closed', !TT.open);
+    if (!TT.open) {
+      box.innerHTML = `<button type="button" class="tt-bar" data-tt="toggle" aria-expanded="false" aria-label="${escH(T('Mes trajets : {0}, retour {1}. Modifier', [go.name, ret ? ret.name : T("à l'envers")]))}">${ico}
+        <span class="tt-sum"><span><span class="tt-lbl lbl">${T('Aller')}</span><b>${escH(go.name)}</b><span class="tt-num">${fD(+go.km || 0)} ${UL.km}</span></span>
+        <svg class="tt-sep" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
+        <span><span class="tt-lbl lbl">${T('Retour')}</span><b>${ret ? escH(ret.name) : T("à l'envers")}</b><span class="tt-num">${fD(+(ret || go).km || 0)} ${UL.km}</span>${ret && days && Math.abs(dh) >= 1 / 60 ? `<span class="hint dt">${ttDelta(dh)}</span>` : ''}</span></span>
+        ${daily ? `<span class="tt-daily"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>${T('Trajet quotidien')}</span>` : ''}
+        <span class="tt-more"><span class="mt">${T('Modifier')}</span>${chev(false)}</span></button>`;
+      return;
+    }
+    const line = (k, m, rev) => `<div class="tt-line"><svg class="sw" viewBox="0 0 36 12" aria-hidden="true"><path class="${k ? (rev ? 'go' : 'ret') : 'go'}" d="M2 6h32"/></svg>
+      <div class="tt-txt"><span class="tt-lbl">${k ? T('Retour · travail → maison') : T('Aller · maison → travail')}</span><b>${rev ? T("Même trace, à l'envers") : escH(m.name)}</b>
+      <span class="tt-num"><span class="nw">${fD(+m.km || 0)} ${UL.km}</span> · <span class="nw">D+ ${fE(+m.dplus || 0)} ${UL.m}</span>${days ? ' · <span class="nw">' + ttDur(days[k].h) + '</span>' : ''}</span>${k && ret && (Math.abs(dk) >= 0.1 || (days && Math.abs(dh) >= 1 / 60)) ? `<span class="hint">${T("{0} km et {1} par rapport à l'aller", [(dk >= 0 ? '+' : '−') + fD(Math.abs(dk)), days ? ttDelta(dh) : '—'])}</span>` : ''}</div>
+      <button type="button" class="btn small tt-chg" data-chg="${k ? 'ret' : 'go'}">${T('Changer')}</button></div>`;
+    const big = ttMap(420, 240, true);
+    box.innerHTML = `<div class="tt-head"><h2>${T('Mes trajets')}</h2><button type="button" class="btn small tt-tog" data-tt="toggle" aria-expanded="true">${T('Replier')}${chev(true)}</button></div>
+      <div class="tt-body">${big ? `<svg class="tt-map" viewBox="0 0 420 240" role="img" aria-label="${T('Les deux trajets sur la même carte')}">${big}</svg>` : ''}
+      <div class="tt-rows">${line(0, go, false)}<div class="tt-mid"><button type="button" class="tt-swap" data-tt="swap"${ret ? '' : ' disabled'} title="${T("Échanger l'aller et le retour")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v14l-4-4M16 20V6l4 4"/></svg>${T('Échanger')}</button></div>${line(1, ret || go, !ret)}</div></div>
+      <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Vélotaf")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
   } catch (e) { box.hidden = true; }
 }
 // ouvre un parcours comme aller sans changer le « dernier parcours » des autres pages ; garde le trajet par défaut à jour
@@ -5277,31 +5325,32 @@ function ttDlgOpen(kind) {
   $('#ttDlgT').textContent = kind === 'go' ? T("Trace de l'aller") : T("Trace du retour");
   const skip = kind === 'go' ? TAF.ret : LIB.current, cur = kind === 'go' ? LIB.current : TAF.ret;
   const items = LIB.list.filter(m => m.id !== skip).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || ''));
-  $('#ttList').innerHTML = items.length ? items.map(m => `<li><button type="button" class="tt-opt" data-pick="${m.id}" aria-pressed="${m.id === cur}">${ttThumb(m.id, false)}<b>${escH(m.name)}</b><span class="tt-num">${fD(+m.km || 0)} ${UL.km}</span></button></li>`).join('')
-    : `<li class="tt-empty">${T("Pas encore d'autre parcours : importe un GPX.")}</li>`;
+  const go = LIB.list.find(x => x.id === LIB.current);
+  const rev = kind === 'ret' && go ? `<li><button type="button" class="tt-opt" data-pick="" aria-pressed="${!TAF.ret}"><span class="rvbox"><svg class="rv" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></svg></span><b>${T("Même trace, à l'envers")}</b><span class="tt-num">${fD(+go.km || 0)} ${UL.km}</span></button></li>` : '';
+  $('#ttList').innerHTML = rev + (items.length ? items.map(m => `<li><button type="button" class="tt-opt" data-pick="${m.id}" aria-pressed="${m.id === cur}">${ttThumb(m.id, false)}<b>${escH(m.name)}</b><span class="tt-num">${fD(+m.km || 0)} ${UL.km}</span></button></li>`).join('')
+    : `<li class="tt-empty">${T("Pas encore d'autre parcours : importe un GPX.")}</li>`);
   const d = $('#ttDlg'); if (!d.open) d.showModal();
 }
-$('#tafTrips').addEventListener('click', e => {
+$('#tafTrips').addEventListener('click', async e => {
   const c = e.target.closest('[data-chg]'); if (c) { ttDlgOpen(c.dataset.chg); return; }
-  const r = e.target.closest('[data-ret]'); if (!r) return;
-  if (r.dataset.ret === 'rev') { if (TAF.ret) { TAF.ret = ''; tafRenderSel(); tripsRender(); schedule(); } }
-  else if (!TAF.ret) ttDlgOpen('ret');
+  const t = e.target.closest('[data-tt]'); if (!t) return;
+  if (t.dataset.tt === 'toggle') { TT.open = !TT.open; tripsRender(); const f = $('#tafTrips [data-tt="toggle"]'); if (f) f.focus(); return; }
+  if (t.dataset.tt === 'swap') {
+    if (!TAF.ret || !LIB.current) return;
+    const a = LIB.current, r = TAF.ret;
+    TAF.ret = ''; await ttOpenGo(r);
+    if (LIB.current === r) { TAF.ret = a; tafRenderSel(); tripsRender(); schedule(); } else { TAF.ret = r; tripsRender(); }
+  }
 });
-$('#ttSwap').addEventListener('click', async () => {
-  if (!TAF.ret || !LIB.current) return;
-  const a = LIB.current, r = TAF.ret;
-  TAF.ret = ''; await ttOpenGo(r);
-  if (LIB.current === r) { TAF.ret = a; tafRenderSel(); tripsRender(); schedule(); } else { TAF.ret = r; tripsRender(); }
-});
-$('#ttDef').addEventListener('change', () => {
-  const on = $('#ttDef').checked;
-  try { if (on && LIB.current) localStorage.setItem('pmr-taf-route', LIB.current); else localStorage.removeItem('pmr-taf-route'); } catch (e) {}
+$('#tafTrips').addEventListener('change', e => {
+  if (e.target.id !== 'ttDef') return; const on = e.target.checked;
+  try { if (on && LIB.current) localStorage.setItem('pmr-taf-route', LIB.current); else localStorage.removeItem('pmr-taf-route'); } catch (err) {}
   const mt = $('#meTaf'); if (mt) mt.value = on ? LIB.current : '';
 });
 $('#ttList').addEventListener('click', async e => {
   const b = e.target.closest('[data-pick]'); if (!b) return; const id = b.dataset.pick; $('#ttDlg').close();
-  if (TT.kind === 'go') { if (id !== LIB.current) await ttOpenGo(id); }
-  else if (id !== TAF.ret) { TAF.ret = id; tafRenderSel(); tripsRender(); schedule(); }
+  if (TT.kind === 'go') { if (id && id !== LIB.current) await ttOpenGo(id); }
+  else if (id !== (TAF.ret || '')) { TAF.ret = id; tafRenderSel(); tripsRender(); schedule(); }
 });
 $('#ttImp').addEventListener('click', () => { $('#ttDlg').close(); (TT.kind === 'go' ? $('#file') : $('#tafFile')).click(); });
 $('#ttDlgX').addEventListener('click', () => $('#ttDlg').close());
@@ -5380,7 +5429,7 @@ function duoFlows() {
 }
 function duoRange(k) { return k ? [S.laps.start[1], S.P.n - 1] : [0, S.laps.start[1] - 1]; }
 function renderDuo(laps, opt) {
-  const card = $('#tafDuo'); card.hidden = false;
+  const card = $('#tafDuo'); card.hidden = false; tripsRender();
   const vs = laps.map(d => tripVerdict(d.wx)), arrT = opt.tafGoMode === 'arr' ? tafOpt(opt, TAF.sel || opt.date).time : '';
   $('#duoHint').textContent = TAF.ret ? T("Retour par un autre parcours.") : T("Retour par la même trace, dans l'autre sens.");
   laps.forEach((d, k) => {
