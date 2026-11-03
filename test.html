@@ -394,8 +394,13 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
 /* déplié */
 .tt-body{display:grid;grid-template-columns:minmax(260px,420px) minmax(0,1fr);gap:24px;align-items:center}
 @media (max-width:820px){.tt-body{grid-template-columns:minmax(0,1fr);gap:12px}}
-.tt-map{width:100%;height:240px;border-radius:12px;background:var(--bg);display:block}
-@media (max-width:700px){.tt-map{height:170px}}
+.tt-map,.tt-lmap{width:100%;height:240px;border-radius:12px;background:var(--bg);display:block}
+@media (max-width:700px){.tt-map,.tt-lmap{height:190px}}
+.tt-lmap{overflow:hidden;cursor:default}
+.tt-lmap .leaflet-tile-pane{filter:grayscale(.55) opacity(.8)}
+.tt-lmap .leaflet-control-attribution{font-size:9px;padding:0 4px}
+.tt-tip{background:var(--panel);color:var(--ink);border:0;border-radius:999px;padding:2px 8px;font:700 12px var(--f-body);box-shadow:0 1px 2px rgba(20,32,27,.12),0 4px 12px rgba(20,32,27,.08)}
+.tt-tip::before{display:none}
 .tt-map .go{fill:none;stroke:var(--rain);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
 .tt-map .ret{fill:none;stroke:var(--ink);stroke-width:3;stroke-dasharray:7 6;stroke-linecap:round;stroke-linejoin:round}
 .tt-map .case{fill:none;stroke:var(--panel);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
@@ -5303,12 +5308,39 @@ function tripsRender() {
       <div class="tt-txt"><span class="tt-lbl">${k ? T('Retour · travail → maison') : T('Aller · maison → travail')}</span><b>${rev ? T("Même trace, à l'envers") : escH(m.name)}</b>
       <span class="tt-num"><span class="nw">${fD(+m.km || 0)} ${UL.km}</span> · <span class="nw">D+ ${fE(+m.dplus || 0)} ${UL.m}</span>${days ? ' · <span class="nw">' + ttDur(days[k].h) + '</span>' : ''}</span>${k && ret && (Math.abs(dk) >= 0.1 || (days && Math.abs(dh) >= 1 / 60)) ? `<span class="hint">${T("{0} km et {1} par rapport à l'aller", [(dk >= 0 ? '+' : '−') + fD(Math.abs(dk)), days ? ttDelta(dh) : '—'])}</span>` : ''}</div>
       <button type="button" class="btn small tt-chg" data-chg="${k ? 'ret' : 'go'}">${T('Changer')}</button></div>`;
-    const big = ttMap(420, 240, true);
+    const big = typeof L !== 'undefined' && S.laps && S.laps.taf && S.P ? '' : ttMap(420, 240, true), lmap = !big && S.laps && S.laps.taf && S.P;
     box.innerHTML = `<div class="tt-head"><h2>${T('Mes trajets')}</h2><button type="button" class="btn small tt-tog" data-tt="toggle" aria-expanded="true">${T('Replier')}${chev(true)}</button></div>
-      <div class="tt-body">${big ? `<svg class="tt-map" viewBox="0 0 420 240" role="img" aria-label="${T('Les deux trajets sur la même carte')}">${big}</svg>` : ''}
+      <div class="tt-body">${big ? `<svg class="tt-map" viewBox="0 0 420 240" role="img" aria-label="${T('Les deux trajets sur la même carte')}">${big}</svg>` : lmap ? '<div class="tt-lslot"></div>' : ''}
       <div class="tt-rows">${line(0, go, false)}<div class="tt-mid"><button type="button" class="tt-swap" data-tt="swap"${ret ? '' : ' disabled'} title="${T("Échanger l'aller et le retour")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v14l-4-4M16 20V6l4 4"/></svg>${T('Échanger')}</button></div>${line(1, ret || go, !ret)}</div></div>
       <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Vélotaf")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
+    if (lmap) ttLeaflet(box.querySelector('.tt-lslot'));
   } catch (e) { box.hidden = true; }
+}
+/* mini-carte commune (04/11/2026) : carte Leaflet figée (ni déplacement ni zoom), même fond que les cartes Aller / Retour,
+   atténué ; l'élément est gardé d'un rendu à l'autre (TT.el) et seulement redessiné. */
+function ttLeaflet(slot) {
+  if (!slot) return;
+  if (!TT.el) {
+    TT.el = document.createElement('div'); TT.el.className = 'tt-lmap'; TT.el.setAttribute('role', 'img');
+    TT.m = L.map(TT.el, { zoomControl: false, attributionControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, tap: false, zoomSnap: 0.25 });
+    TT.m.attributionControl.setPrefix(false);
+    const bases = makeBases(); let name = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)');
+    try { const b = localStorage.getItem('pmr-base2'); if (b && bases[b] && !(location.protocol === 'file:' && b === T('Plan (OSM)'))) name = b; } catch (e) {}
+    bases[name].addTo(TT.m);
+    TT.lay = L.layerGroup().addTo(TT.m);
+  }
+  TT.el.setAttribute('aria-label', T('Les deux trajets sur la même carte'));
+  slot.replaceWith(TT.el);
+  const P = S.P, s1 = S.laps.start[1], ll = (i0, i1) => { const st = Math.max(1, Math.floor((i1 - i0) / 400)), o = []; for (let i = i0; i < i1; i += st) o.push([P.pts[i].lat, P.pts[i].lon]); o.push([P.pts[i1].lat, P.pts[i1].lon]); return o; };
+  const go = ll(0, s1 - 1), ret = TAF.ret ? ll(s1, P.n - 1) : null, panel = cssVar('--panel') || '#fff';
+  TT.lay.clearLayers();
+  if (ret) { L.polyline(ret, { color: panel, weight: 8, opacity: .9, interactive: false }).addTo(TT.lay); L.polyline(ret, { color: cssVar('--ink'), weight: 3.5, dashArray: '7 6', interactive: false }).addTo(TT.lay); }
+  L.polyline(go, { color: panel, weight: 9, opacity: .9, interactive: false }).addTo(TT.lay); L.polyline(go, { color: cssVar('--rain'), weight: 5, interactive: false }).addTo(TT.lay);
+  const pin = (p, col, txt, dir) => L.circleMarker(p, { radius: 7, color: panel, weight: 2, fillColor: col, fillOpacity: 1, interactive: false }).bindTooltip(txt, { permanent: true, direction: dir, offset: [dir === 'left' ? -8 : 8, 0], className: 'tt-tip' }).addTo(TT.lay);
+  const home = go[0], work = go[go.length - 1], west = home[1] <= work[1];
+  pin(home, cssVar('--tail'), T('Maison'), west ? 'left' : 'right'); pin(work, cssVar('--head'), T('Travail'), west ? 'right' : 'left');
+  const fit = () => { TT.m.invalidateSize(); TT.m.fitBounds(L.latLngBounds(ret ? go.concat(ret) : go), { padding: [28, 28] }); };
+  requestAnimationFrame(fit);
 }
 // ouvre un parcours comme aller sans changer le « dernier parcours » des autres pages ; garde le trajet par défaut à jour
 async function ttOpenGo(id) {
