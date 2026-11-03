@@ -1119,6 +1119,15 @@ window.PMR_I18N = {
     "{0} points · données libres": "{0} places · open data",
     "{0} sur 5": "{0} out of 5",
     "{0} « non »": "{0} “no”",
-    "Carte": "Map"
+    "Carte": "Map",
+    "Vent {0}": "Wind {0}",
+    "du nord": "from the north",
+    "du nord-est": "from the northeast",
+    "de l'est": "from the east",
+    "du sud-est": "from the southeast",
+    "du sud": "from the south",
+    "du sud-ouest": "from the southwest",
+    "de l'ouest": "from the west",
+    "du nord-ouest": "from the northwest"
   }
 };
