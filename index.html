@@ -429,6 +429,8 @@ dialog.login .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .wk .wsky{flex:none}
 .wk .t{display:flex;flex-direction:column;line-height:1.25;min-width:0}
 .wk .t b{font-size:14px}
+.wdir{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:0 5px 0 3px;border-radius:999px;background:var(--line, rgba(127,127,127,.18));font:600 11px/16px var(--f-mono);vertical-align:1px;white-space:nowrap}
+.wdir svg{flex:none}
 .wk .t span{font-size:12px;color:var(--muted)}
 @media (max-width:640px){
   .week-table{min-width:0}
@@ -2783,7 +2785,7 @@ function renderWindArrows() {
   windLayer = drawArrowsOn(map, S.P ? tripRange() : null, 0);
 }
 // flèches de vent sur la carte m, pour les points rg = [i0, i1] (km affichés depuis kOff) ; renvoie le calque
-const TAF_FEW_KM = 30; // Vélotaf : en dessous, pastilles météo au départ, au milieu et à l'arrivée seulement
+const TAF_BADGE_KM = 10, TAF_BADGE_MIN = 3, TAF_BADGE_MAX = 6; // Vélotaf : une pastille tous les ~10 km (départ et arrivée compris), de 3 à 6
 function drawArrowsOn(m, rg, kOff, noArrows) {
   const layer = L.layerGroup().addTo(m), map = m, windLayer = layer;
   const showA = !noArrows && $('#arrowsOn').checked, showS = noArrows || $('#skyOn').checked;
@@ -2792,12 +2794,12 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
   // Entre deux points météo, la flèche prend le point le plus proche à l'heure de passage à cet endroit.
   const P = S.P, view = map.getBounds().pad(0.2), shown = [], box = badgeBox(showA, showS);
   let run = ARROW_GAP / 2, prev = null;
-  // Vélotaf : trajet de moins de TAF_FEW_KM km → trois pastilles seulement (départ, milieu, arrivée), quel que soit le zoom
+  // Vélotaf : pastilles réparties régulièrement selon la distance du trajet (3 à 6), quel que soit le zoom
   let few = null;
-  if (noArrows && P.d[rg[1]] - P.d[rg[0]] < TAF_FEW_KM) {
-    const dMid = (P.d[rg[0]] + P.d[rg[1]]) / 2; let mid = rg[0];
-    while (mid < rg[1] && P.d[mid] < dMid) mid++;
-    few = new Set([rg[0], mid, rg[1]]);
+  if (noArrows) {
+    const d0 = P.d[rg[0]], len = P.d[rg[1]] - d0, n = clamp(Math.ceil(len / TAF_BADGE_KM) + 1, TAF_BADGE_MIN, TAF_BADGE_MAX);
+    few = new Set(); let i = rg[0];
+    for (let k = 0; k < n; k++) { const dk = d0 + len * k / (n - 1); while (i < rg[1] && P.d[i] < dk) i++; few.add(i); }
   }
   for (let i = rg[0]; i <= rg[1]; i++) {
     const p = P.pts[i], px = map.latLngToLayerPoint([p.lat, p.lon]);
@@ -4900,6 +4902,14 @@ function tripVerdict(wx) {
   if (!out.length) out.push(wx.rain < 0.05 ? T("au sec, beau trajet") : T("au sec"));
   return { lvl, txt: out.join(' · ') };
 }
+// direction dominante du vent d'un trajet : flèche vers où va le vent + lettre d'où il vient (8 directions), rien si calme
+const COMPASS8 = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'].map(c => LANG === 'fr' ? c : c.replace(/O/g, 'W'));
+const WDIR_NAME = ['du nord', 'du nord-est', "de l'est", 'du sud-est', 'du sud', 'du sud-ouest', "de l'ouest", 'du nord-ouest'];
+function windDirHtml(wx) {
+  if (!wx || !isFinite(wx.wdDom) || !(wx.wsDom >= 3)) return '';
+  const k = Math.round(wx.wdDom / 45) % 8, lbl = T('Vent {0}', [T(WDIR_NAME[k])]);
+  return `<span class="wdir" role="img" aria-label="${lbl}" title="${lbl}"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="transform:rotate(${Math.round((wx.wdDom + 180) % 360)}deg)"><path d="M6 1 L10 9 L6 7.2 L2 9 Z" fill="currentColor"/></svg>${COMPASS8[k]}</span>`;
+}
 const vdot = v => `<span class="vdot ${v.lvl < 0 ? 'lx' : 'l' + v.lvl}" aria-hidden="true"></span>`;
 function renderWeek() {
   const on = S.mode === 'taf' && !!S.laps && S.laps.taf && !!S.tl;
@@ -4912,7 +4922,7 @@ function renderWeek() {
   const cell = d => {
     if (!d || !d.wx) return T("<div class=\"wk\">{0}<div class=\"t\"><span>pas encore de prévision</span></div></div>", [vdot({ lvl: -1 })]);
     const v = tripVerdict(d.wx), w = d.wxMid;
-    return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${fT(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + fT(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? fR(d.wx.rain) + ' ' + UL.mm : T('sec')} · ${d.wx.headAvg >= 4 ? T('face ') + fV(d.wx.headAvg) : d.wx.headAvg <= -4 ? T('dos ') + fV(-d.wx.headAvg) : T("vent faible")}${Math.abs(d.wx.headAvg) >= 4 ? ' ' + UL.kmh : ''}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
+    return `<div class="wk">${vdot(v)}${w ? skySvg(w, 22) : ''}<div class="t"><b>${fT(d.wx.tmin)}${Math.round(d.wx.tmax) !== Math.round(d.wx.tmin) ? '–' + fT(d.wx.tmax) : ''}° · ${d.wx.rain >= 0.1 ? fR(d.wx.rain) + ' ' + UL.mm : T('sec')} · ${d.wx.headAvg >= 4 ? T('face ') + fV(d.wx.headAvg) : d.wx.headAvg <= -4 ? T('dos ') + fV(-d.wx.headAvg) : T("vent faible")}${Math.abs(d.wx.headAvg) >= 4 ? ' ' + UL.kmh : ''}${windDirHtml(d.wx)}</b><span class="vtxt l${Math.max(0, v.lvl)}">${v.txt}</span></div></div>`;
   };
   // samedi et dimanche : une ligne pour le week-end, avec une invitation vers la page Sortie
   const fmtW = new Intl.DateTimeFormat(LOC, { weekday: 'short', day: 'numeric', month: 'short' }), rows = [];
@@ -5006,15 +5016,16 @@ function lapSummaries(tl = S.tl) {
     const s0 = stops[k - 1], s1 = stops[k];
     const a = { km: s0 ? s0.km : 0, t: s0 ? s0.to : tl.start }, b = { km: s1 ? s1.km : P.total, t: s1 ? s1.from : tl.end };
     const d = { a, b, pause: s1 ? (s1.to - s1.from) / 3600e3 : null, late: !!(s1 && s1.late), dist: b.km - a.km, dplus: up[idxAtKm(b.km)] - up[idxAtKm(a.km)], h: (b.t - a.t) / 3600e3 };
-    let tmin = Infinity, tmax = -Infinity, rain = 0, head = 0, tot = 0, hsum = 0, prob = 0, dark = 0, mid = null, tAmin = Infinity, tAmax = -Infinity, sun = 0, gust = 0;
+    let tmin = Infinity, tmax = -Infinity, rain = 0, head = 0, tot = 0, hsum = 0, prob = 0, dark = 0, mid = null, tAmin = Infinity, tAmax = -Infinity, sun = 0, gust = 0, wu = 0, wv = 0;
     if (S.wx) for (let t = a.t; t < b.t; t += 300e3) {
       const dt = Math.min(300e3, b.t - t), tm = t + dt / 2, km = kmAtT(tm), i = idxAtKm(km), w = wxAt(sIdx(km), tm); if (!w) continue;
       const hh = dt / 3600e3, hd = w.ws * Math.cos((w.wd - P.b[i]) * RAD); tot += hh; tmin = Math.min(tmin, w.app); tmax = Math.max(tmax, w.app); rain += w.pr * hh;
       if (hd > 5) head += hh; hsum += hd * hh; prob = Math.max(prob, w.prob || 0); if (!w.day) dark += hh;
       tAmin = Math.min(tAmin, w.temp); tAmax = Math.max(tAmax, w.temp); if (w.day) sun += (w.sun || 0) * hh; if (isFinite(w.gust)) gust = Math.max(gust, w.gust);
+      wu += w.ws * Math.sin(w.wd * RAD) * hh; wv += w.ws * Math.cos(w.wd * RAD) * hh; // vent moyen (d'où il vient), par composantes
       if (!mid || Math.abs(tm - (a.t + b.t) / 2) < Math.abs(mid.t - (a.t + b.t) / 2)) mid = { t: tm, w };
     }
-    d.wx = tot > d.h * 0.5 ? { tmin, tmax, rain, head: head / tot, headAvg: hsum / tot, prob, dark: dark / tot, tAmin, tAmax, sun: sun / tot, gust } : null;
+    d.wx = tot > d.h * 0.5 ? { tmin, tmax, rain, head: head / tot, headAvg: hsum / tot, prob, dark: dark / tot, tAmin, tAmax, sun: sun / tot, gust, wdDom: (Math.atan2(wu, wv) / RAD + 360) % 360, wsDom: Math.hypot(wu, wv) / tot } : null;
     d.wxMid = mid && mid.w;
     out.push(d);
   }
