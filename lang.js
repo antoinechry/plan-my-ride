@@ -1128,6 +1128,20 @@ window.PMR_I18N = {
     "du sud": "from the south",
     "du sud-ouest": "from the southwest",
     "de l'ouest": "from the west",
-    "du nord-ouest": "from the northwest"
+    "du nord-ouest": "from the northwest",
+    "Mes trajets": "My commute",
+    "Une trace pour aller au travail, une pour rentrer. Elles se rouvrent toutes seules sur Vélotaf.": "One route to get to work, one to get home. They reopen by themselves in Commute.",
+    "Mon trajet de tous les jours": "My everyday commute",
+    "Échanger l'aller et le retour": "Swap outbound and return",
+    "Ou dans Mes parcours": "Or from My routes",
+    "Changer": "Change",
+    "Aller · maison → travail": "Outbound · home → work",
+    "À l'envers": "Reversed",
+    "Autre trace": "Other route",
+    "{0} km par rapport à l'aller": "{0} km compared with the outbound trip",
+    "La trace de l'aller, dans l'autre sens · {0} km": "The outbound route, the other way round · {0} km",
+    "Retour · travail → maison": "Return · work → home",
+    "Trace de l'aller": "Outbound route",
+    "Pas encore d'autre parcours : importe un GPX.": "No other route yet: import a GPX."
   }
 };
