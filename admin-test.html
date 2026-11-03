@@ -1109,6 +1109,8 @@ async function pLoad() {
   ]);
   if (a.error || b.error) { P.err = (a.error || b.error).message; P.pois = []; P.revs = []; }
   else { P.err = ''; P.pois = a.data || []; P.revs = b.data || []; }
+  // au premier chargement, ouvrir sur ce qui attend : les avis s'il n'y a aucun point à valider (03/11/2026)
+  if (!P.loaded && P.sub === 'points' && !P.pois.some(p => p.status === 'pending') && P.revs.some(r => r.status === 'pending')) P.sub = 'reviews';
   P.loaded = true; pBadge(); if (S.tab === 'poi') pRender();
   for (const p of P.pois) if (p.status === 'pending' && !P.dup[p.id]) { P.dup[p.id] = { state: 'wait', list: [] }; P.q.push(p); }
   pDupPump();
