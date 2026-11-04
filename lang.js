@@ -2,6 +2,23 @@
    {0}, {1}… = valeurs insérées par le code. Ajouter une langue : un objet de plus, puis LANGS dans test.html. */
 window.PMR_I18N = {
   en: {
+    /* connexion Google / Apple / code par e-mail (04/11/2026) */
+    "Continuer avec Apple": "Continue with Apple",
+    "Continuer avec Google": "Continue with Google",
+    "ou avec ton e-mail": "or with your e-mail",
+    "Recevoir un code par e-mail": "E-mail me a sign-in code",
+    "Code reçu par e-mail": "Code from the e-mail",
+    "Me connecter": "Sign in",
+    "Renvoyer un code": "Send a new code",
+    "← Retour": "← Back",
+    "pas de jeton reçu": "no token received",
+    "La création de compte n'est pas encore ouverte de cette façon. Crée ton compte avec ton e-mail.": "Accounts can't be created this way yet. Create your account with your e-mail.",
+    "Entre ton e-mail, puis touche à nouveau « Recevoir un code par e-mail ».": "Enter your e-mail, then tap “E-mail me a sign-in code” again.",
+    "On t'a envoyé un code à {0}. Il reste valable une heure.": "We've sent a code to {0}. It's valid for one hour.",
+    "Aucun compte avec cet e-mail. Crée ton compte d'abord.": "No account with this e-mail. Create your account first.",
+    "Attends une minute avant de redemander un code.": "Wait a minute before asking for a new code.",
+    "Code incorrect ou expiré.": "Wrong or expired code.",
+    "Nouveau code envoyé.": "New code sent.",
     " (fond partiel)": " (partial background)",
     " (la veille, {0})": " (the day before, {0})",
     " (nuages {0} %)": " (clouds {0} %)",

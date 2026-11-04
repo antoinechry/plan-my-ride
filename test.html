@@ -830,6 +830,16 @@ dialog.plus-dlg .p-prices span{font-size:12.5px;color:var(--muted)}
 @media (max-width:480px){dialog.plus-dlg .p-prices div{padding:8px 4px}dialog.plus-dlg .p-prices b{font-size:16px}dialog.plus-dlg .p-prices span{font-size:11.5px}}
 .me-plan p{margin:0 0 10px}
 .demo-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--brand) 22%,var(--panel));font-size:11.5px;font-weight:700;color:var(--ink)}
+.gate-soc{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.soc-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;padding:10px 14px;border-radius:10px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.soc-btn[hidden]{display:none}
+.soc-btn svg{flex:none}
+.soc-apple{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.soc-btn:disabled{opacity:.6;cursor:wait}
+.gate-or{display:flex;align-items:center;gap:10px;margin:8px 0 6px;color:var(--muted);font-size:12.5px}
+.gate-or::before,.gate-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.gc-row{display:flex;justify-content:space-between;gap:10px}
+#gcCode{letter-spacing:.3em;font-family:var(--f-mono);font-size:20px;text-align:center}
 .gate-guest{width:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);text-align:center}
 .gate-guest .btn{width:100%}
 .gate-guest .note{margin-top:6px}
@@ -1012,6 +1022,7 @@ body.pm-placing .pm-loc{bottom:16px}
 </style>
 </head>
 <body>
+<script>/* retour de Google / Apple / lien de connexion par e-mail (04/11/2026) : jetons gardés pour accessCheck, adresse nettoyée avant le script principal */try{var h0=location.hash;if(/access_token=|error_description=/.test(h0)&&!/type=recovery/.test(h0)){sessionStorage.setItem('pmr-auth-ret',h0.slice(1));history.replaceState(null,'',location.pathname+location.search)}}catch(e){}</script>
 <script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
 <div class="gate" id="gate">
   <div class="gate-card">
@@ -1024,12 +1035,24 @@ body.pm-placing .pm-loc{bottom:16px}
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><button type="button" class="btn primary" id="gateResend" hidden>Renvoyer l'e-mail</button><button type="button" class="btn" id="gateRetry">Réessayer</button><button type="button" class="btn" id="gateOut">Se déconnecter</button><button type="button" class="btn" id="gateWebTry" hidden>Continuer sur le web (version test)</button></div>
     </div>
     <div id="gateForms">
+      <div class="gate-soc" id="gateSoc" hidden>
+        <button type="button" class="soc-btn soc-apple" data-soc="apple" hidden><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z"/></svg>Continuer avec Apple</button>
+        <button type="button" class="soc-btn soc-google" data-soc="google" hidden><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continuer avec Google</button>
+        <p class="gate-or"><span>ou avec ton e-mail</span></p>
+      </div>
       <div class="gate-tabs" role="group" aria-label="Accès"><button type="button" data-g="in" aria-pressed="true">Se connecter</button><button type="button" data-g="up" aria-pressed="false">Créer un compte</button></div>
       <form id="gateIn">
         <label>E-mail<input type="email" id="giEmail" autocomplete="username" required></label>
         <label>Mot de passe<input type="password" id="giPw" autocomplete="current-password" required></label>
         <button type="submit" class="btn primary" id="giGo">Se connecter</button>
+        <button type="button" class="btn" id="giCode">Recevoir un code par e-mail</button>
         <button type="button" class="lnk" id="giForgot">Mot de passe oublié ?</button>
+      </form>
+      <form id="gateCode" hidden>
+        <p class="note" id="gcTxt"></p>
+        <label>Code reçu par e-mail<input type="text" id="gcCode" inputmode="numeric" autocomplete="one-time-code" maxlength="12" required></label>
+        <button type="submit" class="btn primary" id="gcGo">Me connecter</button>
+        <div class="gc-row"><button type="button" class="lnk" id="gcResend">Renvoyer un code</button><button type="button" class="lnk" id="gcBack">← Retour</button></div>
       </form>
       <form id="gateUp" hidden>
         <p class="note" id="guInvite"></p>
@@ -5679,11 +5702,11 @@ function gateShow(mode, msg) {
   document.body.classList.add('gated');
   $('#gateForms').hidden = mode === 'wait'; $('#gateWait').hidden = mode !== 'wait';
   if (mode === 'wait') $('#gateWaitTxt').textContent = msg || '';
-  else gateTab(mode === 'up' || (INVITE && mode !== 'in') ? 'up' : 'in');
+  else socInit(), gateTab(mode === 'up' || (INVITE && mode !== 'in') ? 'up' : 'in');
 }
 function gateTab(t) {
   document.querySelectorAll('#gate [data-g]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.g === t)));
-  $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateErr').hidden = true;
+  $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateCode').hidden = true; $('#gateErr').hidden = true;
   $('#guInvite').textContent = INVITE ? T("🎟️ Invitation testeur : ton accès sera ouvert tout de suite.") : T("Tu recevras un e-mail pour confirmer ton adresse : ton compte s'ouvre dès que tu touches le lien.");
   $('#guInvite').classList.toggle('ok', !!INVITE);
 }
@@ -5703,6 +5726,7 @@ function logOnce(key, event, extra) {
   logAct(event, extra);
 }
 async function accessCheck() {
+  const ret = authReturn(); if (ret) { await ret; return; }
   if (!hasSbToken()) { gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
   try {
     const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession();
@@ -5780,6 +5804,123 @@ $('#gateUp').addEventListener('submit', async e => {
     location.reload();
   } catch (err) { gateErr(err.message || String(err)); $('#guGo').disabled = false; }
 });
+/* ---------- connexion Google, Apple et code par e-mail (04/11/2026) ----------
+   Web : redirection Supabase (signInWithOAuth), jetons repris au retour par authReturn.
+   App : fenêtre native (extension Capacitor SocialLogin), puis signInWithIdToken avec un nonce.
+   Apple : web et iPhone (pas sur Android). Boutons affichés seulement si le fournisseur est activé
+   dans Supabase (/auth/v1/settings) et, dans l'app, si les identifiants Google sont renseignés.
+   Après connexion : auth_welcome (compte en attente ouvert, lien testeur, prénom), puis rechargement. */
+const GOOGLE_IDS = { web: '', ios: '' }; // identifiants OAuth Google Cloud : « web » (aussi dans Supabase) et « iOS »
+const SOC = { init: false };
+const socPlug = () => { const C = window.Capacitor; return C && C.Plugins && C.Plugins.SocialLogin; };
+async function socSettings() {
+  try { const c = sessionStorage.getItem('pmr-auth-set'); if (c) return JSON.parse(c); } catch (e) {}
+  const r = await fetch(SB_URL + '/auth/v1/settings', { headers: { apikey: SB_KEY } });
+  const ex = (await r.json()).external || {}, o = { google: !!ex.google, apple: !!ex.apple };
+  try { sessionStorage.setItem('pmr-auth-set', JSON.stringify(o)); } catch (e) {}
+  return o;
+}
+async function socInit() {
+  let set; try { set = await socSettings(); } catch (e) { return; }
+  const nat = window.SILLAGE_NATIVE, plug = !!socPlug();
+  const g = set.google && (!nat || (plug && !!GOOGLE_IDS.web && (nat !== 'ios' || !!GOOGLE_IDS.ios)));
+  const a = set.apple && (!nat || (nat === 'ios' && plug));
+  $('#gate [data-soc=google]').hidden = !g; $('#gate [data-soc=apple]').hidden = !a; $('#gateSoc').hidden = !g && !a;
+}
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+async function socApp(p) {
+  const SL = socPlug();
+  if (!SOC.init) {
+    const cfg = {};
+    if (GOOGLE_IDS.web) cfg.google = { webClientId: GOOGLE_IDS.web, iOSClientId: GOOGLE_IDS.ios || undefined, mode: 'online' };
+    if (window.SILLAGE_NATIVE === 'ios') cfg.apple = { clientId: 'cc.sillage.app' };
+    await SL.initialize(cfg); SOC.init = true;
+  }
+  const raw = hex(crypto.getRandomValues(new Uint8Array(16)));
+  const nonce = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw)));
+  const res = await SL.login({ provider: p, options: p === 'apple' ? { scopes: ['email', 'name'], nonce } : { nonce } });
+  const out = (res && res.result) || {}, tok = out.idToken;
+  if (!tok) throw new Error(T("pas de jeton reçu"));
+  const sb = await sbClient();
+  const { error } = await sb.auth.signInWithIdToken({ provider: p, token: tok, nonce: raw });
+  if (error) throw error;
+  const pr = out.profile || {};
+  await socDone(pr.givenName || (pr.name || '').split(' ')[0] || '');
+}
+async function socWeb(p) {
+  const sb = await sbClient(), back = location.origin + location.pathname;
+  const { error } = await sb.auth.signInWithOAuth({ provider: p, options: { redirectTo: back, queryParams: p === 'google' ? { prompt: 'select_account' } : undefined } });
+  if (error) throw error;
+}
+async function socDone(name) {
+  try { localStorage.removeItem('pmr-guest'); } catch (e) {}
+  try { const sb = await sbClient(); await sb.rpc('auth_welcome', { p_code: INVITE || null, p_name: name || null }); } catch (e) {}
+  location.reload();
+}
+const socErr = m => /signups? not allowed/i.test(m) ? T("La création de compte n'est pas encore ouverte de cette façon. Crée ton compte avec ton e-mail.")
+  : /cancel|canceled|cancelled|access_denied|1001|12501/i.test(m) ? '' : T("Connexion impossible : {0}", [m]);
+document.querySelectorAll('#gate [data-soc]').forEach(b => b.addEventListener('click', async () => {
+  gateErr(''); b.disabled = true;
+  try { if (window.SILLAGE_NATIVE) await socApp(b.dataset.soc); else await socWeb(b.dataset.soc); }
+  catch (err) { const m = socErr(String((err && err.message) || err)); if (m) gateErr(m); b.disabled = false; }
+}));
+// retour de Google / Apple / lien de connexion de l'e-mail (jetons gardés par le petit script du début de <body>)
+function authReturn() {
+  let h = ''; try { h = sessionStorage.getItem('pmr-auth-ret') || ''; sessionStorage.removeItem('pmr-auth-ret'); } catch (e) {}
+  if (!h) return null;
+  const q = new URLSearchParams(h);
+  return (async () => {
+    try {
+      if (!q.get('access_token')) throw new Error(q.get('error_description') || q.get('error') || '?');
+      const sb = await sbClient();
+      const { error } = await sb.auth.setSession({ access_token: q.get('access_token'), refresh_token: q.get('refresh_token') || '' });
+      if (error) throw error;
+      await socDone();
+    } catch (err) { gateShow('in'); const m = socErr(String((err && err.message) || err).replace(/\+/g, ' ')); if (m) gateErr(m); }
+  })();
+}
+// code à usage unique par e-mail (comptes existants seulement : la création passe par app-signup ou Google / Apple)
+const OTP = { email: '', at: 0 };
+async function otpSend(email) {
+  const sb = await sbClient();
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: window.SILLAGE_WEB || location.href.split(/[?#]/)[0] } });
+  if (error) throw error;
+  OTP.email = email; OTP.at = Date.now();
+}
+$('#giCode').addEventListener('click', async () => {
+  const email = $('#giEmail').value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { gateErr(T("Entre ton e-mail, puis touche à nouveau « Recevoir un code par e-mail ».")); $('#giEmail').focus(); return; }
+  gateErr(''); $('#giCode').disabled = true;
+  try {
+    await otpSend(email);
+    $('#gateIn').hidden = true; $('#gateCode').hidden = false;
+    $('#gcTxt').textContent = T("On t'a envoyé un code à {0}. Il reste valable une heure.", [email]);
+    $('#gcCode').value = ''; $('#gcCode').focus();
+  } catch (err) {
+    const m = String((err && err.message) || err);
+    gateErr(/signups? not allowed|not found|user/i.test(m) && !/rate|seconds/i.test(m) ? T("Aucun compte avec cet e-mail. Crée ton compte d'abord.")
+      : /rate|seconds|security purposes/i.test(m) ? T("Attends une minute avant de redemander un code.") : T("Envoi impossible : {0}", [m]));
+  }
+  $('#giCode').disabled = false;
+});
+$('#gateCode').addEventListener('submit', async e => {
+  e.preventDefault(); gateErr(''); $('#gcGo').disabled = true;
+  try {
+    const sb = await sbClient();
+    const { error } = await sb.auth.verifyOtp({ email: OTP.email, token: $('#gcCode').value.replace(/\D/g, ''), type: 'email' });
+    if (error) throw error;
+    await socDone();
+  } catch (err) {
+    gateErr(/expired|invalid/i.test(String(err && err.message)) ? T("Code incorrect ou expiré.") : T("Connexion impossible : {0}", [(err && err.message) || err]));
+    $('#gcGo').disabled = false;
+  }
+});
+$('#gcResend').addEventListener('click', async () => {
+  if (Date.now() - OTP.at < 60000) { gateErr(T("Attends une minute avant de redemander un code.")); return; }
+  try { await otpSend(OTP.email); gateErr(''); $('#gateErr').hidden = false; $('#gateErr').textContent = T("Nouveau code envoyé."); }
+  catch (err) { gateErr(T("Envoi impossible : {0}", [(err && err.message) || err])); }
+});
+$('#gcBack').addEventListener('click', () => gateTab('in'));
 $('#gateRetry').addEventListener('click', () => location.reload());
 $('#gateWebTry').addEventListener('click', () => { try { sessionStorage.setItem('pmr-free-web', '1'); } catch (e) {} location.reload(); });
 // Compte en attente de confirmation de l'adresse (inscription ouverte, 29/10/2026) : nouveau lien par e-mail (2 min d'écart au plus côté serveur).

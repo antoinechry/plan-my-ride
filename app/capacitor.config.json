@@ -20,6 +20,15 @@
       "launchAutoHide": true,
       "backgroundColor": "#14201b",
       "showSpinner": false
+    },
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "apple": true,
+        "facebook": false,
+        "twitter": false
+      },
+      "logLevel": 1
     }
   }
 }
