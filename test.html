@@ -5810,7 +5810,7 @@ $('#gateUp').addEventListener('submit', async e => {
    Apple : web et iPhone (pas sur Android). Boutons affichés seulement si le fournisseur est activé
    dans Supabase (/auth/v1/settings) et, dans l'app, si les identifiants Google sont renseignés.
    Après connexion : auth_welcome (compte en attente ouvert, lien testeur, prénom), puis rechargement. */
-const GOOGLE_IDS = { web: '', ios: '' }; // identifiants OAuth Google Cloud : « web » (aussi dans Supabase) et « iOS »
+const GOOGLE_IDS = { web: '710289641305-sosjj1lojuj2brrmm1fjosbumupab329.apps.googleusercontent.com', ios: '' }; // identifiants OAuth Google Cloud : « web » (aussi dans Supabase) et « iOS »
 const SOC = { init: false };
 const socPlug = () => { const C = window.Capacitor; return C && C.Plugins && C.Plugins.SocialLogin; };
 async function socSettings() {
