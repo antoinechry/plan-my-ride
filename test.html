@@ -3801,8 +3801,8 @@ function renderLegend() {
 /* ---------- export image (page Sortie) : carte avec la trace et le vent + profil météo ---------- */
 // L'image reprend la vue actuelle de la carte : zoomer / cadrer avant d'exporter. Les tuiles du fond sont rechargées
 // en mode CORS ; si un serveur de tuiles le refuse, le fond est remplacé par un aplat neutre.
-function loadImg(src) {
-  return new Promise(ok => { const im = new Image(); im.crossOrigin = 'anonymous'; const t = setTimeout(() => ok(null), 10000);
+function loadImg(src, ms = 10000) {
+  return new Promise(ok => { const im = new Image(); im.crossOrigin = 'anonymous'; const t = setTimeout(() => ok(null), ms);
     im.onload = () => { clearTimeout(t); ok(im); }; im.onerror = () => { clearTimeout(t); ok(null); }; im.src = src; });
 }
 async function drawMapTo(c, x0, y0, W, H, o = {}) { // o : { m: carte Leaflet, rg: plage de points, arrows, sky, bare }
@@ -6936,7 +6936,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.b
 $('#tabLib').addEventListener('click', lpOpen);
 /* Page « Mes parcours » (essai du 24/10/2026) : liste des parcours en fiches (miniature du tracé, km, D+, dernière ouverture),
    recherche, tri, ouvrir / renommer / supprimer. Onglet « Parcours » sur téléphone, bouton « Voir tous mes parcours » ailleurs. */
-const LP = { sort: 'recent', kind: 'all', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false, maps: {}, mapsLoaded: false, mapsBusy: 0, mapsFail: new Set(), sheet: '', press: null };
+const LP = { sort: 'recent', kind: 'all', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false, maps: {}, mapsLoaded: false, mapsBusy: 0, mapsFail: new Map(), sheet: '', press: null };
 function lpThumbs() { if (!LP.thumbs) { try { LP.thumbs = JSON.parse(localStorage.getItem('pmr-thumbs') || '{}') || {}; } catch (e) { LP.thumbs = {}; } } return LP.thumbs; }
 function thumbOf(pts) { // tracé ramené dans un carré de 64 (projection simple, ~90 points)
   const step = Math.max(1, Math.floor(pts.length / 90)), q = []; for (let i = 0; i < pts.length; i += step) q.push(pts[i]); q.push(pts[pts.length - 1]);
@@ -6983,7 +6983,7 @@ function lpRender() {
     </li>`; }).join('');
   lpFillThumbs(); lpFillMaps(items);
 }
-function lpOpen() { LP.open = LP.ren = LP.del = ''; LP.kind = KINDS.includes(S.mode) ? S.mode : 'all'; $('#lpQ').value = ''; $('#lpSort').value = LP.sort; pageOpen('libPage', '#tabLib'); lpMapsLoad().then(lpRender); }
+function lpOpen() { LP.open = LP.ren = LP.del = ''; LP.kind = KINDS.includes(S.mode) ? S.mode : 'all'; $('#lpQ').value = ''; $('#lpSort').value = LP.sort; LP.mapsFail = new Map(); pageOpen('libPage', '#tabLib'); lpMapsLoad().then(lpRender); }
 function lpClose() { pageClose(); }
 async function lpRename(id, name) {
   const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
@@ -7249,7 +7249,7 @@ async function lpMapDraw(pts) { // null si une tuile manque ou si le canvas est 
   const jobs = []; let miss = 0;
   for (let tx = Math.floor(ox / 256); tx * 256 < ox + LP_MAP_W; tx++) for (let ty = Math.floor(oy / 256); ty * 256 < oy + LP_MAP_H; ty++) {
     if (ty < 0 || ty >= n) continue; const url = lpTileUrl(base, z, ((tx % n) + n) % n, ty); if (!url) return null;
-    jobs.push(loadImg(url).then(im => { if (im) c.drawImage(im, tx * 256 - ox, ty * 256 - oy, 256.5, 256.5); else miss++; }));
+    jobs.push(loadImg(url, 25000).then(im => { if (im) c.drawImage(im, tx * 256 - ox, ty * 256 - oy, 256.5, 256.5); else miss++; }));
   }
   await Promise.all(jobs); if (miss) return null;
   const P = pts.map(q => [(q[1] + 180) / 360 * scale - ox, lat2y(q[0]) * scale - oy]);
@@ -7260,16 +7260,19 @@ async function lpMapDraw(pts) { // null si une tuile manque ou si le canvas est 
 }
 async function lpFillMaps(items) {
   if (LP.mapsBusy || typeof L === 'undefined' || !navigator.onLine) return;
-  const base = lpBaseName(), todo = items.filter(m => !LP.maps[base + '|' + m.id] && !LP.mapsFail.has(base + '|' + m.id)).slice(0, 12); if (!todo.length) return;
+  const base = lpBaseName(), todo = items.filter(m => !LP.maps[base + '|' + m.id] && (LP.mapsFail.get(base + '|' + m.id) || 0) < 3).slice(0, 12); if (!todo.length) return;
+  const fail = m => LP.mapsFail.set(base + '|' + m.id, (LP.mapsFail.get(base + '|' + m.id) || 0) + 1); // 3 essais par ouverture de la page (tuile lente, hors ligne…)
   LP.mapsBusy = 1;
   for (let i = 0; i < todo.length; i += 2) await Promise.all(todo.slice(i, i + 2).map(async m => {
     let pts = null;
     if (m.demo) { try { pts = await demoPts(DEMO.find(d => d.id === m.id)); } catch (e) {} }
-    else { try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); pts = rec && rec.pts; } catch (e) {} }
-    if (!pts || pts.length < 2) { LP.mapsFail.add(base + '|' + m.id); return; }
+    else { try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); pts = rec && rec.pts; } catch (e) {}
+      if (!pts && m.remote) { // trace pas encore sur cet appareil : lue dans le compte et gardée (comme à l'ouverture du parcours)
+        const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', m.id).maybeSingle(); if (data && data.pts && data.pts.length > 1) { pts = data.pts; try { await idbRun('pts', 'readwrite', st => st.put({ id: m.id, pts })); } catch (e) {} } } } }
+    if (!pts || pts.length < 2) { fail(m); return; }
     const step = Math.max(1, Math.floor(pts.length / 400)), q = pts.filter((_, k) => k % step === 0); if (q[q.length - 1] !== pts[pts.length - 1]) q.push(pts[pts.length - 1]);
     let img = null; try { img = await lpMapDraw(q); } catch (e) {}
-    if (!img) { LP.mapsFail.add(base + '|' + m.id); return; }
+    if (!img) { fail(m); return; }
     LP.maps[base + '|' + m.id] = img; try { await idbRun('pois', 'readwrite', st => st.put({ key: 'thumb1|' + base + '|' + m.id, at: Date.now(), img })); } catch (e) {}
     const el = document.querySelector(`#lpList .lp-item[data-id="${m.id}"] .lp-map`); if (el && !el.querySelector('img')) { el.insertAdjacentHTML('afterbegin', `<img src="${img}" alt="">`); el.querySelector('.lp-thumb')?.remove(); }
     if (LP.sheet === m.id) lpSheetFill();
