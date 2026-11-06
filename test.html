@@ -6431,7 +6431,7 @@ function libRender() {
 async function libOpen(id) {
   const m = LIB.list.find(x => x.id === id); if (!m) return;
   // Commute avec un trajet fixé dans Moi : un autre parcours s'ouvre en Sortie, le trajet reste tel quel (06/11/2026)
-  if (S.mode === 'taf' && !LIB.tafForce && !m.demo) { const fx = tafFixed(); if (fx && id !== fx.go) { S.tafPrev = ''; switchMode('ride'); } }
+  if (S.mode === 'taf' && !LIB.tafForce && !m.demo) { const fx = tafFixed(); if (fx && id !== fx.go) { S.tafPrev = ''; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} switchMode('ride'); } }
   if (m.demo) { // mode démo : trace d'exemple du dossier demo/
     const d = DEMO.find(x => x.id === id); let pts = null;
     setStatus(T("Chargement du parcours…"), 'load');
