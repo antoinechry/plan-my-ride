@@ -111,6 +111,7 @@ window.PMR_I18N = {
     // dossiers de Mes parcours (06/11/2026)
     "Tous": "All",
     "Valider": "Confirm",
+    "Ton trajet Commute est réglé dans Moi : « {0} » n'a pas été ouvert. Pour en faire ton trajet, change-le dans Moi.": "Your Commute trip is set in Me: “{0}” was not opened. To make it your trip, change it in Me.",
     "Annuler l'import": "Cancel the import",
     "Abandonner l'import ? La trace ne sera pas enregistrée.": "Abandon the import? The track will not be saved.",
     "Abandonner l'import de « {0} » ? La trace ne sera pas enregistrée.": "Abandon the import of “{0}”? The track will not be saved.",
