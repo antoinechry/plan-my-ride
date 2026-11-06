@@ -370,6 +370,18 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
 .exp-opts .r.full{width:22px;height:30px}.exp-opts .r.wide{width:34px;height:19px}.exp-opts .r.story{width:17px;height:30px}
 .exp-opts b{font-size:15px}.exp-opts span{font-size:13px;color:var(--muted)}
 .exp-foot{display:flex;justify-content:flex-end;margin-top:14px}
+/* Dossiers de Mes parcours : Sortie / Ultra / Commute (06/11/2026) */
+.kind-opts .ki{grid-row:span 2;justify-self:center;width:30px;height:30px;color:var(--ink)}
+.kind-opts .ki svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lp-kind{grid-template-columns:repeat(4,1fr)}
+.lp-kind button{min-height:40px;display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 4px}
+.lp-kind button small{font:600 11px var(--f-mono);color:var(--muted);padding:1px 5px;border-radius:999px;background:var(--line)}
+.lp-kind button[aria-pressed="true"] small{background:var(--panel);color:var(--ink)}
+.lp-tag{display:inline-flex;align-items:center;gap:4px;font:600 10.5px var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.lp-tag svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lp-move{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 12px 12px;font-size:13px;color:var(--muted)}
+.lp-move .seg2{flex:1 1 220px;grid-template-columns:repeat(3,1fr)}
+.lp-move .seg2 button{min-height:36px}
 /* Vélotaf : bloc « Mes trajets » (maquette du 03/11/2026) */
 .card.tt{display:flex;flex-direction:column;gap:14px;padding:18px 20px}
 @media (max-width:700px){.card.tt{padding:14px}}
@@ -1253,6 +1265,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <p class="hint lp-count" id="lpCount"></p>
   <label class="btn primary lp-imp no-guest" for="file">Importer un GPX</label>
   <div class="lp-tools">
+    <div class="seg2 lp-kind" id="lpKind" role="group" aria-label="Dossier"><button type="button" data-v="all" aria-pressed="true">Tous</button><button type="button" data-v="ride" aria-pressed="false">Sortie</button><button type="button" data-v="ultra" aria-pressed="false">Ultra</button><button type="button" data-v="taf" aria-pressed="false">Commute</button></div>
     <input type="search" id="lpQ" placeholder="Rechercher un parcours" autocomplete="off" aria-label="Rechercher un parcours">
     <div class="seg2 lp-sort" id="lpSort" role="group" aria-label="Trier les parcours"><button type="button" data-v="recent" aria-pressed="true">Récents</button><button type="button" data-v="km" aria-pressed="false">Distance</button><button type="button" data-v="name" aria-pressed="false">Nom</button></div>
   </div>
@@ -1772,6 +1785,16 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <button type="button" data-fmt="story"><i class="r story" aria-hidden="true"></i><b>Story 9:16</b><span>Pour partager depuis le téléphone</span></button>
   </div>
   <form method="dialog" class="exp-foot"><button class="btn" value="cancel">Annuler</button></form>
+</dialog>
+<dialog class="exp-dlg kind-dlg" id="kindDlg" aria-labelledby="kindTitle">
+  <h2 id="kindTitle">Ranger ce parcours</h2>
+  <p class="hint" id="kindHint">Choisis le dossier de ce parcours dans Mes parcours. Tu pourras le changer plus tard.</p>
+  <div class="exp-opts kind-opts">
+    <button type="button" data-kind="ride"><i class="ki" aria-hidden="true"></i><b>Sortie</b><span>Une sortie à la journée</span></button>
+    <button type="button" data-kind="ultra"><i class="ki" aria-hidden="true"></i><b>Ultra</b><span>Plusieurs jours, planification journalière</span></button>
+    <button type="button" data-kind="taf"><i class="ki" aria-hidden="true"></i><b>Commute</b><span>Mes trajets maison → travail</span></button>
+  </div>
+  <form method="dialog" class="exp-foot"><button class="btn" value="cancel">Plus tard</button></form>
 </dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
@@ -4467,9 +4490,12 @@ function handleFile(file) {
     try {
       // On travaille sur la trace simplifiée (celle qui est enregistrée) : rouvrir le parcours donne exactement les mêmes calculs.
       const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts));
-      if (FREE && !(await freeUse(routeId(packPts(pts)), S.mode))) return; // compte gratuit : nouvelles traces par mois
+      const id0 = routeId(packPts(pts));
+      if (FREE && !(await freeUse(id0, S.mode))) return; // compte gratuit : nouvelles traces par mois
+      // dossier de Mes parcours (06/11/2026) : demandé à l'import, sauf pour un parcours déjà rangé
+      const known = LIB.list.find(x => x.id === id0), kind = known && known.kind ? known.kind : await kindAsk(name);
       loadRoute(pts, name, false);
-      libSave(pts, name); // fixe LIB.current avant sa première attente
+      libSave(pts, name, undefined, true, kind); // fixe LIB.current avant sa première attente
       revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
       track('gpx', { km: Math.round(S.lapBase.total) });
       logAct('gpx', { detail: String(name).slice(0, 120), km: Math.round(S.lapBase.total * 10) / 10, route_id: LIB.current || null });
@@ -4477,6 +4503,37 @@ function handleFile(file) {
     catch (e) { setStatus(e.message, 'err'); }
   };
   rd.readAsText(file);
+}
+/* Dossiers de Mes parcours (06/11/2026) : chaque parcours est rangé dans Sortie, Ultra ou Commute (`kind` : ride | ultra | taf,
+   dans la méta IndexedDB et la colonne `routes.kind`). Demandé à l'import (dossier du mode en cours proposé), modifiable dans
+   le menu « ⋯ » de Mes parcours ; un parcours pas encore rangé est deviné (trajet Commute fixé, nom, plus de 300 km → Ultra). */
+const KINDS = ['ride', 'ultra', 'taf'], KIND_NAME = { ride: 'Sortie', ultra: 'Ultra', taf: 'Commute' };
+const kindName = k => T(KIND_NAME[k] || 'Sortie');
+const kindIco = (k, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${TAB_ICO[k] || TAB_ICO.ride}</svg>`;
+function kindOf(m) {
+  if (m.kind && KINDS.includes(m.kind)) return m.kind;
+  let fx = null; try { fx = tafFixed(); } catch (e) {}
+  if (fx && (m.id === fx.go || m.id === fx.ret)) return 'taf';
+  if (/\b(commute|v[ée]lotaf|taf|trajet|boulot|travail|bureau)\b/i.test(m.name || '')) return 'taf';
+  return (m.km || 0) > 300 ? 'ultra' : 'ride';
+}
+function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (celui du mode en cours si on referme)
+  return new Promise(res => {
+    const d = $('#kindDlg'), def = KINDS.includes(S.mode) ? S.mode : 'ride'; let done = false;
+    $('#kindHint').textContent = T("« {0} » : choisis son dossier dans Mes parcours. Tu pourras le changer plus tard.", [name || T("Trace sans nom")]);
+    for (const b of d.querySelectorAll('[data-kind]')) { b.classList.toggle('def', b.dataset.kind === def); if (!b.querySelector('.ki svg')) b.querySelector('.ki').innerHTML = kindIco(b.dataset.kind); }
+    const end = k => { if (done) return; done = true; d.removeEventListener('click', onClick); d.removeEventListener('close', onClose); if (d.open) d.close(); res(k); };
+    const onClick = e => { const b = e.target.closest('[data-kind]'); if (b) end(b.dataset.kind); };
+    const onClose = () => end(def);
+    d.addEventListener('click', onClick); d.addEventListener('close', onClose);
+    d.showModal(); const f = d.querySelector(`[data-kind="${def}"]`); if (f) f.focus();
+  });
+}
+async function kindSet(id, kind) { // changer le dossier d'un parcours : liste, navigateur, compte
+  if (!KINDS.includes(kind)) return; const m = LIB.list.find(x => x.id === id); if (!m) return;
+  libUpsert({ id, kind });
+  try { const meta = await idbRun('meta', 'readonly', st => st.get(id)); if (meta) await idbRun('meta', 'readwrite', st => st.put({ ...meta, kind })); } catch (e) {}
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ kind }).eq('user_id', SB_UID).eq('id', id).then(() => {});
 }
 /* ---------- réglages ---------- */
 // Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
@@ -5520,7 +5577,7 @@ $('#tafFile').addEventListener('change', () => {
       const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts)), P = prepare(pts);
       const id = routeId(packPts(pts));
       TAF.ret = TAF.id = id; TAF.P = P;
-      await libSave(pts, name, P, false); // gardé dans « Mes parcours » sans changer la trace de l'aller
+      await libSave(pts, name, P, false, 'taf'); // gardé dans « Mes parcours » (dossier Commute) sans changer la trace de l'aller
       tafRenderSel(); tripsRender(); schedule();
     } catch (e) { setStatus(e.message, 'err'); }
     $('#tafFile').value = '';
@@ -5633,7 +5690,7 @@ function ttDlgOpen(kind) {
   TT.kind = kind;
   $('#ttDlgT').textContent = kind === 'go' ? T("Trace de l'aller") : T("Trace du retour");
   const skip = kind === 'go' ? TAF.ret : LIB.current, cur = kind === 'go' ? LIB.current : TAF.ret;
-  const items = LIB.list.filter(m => m.id !== skip).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || ''));
+  const items = LIB.list.filter(m => m.id !== skip).sort((a, b) => (kindOf(b) === 'taf') - (kindOf(a) === 'taf') || (b.used_at || '').localeCompare(a.used_at || '')); // dossier Commute d'abord
   const go = LIB.list.find(x => x.id === LIB.current);
   const rev = kind === 'ret' && go ? `<li><button type="button" class="tt-opt" data-pick="" aria-pressed="${!TAF.ret}"><span class="rvbox"><svg class="rv" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></svg></span><b>${T("Même trace, à l'envers")}</b><span class="tt-num">${fD(+go.km || 0)} ${UL.km}</span></button></li>` : '';
   $('#ttList').innerHTML = rev + (items.length ? items.map(m => `<li><button type="button" class="tt-opt" data-pick="${m.id}" aria-pressed="${m.id === cur}">${ttThumb(m.id, false)}<b>${escH(m.name)}</b><span class="tt-num">${fD(+m.km || 0)} ${UL.km}</span></button></li>`).join('')
@@ -6350,7 +6407,7 @@ function routeId(packed) { // empreinte du tracé : le même GPX rechargé ne cr
   return 'r' + (h >>> 0).toString(36) + packed.length.toString(36);
 }
 
-async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
+async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true, kind = '') {
   if (GUEST) { if (setCurrent) LIB.current = routeId(packPts(raw)); return; } // mode démo : rien n'est enregistré
   try {
     const pts = packPts(raw), id = routeId(pts), now = new Date().toISOString();
@@ -6359,7 +6416,8 @@ async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
       plusDlg(T("Ce parcours n'est pas enregistré : le compte gratuit garde {0} parcours. Supprimes-en un dans Mes parcours, ou passe à Sillage.cc + pour les garder tous.", [FREE_MAX_ROUTES]));
       libRender(); return;
     }
-    const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now };
+    const prev = LIB.list.find(x => x.id === id);
+    const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now, kind: KINDS.includes(kind) ? kind : (prev && prev.kind) || null };
     if (setCurrent) { LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {} }
     try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
     libUpsert({ ...meta, local: true });
@@ -6477,7 +6535,7 @@ async function libInit() {
   if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
   // Compte : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
   const sb = await sbIfLogged(); if (!sb) return;
-  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at').eq('user_id', SB_UID).order('used_at', { ascending: false }).limit(200);
+  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at,kind').eq('user_id', SB_UID).order('used_at', { ascending: false }).limit(200);
   if (error) return;
   // parcours supprimés par un admin (page Admin) : retirés de ce navigateur au lieu d'être renvoyés au compte
   for (const r of (data || []).filter(r => r.deleted_at)) {
@@ -6485,7 +6543,7 @@ async function libInit() {
     LIB.list = LIB.list.filter(x => x.id !== r.id);
     if (LIB.current === r.id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} }
   }
-  for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; libUpsert({ ...m, remote: true }); }
+  for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; if (!m.kind) delete m.kind; libUpsert({ ...m, remote: true }); }
   libRender(); tafFixedRet();
   if (!S.P && last && LIB.list.some(x => x.id === last)) await libOpen(last);
   // une seule fois : un admin voyait les parcours de tous les comptes ; ceux qu'il a ouverts sont restés dans son navigateur.
@@ -6502,7 +6560,7 @@ async function libInit() {
     const r = own.find(x => S.mode === 'taf' || x.id !== taf) || own[0]; if (r) await libOpen(r.id); }
   for (const m of LIB.list.filter(x => x.local && !x.remote)) {
     try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); if (!rec) continue;
-      const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, pts: rec.pts }, { onConflict: 'user_id,id' });
+      const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, kind: m.kind || null, pts: rec.pts }, { onConflict: 'user_id,id' });
       if (!e2) libUpsert({ id: m.id, remote: true }); } catch (e) {}
   }
 }
@@ -6534,7 +6592,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.b
 $('#tabLib').addEventListener('click', lpOpen);
 /* Page « Mes parcours » (essai du 24/10/2026) : liste des parcours en fiches (miniature du tracé, km, D+, dernière ouverture),
    recherche, tri, ouvrir / renommer / supprimer. Onglet « Parcours » sur téléphone, bouton « Voir tous mes parcours » ailleurs. */
-const LP = { sort: 'recent', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false };
+const LP = { sort: 'recent', kind: 'all', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false };
 function lpThumbs() { if (!LP.thumbs) { try { LP.thumbs = JSON.parse(localStorage.getItem('pmr-thumbs') || '{}') || {}; } catch (e) { LP.thumbs = {}; } } return LP.thumbs; }
 function thumbOf(pts) { // tracé ramené dans un carré de 64 (projection simple, ~90 points)
   const step = Math.max(1, Math.floor(pts.length / 90)), q = []; for (let i = 0; i < pts.length; i += step) q.push(pts[i]); q.push(pts[pts.length - 1]);
@@ -6559,19 +6617,26 @@ function lpRender() {
   $('#lpCount').textContent = GUEST ? T("Traces d'exemple du mode démo. Crée ton compte gratuit pour importer les tiennes.")
     : n ? T('{0} parcours ', [n]) + (hasSbToken() ? T("dans ton compte, sur tous tes appareils.") : T("sur ce navigateur.")) + (FREE ? ' ' + T("Le compte gratuit en garde {0} au plus.", [FREE_MAX_ROUTES]) : '') : '';
   let items = LIB.list.filter(r => q.every(w => fold(r.name).includes(w)));
+  // dossiers (06/11/2026) : compte par dossier sur les pastilles, liste filtrée sur le dossier choisi
+  const cnt = { all: items.length, ride: 0, ultra: 0, taf: 0 }; for (const r of items) cnt[kindOf(r)]++;
+  for (const b of document.querySelectorAll('#lpKind button')) { const k = b.dataset.v; b.innerHTML = `${k === 'all' ? T('Tous') : kindName(k)}${n ? ` <small>${cnt[k]}</small>` : ''}`; b.setAttribute('aria-pressed', String(k === LP.kind)); }
+  if (LP.kind !== 'all') items = items.filter(r => kindOf(r) === LP.kind);
   if (LP.sort === 'km') items = items.slice().sort((a, b) => (b.km || 0) - (a.km || 0));
   else if (LP.sort === 'name') items = items.slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
   if (!n) { $('#lpList').innerHTML = T("<li class=\"lp-empty\"><b>Aucun parcours pour l'instant.</b><br>Importe un GPX depuis Strava, Komoot ou Garmin : il est gardé ici{0}.</li>", [hasSbToken() ? T(" et sur tes autres appareils") : '']); return; }
-  if (!items.length) { $('#lpList').innerHTML = T("<li class=\"lp-empty\">Aucun parcours ne correspond à « {0} ».</li>", [escH($('#lpQ').value)]); return; }
+  if (!items.length) { $('#lpList').innerHTML = q.length ? T("<li class=\"lp-empty\">Aucun parcours ne correspond à « {0} ».</li>", [escH($('#lpQ').value)])
+    : T("<li class=\"lp-empty\"><b>Aucun parcours dans le dossier {0}.</b><br>Range-y un parcours depuis son menu « ⋯ », ou importe un GPX.</li>", [kindName(LP.kind)]); return; }
+  const tag = r => LP.kind === 'all' ? `<span class="lp-tag">${kindIco(kindOf(r))}${kindName(kindOf(r))}</span>` : '';
+  const move = r => `<div class="lp-move"><span>${T('Dossier')}</span><div class="seg2" role="group" aria-label="${T('Dossier')}">${KINDS.map(k => `<button type="button" data-mv="${r.id}" data-k="${k}" aria-pressed="${kindOf(r) === k}">${kindName(k)}</button>`).join('')}</div></div>`;
   $('#lpList').innerHTML = items.map(r => {
     const th = t[r.id], cur = r.id === LIB.current;
     const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
-    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), fD(r.km || 0), fE(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
-        : LP.open === r.id ? T("<div class=\"lp-acts\"><button type=\"button\" class=\"btn small\" data-ren=\"{0}\">Renommer</button><button type=\"button\" class=\"btn small{1}\" data-del=\"{2}\">{3}</button></div>", [r.id, LP.del === r.id ? ' danger' : '', r.id, LP.del === r.id ? T("Confirmer la suppression") : T("Supprimer")]) : '']); }).join('');
+    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m{12}</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), fD(r.km || 0), fE(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
+        : LP.open === r.id ? T("<div class=\"lp-acts\"><button type=\"button\" class=\"btn small\" data-ren=\"{0}\">Renommer</button><button type=\"button\" class=\"btn small{1}\" data-del=\"{2}\">{3}</button></div>", [r.id, LP.del === r.id ? ' danger' : '', r.id, LP.del === r.id ? T("Confirmer la suppression") : T("Supprimer")]) + move(r) : '', tag(r)]); }).join('');
   if (LP.ren) { const i = $('#lpRenIn'); if (i) { i.focus(); i.select(); } }
   lpFillThumbs();
 }
-function lpOpen() { LP.open = LP.ren = LP.del = ''; $('#lpQ').value = ''; pageOpen('libPage', '#tabLib'); lpRender(); }
+function lpOpen() { LP.open = LP.ren = LP.del = ''; LP.kind = KINDS.includes(S.mode) ? S.mode : 'all'; $('#lpQ').value = ''; pageOpen('libPage', '#tabLib'); lpRender(); }
 function lpClose() { pageClose(); }
 async function lpRename(id, name) {
   const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
@@ -6747,8 +6812,10 @@ $('#libPageX').addEventListener('click', lpClose);
 for (const a of document.querySelectorAll('.modes a, .tabbar a[data-mode]')) a.addEventListener('click', pageClose);
 $('#lpQ').addEventListener('input', () => { LP.open = LP.ren = ''; lpRender(); });
 $('#lpSort').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.sort = b.dataset.v; setSeg('#lpSort', LP.sort); lpRender(); });
+$('#lpKind').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.kind = b.dataset.v; LP.open = LP.ren = LP.del = ''; lpRender(); });
 $('#lpList').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+  if (d.mv) { await kindSet(d.mv, d.k); lpRender(); return; }
   if (d.open) { lpClose(); window.scrollTo(0, 0); if (d.open !== LIB.current) await libOpen(d.open); return; }
   if (d.more) { LP.open = LP.open === d.more ? '' : d.more; LP.ren = LP.del = ''; lpRender(); return; }
   if (d.ren) { LP.ren = d.ren; lpRender(); return; }
