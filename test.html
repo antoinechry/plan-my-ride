@@ -708,7 +708,8 @@ body.lib-open{overflow:hidden}
 .me-sel{width:100%;min-height:46px;margin-top:8px;font-size:16px}
 /* alertes météo (essai du 25/10/2026) */
 .al-l{display:block;margin-top:12px;font-size:13px;color:var(--muted)}
-#meTafCard .me-ret[hidden],#meTafCard .me-ret[hidden]+select{display:none}
+#meTafCard .me-ret[hidden]{display:none}
+#meTafKind{grid-template-columns:1fr 1fr}
 .tt-lock{cursor:default}.tt-lock .btn{flex:none}
 .al-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .al-grid .me-sel{box-sizing:border-box}
@@ -1279,7 +1280,9 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <div class="me-btns"><button type="button" class="btn small primary" data-plus>Découvrir Sillage.cc +</button></div></div>
   <div class="me-card no-guest" id="meTafCard"><h3>Mon trajet Commute</h3><p class="hint">Choisis ta trace aller et ton retour. Ce trajet s'ouvre tout seul sur Commute et y reste fixe : pour en changer, reviens ici. Une nouvelle trace s'importe dans Parcours.</p>
     <label class="al-l" for="meTaf">Aller · maison → travail</label><select id="meTaf" class="me-sel" aria-label="Trajet Commute : aller"></select>
-    <label class="al-l me-ret" for="meTafRet">Retour · travail → maison</label><select id="meTafRet" class="me-sel" aria-label="Trajet Commute : retour"></select></div>
+    <span class="al-l me-ret">Retour · travail → maison</span>
+    <div class="seg2 me-theme me-ret" id="meTafKind" role="group" aria-label="Trace du retour"><button type="button" data-k="rev" aria-pressed="true">Même trace, à l'envers</button><button type="button" data-k="other" aria-pressed="false">Une autre trace</button></div>
+    <select id="meTafRet" class="me-sel me-ret" aria-label="Trajet Commute : trace du retour" hidden></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
     <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
     <div class="guest-lock guest-only"><b>Avec un compte gratuit</b><p>Choisis un parcours enregistré et reçois sa météo la veille au soir ou le matin même.</p><button type="button" class="btn small primary" data-guest-up>Créer mon compte gratuit</button></div>
@@ -6902,24 +6905,29 @@ try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pm
 // lien direct vers la Carte (#carte, depuis le rail de la supervision, 03/11/2026)
 if (location.hash === '#carte') { history.replaceState(null, '', location.pathname + location.search); if (!document.body.classList.contains('gated')) setTimeout(pmOpen, 0); }
 // Moi · Mon trajet Commute (06/11/2026) : aller (pmr-taf-route) et retour (pmr-taf-ret, '' = même trace à l'envers)
+const ME = { tafOther: false }; // « Une autre trace » choisi mais pas encore de parcours
 function meTafSel() {
   const go = $('#meTaf'), rt = $('#meTafRet'); if (!go || !rt) return;
   const fx = tafFixed(), opts = LIB.list.filter(x => !x.demo).slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
   const opt = r => `<option value="${r.id}">${escH(r.name)} · ${fD(r.km || 0)} ${UL.km}</option>`;
   go.innerHTML = `<option value="">${T("Aucun : le parcours ouvert")}</option>` + opts.map(opt).join('');
   go.value = fx ? fx.go : '';
-  rt.innerHTML = `<option value="">${T("Même trace, à l'envers")}</option>` + opts.filter(r => !fx || r.id !== fx.go).map(opt).join('');
+  const other = !!(fx && (fx.ret || ME.tafOther)); ME.tafOther = other;
+  rt.innerHTML = `<option value="">${T("Choisis la trace du retour…")}</option>` + opts.filter(r => !fx || r.id !== fx.go).map(opt).join('');
   rt.value = fx ? fx.ret : '';
   for (const el of document.querySelectorAll('#meTafCard .me-ret')) el.hidden = !fx;
+  for (const b of document.querySelectorAll('#meTafKind button')) b.setAttribute('aria-pressed', String((b.dataset.k === 'other') === other));
+  rt.hidden = !fx || !other;
 }
 function meTafSave() {
-  const go = $('#meTaf').value, ret = go ? $('#meTafRet').value : '';
+  const go = $('#meTaf').value, ret = go && ME.tafOther ? $('#meTafRet').value : '';
   try { if (go) localStorage.setItem('pmr-taf-route', go); else localStorage.removeItem('pmr-taf-route'); if (go && ret && ret !== go) localStorage.setItem('pmr-taf-ret', ret); else localStorage.removeItem('pmr-taf-ret'); } catch (e) {}
   meTafSel();
   if (S.mode === 'taf') { if (go) tafOpenDefault(); else tripsRender(); }
 }
-$('#meTaf').addEventListener('change', meTafSave);
+$('#meTaf').addEventListener('change', () => { ME.tafOther = false; meTafSave(); });
 $('#meTafRet').addEventListener('change', meTafSave);
+$('#meTafKind').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; ME.tafOther = b.dataset.k === 'other'; meTafSave(); if (ME.tafOther) $('#meTafRet').focus(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
 /* Suppression du compte (essai du 29/10/2026, exigée par l'App Store et Google Play) : mot de passe demandé,

@@ -710,6 +710,8 @@ window.PMR_I18N = {
     "Vélo": "Bike",
     "Vélo (CyclOSM)": "Cycling (CyclOSM)",
     "Vélotaf": "Commute",
+    "Une autre trace": "Another route",
+    "Choisis la trace du retour…": "Choose the return route…",
     "Choisis ta trace aller et ton retour. Ce trajet s'ouvre tout seul sur Commute et y reste fixe : pour en changer, reviens ici. Une nouvelle trace s'importe dans Parcours.": "Choose your outbound route and your way back. This commute opens by itself in Commute and stays fixed there: come back here to change it. New routes are imported in Routes.",
     "Trajet Commute : aller": "Commute: outbound",
     "Trajet Commute : retour": "Commute: way back",
