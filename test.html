@@ -8149,7 +8149,7 @@ function pmAddDraw() {
       <label><span>${escH(T("Nom du lieu"))}</span><input type="text" id="pmName" maxlength="80" value="${escH(f.name)}" placeholder="${escH(t.lbl)}"></label>
       <label><span>${escH(T("Infos utiles · facultatif"))}</span><textarea id="pmDet" maxlength="500" placeholder="${escH(t.hint)}">${escH(f.details)}</textarea></label>
       ${pmRevFields(f, T("Ton avis sur ce lieu"))}
-      ${f.type === 'bivouac' ? `<p class="pm-warn">${pmSvg('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5M12 16.5v.1').replace('<svg', '<svg width="18" height="18" style="flex:none" fill="none" stroke="var(--lv1t)" stroke-width="2"')}${escH(T("Le bivouac est réglementé selon les lieux (parcs, réserves, forêts). Indique si c'est autorisé ou toléré."))}</p>` : ''}
+      ${f.type === 'bivouac' ? `<p class="pm-warn">${pmSvg('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5M12 16.5v.1').replace('<svg', '<svg width="18" height="18" style="flex:none" fill="none" stroke="var(--lv1t)" stroke-width="2"')}${escH(T("Respecte les lieux : bivouac discret, une nuit, rien laissé derrière toi."))}</p>` : ''}
       <p class="pm-msg">${escH(T("Ton point est visible tout de suite, avec la mention « en cours de validation » le temps qu'on le vérifie."))}</p>
       <p class="pm-msg" id="pmFormMsg" aria-live="polite"></p>
       <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" data-step="place">${escH(T("← Déplacer le repère"))}</button><button type="button" class="btn primary" id="pmAddSend">${escH(T("Publier le point"))}</button></div>

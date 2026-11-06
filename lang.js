@@ -1105,6 +1105,7 @@ window.PMR_I18N = {
     "Plans (Apple)": "Apple Maps",
     "Autre appli": "Other app",
     "Le guidage s'ouvre dans l'appli choisie.": "Directions open in the app you choose.",
+    "Respecte les lieux : bivouac discret, une nuit, rien laissé derrière toi.": "Respect the place: discreet bivouac, one night, leave nothing behind.",
     "Le bivouac est réglementé selon les lieux (parcs, réserves, forêts). Indique si c'est autorisé ou toléré.": "Wild camping rules vary (parks, reserves, forests). Say whether it's allowed or tolerated.",
     "Le point n'a pas pu être enregistré.": "The place couldn't be saved.",
     "Localisation indisponible sur cet appareil": "Location isn't available on this device",
