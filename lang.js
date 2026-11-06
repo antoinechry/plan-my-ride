@@ -1214,6 +1214,12 @@ window.PMR_I18N = {
     "km {0} · {1} au total": "km {0} · {1} in total",
     "Chaud": "Hot",
     "Moins bien": "Less good",
+    "Heures": "Times",
+    "Moins": "Less",
+    "Inc.": "N/A",
+    "Raf.": "Gusts",
+    "Conditions favorables": "Good conditions",
+    "Bien, avec quelques réserves": "Good, with a few caveats",
     "Départ à {0} : {1}": "Start at {0}: {1}",
     "<p><b>Meilleur créneau : {0}.</b> Arrivée {1}, pluie {2} mm, face {3} %.</p><button type=\"button\" class=\"btn primary\" data-time=\"{4}\">Partir à {4}</button>": "<p><b>Best slot: {0}.</b> Arrival {1}, rain {2} mm, headwind {3} %.</p><button type=\"button\" class=\"btn primary\" data-time=\"{4}\">Start at {4}</button>"
   }

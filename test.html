@@ -1088,6 +1088,41 @@ body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{mar
 .hours-card .vhours{margin-top:0}
 .hours-card .vhours .vh-head b{font:700 18px var(--f-display);letter-spacing:0;text-transform:none;color:var(--ink)}
 @media (max-width:1099px){body:not([data-mode="taf"]) #results>#hoursCard{order:4}}
+/* niveau au-dessus du verdict, étiquettes des lignes du verdict (maquette mobile A) */
+.vkick{margin:0 0 8px;display:flex;align-items:center;gap:8px;font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vkick::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--lv0,var(--tail));flex:none}
+.vkick.lv1::before{background:var(--lv1,var(--sun))}
+.vkick.lv2::before{background:var(--lv2,var(--head))}
+body[data-mode="taf"] .vkick{display:none}
+.vlines .vk{display:none}
+.qs-meta{font:400 13px var(--f-body);color:var(--muted);margin-left:8px}
+@media (min-width:1100px){.vkick,.qs-meta{display:none!important}}
+@media (max-width:700px){
+  header.top .modes{border:0;border-radius:999px;background:var(--line);padding:3px;gap:2px;overflow:visible}
+  header.top .modes a{border:0!important;border-radius:999px;text-transform:none;letter-spacing:0;font-size:14px;min-height:38px;padding:8px 4px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  header.top .modes a[aria-current="page"]{background:var(--ink);color:var(--panel)}
+  body:not([data-mode="taf"]) .verdict{font-size:26px;line-height:1.15}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{padding:18px 16px}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li{gap:10px;padding:9px 0;font-size:14px;line-height:1.4}
+  .vlines svg{display:none}
+  .vlines .vk{display:block;flex:0 0 84px;padding-top:2px;font:500 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .verdict-go{flex-wrap:nowrap;background:color-mix(in srgb,var(--tail) 10%,var(--panel));padding:10px 12px;gap:10px;margin-top:12px}
+  .verdict-go p{font-size:13.5px;max-width:none;flex:1;min-width:0}
+  .verdict-go .btn{background:var(--ink);color:var(--panel);border-color:var(--ink);padding:9px 13px;font-size:13px}
+  #mapCard .seg{display:flex;width:100%}
+  #mapCard .seg button{flex:1 1 auto;white-space:nowrap;padding:7px 8px;font-size:12.5px}
+  .chart-keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11.5px}
+  .opt-strip{gap:2px;padding:10px 12px 4px;overflow:visible}
+  .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent}
+  .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
+  .opt-h.best{border:2px solid var(--tail)}
+  .opt-h .b{width:16px}
+  .opt-h .t{font-size:10.5px}
+  .opt-h .w{font-size:0;line-height:12px}
+  .opt-h .w::after{content:attr(data-s);font-size:9.5px;letter-spacing:-.01em}
+  .opt{grid-template-columns:70px minmax(0,1fr)}
+  #optList .opt .h{font-size:15px;white-space:nowrap}
+}
 @media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:2px 8px}.vhours li>.t,.vhours li>svg,.vhours li>.wsky,.vhours li>.w{grid-row:span 2}.vhours li>.a{align-self:end}.vhours li .rel{grid-column:4;justify-self:end;align-self:start;padding:2px 8px;font-size:11.5px}.vhours li.end>*{grid-row:auto}}
 @media (max-width:700px){
   .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
@@ -1095,7 +1130,6 @@ body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{mar
   .opt-h{flex:0 0 48px;min-width:48px;height:100px;padding:8px 2px}
   .opt-h .t{font-size:12px}
   .opt-h .w{font-size:10px}
-  .opt .t,.opt>:first-child{white-space:nowrap}
   .chart-keys{gap:6px 14px;font-size:12px}
 }
 .verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -1491,6 +1525,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <ul class="tt-list" id="ttList"></ul>
     </dialog>
     <section aria-label="Résumé">
+      <p class="vkick" id="verdictKick" hidden></p>
       <p class="verdict" id="verdict">Calcul en cours…</p>
       <div class="verdict-more" id="verdictMore" hidden></div>
       <div class="vhours" id="verdictHours" hidden></div>
@@ -3032,6 +3067,7 @@ function renderAll(opts, opt) {
 }
 
 function renderSummary(opt) {
+  { const k = $('#verdictKick'); if (k) k.hidden = true; }
   const P = S.P, tl = S.tl, st = tl.st, has = !!S.wx && st.missKm < P.total;
   const covered = P.total - st.missKm;
   const pct = x => covered > 0 ? Math.round(x / covered * 100) : 0;
@@ -3135,7 +3171,9 @@ function renderSummary(opt) {
     const keys = ['clock', 'rain', 'wind', 'temp', 'sun'];
     S.sumLvl = !neg.length ? 0 : (st.rain >= 3 || st.amin < 3 || (st.hasGust && st.gust >= GUST_DANGER)) ? 2 : 1; // niveau pour l'export image
     S.sumLines = S1.map(x => xPlain(x));
-    more = `<ul class="vlines">${S1.map((x, k) => `<li class="${keys[k]}${k === 1 && !dry ? '' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${VI[keys[k]]}</svg><span>${x}</span></li>`).join('')}</ul>`;
+    { const k = $('#verdictKick'); if (k) { k.className = 'vkick lv' + S.sumLvl; k.textContent = [T("Conditions favorables"), T("Bien, avec quelques réserves"), T("Conditions difficiles")][S.sumLvl]; k.hidden = false; } }
+    const VL = [T("Heures"), T("Pluie"), T("Vent"), T("Températures"), T("Ciel")];
+    more = `<ul class="vlines">${S1.map((x, k) => `<li class="${keys[k]}"><svg viewBox="0 0 24 24" aria-hidden="true">${VI[keys[k]]}</svg><small class="vk">${VL[k]}</small><span>${x}</span></li>`).join('')}</ul>`;
   }
   if (tafSum) { // Vélotaf : une phrase par trajet
     const vs = tafSum.map(d => tripVerdict(d.wx));
@@ -4358,7 +4396,7 @@ function renderOpts(opts, opt) {
     const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [why(o.r.st), 'var(--head)'];
     const night = okRun(o.r) && o.r.st.nightH > 0.5 * Math.max(o.r.st.rideH || 0, 0.1);
     return `<button type="button" class="opt-h${isMine ? ' mine' : ''}${isTop && !isMine ? ' best' : ''}${q < 0 ? ' off' : ''}" data-time="${o.time}" aria-pressed="${isMine}" aria-label="${T('Départ à {0} : {1}', [hLbl(o.time), lv[0]])}">` +
-      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
+      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w" data-s="${isMine ? T("Toi") : night ? T("Nuit") : ({ [T("Moins bien")]: T("Moins"), [T("Incomplet")]: T("Inc."), [T("Rafales")]: T("Raf.") })[lv[0]] || lv[0]}">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
   }).join('');
   el.innerHTML = `<div class="opt-strip">${strip}</div>` + html;
   { const sc = el.querySelector('.opt-strip'), m = sc && sc.querySelector('.opt-h.mine'); if (m && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = Math.max(0, m.offsetLeft - sc.offsetLeft - (sc.clientWidth - m.offsetWidth) / 2); }
@@ -6716,7 +6754,7 @@ function chipsRender() {
   const tm = $('#time').value || '';
   const esc = v => String(v).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
   const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg>`;
-  box.innerHTML = `<button type="button" class="chip qs-route" data-go="@lib">${ico('route')}<span>${esc(S.name || T("Parcours"))}</span><svg class="qs-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`
+  box.innerHTML = `<button type="button" class="chip qs-route" data-go="@lib">${ico('route')}<span>${esc(S.name || T("Parcours"))}${S.P ? `<small class="qs-meta">${fD((S.lapBase || S.P).total)} ${UL.km} · ${fE((S.lapBase || S.P).up)} ${UL.m} D+</small>` : ''}</span><svg class="qs-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`
     + `<div class="qs-row">`
     + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planStartSlot' : '#startRow'}"><small>${S.mode === 'taf' ? T("Aller") : T("Départ")}</small><b>${d ? esc(dayFmt.format(d)) + ' · ' : ''}<span class="qs-num">${esc(tm)}</span></b></button>`
     + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planSpeedSlot' : '#speed'}"><small>${T("Vitesse")}</small><b class="qs-num">${fV(+$('#speed').value, 1)} ${UL.kmh}</b></button>`
