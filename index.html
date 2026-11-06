@@ -954,6 +954,97 @@ body.pm-placing .pm-loc{bottom:16px}
 .nav-row a{font-weight:600;white-space:nowrap}
 .pm-big{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
 .pm-big img{max-width:100%;max-height:100%;border-radius:8px}
+/* Refonte v2.0 « D · tout garder, en plus clair » (essai du 06/11/2026, maquette canevas « Sillage v2.0 · écran Sortie ») :
+   mêmes blocs que la v1.0, cartes arrondies, chiffres en Plex Mono, étiquettes en capitales, verdict en carte avec « Partir à … »,
+   tuiles séparées, barre du vent ressenti, rangée d'heures de départ, pastilles « Pour vous » dans la feuille de route. */
+#results .card{border-radius:16px}
+#results .card-head{padding:14px 18px}
+#results .card-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
+#results .card-head .hint{font-size:13px}
+#results .btn.small{border-radius:999px;padding:7px 14px;font-weight:600}
+#mapCard .seg{border:0;background:var(--surface-alt,var(--bg));border-radius:999px;padding:3px;gap:2px}
+#mapCard .seg button{border:0!important;border-radius:999px;padding:7px 13px;font-weight:600;color:var(--ink)}
+#mapCard .seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+#mapCard .legend{padding:12px 18px}
+#mapCard .flow-bar{padding:10px 18px}
+@media (min-width:701px){
+  #mapOptsBtn{display:inline-flex}
+  #mapCard .arrows-toggle{display:none}
+  body.map-opts #mapCard .arrows-toggle{display:inline-flex}
+  body.map-opts #mapOptsBtn{background:var(--bg)}
+}
+body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column;min-width:0}
+body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines{background:transparent;border:0;border-radius:0;margin:14px 0 0;max-width:none}
+body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li{padding:11px 0;border-top:1px solid var(--line)}
+body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li:first-child{border-top:1px solid var(--line)}
+body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{margin-top:0}
+.vhours{margin-top:20px;display:flex;flex-direction:column;gap:6px}
+.vhours .vh-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.vhours .vh-head b{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vhours .vh-head span{font-size:12px;color:var(--muted)}
+.vhours ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.vhours li{display:grid;grid-template-columns:50px 24px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--line)}
+.vhours li:last-child{border-bottom:0}
+.vhours li.hi{background:color-mix(in srgb,var(--sun) 13%,var(--panel));border-radius:12px;border-bottom-color:transparent}
+.vhours .t{font:500 15px var(--f-mono)}
+.vhours .wsky{width:22px;height:22px}
+.vhours .w{display:flex;flex-direction:column;min-width:0}
+.vhours .w b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vhours li.hi .w b{font-weight:700}
+.vhours .w small{font:500 12px var(--f-mono);color:var(--muted)}
+.vhours .a{font:500 15px var(--f-mono);text-align:right;white-space:nowrap}
+.vhours .rel{display:inline-flex;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--bg)}
+.vhours .rel.h{background:color-mix(in srgb,var(--head) 14%,var(--panel))}
+.vhours .rel.t{background:color-mix(in srgb,var(--tail) 14%,var(--panel))}
+.vhours li.end{grid-template-columns:50px 24px minmax(0,1fr)}
+.vhours li.end svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vhours .note{margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
+@media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:8px}.vhours li .rel{grid-column:3/-1;justify-self:start}}
+.verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.verdict-go p{margin:0;font-size:14px;line-height:1.4;max-width:30ch}
+.verdict-go p b{font-weight:700}
+.verdict-go .btn{border-radius:999px;padding:11px 18px;font-weight:700;white-space:nowrap}
+body[data-mode="taf"] .verdict-go{display:none}
+@media (min-width:1100px){
+  body:not([data-mode="taf"]) .verdict{font-size:34px;line-height:1.15;letter-spacing:-.015em}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{align-self:stretch}
+}
+body:not([data-mode="taf"]) .stats:not(.duo-stats){gap:12px;background:transparent;border:0;border-radius:0;overflow:visible}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat{border:1px solid var(--line);border-radius:16px;padding:14px 16px;gap:4px}
+#results .stat .label{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#results .stat .v{font-family:var(--f-mono);font-weight:500;font-size:26px;letter-spacing:-.01em}
+#results .stat .v small{font-family:var(--f-mono);font-size:15px}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind{flex-direction:column;align-items:stretch;gap:8px}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind canvas{display:none}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind .wtxt{flex-direction:row;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind .wtxt .label{width:100%}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind .wtxt .s{font-size:13.5px;color:var(--ink)}
+body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind .wtxt .s b{font-family:var(--f-mono);font-weight:500}
+.wbar{display:none;width:100%;margin:2px 0 4px;height:14px;border-radius:999px;overflow:hidden;background:var(--bg)}
+.wbar i{display:block;height:100%}
+body:not([data-mode="taf"]) .stats:not(.duo-stats) .wtxt .s.wpill{border-radius:999px;padding:2px 9px;font-weight:600}
+.wtxt .s.wf{background:var(--head);color:var(--panel)!important}
+.wtxt .s.wc{background:var(--sun);color:#14201b!important}
+.wtxt .s.wt{background:var(--tail);color:var(--panel)!important}
+.wtxt .s.wk{background:var(--bg);color:var(--ink)!important}
+.wtxt .s.wpill b{color:inherit}
+body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
+.opt-strip{display:flex;gap:6px;overflow-x:auto;padding:14px 18px 6px;scrollbar-width:thin}
+.opt-h{flex:1 0 58px;min-width:58px;height:112px;box-sizing:border-box;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;padding:9px 4px;font-family:inherit}
+.opt-h:hover{background:var(--bg)}
+.opt-h .b{display:block;width:24px;border-radius:6px}
+.opt-h .t{font:500 13px var(--f-mono)}
+.opt-h .w{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
+.opt-h.best{border:2px solid var(--tail)}
+.opt-h.off{opacity:.45}
+#optList .opt .h{font-family:var(--f-mono);font-weight:500}
+#roadCard th{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#roadCard td.num{font-family:var(--f-mono);font-weight:500}
+#roadCard .rel{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:12.5px;background:var(--bg);white-space:nowrap}
+#roadCard .rel.h{background:color-mix(in srgb,var(--head) 14%,var(--panel))}
+#roadCard .rel.t{background:color-mix(in srgb,var(--tail) 14%,var(--panel))}
+#roadCard tbody tr:nth-child(even):not(.stop){background:color-mix(in srgb,var(--bg) 55%,var(--panel))}
 </style>
 </head>
 <body>
@@ -1282,6 +1373,8 @@ body.pm-placing .pm-loc{bottom:16px}
     <section aria-label="Résumé">
       <p class="verdict" id="verdict">Calcul en cours…</p>
       <div class="verdict-more" id="verdictMore" hidden></div>
+      <div class="vhours" id="verdictHours" hidden></div>
+      <div class="verdict-go" id="verdictGo" hidden></div>
     </section>
     <div class="stats" id="stats"></div>
     <p class="hint taf-warn" id="tafWarn" hidden>Heure de départ conseillée, calculée selon la distance et votre vitesse. Prévoyez une marge selon les conditions de circulation et la météo.</p>
@@ -2619,7 +2712,7 @@ function whenTxt(t, ref) {
 
 /* ---------- rendu ---------- */
 function renderAll(opts, opt) {
-  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderPlan(); renderLaps(); renderWeek();
+  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderHours(); renderPois(); renderPlan(); renderLaps(); renderWeek();
 }
 
 function renderSummary(opt) {
@@ -2650,6 +2743,16 @@ function renderSummary(opt) {
   { const small = [...$('#stats').children].filter(e => !e.classList.contains('wind')); // mobile : dernière tuile seule sur sa ligne = pleine largeur
     if (small.length % 2) small[small.length - 1].classList.add('span'); }
   S.rose = rs; if (rs) roseCanvas($('#roseAll'), rs, 172, 96);
+  if (rs) { const w = $('#stats .stat.wind'); // refonte v2.0 : barre face / travers / dos / calme (la rose reste pour Vélotaf)
+    if (w) { const p = x => Math.max(0, Math.round(x * 100)), bar = document.createElement('div');
+      bar.className = 'wbar'; bar.setAttribute('role', 'img');
+      bar.setAttribute('aria-label', T("Vent : {0} % de face, {1} % de travers, {2} % de dos, {3} % calme", [p(rs.face), p(rs.cross), p(rs.tail), p(rs.calm)]));
+      bar.innerHTML = `<i style="width:${p(rs.face)}%;background:var(--head)"></i><i style="width:${p(rs.cross)}%;background:var(--sun)"></i><i style="width:${p(rs.tail)}%;background:var(--tail)"></i>`;
+      const lb = w.querySelector('.wtxt .label'); if (lb) lb.after(bar);
+      // textes surlignés de la couleur de leur part de la barre (face, travers, dos, puis calme s'il est affiché)
+      const ss = [...w.querySelectorAll('.wtxt .s')], cl = ['wf', 'wc', 'wt'];
+      if (rs.calm > 0.02) cl.push('wk');
+      cl.forEach((c, i) => { if (ss[i]) ss[i].classList.add('wpill', c); }); } }
   // Vélotaf : résumé coupé en deux (Aller | Retour), une rose par trajet
   $('#stats').classList.toggle('duo-stats', !!tafSum); S.roses = null;
   if (tafSum) {
@@ -3852,10 +3955,45 @@ function renderTable() {
   }).join('');
 }
 
+/* refonte v2.0, maquette « 2 · Ta sortie heure par heure » (06/11/2026) : sous le verdict de la page Sortie,
+   le départ, une ligne par heure (toutes les 2 h au-delà de 7 h), le point haut, puis l'arrivée ; le moment le plus froid en note */
+function renderHours() {
+  const el = $('#verdictHours'); if (!el) return;
+  const tl = S.tl, P = S.P;
+  const off = () => { el.hidden = true; el.innerHTML = ''; };
+  if (!tl || !S.wx || S.mode !== 'ride' || !S.samples || S.samples.length < 2) return off();
+  // point de la trace atteint à l'heure t (tl.times croissant par point de trace), météo du point d'échantillonnage le plus proche
+  const at = t => { let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (tl.times[m] < t) lo = m + 1; else hi = m; }
+    const k = sIdx(P.d[lo]), w = wxAt(k, t); return w && isFinite(w.app) ? { i: lo, km: P.d[lo], t, w, ele: P.es[lo], head: w.ws * Math.cos((w.wd - P.b[lo]) * RAD) } : null; };
+  // départ, puis toutes les heures après l'heure de départ (toujours 1 h, demande d'Antoine du 06/11/2026)
+  const dur = (tl.end - tl.start) / 3600e3, step = 3600e3;
+  const list = []; const p0 = at(tl.start); if (!p0) return off(); list.push({ p: p0, tag: 'dep' });
+  for (let t = tl.start + step; t < tl.end - 10 * 60e3; t += step) { const p = at(t); if (p) list.push({ p }); }
+  const row = ({ p, tag }) => { const rel = relLabel(p.head), sky = skyLabel(p.w.code, p.w.day);
+    const lbl = tag === 'dep' ? T("Départ · {0}", [sky.toLowerCase()]) : sky;
+    return `<li><span class="t">${hm.format(new Date(p.t))}</span>${skySvg(p.w, 22)}` +
+      `<span class="w"><b>${lbl}</b><small>${T("km {0} · {1} m", [fD(p.km), fE(p.ele)])}</small></span>` +
+      `<span class="a">${fT(p.w.app)} ${UL.C}</span><span class="rel ${rel.cls}">${rel.txt}</span></li>`; };
+  // notes : point haut et moment le plus froid (points météo de la trace)
+  const pts = S.samples.map((sm, k) => { const t = tl.times[sm.i], w = isFinite(t) ? wxAt(k, t) : null; return { sm, t, w, ele: P.es[sm.i] }; }).filter(x => x.w && isFinite(x.w.app));
+  const notes = [];
+  if (P.hasEle && pts.length) { const top = pts.reduce((a, b) => b.ele > a.ele ? b : a);
+    if (top.ele - Math.min(P.es[0], P.es[P.n - 1]) > 80) notes.push(T("Point haut à {0} m vers {1}, au km {2} : ressenti {3} °C.", [fE(top.ele), hm.format(new Date(top.t)), fD(top.sm.km, 0), fT(top.w.app)])); }
+  if (pts.length) { const cold = pts.reduce((a, b) => b.w.app < a.w.app ? b : a);
+    if (cold.w.app < p0.w.app - 1 && cold.sm.km > 1) notes.push(T("Le plus froid vers {0} au km {1} : ressenti {2} °C.", [hm.format(new Date(cold.t)), fD(cold.sm.km, 0), fT(cold.w.app)])); }
+  const hdr = T("Ta sortie heure par heure");
+  el.innerHTML = `<div class="vh-head"><b>${hdr}</b><span>${T("ressenti · vent pour toi")}</span></div><ol>` + list.map(row).join('') +
+    `<li class="end"><span class="t">${hm.format(new Date(tl.end))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></svg>` +
+    `<span class="w"><b>${T("Arrivée")}</b><small>${T("km {0} · {1} au total", [fD(P.total), durTxt(dur)])}</small></span></li></ol>` +
+    notes.map(n => `<p class="note">${n}</p>`).join('');
+  el.hidden = false;
+}
+
 /* créneaux */
 // Deux lignes seulement : l'heure de départ choisie et le meilleur créneau du jour (départs de 4 h à 16 h).
 function renderOpts(opts, opt) {
   const el = $('#optList');
+  const go = $('#verdictGo'); if (go) { go.hidden = true; go.innerHTML = ''; }
   if (!opts.length) { el.innerHTML = T("<p class=\"hint\" style=\"padding:12px 14px\">Disponible quand les prévisions couvrent la date choisie.</p>"); return; }
   const okRun = r => r.st.missKm < S.P.total * 0.05;
   const valid = opts.filter(o => okRun(o.r));
@@ -3872,7 +4010,24 @@ function renderOpts(opts, opt) {
   let html = row(mine, T("<span class=\"pill mine\">Ton départ</span>{0}", [isBest ? T(" <span class=\"pill best\">Meilleur créneau</span>") : '']));
   if (best && !isBest) html += row(best, T("<span class=\"pill best\">Meilleur créneau</span>"));
   else if (isBest) html += T("<p class=\"hint\" style=\"padding:8px 14px 12px\">Ton heure de départ est déjà le meilleur créneau de la journée.</p>");
-  el.innerHTML = html;
+  // refonte v2.0 : toute la journée en une rangée d'heures (note de chaque départ), puis les deux lignes habituelles
+  const qOf = o => okRun(o.r) && valid.length ? (hi - lo < 1e-6 ? 1 : clamp(1 - (o.sc - lo) / (hi - lo), 0, 1)) : -1;
+  const why = st => { const cov = S.P.total - st.missKm || 1;
+    return st.rain >= 0.3 ? T("Pluie") : st.hasGust && st.gust >= GUST_WARN ? T("Rafales") : st.headKm / cov >= 0.5 ? T("Vent") : st.amin < 3 ? T("Froid") : st.amax > 30 ? T("Chaud") : T("Moins bien"); };
+  const strip = opts.map(o => {
+    const q = qOf(o), isMine = o.time === mine.time, isTop = best && o.time === best.time;
+    const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [why(o.r.st), 'var(--head)'];
+    const night = okRun(o.r) && o.r.st.nightH > 0.5 * Math.max(o.r.st.rideH || 0, 0.1);
+    return `<button type="button" class="opt-h${isMine ? ' mine' : ''}${isTop && !isMine ? ' best' : ''}${q < 0 ? ' off' : ''}" data-time="${o.time}" aria-pressed="${isMine}" aria-label="${T('Départ à {0} : {1}', [hLbl(o.time), lv[0]])}">` +
+      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
+  }).join('');
+  el.innerHTML = `<div class="opt-strip">${strip}</div>` + html;
+  // sous le verdict : « Meilleur créneau : 14 h » + bouton « Partir à 14:00 », si un autre départ est meilleur
+  if (go && best && !isBest) {
+    const st = best.r.st, cov = S.P.total - st.missKm || 1;
+    go.innerHTML = T("<p><b>Meilleur créneau : {0}.</b> Arrivée {1}, pluie {2} mm, face {3} %.</p><button type=\"button\" class=\"btn primary\" data-time=\"{4}\">Partir à {4}</button>", [hLbl(best.time), whenTxt(best.r.end, best.r.start), fR(st.rain), Math.round(st.headKm / cov * 100), best.time]);
+    go.hidden = false;
+  }
 }
 
 /* CSV */
@@ -5969,7 +6124,8 @@ document.querySelectorAll('.seg button[data-metric]').forEach(b => b.addEventLis
   document.querySelectorAll('.seg button[data-metric]').forEach(x => x.setAttribute('aria-pressed', x === b));
   if (S.tl) renderMap();
 }));
-$('#optList').addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b) return; $('#time').value = b.dataset.time; run(); });
+$('#optList').addEventListener('click', e => { const b = e.target.closest('.opt, .opt-h'); if (!b) return; $('#time').value = b.dataset.time; run(); });
+$('#verdictGo').addEventListener('click', e => { const b = e.target.closest('[data-time]'); if (!b) return; $('#time').value = b.dataset.time; run(); });
 const cv = $('#chart');
 cv.addEventListener('pointermove', chartHover);
 cv.addEventListener('pointerleave', chartLeave);
