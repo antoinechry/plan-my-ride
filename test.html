@@ -1062,6 +1062,28 @@ body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines{back
 body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li{padding:11px 0;border-top:1px solid var(--line)}
 body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li:first-child{border-top:1px solid var(--line)}
 body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{margin-top:0}
+.vhours{margin-top:20px;display:flex;flex-direction:column;gap:6px}
+.vhours .vh-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.vhours .vh-head b{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vhours .vh-head span{font-size:12px;color:var(--muted)}
+.vhours ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.vhours li{display:grid;grid-template-columns:50px 24px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--line)}
+.vhours li:last-child{border-bottom:0}
+.vhours li.hi{background:color-mix(in srgb,var(--sun) 13%,var(--panel));border-radius:12px;border-bottom-color:transparent}
+.vhours .t{font:500 15px var(--f-mono)}
+.vhours .wsky{width:22px;height:22px}
+.vhours .w{display:flex;flex-direction:column;min-width:0}
+.vhours .w b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vhours li.hi .w b{font-weight:700}
+.vhours .w small{font:500 12px var(--f-mono);color:var(--muted)}
+.vhours .a{font:500 15px var(--f-mono);text-align:right;white-space:nowrap}
+.vhours .rel{display:inline-flex;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--bg)}
+.vhours .rel.h{background:color-mix(in srgb,var(--head) 14%,var(--panel))}
+.vhours .rel.t{background:color-mix(in srgb,var(--tail) 14%,var(--panel))}
+.vhours li.end{grid-template-columns:50px 24px minmax(0,1fr)}
+.vhours li.end svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vhours .note{margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
+@media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:8px}.vhours li .rel{grid-column:3/-1;justify-self:start}}
 .verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .verdict-go p{margin:0;font-size:14px;line-height:1.4;max-width:30ch}
 .verdict-go p b{font-weight:700}
@@ -1451,6 +1473,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <section aria-label="Résumé">
       <p class="verdict" id="verdict">Calcul en cours…</p>
       <div class="verdict-more" id="verdictMore" hidden></div>
+      <div class="vhours" id="verdictHours" hidden></div>
       <div class="verdict-go" id="verdictGo" hidden></div>
     </section>
     <div class="stats" id="stats"></div>
@@ -2984,7 +3007,7 @@ function trendRender() {
 }
 
 function renderAll(opts, opt) {
-  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderPois(); renderPlan(); renderLaps(); renderWeek();
+  renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderHours(); renderPois(); renderPlan(); renderLaps(); renderWeek();
 }
 
 function renderSummary(opt) {
@@ -4233,6 +4256,41 @@ function renderTable() {
       (w ? T("<td>{0}</td><td class=\"num\">{1}° / {2}°</td>\n        <td class=\"num\">{3}{4} {5}{6}</td>\n        <td><span class=\"rel {7}\">{8}</span></td>\n        <td class=\"num\" style=\"color:{9}\">{10} mm · {11} %</td>", [skyLabel(w.code, w.day), fT(w.temp), fT(w.app), arrowSvg((w.wd + 180) % 360, windStrength(w.ws)[1]), compass(w.wd), fV(w.ws), isFinite(w.gust) ? ` <span style="color:var(--muted)">raf. ${fV(w.gust)}</span>` : '', rel.cls, rel.txt, w.pr >= 0.1 ? 'var(--rain)' : 'var(--muted)', fR(w.pr), n0(w.prob)])
         : T("<td colspan=\"5\" style=\"color:var(--muted)\">Hors prévisions</td>")) + '</tr>';
   }).join('');
+}
+
+/* refonte v2.0, maquette « 2 · Ta sortie heure par heure » (06/11/2026) : sous le verdict de la page Sortie,
+   le départ, une ligne par heure (toutes les 2 h au-delà de 7 h), le point haut, puis l'arrivée ; le moment le plus froid en note */
+function renderHours() {
+  const el = $('#verdictHours'); if (!el) return;
+  const tl = S.tl, P = S.P;
+  const off = () => { el.hidden = true; el.innerHTML = ''; };
+  if (!tl || !S.wx || S.mode !== 'ride' || !S.samples || S.samples.length < 2) return off();
+  const pts = S.samples.map((s, k) => { const t = tl.times[s.i], w = isFinite(t) ? wxAt(k, t) : null;
+    return { s, t, w, ele: P.es[s.i], head: w ? w.ws * Math.cos((w.wd - P.b[s.i]) * RAD) : 0 }; }).filter(p => p.w && isFinite(p.w.app));
+  if (pts.length < 2) return off();
+  const near = t => pts.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
+  const step = (tl.end - tl.start) / 3600e3 > 7 ? 2 : 1, pick = [{ p: pts[0], tag: 'dep' }];
+  const h0 = new Date(tl.start); h0.setMinutes(0, 0, 0);
+  for (let h = +h0 + step * 3600e3; h < tl.end - 10 * 60e3; h += step * 3600e3) { const p = near(h); if (Math.abs(p.t - h) < 25 * 60e3) pick.push({ p }); }
+  const top = P.hasEle ? pts.reduce((a, b) => b.ele > a.ele ? b : a) : null;
+  if (top && top.ele - Math.min(pts[0].ele, pts[pts.length - 1].ele) > 80) {
+    const i = pick.findIndex(x => Math.abs(x.p.t - top.t) < 12 * 60e3);
+    if (i > 0) pick[i] = { p: top, tag: 'top' }; else if (i < 0) pick.push({ p: top, tag: 'top' });
+  }
+  pick.sort((a, b) => a.p.t - b.p.t);
+  const list = pick.filter((x, i) => i === 0 || x.p.t - pick[i - 1].p.t > 8 * 60e3 || x.tag).slice(0, 9);
+  const row = ({ p, tag }) => { const rel = relLabel(p.head), sky = skyLabel(p.w.code, p.w.day);
+    const lbl = tag === 'dep' ? T("Départ · {0}", [sky.toLowerCase()]) : tag === 'top' ? T("Point haut · {0}", [sky.toLowerCase()]) : sky;
+    return `<li${tag === 'top' ? ' class="hi"' : ''}><span class="t">${hm.format(new Date(p.t))}</span>${skySvg(p.w, 22)}` +
+      `<span class="w"><b>${lbl}</b><small>${T("km {0} · {1} m", [fD(p.s.km), fE(p.ele)])}</small></span>` +
+      `<span class="a">${fT(p.w.app)} ${UL.C}</span><span class="rel ${rel.cls}">${rel.txt}</span></li>`; };
+  const cold = pts.reduce((a, b) => b.w.app < a.w.app ? b : a);
+  const note = cold.w.app < pts[0].w.app - 1 && cold.s.km > 1
+    ? `<p class="note">${T("Le plus froid vers {0} au km {1} : ressenti {2} °C.", [hm.format(new Date(cold.t)), fD(cold.s.km, 0), fT(cold.w.app)])}</p>` : '';
+  el.innerHTML = `<div class="vh-head"><b>${T("Ta sortie heure par heure")}</b><span>${T("ressenti · vent pour toi")}</span></div><ol>` + list.map(row).join('') +
+    `<li class="end"><span class="t">${hm.format(new Date(tl.end))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></svg>` +
+    `<span class="w"><b>${T("Arrivée")}</b><small>${T("km {0} · {1} au total", [fD(P.total), durTxt((tl.end - tl.start) / 3600e3)])}</small></span></li></ol>` + note;
+  el.hidden = false;
 }
 
 /* créneaux */
