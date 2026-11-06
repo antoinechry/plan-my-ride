@@ -1133,7 +1133,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 .opt-h .b{display:block;width:24px;border-radius:6px}
 .opt-h .t{font:500 13px var(--f-mono)}
 .opt-h .w{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
-.opt-h .ws{display:none}
+.opt-h .ws,.opt-h .ts{display:none}
 .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
 .opt-h.best{border:2px solid var(--tail)}
 .opt-h.off{opacity:.45}
@@ -1165,10 +1165,10 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
   .opt-h.best{border:2px solid var(--tail)}
   .opt-h .b{width:16px}
-  .opt-h .t{font-size:10.5px}
-  .opt-h .w{font-size:9.5px;letter-spacing:-.01em}
-  .opt-h .wl{display:none}
-  .opt-h .ws{display:inline}
+  .opt-h .t{font-size:11px}
+  .opt-h .w{font-size:9px;letter-spacing:-.02em;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .opt-h .wl,.opt-h .tl{display:none}
+  .opt-h .ws,.opt-h .ts{display:inline}
   .opt{grid-template-columns:70px minmax(0,1fr)}
   #optList .opt .h{font-size:15px;white-space:nowrap}
   .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
@@ -4392,7 +4392,7 @@ function renderOpts(opts, opt) {
     const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [why(o.r.st), 'var(--head)'];
     const night = okRun(o.r) && o.r.st.nightH > 0.5 * Math.max(o.r.st.rideH || 0, 0.1);
     return `<button type="button" class="opt-h${isMine ? ' mine' : ''}${isTop && !isMine ? ' best' : ''}${q < 0 ? ' off' : ''}" data-time="${o.time}" aria-pressed="${isMine}" aria-label="${T('Départ à {0} : {1}', [hLbl(o.time), lv[0]])}">` +
-      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w"><span class="wl">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span><span class="ws">${isMine ? T("Toi") : night ? T("Nuit") : ({ [T("Moins bien")]: T("Moins"), [T("Incomplet")]: T("Inc."), [T("Rafales")]: T("Raf.") })[lv[0]] || lv[0]}</span></span></button>`;
+      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t"><span class="tl">${o.time.replace(/^0/, '')}</span><span class="ts">${o.time.replace(/^0/, '').replace(/:00$/, 'h').replace(':', 'h')}</span></span><span class="w"><span class="wl">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span><span class="ws">${isMine ? T("Toi") : night ? T("Nuit") : ({ [T("Moins bien")]: T("Moins"), [T("Incomplet")]: T("Inc."), [T("Rafales")]: T("Raf.") })[lv[0]] || lv[0]}</span></span></button>`;
   }).join('');
   el.innerHTML = `<div class="opt-strip">${strip}</div>` + html;
   { const sc = el.querySelector('.opt-strip'), m = sc && sc.querySelector('.opt-h.mine'); if (m && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = Math.max(0, m.offsetLeft - sc.offsetLeft - (sc.clientWidth - m.offsetWidth) / 2); }
