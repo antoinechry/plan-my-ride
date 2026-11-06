@@ -110,6 +110,7 @@ window.PMR_I18N = {
     "<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m{12}</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>": "<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m{12}</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions for {10}\">⋯</button>\n      {11}\n    </li>",
     // dossiers de Mes parcours (06/11/2026)
     "Tous": "All",
+    "Valider": "Confirm",
     "Dossier": "Folder",
     "Ranger ce parcours": "File this route",
     "Choisis le dossier de ce parcours dans Mes parcours. Tu pourras le changer plus tard.": "Choose its folder in My routes. You can change it later.",

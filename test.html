@@ -371,7 +371,10 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
 .exp-opts b{font-size:15px}.exp-opts span{font-size:13px;color:var(--muted)}
 .exp-foot{display:flex;justify-content:flex-end;margin-top:14px}
 /* Dossiers de Mes parcours : Sortie / Ultra / Commute (06/11/2026) */
-.kind-dlg .exp-opts{margin-bottom:2px}
+.kind-opts button[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.kind-opts button[aria-pressed="true"] .ki{color:var(--accent)}
+.kind-opts button:hover{border-color:var(--accent);box-shadow:none}
+.kind-dlg #kindOk:disabled{opacity:.45;cursor:not-allowed}
 .kind-opts .ki{grid-row:span 2;justify-self:center;width:30px;height:30px;color:var(--ink)}
 .kind-opts .ki svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .lp-kind{grid-template-columns:repeat(4,1fr)}
@@ -1791,10 +1794,11 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <h2 id="kindTitle">Ranger ce parcours</h2>
   <p class="hint" id="kindHint">Choisis le dossier de ce parcours dans Mes parcours. Tu pourras le changer plus tard.</p>
   <div class="exp-opts kind-opts">
-    <button type="button" data-kind="ride"><i class="ki" aria-hidden="true"></i><b>Sortie</b><span>Une sortie à la journée</span></button>
-    <button type="button" data-kind="ultra"><i class="ki" aria-hidden="true"></i><b>Ultra</b><span>Plusieurs jours, planification journalière</span></button>
-    <button type="button" data-kind="taf"><i class="ki" aria-hidden="true"></i><b>Commute</b><span>Mes trajets maison → travail</span></button>
+    <button type="button" data-kind="ride" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Sortie</b><span>Une sortie à la journée</span></button>
+    <button type="button" data-kind="ultra" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Ultra</b><span>Plusieurs jours, planification journalière</span></button>
+    <button type="button" data-kind="taf" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Commute</b><span>Mes trajets maison → travail</span></button>
   </div>
+  <div class="exp-foot"><button type="button" class="btn primary" id="kindOk" disabled>Valider</button></div>
 </dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
@@ -4517,17 +4521,22 @@ function kindOf(m) {
   if (/\b(commute|v[ée]lo ?taff?|taff?|trajet|boulot|travail|bureau)\b/i.test(m.name || '')) return 'taf';
   return (m.km || 0) > 300 ? 'ultra' : 'ride';
 }
-function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (celui du mode en cours si on referme)
+function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (un clic teinte la case, « Valider » confirme)
   return new Promise(res => {
-    const d = $('#kindDlg'), def = KINDS.includes(S.mode) ? S.mode : 'ride'; let done = false;
+    const d = $('#kindDlg'), def = KINDS.includes(S.mode) ? S.mode : 'ride', ok = $('#kindOk'); let done = false, sel = '';
     $('#kindHint').textContent = T("« {0} » : choisis son dossier dans Mes parcours. Tu pourras le changer plus tard.", [name || T("Trace sans nom")]);
-    for (const b of d.querySelectorAll('[data-kind]')) { b.classList.toggle('def', b.dataset.kind === def); if (!b.querySelector('.ki svg')) b.querySelector('.ki').innerHTML = kindIco(b.dataset.kind); }
+    for (const b of d.querySelectorAll('[data-kind]')) { b.setAttribute('aria-pressed', 'false'); if (!b.querySelector('.ki svg')) b.querySelector('.ki').innerHTML = kindIco(b.dataset.kind); }
+    ok.disabled = true;
     const end = k => { if (done) return; done = true; d.removeEventListener('click', onClick); d.removeEventListener('close', onClose); d.removeEventListener('cancel', onCancel); if (d.open) d.close(); res(k); };
-    const onClick = e => { const b = e.target.closest('[data-kind]'); if (b) end(b.dataset.kind); };
-    const onClose = () => end(def);
+    const onClick = e => {
+      if (e.target.closest('#kindOk')) { if (sel) end(sel); return; }
+      const b = e.target.closest('[data-kind]'); if (!b) return;
+      sel = b.dataset.kind; for (const x of d.querySelectorAll('[data-kind]')) x.setAttribute('aria-pressed', String(x === b)); ok.disabled = false;
+    };
+    const onClose = () => end(sel || def);
     const onCancel = e => e.preventDefault(); // pas de « Plus tard » ni d'Échap : on choisit un dossier (demande d'Antoine, 06/11/2026)
     d.addEventListener('click', onClick); d.addEventListener('close', onClose); d.addEventListener('cancel', onCancel);
-    d.showModal(); const f = d.querySelector(`[data-kind="${def}"]`); if (f) f.focus();
+    d.showModal();
   });
 }
 async function kindSet(id, kind) { // changer le dossier d'un parcours : liste, navigateur, compte
