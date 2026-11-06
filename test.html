@@ -1232,7 +1232,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <nav class="modes" aria-label="Page">
     <a href="#" data-mode="ride">Sortie</a>
     <a href="#ultra" data-mode="ultra">Ultra</a>
-    <a href="#velotaf" data-mode="taf">Vélotaf</a>
+    <a href="#velotaf" data-mode="taf">Commute</a>
   </nav>
   <div class="theme-seg" role="group" aria-label="Thème" id="themeSeg">
     <button type="button" data-t="light" title="Thème clair" aria-label="Thème clair">☀︎</button>
@@ -1272,8 +1272,8 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <p class="me-del no-guest"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
   <div class="me-card me-plan free-only"><h3>Compte gratuit</h3><p class="hint" id="mePlanTxt"></p>
     <div class="me-btns"><button type="button" class="btn small primary" data-plus>Découvrir Sillage.cc +</button></div></div>
-  <div class="me-card no-guest"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
-    <select id="meTaf" class="me-sel" aria-label="Trajet de vélotaf par défaut"></select></div>
+  <div class="me-card no-guest"><h3>Mon trajet Commute</h3><p class="hint">Ouvert tout seul quand tu passes sur Commute. Les autres pages gardent leur parcours.</p>
+    <select id="meTaf" class="me-sel" aria-label="Trajet Commute par défaut"></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
     <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
     <div class="guest-lock guest-only"><b>Avec un compte gratuit</b><p>Choisis un parcours enregistré et reçois sa météo la veille au soir ou le matin même.</p><button type="button" class="btn small primary" data-guest-up>Créer mon compte gratuit</button></div>
@@ -1334,7 +1334,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <div class="pm-sheet" id="pmSheet" hidden role="dialog" aria-labelledby="pmSheetTitle"><div id="pmSheetBody"></div></div>
   </div>
 </section>
-<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabMap"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21c-4-5-7-8-7-11.5a7 7 0 0 1 14 0C19 13 16 16 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>Carte</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin-test.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
+<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/></svg></span>Commute</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabMap"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21c-4-5-7-8-7-11.5a7 7 0 0 1 14 0C19 13 16 16 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>Carte</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin-test.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
@@ -1616,7 +1616,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     </section>
 
     <section class="card" id="weekCard" hidden>
-      <div class="card-head"><h2>Deux semaines de vélotaf</h2><span class="hint" id="weekHint"></span></div>
+      <div class="card-head"><h2>Deux semaines de trajets</h2><span class="hint" id="weekHint"></span></div>
       <div class="week-scroll">
         <table class="week-table">
           <thead><tr><th>Jour</th><th>Aller <span class="hint" id="weekGoH"></span></th><th>Retour <span class="hint" id="weekBackH"></span></th></tr></thead>
@@ -1693,7 +1693,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <div class="bd">
     <p>Sillage calcule ton heure de passage à chaque point d'un parcours et te donne la météo prévue à cet endroit, à ce moment-là. Trois modes selon ta sortie, et ton espace pour le reste&nbsp;:</p>
     <div class="seg2 help-tabs" role="tablist" aria-label="Pages">
-      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Vélotaf</button><button type="button" role="tab" data-h="more">Et aussi</button>
+      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Commute</button><button type="button" role="tab" data-h="more">Et aussi</button>
     </div>
     <ol data-h="ride">
       <li><i>1</i><div><b>Importe une trace GPX</b><span>«&nbsp;Importer un GPX&nbsp;» dans les réglages, ou glisse le fichier sur la page. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Le parcours est gardé dans ton compte et se retrouve sur tous tes appareils. «&nbsp;⇄ Inverser le sens&nbsp;» pour le rouler à l'envers.</span></div></li>
@@ -1708,7 +1708,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <li><i>4</i><div><b>Trouve tes ravitos</b><span>Coche «&nbsp;Rechercher les lieux&nbsp;»&nbsp;: épiceries, boulangeries, restos, points d'eau et hébergements le long de la trace, ouverts ou non à ton passage, avec les plus longs tronçons sans ravito.</span></div></li>
     </ol>
     <ol data-h="taf" hidden>
-      <li><i>1</i><div><b>Choisis ton trajet maison → travail</b><span>Importe-le une fois et fais-en ton trajet de vélotaf dans Moi&nbsp;: il s'ouvre tout seul sur Vélotaf. Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours («&nbsp;Trace du retour&nbsp;»).</span></div></li>
+      <li><i>1</i><div><b>Choisis ton trajet maison → travail</b><span>Importe-le une fois et fais-en ton trajet Commute dans Moi&nbsp;: il s'ouvre tout seul sur Commute. Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours («&nbsp;Trace du retour&nbsp;»).</span></div></li>
       <li><i>2</i><div><b>Règle tes horaires</b><span>Heure de départ, ou heure d'arrivée au travail avec une marge&nbsp;: tu obtiens alors l'heure de départ conseillée. Heure du retour, et des horaires différents selon le jour si besoin. Vitesse moyenne seulement.</span></div></li>
       <li><i>3</i><div><b>Aller et retour en un coup d'œil</b><span>Pour chaque trajet&nbsp;: carte, pastille verte, orange ou rouge (pluie, vent de face, rafales, froid, nuit), températures et vent ressenti.</span></div></li>
       <li><i>4</i><div><b>Anticipe deux semaines</b><span>Les jours ouvrés des deux prochaines semaines aux mêmes horaires&nbsp;; touche un jour pour le voir en détail. L'heure de départ est une estimation&nbsp;: prévois une marge selon la circulation et la météo.</span></div></li>
@@ -1717,7 +1717,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <li><i>1</i><div><b>Mes parcours</b><span>Tous tes parcours, avec recherche, tri, «&nbsp;Renommer&nbsp;» et «&nbsp;Supprimer&nbsp;». Touche un parcours pour l'ouvrir.</span></div></li>
       <li><i>2</i><div><b>Mes sorties</b><span>Tes parcours classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.</span></div></li>
       <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
-      <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet de vélotaf, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
+      <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet Commute, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
     </ol>
     <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
@@ -1731,11 +1731,11 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <ul class="g-rules">
       <li><b>Sortie</b><span>Trois boucles d'exemple de 40, 70 et 150&nbsp;km. Choisis la date et l'heure de départ dans les 9 prochains jours.</span></li>
       <li><b>Ultra</b><span>Un ultra d'environ 1&nbsp;200&nbsp;km, découpé par nombre de jours, avec les ravitos et les hébergements le long de la trace.</span></li>
-      <li><b>Vélotaf</b><span>Un trajet de 10&nbsp;km, aller et retour, aujourd'hui, demain et après-demain.</span></li>
+      <li><b>Commute</b><span>Un trajet de 10&nbsp;km, aller et retour, aujourd'hui, demain et après-demain.</span></li>
       <li><b>Météo</b><span>MET Norway (Institut météorologique norvégien), sur 9 jours.</span></li>
       <li><b>Rien n'est enregistré</b><span>Pas d'import de GPX en mode démo.</span></li>
     </ul>
-    <p>Avec un compte gratuit, importe tes propres traces (5 Sortie ou Vélotaf et 3 Ultra par mois) et garde jusqu'à 5 parcours dans l'app.</p>
+    <p>Avec un compte gratuit, importe tes propres traces (5 Sortie ou Commute et 3 Ultra par mois) et garde jusqu'à 5 parcours dans l'app.</p>
   </div>
   <div class="ft"><button type="button" class="btn" data-guest-up>Créer mon compte gratuit</button><button type="button" class="btn primary" id="guestOk" autofocus>C'est parti</button></div>
 </dialog>
@@ -1746,7 +1746,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <div class="p-prices"><div><b>2,99 €</b><span>Pass 10 jours, sans renouvellement</span></div><div><b>4,99 €</b><span>par mois</span></div><div><b>34,99 €</b><span>par an, 7 jours d'essai</span></div></div>
     <ul class="g-rules">
       <li><b>Sans limite</b><span>Autant de traces que tu veux, tous tes parcours enregistrés, sur ton téléphone et sur ordinateur.</span></li>
-      <li><b>Une vingtaine de modèles météo</b><span>Le plus précis selon le lieu (AROME, ICON, Met Office, GFS…) et jusqu'à 16 jours. Deux semaines de vélotaf.</span></li>
+      <li><b>Une vingtaine de modèles météo</b><span>Le plus précis selon le lieu (AROME, ICON, Met Office, GFS…) et jusqu'à 16 jours. Deux semaines de trajets.</span></li>
       <li><b>Mes sorties, alertes météo, vent animé</b><span>Tes parcours classés selon la météo, une notification la veille ou le matin même, le vent qui souffle sur la carte.</span></li>
       <li><b>Export image sans filigrane</b><span>En image complète, en écran large ou en story.</span></li>
     </ul>
@@ -3371,7 +3371,7 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
    la vue (élargie de 35 %), toutes les heures ; grilles gardées et partagées entre les cartes (FLOW_GRIDS), redemandées
    quand la vue sort de la grille, qu'on zoome beaucoup ou que les dates changent. Champ interpolé dans le temps et dans
    l'espace sur des cases de 10 px. Un moteur par carte (`flowEngine`) : carte principale (heure du curseur sous la
-   carte, point du cycliste à cette heure) et cartes Aller / Retour du Vélotaf (heure du milieu du trajet). */
+   carte, point du cycliste à cette heure) et cartes Aller / Retour du Commute (heure du milieu du trajet). */
 const FLOW = { on: false, t: null, start: null, a: 0, rider: null, status: '', main: null };
 try { FLOW.on = !LIM && localStorage.getItem('pmr-flow') !== '0'; } catch (e) {} // mode démo et compte gratuit : pas de vent animé (grilles Open-Meteo)
 $('#flowOn').checked = FLOW.on; $('#flowOn2').checked = FLOW.on;
@@ -3621,7 +3621,7 @@ function wrapText(c, text, maxW) {
 }
 /* ---------- Export image, charte Sillage (essai du 26/10/2026) ----------
    Trois formats au choix (#expDlg) : 'full' = image complète (1200 px de large, hauteur selon le contenu),
-   'wide' = écran 16:9 (1600 × 900), 'story' = 9:16 (540 × 960, en sombre). Pages Sortie, Ultra et Vélotaf.
+   'wide' = écran 16:9 (1600 × 900), 'story' = 9:16 (540 × 960, en sombre). Pages Sortie, Ultra et Commute.
    Étapes : expModel (données) → expAssets (carte(s) rendue(s) hors écran, profil et graphes du jour recopiés
    en thème clair) → expFull / expWide / expStory (dessin synchrone ; l'image complète est d'abord mise en page
    sur un canvas de 1 px pour connaître sa hauteur). PNG ×2, partage natif sur téléphone, sinon téléchargement. */
@@ -3896,7 +3896,7 @@ function expFull(c, M, A) {
     y = yy + 24;
     // deux semaines
     const rows = M.weeks.length, cellH = 74, h = 70 + 24 + rows * (cellH + 8) + 40;
-    xR(c, x, y, w, h, 16, P.card, P.line); xT(c, T("Deux semaines de vélotaf"), x + 24, y + 40, xF(800, 22, P.fd), P.ink);
+    xR(c, x, y, w, h, 16, P.card, P.line); xT(c, T("Deux semaines de trajets"), x + 24, y + 40, xF(800, 22, P.fd), P.ink);
     xT(c, T("ressenti à l'aller / au retour"), x + w - 24, y + 40, xF(400, 14, P.fd), P.muted, 'right');
     const cw = (w - 48 - 5 * 8) / 6, fWd = new Intl.DateTimeFormat(LOC, { weekday: 'short' }), mon = new Date(2024, 0, 1);
     for (let k = 0; k < 6; k++) { const lbl = k < 5 ? fWd.format(new Date(mon.getTime() + k * 864e5)).toUpperCase() : T("WEEK-END"); xT(c, lbl, x + 24 + k * (cw + 8), y + 76, xF(500, 11, P.fm), P.muted); }
@@ -4540,8 +4540,8 @@ function applyModeUI() {
     const t8 = new Date(); t8.setDate(t8.getDate() + 8);
     if (LIM) { d.min = ymd(t0); d.max = ymd(taf ? t2 : t8); } else { d.removeAttribute('max'); } }
   tafPerDayUI();
-  $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Vélotaf : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
-  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Vélotaf") : 'Sillage');
+  $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Commute : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
+  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Commute") : 'Sillage');
 }
 function switchMode(m) {
   if (m === S.mode) return;
@@ -5172,7 +5172,7 @@ function roseCanvas(cv, rs, w, hh) {
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
 /* Lune : phase (0 = nouvelle, 0,5 = pleine) d'après une nouvelle lune de référence et le mois synodique,
    pictogramme avec la partie éclairée (côté droit quand elle croît, vu de l'hémisphère nord) et pourcentage éclairé.
-   Dessinée dans les parties de nuit des graphes (profil de la page Sortie, graphes du jour en Ultra et en Vélotaf). */
+   Dessinée dans les parties de nuit des graphes (profil de la page Sortie, graphes du jour en Ultra et en Commute). */
 const moonPhase = ms => { const SYN = 29.530588853, d = (ms - Date.UTC(2000, 0, 6, 18, 14)) / 864e5; return ((d % SYN) + SYN) % SYN / SYN; };
 const moonLit = p => (1 - Math.cos(2 * Math.PI * p)) / 2;
 function drawMoon(c, x, y, r, p) {
@@ -5572,7 +5572,7 @@ function tripsRender() {
     box.innerHTML = `<div class="tt-head"><h2>${T('Mes trajets')}</h2><button type="button" class="btn small tt-tog" data-tt="toggle" aria-expanded="true">${T('Replier')}${chev(true)}</button></div>
       <div class="tt-body">${big ? `<svg class="tt-map" viewBox="0 0 420 240" role="img" aria-label="${T('Les deux trajets sur la même carte')}">${big}</svg>` : lmap ? '<div class="tt-lslot"></div>' : ''}
       <div class="tt-rows">${line(0, go, false)}<div class="tt-mid"><button type="button" class="tt-swap" data-tt="swap"${ret ? '' : ' disabled'} title="${T("Échanger l'aller et le retour")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v14l-4-4M16 20V6l4 4"/></svg>${T('Échanger')}</button></div>${line(1, ret || go, !ret)}</div></div>
-      <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Vélotaf")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
+      <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Commute")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
     if (lmap) ttLeaflet(box.querySelector('.tt-lslot'));
   } catch (e) { box.hidden = true; }
 }
@@ -5672,7 +5672,7 @@ const vdot = v => `<span class="vdot ${v.lvl < 0 ? 'lx' : 'l' + v.lvl}" aria-hid
 function renderWeek() {
   const on = S.mode === 'taf' && !!S.laps && S.laps.taf && !!S.tl;
   $('#weekCard').hidden = !on; if (!on) return;
-  $('#weekCard .card-head h2').textContent = LIM ? T("Trois jours de vélotaf") : T("Deux semaines de vélotaf");
+  $('#weekCard .card-head h2').textContent = LIM ? T("Trois jours de trajets") : T("Deux semaines de trajets");
   const opt = readOpt(), sel = TAF.sel;
   const fmtS = new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' });
   $('#weekHint').textContent = T("À partir du {0}, {1}. Clique sur un jour pour le détail.", [fmtS.format(new Date(opt.date + 'T12:00')), opt.tafPerDay ? T("avec les heures de chaque jour") : T("aux mêmes heures")]);
@@ -6174,13 +6174,13 @@ $('#gateOut').addEventListener('click', async () => { try { const sb = await sbC
 /* ---------- mode démo (sans compte, 30/10/2026) ----------
    Compte invité créé par la fonction guest-start (identifiants dans pmr-guest, repris s'il en existe déjà un).
    Traces d'exemple seulement (DEMO, fichiers du dossier demo/), pas d'import, rien d'enregistré ; MET Norway sur 9 jours ;
-   Vélotaf sur 3 jours ; ravitos sur toute la trace ; export image sans filigrane. */
+   Commute sur 3 jours ; ravitos sur toute la trace ; export image sans filigrane. */
 const DEMO = [
   { id: 'demo-s40', mode: 'ride', file: 'demo/sortie-40.gpx', name: 'Sortie · 40 km', km: 40 },
   { id: 'demo-s70', mode: 'ride', file: 'demo/sortie-70.gpx', name: 'Sortie · 70 km', km: 70 },
   { id: 'demo-s150', mode: 'ride', file: 'demo/sortie-150.gpx', name: 'Sortie · 150 km', km: 150 },
   { id: 'demo-u1200', mode: 'ultra', file: 'demo/ultra-1200.gpx', name: 'Ultra · 1 200 km', km: 1200 },
-  { id: 'demo-t10', mode: 'taf', file: 'demo/velotaf-10.gpx', name: 'Vélotaf · 10 km', km: 10 }
+  { id: 'demo-t10', mode: 'taf', file: 'demo/velotaf-10.gpx', name: 'Commute · 10 km', km: 10 }
 ];
 const DEMO_DEF = { ride: 'demo-s70', ultra: 'demo-u1200', taf: 'demo-t10' };
 const DEMO_PTS = {};
@@ -6224,7 +6224,7 @@ async function guestEnd(toSignup) { // quitte la démo ; vers la création de co
   location.reload();
 }
 /* ---------- compte gratuit (30/10/2026) ----------
-   Nouvelles traces comptées par la fonction SQL free_trace (5 Sortie / Vélotaf et 3 Ultra par mois UTC ; une trace déjà
+   Nouvelles traces comptées par la fonction SQL free_trace (5 Sortie / Commute et 3 Ultra par mois UTC ; une trace déjà
    comptée ne compte plus) : à l'import, à l'ouverture d'un parcours et en passant sur une autre page avec la trace ouverte.
    5 parcours enregistrés au plus (aussi refusé par la base : politique free_routes_max5). */
 const FREE_LIM = { std: 5, ultra: 3 }, FREE_MAX_ROUTES = 5;
@@ -6246,7 +6246,7 @@ async function freeUse(id, m) { // true si la trace peut être chargée sur cett
   if (j.ok) { FT.known.add(key); if (!$('#mePage').hidden) meRender(); return true; }
   if (j.error !== 'limit') return true;
   plusDlg(T("Tu as chargé tes {0} nouvelles traces {1} de ce mois avec le compte gratuit. Le compteur repart à zéro le {2}. Pour en charger plus dès maintenant, passe à Sillage.cc +.",
-    [j.lim, k === 'ultra' ? T("Ultra") : T("Sortie ou Vélotaf"), ftResetTxt(j.reset)]));
+    [j.lim, k === 'ultra' ? T("Ultra") : T("Sortie ou Commute"), ftResetTxt(j.reset)]));
   return false;
 }
 async function freeLeft() {
@@ -6810,16 +6810,16 @@ function setTheme(t) {
 for (const b of document.querySelectorAll('#themeSeg button')) b.setAttribute('aria-pressed', String(b.dataset.t === (document.documentElement.dataset.theme || 'auto')));
 $('#themeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTheme(b.dataset.t); });
 /* Onglet « Mode » : icône et nom du mode en cours ; le choix du mode se fait en haut de l'écran. */
-const TAB_ICO = { ride: '<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/>', ultra: '<path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/>', taf: '<rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/>' };
-function tabModeRender() { const ic = $('#tabModeIco'); if (!ic) return; ic.innerHTML = TAB_ICO[S.mode] || TAB_ICO.ride; $('#tabModeTxt').textContent = S.mode === 'ultra' ? 'Ultra' : S.mode === 'taf' ? T("Vélotaf") : T("Sortie"); }
+const TAB_ICO = { ride: '<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/>', ultra: '<path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/>', taf: '<rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/>' };
+function tabModeRender() { const ic = $('#tabModeIco'); if (!ic) return; ic.innerHTML = TAB_ICO[S.mode] || TAB_ICO.ride; $('#tabModeTxt').textContent = S.mode === 'ultra' ? 'Ultra' : S.mode === 'taf' ? T("Commute") : T("Sortie"); }
 $('#tabMode').addEventListener('click', () => { const was = document.body.classList.contains('lib-open'); pageClose(); if (!was) window.scrollTo({ top: 0, behavior: 'smooth' }); });
 $('#tabOut').addEventListener('click', outOpen);
 $('#tabMe').addEventListener('click', meOpen);
 tabModeRender();
 /* Page « Moi » (essai du 24/10/2026) : compte, réglages de vitesse par mode (Sortie, Ultra : vitesse sur le plat, VAM,
-   arrêts en minutes par heure de pédalage ; Vélotaf : vitesse moyenne), thème et mode d'emploi. Le mode en cours est
+   arrêts en minutes par heure de pédalage ; Commute : vitesse moyenne), thème et mode d'emploi. Le mode en cours est
    réglé directement dans la page ; les autres dans leurs réglages enregistrés (pmr-opt, pmr-opt-ultra, pmr-opt-taf). */
-const ME_KEY = { ride: 'pmr-opt', ultra: 'pmr-opt-ultra', taf: 'pmr-opt-taf' }, ME_NAME = { ride: T("Sortie"), ultra: 'Ultra', taf: T("Vélotaf") };
+const ME_KEY = { ride: 'pmr-opt', ultra: 'pmr-opt-ultra', taf: 'pmr-opt-taf' }, ME_NAME = { ride: T("Sortie"), ultra: 'Ultra', taf: T("Commute") };
 function meGet(m) {
   if (m === S.mode) { const o = readOpt(); return { speed: o.speed, vam: o.vam, pmin: o.pauseMode === 'min' ? Math.round(o.pauseMin / o.pauseEvery) : Math.round(o.pause * 0.6) }; }
   let sv = {}; try { sv = JSON.parse(localStorage.getItem(ME_KEY[m]) || '{}') || {}; } catch (e) {}
@@ -6840,7 +6840,7 @@ function meSet(m, k, v) {
 function meRender() {
   let who = ''; try { const t = JSON.parse(localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token') || 'null'); who = t && t.user ? t.user.email : ''; } catch (e) {}
   if (GUEST) who = '';
-  if (FREE) { const L = FT.left; $('#mePlanTxt').textContent = (L ? T("Nouvelles traces restantes ce mois-ci : {0} Sortie ou Vélotaf, {1} Ultra (compteur remis à zéro le {2}). ", [L.std_left, L.ultra_left, ftResetTxt(L.reset)]) : '')
+  if (FREE) { const L = FT.left; $('#mePlanTxt').textContent = (L ? T("Nouvelles traces restantes ce mois-ci : {0} Sortie ou Commute, {1} Ultra (compteur remis à zéro le {2}). ", [L.std_left, L.ultra_left, ftResetTxt(L.reset)]) : '')
     + T("Le compte gratuit garde {0} parcours, avec la météo MET Norway sur 9 jours.", [FREE_MAX_ROUTES]); if (!L && !FT.asked) { FT.asked = 1; freeLeft().then(x => { if (x) meRender(); }); } }
   $('#meWho').textContent = GUEST ? T("Tu es en mode démo : traces d'exemple, rien n'est enregistré.") : who ? T("Connecté avec {0}.{1}", [who, LIB.list.length ? T(" {0} parcours dans ton compte.", [LIB.list.length]) : '']) : T("Pas connecté.");
   const row = (m, k, label, min, max, step, v, unit) => `<div class="me-row"><label for="me-${m}-${k}">${label}</label><output id="me-${m}-${k}-o">${unit(v)}</output>
