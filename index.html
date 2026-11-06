@@ -348,6 +348,46 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
 .exp-opts .r.full{width:22px;height:30px}.exp-opts .r.wide{width:34px;height:19px}.exp-opts .r.story{width:17px;height:30px}
 .exp-opts b{font-size:15px}.exp-opts span{font-size:13px;color:var(--muted)}
 .exp-foot{display:flex;justify-content:flex-end;margin-top:14px}
+/* Dossiers de Mes parcours : Sortie / Ultra / Commute (06/11/2026) */
+.kind-opts button[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.kind-opts button[aria-pressed="true"] .ki{color:var(--accent)}
+.kind-opts button:hover{border-color:var(--accent);box-shadow:none}
+.kind-dlg #kindOk:disabled{opacity:.45;cursor:not-allowed}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(92vw,520px);background:var(--ink);color:var(--panel);padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.4;z-index:3000;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (max-width:700px){.toast{bottom:calc(84px + env(safe-area-inset-bottom))}}
+.kind-dlg{position:relative}
+.kind-dlg h2{padding-right:44px}
+.kd-x{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:400 22px/1 var(--f-body);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.kd-x:hover{border-color:var(--ink)}
+.kd-confirm{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--head) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--head) 45%,var(--line))}
+.kd-confirm p{margin:0;font-size:14px;line-height:1.45}
+.kd-cbtns{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;flex-wrap:wrap}
+.kd-cbtns .btn.danger{background:var(--head);border-color:var(--head);color:#fff}
+.kind-dlg.confirming .exp-opts,.kind-dlg.confirming .exp-foot{display:none}
+@media (max-width:700px){
+  /* téléphone : panneau qui monte du bas (choix d'Antoine, 06/11/2026) */
+  dialog.kind-dlg{position:fixed;inset:auto 0 0 0;margin:0;max-width:none;width:100%;border:0;border-radius:20px 20px 0 0;padding:10px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.18);animation:kdUp .22s ease-out}
+  dialog.kind-dlg::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+  dialog.kind-dlg h2{font-size:19px}
+  .kd-x{top:18px}
+  .kind-dlg .exp-foot{margin-top:12px}
+  .kind-dlg #kindOk{width:100%;min-height:48px;font-size:16px;justify-content:center;text-align:center}
+  .kd-cbtns .btn{flex:1 1 auto;min-height:44px;justify-content:center;text-align:center}
+  @keyframes kdUp{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+}
+html[data-motion="reduce"] dialog.kind-dlg{animation:none}
+.kind-opts .ki{grid-row:span 2;justify-self:center;width:30px;height:30px;color:var(--ink)}
+.kind-opts .ki svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lp-kind{grid-template-columns:repeat(4,1fr)}
+.lp-kind button{min-height:40px;display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 4px}
+.lp-kind button small{font:600 11px var(--f-mono);color:var(--muted);padding:1px 5px;border-radius:999px;background:var(--line)}
+.lp-kind button[aria-pressed="true"] small{background:var(--panel);color:var(--ink)}
+.lp-tag{display:inline-flex;align-items:center;gap:4px;font:600 10.5px var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.lp-tag svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lp-move{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 12px 12px;font-size:13px;color:var(--muted)}
+.lp-move .seg2{flex:1 1 220px;grid-template-columns:repeat(3,1fr)}
+.lp-move .seg2 button{min-height:36px}
 /* Vélotaf : bloc « Mes trajets » (maquette du 03/11/2026) */
 .card.tt{display:flex;flex-direction:column;gap:14px;padding:18px 20px}
 @media (max-width:700px){.card.tt{padding:14px}}
@@ -686,6 +726,9 @@ body.lib-open{overflow:hidden}
 .me-sel{width:100%;min-height:46px;margin-top:8px;font-size:16px}
 /* alertes météo (essai du 25/10/2026) */
 .al-l{display:block;margin-top:12px;font-size:13px;color:var(--muted)}
+#meTafCard .me-ret[hidden]{display:none}
+#meTafKind{grid-template-columns:1fr 1fr}
+.tt-lock{cursor:default}.tt-lock .btn{flex:none}
 .al-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .al-grid .me-sel{box-sizing:border-box}
 .al-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px}
@@ -1150,6 +1193,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <p class="hint lp-count" id="lpCount"></p>
   <label class="btn primary lp-imp" for="file">Importer un GPX</label>
   <div class="lp-tools">
+    <div class="seg2 lp-kind" id="lpKind" role="group" aria-label="Dossier"><button type="button" data-v="all" aria-pressed="true">Tous</button><button type="button" data-v="ride" aria-pressed="false">Sortie</button><button type="button" data-v="ultra" aria-pressed="false">Ultra</button><button type="button" data-v="taf" aria-pressed="false">Commute</button></div>
     <input type="search" id="lpQ" placeholder="Rechercher un parcours" autocomplete="off" aria-label="Rechercher un parcours">
     <div class="seg2 lp-sort" id="lpSort" role="group" aria-label="Trier les parcours"><button type="button" data-v="recent" aria-pressed="true">Récents</button><button type="button" data-v="km" aria-pressed="false">Distance</button><button type="button" data-v="name" aria-pressed="false">Nom</button></div>
   </div>
@@ -1172,8 +1216,11 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
     <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div>
     <p class="me-del"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
-  <div class="me-card"><h3>Mon trajet Commute</h3><p class="hint">Ouvert tout seul quand tu passes sur Commute. Les autres pages gardent leur parcours.</p>
-    <select id="meTaf" class="me-sel" aria-label="Trajet Commute par défaut"></select></div>
+  <div class="me-card" id="meTafCard"><h3>Mon trajet Commute</h3><p class="hint">Choisis ta trace aller et ton retour. Ce trajet s'ouvre tout seul sur Commute et y reste fixe : pour en changer, reviens ici. Une nouvelle trace s'importe dans Parcours.</p>
+    <label class="al-l" for="meTaf">Aller · maison → travail</label><select id="meTaf" class="me-sel" aria-label="Trajet Commute : aller"></select>
+    <span class="al-l me-ret">Retour · travail → maison</span>
+    <div class="seg2 me-theme me-ret" id="meTafKind" role="group" aria-label="Trace du retour"><button type="button" data-k="rev" aria-pressed="true">Même trace, à l'envers</button><button type="button" data-k="other" aria-pressed="false">Une autre trace</button></div>
+    <select id="meTafRet" class="me-sel me-ret" aria-label="Trajet Commute : trace du retour" hidden></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
     <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
     <p class="al-why" id="alWhy" hidden></p>
@@ -1622,6 +1669,18 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <button type="button" data-fmt="story"><i class="r story" aria-hidden="true"></i><b>Story 9:16</b><span>Pour partager depuis le téléphone</span></button>
   </div>
   <form method="dialog" class="exp-foot"><button class="btn" value="cancel">Annuler</button></form>
+</dialog>
+<dialog class="exp-dlg kind-dlg" id="kindDlg" aria-labelledby="kindTitle">
+  <button type="button" class="kd-x" id="kindX" aria-label="Annuler l'import" title="Annuler l'import">×</button>
+  <h2 id="kindTitle">Ranger ce parcours</h2>
+  <p class="hint" id="kindHint">Choisis le dossier de ce parcours dans Mes parcours. Tu pourras le changer plus tard.</p>
+  <div class="kd-confirm" id="kindConf" hidden><p id="kindConfTxt">Abandonner l'import ? La trace ne sera pas enregistrée.</p><div class="kd-cbtns"><button type="button" class="btn" data-kc="no">Non, continuer</button><button type="button" class="btn danger" data-kc="yes">Oui, abandonner</button></div></div>
+  <div class="exp-opts kind-opts">
+    <button type="button" data-kind="ride" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Sortie</b><span>Une sortie à la journée</span></button>
+    <button type="button" data-kind="ultra" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Ultra</b><span>Plusieurs jours, planification journalière</span></button>
+    <button type="button" data-kind="taf" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Commute</b><span>Mes trajets maison ⇄ travail</span></button>
+  </div>
+  <div class="exp-foot"><button type="button" class="btn primary" id="kindOk" disabled>Valider</button></div>
 </dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
@@ -2640,6 +2699,10 @@ async function run() {
 function setStatus(msg, kind) {
   const el = $('#status');
   el.hidden = !msg; el.textContent = msg || ''; el.className = 'status ' + (kind || '');
+}
+function toast(msg, ms = 6000) { // message passager en bas de l'écran (06/11/2026), là où la note d'état est réécrite par le calcul
+  let el = $('#toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), ms);
 }
 
 /* ---------- couleurs ---------- */
@@ -4143,12 +4206,16 @@ function loadRoute(raw, name, rev) {
 function handleFile(file) {
   if (!file) return;
   const rd = new FileReader();
-  rd.onload = () => {
+  rd.onload = async () => {
     try {
       // On travaille sur la trace simplifiée (celle qui est enregistrée) : rouvrir le parcours donne exactement les mêmes calculs.
       const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts));
+      const id0 = routeId(packPts(pts));
+      // dossier de Mes parcours (06/11/2026) : demandé à l'import, sauf pour un parcours déjà rangé
+      const known = LIB.list.find(x => x.id === id0), kind = known && known.kind ? known.kind : await kindAsk(name);
+      if (!kind) { setStatus(T("Import abandonné : « {0} » n'a pas été enregistré.", [name || T("Trace sans nom")])); return; } // croix de la fenêtre
       loadRoute(pts, name, false);
-      libSave(pts, name); // fixe LIB.current avant sa première attente
+      libSave(pts, name, undefined, true, kind); // fixe LIB.current avant sa première attente
       revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
       track('gpx', { km: Math.round(S.lapBase.total) });
       logAct('gpx', { detail: String(name).slice(0, 120), km: Math.round(S.lapBase.total * 10) / 10, route_id: LIB.current || null });
@@ -4156,6 +4223,48 @@ function handleFile(file) {
     catch (e) { setStatus(e.message, 'err'); }
   };
   rd.readAsText(file);
+}
+/* Dossiers de Mes parcours (06/11/2026) : chaque parcours est rangé dans Sortie, Ultra ou Commute (`kind` : ride | ultra | taf,
+   dans la méta IndexedDB et la colonne `routes.kind`). Demandé à l'import (dossier du mode en cours proposé), modifiable dans
+   le menu « ⋯ » de Mes parcours ; un parcours pas encore rangé est deviné (trajet Commute fixé, nom, plus de 300 km → Ultra). */
+const KINDS = ['ride', 'ultra', 'taf'], KIND_NAME = { ride: 'Sortie', ultra: 'Ultra', taf: 'Commute' };
+const kindName = k => T(KIND_NAME[k] || 'Sortie');
+const kindIco = (k, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${TAB_ICO[k] || TAB_ICO.ride}</svg>`;
+function kindOf(m) {
+  if (m.kind && KINDS.includes(m.kind)) return m.kind;
+  let fx = null; try { fx = tafFixed(); } catch (e) {}
+  if (fx && (m.id === fx.go || m.id === fx.ret)) return 'taf';
+  if (/\b(commute|v[ée]lo ?taff?|taff?|trajet|boulot|travail|bureau)\b/i.test(m.name || '')) return 'taf';
+  return (m.km || 0) > 300 ? 'ultra' : 'ride';
+}
+function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (un clic teinte la case, « Valider » confirme) ; '' = import abandonné (croix + confirmation)
+  return new Promise(res => {
+    const d = $('#kindDlg'), def = KINDS.includes(S.mode) ? S.mode : 'ride', ok = $('#kindOk'), conf = $('#kindConf'); let done = false, sel = '';
+    const nm = name || T("Trace sans nom");
+    $('#kindHint').textContent = T("« {0} » : choisis son dossier dans Mes parcours. Tu pourras le changer plus tard.", [nm]);
+    $('#kindConfTxt').textContent = T("Abandonner l'import de « {0} » ? La trace ne sera pas enregistrée.", [nm]);
+    for (const b of d.querySelectorAll('[data-kind]')) { b.setAttribute('aria-pressed', 'false'); if (!b.querySelector('.ki svg')) b.querySelector('.ki').innerHTML = kindIco(b.dataset.kind); }
+    ok.disabled = true; conf.hidden = true; d.classList.remove('confirming');
+    const confirming = on => { conf.hidden = !on; d.classList.toggle('confirming', on); if (on) { const b = conf.querySelector('[data-kc="no"]'); if (b) b.focus(); } };
+    const end = k => { if (done) return; done = true; d.removeEventListener('click', onClick); d.removeEventListener('close', onClose); d.removeEventListener('cancel', onCancel); if (d.open) d.close(); res(k); };
+    const onClick = e => {
+      if (e.target.closest('#kindX')) { confirming(true); return; }
+      const kc = e.target.closest('[data-kc]'); if (kc) { if (kc.dataset.kc === 'yes') end(''); else confirming(false); return; }
+      if (e.target.closest('#kindOk')) { if (sel) end(sel); return; }
+      const b = e.target.closest('[data-kind]'); if (!b) return;
+      sel = b.dataset.kind; for (const x of d.querySelectorAll('[data-kind]')) x.setAttribute('aria-pressed', String(x === b)); ok.disabled = false;
+    };
+    const onClose = () => end(sel || def);
+    const onCancel = e => { e.preventDefault(); confirming(!conf.hidden ? false : true); }; // Échap = comme la croix (demande de confirmation), jamais une fermeture muette
+    d.addEventListener('click', onClick); d.addEventListener('close', onClose); d.addEventListener('cancel', onCancel);
+    d.showModal();
+  });
+}
+async function kindSet(id, kind) { // changer le dossier d'un parcours : liste, navigateur, compte
+  if (!KINDS.includes(kind)) return; const m = LIB.list.find(x => x.id === id); if (!m) return;
+  libUpsert({ id, kind });
+  try { const meta = await idbRun('meta', 'readonly', st => st.get(id)); if (meta) await idbRun('meta', 'readwrite', st => st.put({ ...meta, kind })); } catch (e) {}
+  const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ kind }).eq('user_id', SB_UID).eq('id', id).then(() => {});
 }
 /* ---------- réglages ---------- */
 // Chaque page (Sortie / Ultra) garde ses propres réglages. La page Ultra garde aussi la date de départ (date de la course).
@@ -4182,7 +4291,7 @@ function initInputs() {
     if (now.getHours() * 60 + now.getMinutes() >= bh * 60 + bm) d.setDate(d.getDate() + 1);
     $('#date').value = ymd(d);
   }
-  $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; tafRenderSel();
+  $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; { const fx = S.mode === 'taf' ? tafFixed() : null; if (fx) TAF.ret = fx.ret; } tafRenderSel();
   setSeg('#tafGoSeg', def.tafGoMode === 'arr' ? 'arr' : 'dep'); $('#tafMargin').value = def.tafMargin != null && isFinite(+def.tafMargin) ? def.tafMargin : 5;
   $('#tafPerDay').checked = !!def.tafPerDay; TAF.days = def.tafDays && typeof def.tafDays === 'object' ? def.tafDays : {};
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
@@ -4239,17 +4348,39 @@ function switchMode(m) {
 /* Trajet de vélotaf par défaut (page Moi, localStorage pmr-taf-route) : ouvert en arrivant sur Vélotaf ; en repartant,
    le parcours d'avant revient. Le « dernier parcours ouvert » (pmr-last-route) reste celui des autres pages. */
 const tafDefault = () => { let id = ''; try { id = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {} return LIB.list.some(x => x.id === id) ? id : ''; };
+// trajet fixé dans Moi (06/11/2026) : aller = pmr-taf-route, retour = pmr-taf-ret ('' = même trace à l'envers) ; null si rien de réglé
+const tafFixed = () => { const go = tafDefault(); if (!go) return null; let ret = ''; try { ret = localStorage.getItem('pmr-taf-ret') || ''; } catch (e) {}
+  if (ret === go || !LIB.list.some(x => x.id === ret)) ret = ''; return { go, ret }; };
+function tafFixedRet() { if (S.mode !== 'taf') return; const fx = tafFixed(); if (fx && fx.ret !== (TAF.ret || '')) { TAF.ret = fx.ret; tafRenderSel(); } }
 async function tafOpenDefault() {
-  const def = tafDefault(); if (!def || def === LIB.current) return;
+  const fx = tafFixed(); if (!fx) return;
+  if (fx.ret !== (TAF.ret || '')) { TAF.ret = fx.ret; tafRenderSel(); }
+  if (fx.go === LIB.current) { tripsRender(); schedule(); return; }
   let keep = ''; try { keep = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
   if (LIB.current) S.tafPrev = LIB.current;
-  await libOpen(def);
+  LIB.tafForce = true; try { await libOpen(fx.go); } finally { LIB.tafForce = false; }
   try { if (keep) localStorage.setItem('pmr-last-route', keep); } catch (e) {}
 }
-function tafRouteSwitch(from, to) {
-  if (to === 'taf') tafOpenDefault();
-  else if (from === 'taf' && S.tafPrev && LIB.current === tafDefault() && S.tafPrev !== LIB.current) { const id = S.tafPrev; S.tafPrev = ''; libOpen(id); }
+function modeGo(m) { // changer de mode depuis le code (adresse mise à jour sans déclencher hashchange)
+  if (m === S.mode) return;
+  try { history.replaceState(null, '', location.pathname + location.search + (m === 'ultra' ? '#ultra' : m === 'taf' ? '#velotaf' : '')); } catch (e) {}
+  switchMode(m);
 }
+function lastFor(mode) { // dernier parcours ouvert du dossier de ce mode (06/11/2026), sinon le plus récent du dossier, sinon ''
+  let last = ''; try { last = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
+  const ok = x => !x.demo && kindOf(x) === mode;
+  const l = LIB.list.find(x => x.id === last); if (l && ok(l)) return last;
+  const r = LIB.list.filter(ok).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || ''))[0]; return r ? r.id : '';
+}
+async function modeRoute(from, to) { // au changement de mode : le parcours ouvert doit être du dossier de ce mode (06/11/2026)
+  if (to === 'taf') { if (tafFixed()) { tafOpenDefault(); return; } }
+  const cur = LIB.list.find(x => x.id === LIB.current);
+  if (cur && !cur.demo && kindOf(cur) === to) return;
+  const id = lastFor(to);
+  if (id) { LIB.keepMode = true; try { await libOpen(id); } finally { LIB.keepMode = false; } }
+  else if (cur) { S.P = null; S.tl = null; LIB.current = ''; $('#results').hidden = true; $('#empty').hidden = false; setStatus(''); libRender(); } // aucun parcours dans ce dossier : écran d'import
+}
+function tafRouteSwitch(from, to) { modeRoute(from, to); }
 window.addEventListener('hashchange', () => switchMode(hashMode(location.hash)));
 function syncOutputs() {
   $('#speedOut').textContent = fV(+$('#speed').value, 1) + ' ' + UL.kmh;
@@ -5185,7 +5316,7 @@ $('#tafFile').addEventListener('change', () => {
       const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts)), P = prepare(pts);
       const id = routeId(packPts(pts));
       TAF.ret = TAF.id = id; TAF.P = P;
-      await libSave(pts, name, P, false); // gardé dans « Mes parcours » sans changer la trace de l'aller
+      await libSave(pts, name, P, false, 'taf'); // gardé dans « Mes parcours » (dossier Commute) sans changer la trace de l'aller
       tafRenderSel(); tripsRender(); schedule();
     } catch (e) { setStatus(e.message, 'err'); }
     $('#tafFile').value = '';
@@ -5229,6 +5360,7 @@ function tripsRender() {
     box.hidden = !(S.mode === 'taf' && go); if (box.hidden) return;
     let def = ''; try { def = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {}
     const daily = def === go.id, ret = TAF.ret ? LIB.list.find(x => x.id === TAF.ret) : null;
+    const locked = daily; // trajet fixé dans Moi : rien ne se change ici (06/11/2026)
     if (TT.open == null) TT.open = !daily && !ret; // replié dès que les trajets sont réglés ; ouvert à la première visite
     const days = S.laps && S.laps.taf && LAPS.days && LAPS.days.length === 2 ? LAPS.days : null;
     const dk = ret ? (+ret.km || 0) - (+go.km || 0) : 0, dh = days ? days[1].h - days[0].h : 0;
@@ -5241,18 +5373,19 @@ function tripsRender() {
         <svg class="tt-sep" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
         <span><span class="tt-lbl lbl">${T('Retour')}</span><b>${ret ? escH(ret.name) : T("à l'envers")}</b><span class="tt-num">${fD(+(ret || go).km || 0)} ${UL.km}</span>${ret && days && Math.abs(dh) >= 1 / 60 ? `<span class="hint dt">${ttDelta(dh)}</span>` : ''}</span></span>
         ${daily ? `<span class="tt-daily"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>${T('Trajet quotidien')}</span>` : ''}
-        <span class="tt-more"><span class="mt">${T('Modifier')}</span>${chev(false)}</span></button>`;
+        <span class="tt-more"><span class="mt">${locked ? T('Voir') : T('Modifier')}</span>${chev(false)}</span></button>`;
       return;
     }
     const line = (k, m, rev) => `<div class="tt-line"><svg class="sw" viewBox="0 0 36 12" aria-hidden="true"><path class="${k ? (rev ? 'go' : 'ret') : 'go'}" d="M2 6h32"/></svg>
       <div class="tt-txt"><span class="tt-lbl">${k ? T('Retour · travail → maison') : T('Aller · maison → travail')}</span><b>${rev ? T("Même trace, à l'envers") : escH(m.name)}</b>
       <span class="tt-num"><span class="nw">${fD(+m.km || 0)} ${UL.km}</span> · <span class="nw">D+ ${fE(+m.dplus || 0)} ${UL.m}</span>${days ? ' · <span class="nw">' + ttDur(days[k].h) + '</span>' : ''}</span>${k && ret && (Math.abs(dk) >= 0.1 || (days && Math.abs(dh) >= 1 / 60)) ? `<span class="hint">${T("{0} km et {1} par rapport à l'aller", [(dk >= 0 ? '+' : '−') + fD(Math.abs(dk)), days ? ttDelta(dh) : '—'])}</span>` : ''}</div>
-      <button type="button" class="btn small tt-chg" data-chg="${k ? 'ret' : 'go'}">${T('Changer')}</button></div>`;
+      ${locked ? '' : `<button type="button" class="btn small tt-chg" data-chg="${k ? 'ret' : 'go'}">${T('Changer')}</button>`}</div>`;
     const big = typeof L !== 'undefined' && S.laps && S.laps.taf && S.P ? '' : ttMap(420, 240, true), lmap = !big && S.laps && S.laps.taf && S.P;
     box.innerHTML = `<div class="tt-head"><h2>${T('Mes trajets')}</h2><button type="button" class="btn small tt-tog" data-tt="toggle" aria-expanded="true">${T('Replier')}${chev(true)}</button></div>
       <div class="tt-body">${big ? `<svg class="tt-map" viewBox="0 0 420 240" role="img" aria-label="${T('Les deux trajets sur la même carte')}">${big}</svg>` : lmap ? '<div class="tt-lslot"></div>' : ''}
-      <div class="tt-rows">${line(0, go, false)}<div class="tt-mid"><button type="button" class="tt-swap" data-tt="swap"${ret ? '' : ' disabled'} title="${T("Échanger l'aller et le retour")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v14l-4-4M16 20V6l4 4"/></svg>${T('Échanger')}</button></div>${line(1, ret || go, !ret)}</div></div>
-      <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Commute")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
+      <div class="tt-rows">${line(0, go, false)}<div class="tt-mid">${locked ? '' : `<button type="button" class="tt-swap" data-tt="swap"${ret ? '' : ' disabled'} title="${T("Échanger l'aller et le retour")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v14l-4-4M16 20V6l4 4"/></svg>${T('Échanger')}</button>`}</div>${line(1, ret || go, !ret)}</div></div>
+      ${locked ? `<div class="tt-dsw tt-lock"><span><b>${T('Mon trajet quotidien')}</b><small>${T("Réglé dans Moi : il s'ouvre tout seul sur Commute et y reste fixe.")}</small></span><button type="button" class="btn small" data-tt="me">${T('Modifier dans Moi')}</button></div>`
+      : `<label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Commute")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`}`;
     if (lmap) ttLeaflet(box.querySelector('.tt-lslot'));
   } catch (e) { box.hidden = true; }
 }
@@ -5287,7 +5420,7 @@ async function ttOpenGo(id) {
   const was = LIB.current; let keep = '', def = '';
   try { keep = localStorage.getItem('pmr-last-route') || ''; def = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {}
   if (id === TAF.ret) TAF.ret = '';
-  await libOpen(id);
+  LIB.keepMode = true; try { await libOpen(id); } finally { LIB.keepMode = false; } // reste en Commute quel que soit le dossier du parcours
   if (LIB.current !== id) return;
   try { if (keep) localStorage.setItem('pmr-last-route', keep); if (def && def === was) localStorage.setItem('pmr-taf-route', id); } catch (e) {}
   tripsRender();
@@ -5296,7 +5429,7 @@ function ttDlgOpen(kind) {
   TT.kind = kind;
   $('#ttDlgT').textContent = kind === 'go' ? T("Trace de l'aller") : T("Trace du retour");
   const skip = kind === 'go' ? TAF.ret : LIB.current, cur = kind === 'go' ? LIB.current : TAF.ret;
-  const items = LIB.list.filter(m => m.id !== skip).sort((a, b) => (b.used_at || '').localeCompare(a.used_at || ''));
+  const items = LIB.list.filter(m => m.id !== skip).sort((a, b) => (kindOf(b) === 'taf') - (kindOf(a) === 'taf') || (b.used_at || '').localeCompare(a.used_at || '')); // dossier Commute d'abord
   const go = LIB.list.find(x => x.id === LIB.current);
   const rev = kind === 'ret' && go ? `<li><button type="button" class="tt-opt" data-pick="" aria-pressed="${!TAF.ret}"><span class="rvbox"><svg class="rv" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></svg></span><b>${T("Même trace, à l'envers")}</b><span class="tt-num">${fD(+go.km || 0)} ${UL.km}</span></button></li>` : '';
   $('#ttList').innerHTML = rev + (items.length ? items.map(m => `<li><button type="button" class="tt-opt" data-pick="${m.id}" aria-pressed="${m.id === cur}">${ttThumb(m.id, false)}<b>${escH(m.name)}</b><span class="tt-num">${fD(+m.km || 0)} ${UL.km}</span></button></li>`).join('')
@@ -5307,6 +5440,7 @@ $('#tafTrips').addEventListener('click', async e => {
   const c = e.target.closest('[data-chg]'); if (c) { ttDlgOpen(c.dataset.chg); return; }
   const t = e.target.closest('[data-tt]'); if (!t) return;
   if (t.dataset.tt === 'toggle') { TT.open = !TT.open; tripsRender(); const f = $('#tafTrips [data-tt="toggle"]'); if (f) f.focus(); return; }
+  if (t.dataset.tt === 'me') { meOpen(); const c = $('#meTafCard'); if (c) c.scrollIntoView({ block: 'start' }); return; }
   if (t.dataset.tt === 'swap') {
     if (!TAF.ret || !LIB.current) return;
     const a = LIB.current, r = TAF.ret;
@@ -5316,8 +5450,8 @@ $('#tafTrips').addEventListener('click', async e => {
 });
 $('#tafTrips').addEventListener('change', e => {
   if (e.target.id !== 'ttDef') return; const on = e.target.checked;
-  try { if (on && LIB.current) localStorage.setItem('pmr-taf-route', LIB.current); else localStorage.removeItem('pmr-taf-route'); } catch (err) {}
-  const mt = $('#meTaf'); if (mt) mt.value = on ? LIB.current : '';
+  try { if (on && LIB.current) { localStorage.setItem('pmr-taf-route', LIB.current); if (TAF.ret) localStorage.setItem('pmr-taf-ret', TAF.ret); else localStorage.removeItem('pmr-taf-ret'); } else { localStorage.removeItem('pmr-taf-route'); localStorage.removeItem('pmr-taf-ret'); } } catch (err) {}
+  meTafSel(); tripsRender();
 });
 $('#ttList').addEventListener('click', async e => {
   const b = e.target.closest('[data-pick]'); if (!b) return; const id = b.dataset.pick; $('#ttDlg').close();
@@ -5756,10 +5890,11 @@ function routeId(packed) { // empreinte du tracé : le même GPX rechargé ne cr
   return 'r' + (h >>> 0).toString(36) + packed.length.toString(36);
 }
 
-async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true) {
+async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true, kind = '') {
   try {
     const pts = packPts(raw), id = routeId(pts), now = new Date().toISOString();
-    const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now };
+    const prev = LIB.list.find(x => x.id === id);
+    const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now, kind: KINDS.includes(kind) ? kind : (prev && prev.kind) || null };
     if (setCurrent) { LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {} }
     try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
     libUpsert({ ...meta, local: true });
@@ -5833,18 +5968,27 @@ function libRender() {
 }
 async function libOpen(id) {
   const m = LIB.list.find(x => x.id === id); if (!m) return;
+  // Un parcours s'ouvre dans le mode de son dossier (06/11/2026, demande d'Antoine) : ouvrir un parcours Ultra depuis Sortie bascule
+  // en Ultra, un parcours Commute ouvre Commute. Trajet fixé dans Moi : seul ce trajet s'ouvre en Commute, un autre est refusé.
+  if (!LIB.tafForce && !LIB.keepMode) {
+    const want = kindOf(m), fx = tafFixed();
+    if (want === 'taf') {
+      if (fx && id !== fx.go) { if (S.mode !== 'taf') modeGo('taf'); if (id !== fx.ret) toast(T("Ton trajet Commute est réglé dans Moi : « {0} » n'a pas été ouvert. Pour en faire ton trajet, change-le dans Moi.", [m.name])); return; }
+      if (S.mode !== 'taf') { modeGo('taf'); if (fx) return; } // avec un trajet fixé, modeRoute l'ouvre
+    } else if (want !== S.mode) modeGo(want);
+  }
   let rec = null;
   try { rec = await idbRun('pts', 'readonly', st => st.get(id)); } catch (e) {}
   if (!rec) {
     const sb = await sbIfLogged();
     if (sb) { setStatus(T("Chargement du parcours…"), 'load'); const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; }
-    if (rec) { try { await idbRun('pts', 'readwrite', st => st.put(rec)); await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at })); libUpsert({ id, local: true }); } catch (e) {} }
+    if (rec) { try { await idbRun('pts', 'readwrite', st => st.put(rec)); await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, kind: m.kind || null })); libUpsert({ id, local: true }); } catch (e) {} }
   }
   if (!rec) { setStatus(T("Ce parcours n'est plus disponible."), 'err'); return; }
-  LIB.current = id; try { if (!(S.mode === 'taf' && localStorage.getItem('pmr-taf-route') === id)) localStorage.setItem('pmr-last-route', id); } catch (e) {} // le trajet de vélotaf ne remplace pas le dernier parcours des autres pages
+  LIB.current = id; try { if (S.mode !== 'taf') localStorage.setItem('pmr-last-route', id); } catch (e) {} // les trajets Commute ne remplacent pas le dernier parcours des autres pages
   try { loadRoute(unpackPts(rec.pts), m.name, revGet(id)); } catch (e) { setStatus(e.message, 'err'); return; }
   const now = new Date().toISOString(); libUpsert({ id, used_at: now }); libRender();
-  try { await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: now })); } catch (e) {}
+  try { await idbRun('meta', 'readwrite', st => st.put({ id, name: m.name, km: m.km, dplus: m.dplus, used_at: now, kind: m.kind || null })); } catch (e) {}
   const sb = await sbIfLogged(); if (sb && m.remote) sb.from('routes').update({ used_at: now }).eq('user_id', SB_UID).eq('id', id).then(() => {});
 }
 async function libDelete(id) {
@@ -5857,14 +6001,14 @@ async function libDelete(id) {
 }
 async function libInit() {
   try { for (const m of await idbRun('meta', 'readonly', st => st.getAll())) libUpsert({ ...m, local: true }); } catch (e) {}
-  let last = ''; try { last = localStorage.getItem('pmr-last-route') || ''; } catch (e) {}
-  let tafDef = ''; try { tafDef = S.mode === 'taf' ? localStorage.getItem('pmr-taf-route') || '' : ''; } catch (e) {} // Vélotaf : trajet par défaut
-  if (tafDef) { S.tafPrev = last; last = tafDef; }
-  libRender();
-  if (last && LIB.list.some(x => x.id === last) && !S.P) await libOpen(last);
+  // parcours de départ : celui du dossier du mode (06/11/2026) ; en Commute, le trajet fixé dans Moi d'abord
+  const startId = () => (S.mode === 'taf' && tafDefault()) || lastFor(S.mode);
+  let last = startId();
+  libRender(); tafFixedRet();
+  if (last && !S.P) { LIB.keepMode = true; try { await libOpen(last); } finally { LIB.keepMode = false; } }
   // Compte : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
   const sb = await sbIfLogged(); if (!sb) return;
-  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at').eq('user_id', SB_UID).order('used_at', { ascending: false }).limit(200);
+  const { data, error } = await sb.from('routes').select('id,name,km,dplus,used_at,deleted_at,kind').eq('user_id', SB_UID).order('used_at', { ascending: false }).limit(200);
   if (error) return;
   // parcours supprimés par un admin (page Admin) : retirés de ce navigateur au lieu d'être renvoyés au compte
   for (const r of (data || []).filter(r => r.deleted_at)) {
@@ -5872,9 +6016,9 @@ async function libInit() {
     LIB.list = LIB.list.filter(x => x.id !== r.id);
     if (LIB.current === r.id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} }
   }
-  for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; libUpsert({ ...m, remote: true }); }
-  libRender();
-  if (!S.P && last && LIB.list.some(x => x.id === last)) await libOpen(last);
+  for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; if (!m.kind) delete m.kind; libUpsert({ ...m, remote: true }); }
+  libRender(); tafFixedRet();
+  if (!S.P) { last = startId(); if (last) { LIB.keepMode = true; try { await libOpen(last); } finally { LIB.keepMode = false; } } }
   // une seule fois : un admin voyait les parcours de tous les comptes ; ceux qu'il a ouverts sont restés dans son navigateur.
   // On les retire au lieu de les recopier dans son compte (pour un compte non admin, la requête ne renvoie que ses propres parcours).
   try { if (!localStorage.getItem('pmr-own-routes')) { const ids = LIB.list.filter(x => x.local && !x.remote).map(x => x.id);
@@ -5884,12 +6028,11 @@ async function libInit() {
         LIB.list = LIB.list.filter(x => x.id !== id); if (LIB.current === id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} } }
       libRender(); }
     localStorage.setItem('pmr-own-routes', '1'); } } catch (e) {}
-  // aucun dernier parcours connu (effacé, autre appareil…) : on rouvre le plus récent du compte plutôt qu'un écran vide
-  if (!S.P) { const own = LIB.list.filter(x => x.remote); let taf = ''; try { taf = localStorage.getItem('pmr-taf-route') || ''; } catch (e) {}
-    const r = own.find(x => S.mode === 'taf' || x.id !== taf) || own[0]; if (r) await libOpen(r.id); }
+  // aucun dernier parcours connu (effacé, autre appareil…) : le plus récent du dossier de ce mode plutôt qu'un écran vide
+  if (!S.P) { last = startId(); if (last) { LIB.keepMode = true; try { await libOpen(last); } finally { LIB.keepMode = false; } } }
   for (const m of LIB.list.filter(x => x.local && !x.remote)) {
     try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); if (!rec) continue;
-      const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, pts: rec.pts }, { onConflict: 'user_id,id' });
+      const { error: e2 } = await sb.from('routes').upsert({ id: m.id, name: m.name, km: m.km, dplus: m.dplus, used_at: m.used_at, kind: m.kind || null, pts: rec.pts }, { onConflict: 'user_id,id' });
       if (!e2) libUpsert({ id: m.id, remote: true }); } catch (e) {}
   }
 }
@@ -5921,7 +6064,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.b
 $('#tabLib').addEventListener('click', lpOpen);
 /* Page « Mes parcours » (essai du 24/10/2026) : liste des parcours en fiches (miniature du tracé, km, D+, dernière ouverture),
    recherche, tri, ouvrir / renommer / supprimer. Onglet « Parcours » sur téléphone, bouton « Voir tous mes parcours » ailleurs. */
-const LP = { sort: 'recent', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false };
+const LP = { sort: 'recent', kind: 'all', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false };
 function lpThumbs() { if (!LP.thumbs) { try { LP.thumbs = JSON.parse(localStorage.getItem('pmr-thumbs') || '{}') || {}; } catch (e) { LP.thumbs = {}; } } return LP.thumbs; }
 function thumbOf(pts) { // tracé ramené dans un carré de 64 (projection simple, ~90 points)
   const step = Math.max(1, Math.floor(pts.length / 90)), q = []; for (let i = 0; i < pts.length; i += step) q.push(pts[i]); q.push(pts[pts.length - 1]);
@@ -5943,19 +6086,26 @@ function lpRender() {
   const t = lpThumbs(), n = LIB.list.length, q = fold($('#lpQ').value).trim().split(/\s+/).filter(Boolean);
   $('#lpCount').textContent = n ? T('{0} parcours ', [n]) + (hasSbToken() ? T("dans ton compte, sur tous tes appareils.") : T("sur ce navigateur.")) : '';
   let items = LIB.list.filter(r => q.every(w => fold(r.name).includes(w)));
+  // dossiers (06/11/2026) : compte par dossier sur les pastilles, liste filtrée sur le dossier choisi
+  const cnt = { all: items.length, ride: 0, ultra: 0, taf: 0 }; for (const r of items) cnt[kindOf(r)]++;
+  for (const b of document.querySelectorAll('#lpKind button')) { const k = b.dataset.v; b.innerHTML = `${k === 'all' ? T('Tous') : kindName(k)}${n ? ` <small>${cnt[k]}</small>` : ''}`; b.setAttribute('aria-pressed', String(k === LP.kind)); }
+  if (LP.kind !== 'all') items = items.filter(r => kindOf(r) === LP.kind);
   if (LP.sort === 'km') items = items.slice().sort((a, b) => (b.km || 0) - (a.km || 0));
   else if (LP.sort === 'name') items = items.slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
   if (!n) { $('#lpList').innerHTML = T("<li class=\"lp-empty\"><b>Aucun parcours pour l'instant.</b><br>Importe un GPX depuis Strava, Komoot ou Garmin : il est gardé ici{0}.</li>", [hasSbToken() ? T(" et sur tes autres appareils") : '']); return; }
-  if (!items.length) { $('#lpList').innerHTML = T("<li class=\"lp-empty\">Aucun parcours ne correspond à « {0} ».</li>", [escH($('#lpQ').value)]); return; }
+  if (!items.length) { $('#lpList').innerHTML = q.length ? T("<li class=\"lp-empty\">Aucun parcours ne correspond à « {0} ».</li>", [escH($('#lpQ').value)])
+    : T("<li class=\"lp-empty\"><b>Aucun parcours dans le dossier {0}.</b><br>Range-y un parcours depuis son menu « ⋯ », ou importe un GPX.</li>", [kindName(LP.kind)]); return; }
+  const tag = r => LP.kind === 'all' ? `<span class="lp-tag">${kindIco(kindOf(r))}${kindName(kindOf(r))}</span>` : '';
+  const move = r => `<div class="lp-move"><span>${T('Dossier')}</span><div class="seg2" role="group" aria-label="${T('Dossier')}">${KINDS.map(k => `<button type="button" data-mv="${r.id}" data-k="${k}" aria-pressed="${kindOf(r) === k}">${kindName(k)}</button>`).join('')}</div></div>`;
   $('#lpList').innerHTML = items.map(r => {
     const th = t[r.id], cur = r.id === LIB.current;
     const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
-    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), fD(r.km || 0), fE(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
-        : LP.open === r.id ? T("<div class=\"lp-acts\"><button type=\"button\" class=\"btn small\" data-ren=\"{0}\">Renommer</button><button type=\"button\" class=\"btn small{1}\" data-del=\"{2}\">{3}</button></div>", [r.id, LP.del === r.id ? ' danger' : '', r.id, LP.del === r.id ? T("Confirmer la suppression") : T("Supprimer")]) : '']); }).join('');
+    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m{12}</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), fD(r.km || 0), fE(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
+        : LP.open === r.id ? T("<div class=\"lp-acts\"><button type=\"button\" class=\"btn small\" data-ren=\"{0}\">Renommer</button><button type=\"button\" class=\"btn small{1}\" data-del=\"{2}\">{3}</button></div>", [r.id, LP.del === r.id ? ' danger' : '', r.id, LP.del === r.id ? T("Confirmer la suppression") : T("Supprimer")]) + move(r) : '', tag(r)]); }).join('');
   if (LP.ren) { const i = $('#lpRenIn'); if (i) { i.focus(); i.select(); } }
   lpFillThumbs();
 }
-function lpOpen() { LP.open = LP.ren = LP.del = ''; $('#lpQ').value = ''; pageOpen('libPage', '#tabLib'); lpRender(); }
+function lpOpen() { LP.open = LP.ren = LP.del = ''; LP.kind = KINDS.includes(S.mode) ? S.mode : 'all'; $('#lpQ').value = ''; pageOpen('libPage', '#tabLib'); lpRender(); }
 function lpClose() { pageClose(); }
 async function lpRename(id, name) {
   const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
@@ -6129,8 +6279,10 @@ $('#libPageX').addEventListener('click', lpClose);
 for (const a of document.querySelectorAll('.modes a, .tabbar a[data-mode]')) a.addEventListener('click', pageClose);
 $('#lpQ').addEventListener('input', () => { LP.open = LP.ren = ''; lpRender(); });
 $('#lpSort').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.sort = b.dataset.v; setSeg('#lpSort', LP.sort); lpRender(); });
+$('#lpKind').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.kind = b.dataset.v; LP.open = LP.ren = LP.del = ''; lpRender(); });
 $('#lpList').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+  if (d.mv) { await kindSet(d.mv, d.k); lpRender(); return; }
   if (d.open) { lpClose(); window.scrollTo(0, 0); if (d.open !== LIB.current) await libOpen(d.open); return; }
   if (d.more) { LP.open = LP.open === d.more ? '' : d.more; LP.ren = LP.del = ''; lpRender(); return; }
   if (d.ren) { LP.ren = d.ren; lpRender(); return; }
@@ -6250,8 +6402,7 @@ function meRender() {
       + row(m, 'speed', m === 'taf' ? T("Vitesse moyenne") : T("Vitesse sur le plat"), 12, 40, 0.5, g.speed, kmh)
       + (m === 'taf' ? '' : row(m, 'vam', T("Vitesse de montée (VAM)"), 300, 1400, 50, g.vam, mh) + row(m, 'pmin', T("Arrêts par heure de pédalage"), 0, 30, 1, g.pmin, mn))
       + '</div>'; }).join('');
-  const td = tafDefault(), opts = LIB.list.slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
-  $('#meTaf').innerHTML = T("<option value=\"\">Aucun : le parcours ouvert</option>{0}", [opts.map(r => `<option value="${r.id}"${r.id === td ? ' selected' : ''}>${escH(r.name)} · ${fD(r.km || 0)} ${UL.km}</option>`).join('')]);
+  meTafSel();
   const th = document.documentElement.dataset.theme || 'auto';
   for (const b of document.querySelectorAll('#meTheme button')) b.setAttribute('aria-pressed', String(b.dataset.t === th));
 }
@@ -6284,7 +6435,30 @@ $('#meFont').addEventListener('click', e => { const b = e.target.closest('button
 try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pmr-open-me'); if (!document.body.classList.contains('gated')) setTimeout(meOpen, 0); } } catch (e) {}
 // lien direct vers la Carte (#carte, depuis le rail de la supervision, 03/11/2026)
 if (location.hash === '#carte') { history.replaceState(null, '', location.pathname + location.search); if (!document.body.classList.contains('gated')) setTimeout(pmOpen, 0); }
-$('#meTaf').addEventListener('change', () => { const v = $('#meTaf').value; try { if (v) localStorage.setItem('pmr-taf-route', v); else localStorage.removeItem('pmr-taf-route'); } catch (e) {} if (v && S.mode === 'taf') tafOpenDefault(); });
+// Moi · Mon trajet Commute (06/11/2026) : aller (pmr-taf-route) et retour (pmr-taf-ret, '' = même trace à l'envers)
+const ME = { tafOther: false }; // « Une autre trace » choisi mais pas encore de parcours
+function meTafSel() {
+  const go = $('#meTaf'), rt = $('#meTafRet'); if (!go || !rt) return;
+  const fx = tafFixed(), opts = LIB.list.filter(x => !x.demo).slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
+  const opt = r => `<option value="${r.id}">${escH(r.name)} · ${fD(r.km || 0)} ${UL.km}</option>`;
+  go.innerHTML = `<option value="">${T("Aucun : le parcours ouvert")}</option>` + opts.map(opt).join('');
+  go.value = fx ? fx.go : '';
+  const other = !!(fx && (fx.ret || ME.tafOther)); ME.tafOther = other;
+  rt.innerHTML = `<option value="">${T("Choisis la trace du retour…")}</option>` + opts.filter(r => !fx || r.id !== fx.go).map(opt).join('');
+  rt.value = fx ? fx.ret : '';
+  for (const el of document.querySelectorAll('#meTafCard .me-ret')) el.hidden = !fx;
+  for (const b of document.querySelectorAll('#meTafKind button')) b.setAttribute('aria-pressed', String((b.dataset.k === 'other') === other));
+  rt.hidden = !fx || !other;
+}
+function meTafSave() {
+  const go = $('#meTaf').value, ret = go && ME.tafOther ? $('#meTafRet').value : '';
+  try { if (go) localStorage.setItem('pmr-taf-route', go); else localStorage.removeItem('pmr-taf-route'); if (go && ret && ret !== go) localStorage.setItem('pmr-taf-ret', ret); else localStorage.removeItem('pmr-taf-ret'); } catch (e) {}
+  meTafSel();
+  if (S.mode === 'taf') { if (go) tafOpenDefault(); else tripsRender(); }
+}
+$('#meTaf').addEventListener('change', () => { ME.tafOther = false; meTafSave(); });
+$('#meTafRet').addEventListener('change', meTafSave);
+$('#meTafKind').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; ME.tafOther = b.dataset.k === 'other'; meTafSave(); if (ME.tafOther) $('#meTafRet').focus(); });
 $('#mePw').addEventListener('click', () => { pageClose(); $('#pwLink').click(); });
 $('#meOut').addEventListener('click', () => $('#logoutLink').click());
 /* Suppression du compte (essai du 29/10/2026, exigée par l'App Store et Google Play) : mot de passe demandé,
