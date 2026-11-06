@@ -1133,6 +1133,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 .opt-h .b{display:block;width:24px;border-radius:6px}
 .opt-h .t{font:500 13px var(--f-mono)}
 .opt-h .w{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.opt-h .ws{display:none}
 .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
 .opt-h.best{border:2px solid var(--tail)}
 .opt-h.off{opacity:.45}
@@ -1159,14 +1160,16 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   #mapCard .seg{display:flex;width:100%}
   #mapCard .seg button{flex:1 1 auto;white-space:nowrap;padding:7px 8px;font-size:12.5px}
   .chart-keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11.5px}
-  .opt-strip{gap:2px;padding:10px 12px 4px;overflow:visible}
-  .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent}
+  .opt-strip{gap:2px;padding:10px 10px 4px;overflow:hidden}
+  .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent;overflow:hidden}
+  .opt-h .t{font-size:10px;letter-spacing:-.02em}
   .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
   .opt-h.best{border:2px solid var(--tail)}
   .opt-h .b{width:16px}
   .opt-h .t{font-size:10.5px}
-  .opt-h .w{font-size:0;line-height:12px}
-  .opt-h .w::after{content:attr(data-s);font-size:9.5px;letter-spacing:-.01em}
+  .opt-h .w{font-size:9.5px;letter-spacing:-.01em}
+  .opt-h .wl{display:none}
+  .opt-h .ws{display:inline}
   .opt{grid-template-columns:70px minmax(0,1fr)}
   #optList .opt .h{font-size:15px;white-space:nowrap}
   .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
@@ -4395,7 +4398,7 @@ function renderOpts(opts, opt) {
     const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [why(o.r.st), 'var(--head)'];
     const night = okRun(o.r) && o.r.st.nightH > 0.5 * Math.max(o.r.st.rideH || 0, 0.1);
     return `<button type="button" class="opt-h${isMine ? ' mine' : ''}${isTop && !isMine ? ' best' : ''}${q < 0 ? ' off' : ''}" data-time="${o.time}" aria-pressed="${isMine}" aria-label="${T('Départ à {0} : {1}', [hLbl(o.time), lv[0]])}">` +
-      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w" data-s="${isMine ? T("Toi") : night ? T("Nuit") : ({ [T("Moins bien")]: T("Moins"), [T("Incomplet")]: T("Inc."), [T("Rafales")]: T("Raf.") })[lv[0]] || lv[0]}">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
+      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w"><span class="wl">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span><span class="ws">${isMine ? T("Toi") : night ? T("Nuit") : ({ [T("Moins bien")]: T("Moins"), [T("Incomplet")]: T("Inc."), [T("Rafales")]: T("Raf.") })[lv[0]] || lv[0]}</span></span></button>`;
   }).join('');
   el.innerHTML = `<div class="opt-strip">${strip}</div>` + html;
   { const sc = el.querySelector('.opt-strip'), m = sc && sc.querySelector('.opt-h.mine'); if (m && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = Math.max(0, m.offsetLeft - sc.offsetLeft - (sc.clientWidth - m.offsetWidth) / 2); }
