@@ -111,6 +111,12 @@ window.PMR_I18N = {
     // dossiers de Mes parcours (06/11/2026)
     "Tous": "All",
     "Valider": "Confirm",
+    "Annuler l'import": "Cancel the import",
+    "Abandonner l'import ? La trace ne sera pas enregistrée.": "Abandon the import? The track will not be saved.",
+    "Abandonner l'import de « {0} » ? La trace ne sera pas enregistrée.": "Abandon the import of “{0}”? The track will not be saved.",
+    "Non, continuer": "No, keep going",
+    "Oui, abandonner": "Yes, abandon",
+    "Import abandonné : « {0} » n'a pas été enregistré.": "Import abandoned: “{0}” was not saved.",
     "Dossier": "Folder",
     "Ranger ce parcours": "File this route",
     "Choisis le dossier de ce parcours dans Mes parcours. Tu pourras le changer plus tard.": "Choose its folder in My routes. You can change it later.",

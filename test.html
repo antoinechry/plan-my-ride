@@ -375,6 +375,27 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
 .kind-opts button[aria-pressed="true"] .ki{color:var(--accent)}
 .kind-opts button:hover{border-color:var(--accent);box-shadow:none}
 .kind-dlg #kindOk:disabled{opacity:.45;cursor:not-allowed}
+.kind-dlg{position:relative}
+.kind-dlg h2{padding-right:44px}
+.kd-x{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:400 22px/1 var(--f-body);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.kd-x:hover{border-color:var(--ink)}
+.kd-confirm{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--head) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--head) 45%,var(--line))}
+.kd-confirm p{margin:0;font-size:14px;line-height:1.45}
+.kd-cbtns{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;flex-wrap:wrap}
+.kd-cbtns .btn.danger{background:var(--head);border-color:var(--head);color:#fff}
+.kind-dlg.confirming .exp-opts,.kind-dlg.confirming .exp-foot{display:none}
+@media (max-width:700px){
+  /* téléphone : panneau qui monte du bas (choix d'Antoine, 06/11/2026) */
+  dialog.kind-dlg{position:fixed;inset:auto 0 0 0;margin:0;max-width:none;width:100%;border:0;border-radius:20px 20px 0 0;padding:10px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.18);animation:kdUp .22s ease-out}
+  dialog.kind-dlg::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+  dialog.kind-dlg h2{font-size:19px}
+  .kd-x{top:18px}
+  .kind-dlg .exp-foot{margin-top:12px}
+  .kind-dlg #kindOk{width:100%;min-height:48px;font-size:16px;justify-content:center;text-align:center}
+  .kd-cbtns .btn{flex:1 1 auto;min-height:44px;justify-content:center;text-align:center}
+  @keyframes kdUp{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+}
+html[data-motion="reduce"] dialog.kind-dlg{animation:none}
 .kind-opts .ki{grid-row:span 2;justify-self:center;width:30px;height:30px;color:var(--ink)}
 .kind-opts .ki svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .lp-kind{grid-template-columns:repeat(4,1fr)}
@@ -1791,8 +1812,10 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <form method="dialog" class="exp-foot"><button class="btn" value="cancel">Annuler</button></form>
 </dialog>
 <dialog class="exp-dlg kind-dlg" id="kindDlg" aria-labelledby="kindTitle">
+  <button type="button" class="kd-x" id="kindX" aria-label="Annuler l'import" title="Annuler l'import">×</button>
   <h2 id="kindTitle">Ranger ce parcours</h2>
   <p class="hint" id="kindHint">Choisis le dossier de ce parcours dans Mes parcours. Tu pourras le changer plus tard.</p>
+  <div class="kd-confirm" id="kindConf" hidden><p id="kindConfTxt">Abandonner l'import ? La trace ne sera pas enregistrée.</p><div class="kd-cbtns"><button type="button" class="btn" data-kc="no">Non, continuer</button><button type="button" class="btn danger" data-kc="yes">Oui, abandonner</button></div></div>
   <div class="exp-opts kind-opts">
     <button type="button" data-kind="ride" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Sortie</b><span>Une sortie à la journée</span></button>
     <button type="button" data-kind="ultra" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Ultra</b><span>Plusieurs jours, planification journalière</span></button>
@@ -4498,6 +4521,7 @@ function handleFile(file) {
       if (FREE && !(await freeUse(id0, S.mode))) return; // compte gratuit : nouvelles traces par mois
       // dossier de Mes parcours (06/11/2026) : demandé à l'import, sauf pour un parcours déjà rangé
       const known = LIB.list.find(x => x.id === id0), kind = known && known.kind ? known.kind : await kindAsk(name);
+      if (!kind) { setStatus(T("Import abandonné : « {0} » n'a pas été enregistré.", [name || T("Trace sans nom")])); return; } // croix de la fenêtre
       loadRoute(pts, name, false);
       libSave(pts, name, undefined, true, kind); // fixe LIB.current avant sa première attente
       revSet(LIB.current, false); // un GPX importé repart dans le sens du fichier
@@ -4521,20 +4545,25 @@ function kindOf(m) {
   if (/\b(commute|v[ée]lo ?taff?|taff?|trajet|boulot|travail|bureau)\b/i.test(m.name || '')) return 'taf';
   return (m.km || 0) > 300 ? 'ultra' : 'ride';
 }
-function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (un clic teinte la case, « Valider » confirme)
+function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (un clic teinte la case, « Valider » confirme) ; '' = import abandonné (croix + confirmation)
   return new Promise(res => {
-    const d = $('#kindDlg'), def = KINDS.includes(S.mode) ? S.mode : 'ride', ok = $('#kindOk'); let done = false, sel = '';
-    $('#kindHint').textContent = T("« {0} » : choisis son dossier dans Mes parcours. Tu pourras le changer plus tard.", [name || T("Trace sans nom")]);
+    const d = $('#kindDlg'), def = KINDS.includes(S.mode) ? S.mode : 'ride', ok = $('#kindOk'), conf = $('#kindConf'); let done = false, sel = '';
+    const nm = name || T("Trace sans nom");
+    $('#kindHint').textContent = T("« {0} » : choisis son dossier dans Mes parcours. Tu pourras le changer plus tard.", [nm]);
+    $('#kindConfTxt').textContent = T("Abandonner l'import de « {0} » ? La trace ne sera pas enregistrée.", [nm]);
     for (const b of d.querySelectorAll('[data-kind]')) { b.setAttribute('aria-pressed', 'false'); if (!b.querySelector('.ki svg')) b.querySelector('.ki').innerHTML = kindIco(b.dataset.kind); }
-    ok.disabled = true;
+    ok.disabled = true; conf.hidden = true; d.classList.remove('confirming');
+    const confirming = on => { conf.hidden = !on; d.classList.toggle('confirming', on); if (on) { const b = conf.querySelector('[data-kc="no"]'); if (b) b.focus(); } };
     const end = k => { if (done) return; done = true; d.removeEventListener('click', onClick); d.removeEventListener('close', onClose); d.removeEventListener('cancel', onCancel); if (d.open) d.close(); res(k); };
     const onClick = e => {
+      if (e.target.closest('#kindX')) { confirming(true); return; }
+      const kc = e.target.closest('[data-kc]'); if (kc) { if (kc.dataset.kc === 'yes') end(''); else confirming(false); return; }
       if (e.target.closest('#kindOk')) { if (sel) end(sel); return; }
       const b = e.target.closest('[data-kind]'); if (!b) return;
       sel = b.dataset.kind; for (const x of d.querySelectorAll('[data-kind]')) x.setAttribute('aria-pressed', String(x === b)); ok.disabled = false;
     };
     const onClose = () => end(sel || def);
-    const onCancel = e => e.preventDefault(); // pas de « Plus tard » ni d'Échap : on choisit un dossier (demande d'Antoine, 06/11/2026)
+    const onCancel = e => { e.preventDefault(); confirming(!conf.hidden ? false : true); }; // Échap = comme la croix (demande de confirmation), jamais une fermeture muette
     d.addEventListener('click', onClick); d.addEventListener('close', onClose); d.addEventListener('cancel', onCancel);
     d.showModal();
   });
