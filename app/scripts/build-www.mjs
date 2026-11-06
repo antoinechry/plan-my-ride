@@ -51,6 +51,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'icons'))) cp(path.join(ROOT, 'ic
 // traces d'exemple du mode démo (dossier demo/, s'il existe)
 if (fs.existsSync(path.join(ROOT, 'demo'))) for (const f of fs.readdirSync(path.join(ROOT, 'demo'))) if (f.endsWith('.gpx')) cp(path.join(ROOT, 'demo', f), path.join(WWW, 'demo', f));
 cp(path.join(APP, 'native', 'native.js'), path.join(WWW, 'native.js'));
+cp(path.join(APP, 'native', 'btt-logo.png'), path.join(WWW, 'btt-logo.png')); // écran de démarrage animé
 
 // 4. La page, adaptée à l'app
 let h = fs.readFileSync(SRC, 'utf8');

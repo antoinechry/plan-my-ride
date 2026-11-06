@@ -9,7 +9,7 @@
     "build:test": "node scripts/build-www.mjs --test",
     "sync": "node scripts/build-www.mjs && cap sync",
     "sync:test": "node scripts/build-www.mjs --test && cap sync",
-    "icons": "node scripts/make-icon-sources.mjs && capacitor-assets generate --android --ios --iconBackgroundColor '#14201b' --iconBackgroundColorDark '#14201b' --splashBackgroundColor '#14201b' --splashBackgroundColorDark '#121b17'",
+    "icons": "node scripts/make-icon-sources.mjs && capacitor-assets generate --android --ios --iconBackgroundColor '#14201b' --iconBackgroundColorDark '#14201b' --splashBackgroundColor '#14201b' --splashBackgroundColorDark '#14201b'",
     "android": "cap open android",
     "ios": "cap open ios"
   },

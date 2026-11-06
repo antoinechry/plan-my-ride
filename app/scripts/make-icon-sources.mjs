@@ -38,7 +38,9 @@ await png(svg(1024, 1024, mark({ ...ICON, ink: C.paper, rain: C.rain, bold: true
 // Android adaptatif : même dessin réduit à 80 % pour tenir dans la zone sûre, fond uni
 await png(svg(1024, 1024, mark({ cx: 512 + (ICON.cx - 512) * 0.8, cy: 512 + (ICON.cy - 512) * 0.8, w: ICON.w * 0.8, ink: C.paper, rain: C.rain, bold: true })), 'icon-foreground.png');
 await png(svg(1024, 1024, '', C.night), 'icon-background.png');
-// Écran de démarrage : logo + « Sillage » (Archivo ExtraBold n'est pas garanti ici : le texte reste dans l'app, pas sur l'écran)
-await png(svg(2732, 2732, mark({ cx: 1366, cy: 1340, w: 560, ink: C.paper, rain: C.rain }), C.night), 'splash.png');
-await png(svg(2732, 2732, mark({ cx: 1366, cy: 1340, w: 560, ink: C.paper, rain: C.rain }), C.nightDeep), 'splash-dark.png');
+// Écran de démarrage : le logo seul, exactement là où l'écran animé de native.js le dessine
+// (logo de 760 px centré à 1366, 1290 ; « Sillage.cc » et « POWERED BY » apparaissent ensuite en fondu dans l'app).
+// Même fond en clair et en sombre : l'écran animé n'a qu'un fond (#14201b).
+await png(svg(2732, 2732, mark({ cx: 1366, cy: 1290, w: 760, ink: C.paper, rain: C.rain }), C.night), 'splash.png');
+await png(svg(2732, 2732, mark({ cx: 1366, cy: 1290, w: 760, ink: C.paper, rain: C.rain }), C.night), 'splash-dark.png');
 console.log('✓ assets/ : icon-only, icon-foreground, icon-background, splash, splash-dark');

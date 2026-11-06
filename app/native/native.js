@@ -31,6 +31,74 @@
   // et si quelque chose décale malgré tout la page de côté, on la remet en place
   window.addEventListener('scroll', function () { if (window.scrollX) window.scrollTo(0, window.scrollY); }, { passive: true });
 
+  // ---- Écran de démarrage animé ----------------------------------------------
+  // iOS impose un écran de lancement fixe (image) : on le prolonge par le même dessin, animé, posé
+  // par-dessus la page, puis on retire l'écran natif sans fondu une fois notre écran affiché.
+  // Même fond (#14201b), même logo à la même taille et au même endroit que assets/splash.png
+  // (logo de 760 px centré à 1366, 1290 sur 2732 px, affiché en « aspect fill » : 1 px d'image = 100vmax / 2732).
+  var SPLASH_MS = 3000, SPLASH_FADE = 300;
+  var splashCss =
+    '.app-splash{position:fixed;inset:0;z-index:2147483100;background:#14201b;transition:opacity .3s ease}' +
+    '.app-splash.out{opacity:0;pointer-events:none}' +
+    '.app-splash-logo{position:absolute;left:50%;top:calc(50% - 2.8vmax);width:27.8vmax;height:25.3vmax;transform:translate(-50%,-50%)}' +
+    '.app-splash-logo .ink{fill:#eef1ec}' +
+    '.app-splash-logo .wheel{transform-origin:70px 48px;animation:app-wheel 2.4s linear infinite}' +
+    '.app-splash-logo .ring{fill:none;stroke:#eef1ec;stroke-width:8}' +
+    '.app-splash-logo .ray{fill:none;stroke:#e0a21b;stroke-width:3.5;stroke-linecap:round}' +
+    '.app-splash-logo .sun{fill:#e0a21b}' +
+    '.app-splash-logo .drop{fill:none;stroke:#5ba3da;stroke-width:5;stroke-linecap:round;animation:app-drop 1.6s cubic-bezier(.4,0,.8,.6) infinite}' +
+    '.app-splash-logo .d2{animation-delay:.5s}.app-splash-logo .d3{animation-delay:1s}' +
+    '@keyframes app-wheel{to{transform:rotate(360deg)}}' +
+    '@keyframes app-drop{0%{transform:translateY(-4px);opacity:0}15%{opacity:1}75%{opacity:1}100%{transform:translateY(22px);opacity:0}}' +
+    // le nom et le crédit apparaissent en fondu : l'écran natif ne montre que le logo
+    '.app-splash-name{position:absolute;left:0;right:0;top:calc(50% + 10.9vmax);margin:0;text-align:center;font:800 4.6vmax/1 Archivo,system-ui,sans-serif;letter-spacing:-.03em;color:#eef1ec;animation:app-in .4s ease .15s both}' +
+    '.app-splash-name b{font-weight:800;color:#e0a21b}' +
+    '.app-splash-credit{position:absolute;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;gap:10px;animation:app-in .4s ease .15s both}' +
+    '.app-splash-txt{font:700 13px/1 Archivo,system-ui,sans-serif;letter-spacing:.14em;color:#fff}' +
+    '.app-splash-btt{height:30px;width:auto;display:block}' +
+    '@keyframes app-in{from{opacity:0}to{opacity:1}}' +
+    '@media (prefers-reduced-motion:reduce){.app-splash-logo .wheel,.app-splash-logo .drop{animation:none}}' +
+    'html[data-motion="reduce"] .app-splash-logo .wheel,html[data-motion="reduce"] .app-splash-logo .drop{animation:none}';
+  var splashHtml =
+    '<svg class="app-splash-logo" viewBox="0 0 110 100" aria-hidden="true">' +
+    '<defs><mask id="appSplashMask"><rect x="-10" y="-10" width="130" height="120" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs>' +
+    '<g class="ink" mask="url(#appSplashMask)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g>' +
+    '<g class="wheel"><circle class="ring" cx="70" cy="48" r="26"/><path class="ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/></g>' +
+    '<circle class="sun" cx="70" cy="48" r="8"/>' +
+    '<path class="drop d1" d="M28 82l-3 9"/><path class="drop d2" d="M41 82l-3 9"/><path class="drop d3" d="M54 82l-3 9"/></svg>' +
+    '<p class="app-splash-name">Sillage<b>.cc</b></p>' +
+    '<div class="app-splash-credit"><span class="app-splash-txt">POWERED BY</span><img class="app-splash-btt" src="btt-logo.png" alt="Beyond The Track"></div>';
+  var splashStyle = document.createElement('style');
+  splashStyle.textContent = splashCss;
+  document.head.appendChild(splashStyle);
+  var nativeHidden = false;
+  function hideNative() {
+    if (nativeHidden) return;
+    nativeHidden = true;
+    if (P.SplashScreen) P.SplashScreen.hide({ fadeOutDuration: 0 }).catch(function () {});
+  }
+  // filet de sécurité : l'écran natif part quoi qu'il arrive au bout de 1,5 s
+  setTimeout(hideNative, 1500);
+  function splashStart() {
+    var el = document.createElement('div');
+    el.className = 'app-splash';
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = splashHtml;
+    document.body.insertBefore(el, document.body.firstChild);
+    var img = el.querySelector('img');
+    var t0 = Date.now();
+    function ready() {
+      // deux images rendues avant de retirer l'écran natif, pour ne jamais montrer un fond vide
+      requestAnimationFrame(function () { requestAnimationFrame(hideNative); });
+    }
+    if (img.complete) ready(); else { img.onload = ready; img.onerror = ready; }
+    setTimeout(function () {
+      el.classList.add('out');
+      setTimeout(function () { el.remove(); }, SPLASH_FADE);
+    }, Math.max(0, SPLASH_MS - (Date.now() - t0)));
+  }
+  if (document.body) splashStart(); else document.addEventListener('DOMContentLoaded', splashStart);
+
   // ---- Diagnostic provisoire (version de test) : signale ce qui dépasse la largeur de l'écran ----
   // Petit bandeau rouge en bas avec le premier élément trop large ; toucher le bandeau le ferme.
   function overflowCheck() {
