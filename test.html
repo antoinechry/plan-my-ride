@@ -1088,7 +1088,16 @@ body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{mar
 .hours-card .vhours{margin-top:0}
 .hours-card .vhours .vh-head b{font:700 18px var(--f-display);letter-spacing:0;text-transform:none;color:var(--ink)}
 @media (max-width:1099px){body:not([data-mode="taf"]) #results>#hoursCard{order:4}}
-@media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:8px}.vhours li .rel{grid-column:3/-1;justify-self:start}}
+@media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:2px 8px}.vhours li>.t,.vhours li>svg,.vhours li>.wsky,.vhours li>.w{grid-row:span 2}.vhours li>.a{align-self:end}.vhours li .rel{grid-column:4;justify-self:end;align-self:start;padding:2px 8px;font-size:11.5px}.vhours li.end>*{grid-row:auto}}
+@media (max-width:700px){
+  .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
+  .opt-strip{gap:4px;padding:12px 14px 6px}
+  .opt-h{flex:0 0 48px;min-width:48px;height:100px;padding:8px 2px}
+  .opt-h .t{font-size:12px}
+  .opt-h .w{font-size:10px}
+  .opt .t,.opt>:first-child{white-space:nowrap}
+  .chart-keys{gap:6px 14px;font-size:12px}
+}
 .verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .verdict-go p{margin:0;font-size:14px;line-height:1.4;max-width:30ch}
 .verdict-go p b{font-weight:700}
@@ -4352,6 +4361,7 @@ function renderOpts(opts, opt) {
       `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
   }).join('');
   el.innerHTML = `<div class="opt-strip">${strip}</div>` + html;
+  { const sc = el.querySelector('.opt-strip'), m = sc && sc.querySelector('.opt-h.mine'); if (m && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = Math.max(0, m.offsetLeft - sc.offsetLeft - (sc.clientWidth - m.offsetWidth) / 2); }
   // sous le verdict : « Meilleur créneau : 14 h » + bouton « Partir à 14:00 », si un autre départ est meilleur
   if (go && best && !isBest) {
     const st = best.r.st, cov = S.P.total - st.missKm || 1;
