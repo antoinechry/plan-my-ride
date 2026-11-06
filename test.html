@@ -876,6 +876,18 @@ body:not(.admin) .me-adm{display:none}
 .me-kpis b{display:block;font-family:var(--f-mono);font-weight:500;font-size:22px}
 .me-kpis b.on{color:var(--brand)}
 .me-kpis span{font-size:12px;opacity:.72}
+.me-kpis .me-kbtn{background:color-mix(in srgb,var(--bg) 10%,var(--ink));border-radius:12px;padding:10px;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;position:relative}
+.me-kpis .me-kbtn::after{content:"›";position:absolute;right:10px;top:8px;font-size:18px;opacity:.6}
+.me-kpis .me-kbtn:hover,.me-kpis .me-kbtn:focus-visible{background:color-mix(in srgb,var(--bg) 18%,var(--ink))}
+.pmm-ic{flex:none;width:36px;height:36px}
+.pmm-ic .pm-pin{background:var(--c);color:#fff}
+.pmm-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pmm-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pmm-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmm-t span{font-size:12.5px;color:var(--muted)}
+.pmm-st{flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--bg)}
+.pmm-st.pend{background:color-mix(in srgb,var(--brand) 25%,var(--panel))}
+.pmm-st.off{color:var(--head)}
 .me-hero .me-btns .btn{background:var(--panel);color:var(--ink)}
 .me-mseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:color-mix(in srgb,var(--line) 55%,var(--bg));border-radius:999px;padding:3px;gap:2px;margin-top:12px}
 .me-mseg button{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink);border-radius:999px;min-height:40px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
@@ -1379,7 +1391,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <div class="me-hero">
     <div class="me-hrow"><div class="me-av" id="meAv" aria-hidden="true">?</div><div class="me-hid"><h3 id="meHello">Salut</h3><p id="meWho"></p></div>
       <a class="me-adm adm" href="admin-test.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/></svg>Admin</a></div>
-    <div class="me-kpis no-guest"><div><b id="meKRoutes">–</b><span>parcours</span></div><div><b id="meKPoi">–</b><span>points ajoutés</span></div><div><b id="meKAl">–</b><span>alertes</span></div></div>
+    <div class="me-kpis no-guest"><div><b id="meKRoutes">–</b><span>parcours</span></div><button type="button" class="me-kbtn" id="meKPoiBtn" aria-haspopup="dialog"><b id="meKPoi">–</b><span>points ajoutés</span></button><div><b id="meKAl">–</b><span>alertes</span></div></div>
     <div class="me-btns guest-only"><button type="button" class="btn small primary" data-guest-up>Créer mon compte gratuit</button><button type="button" class="btn small" id="meGuestRules">Ce que permet la démo</button><button type="button" class="btn small" id="meGuestEnd">Quitter la démo</button></div>
   </div>
   <div class="me-card me-plan free-only"><h3>Compte gratuit</h3><p class="hint" id="mePlanTxt"></p>
@@ -1638,6 +1650,11 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <button type="button" class="btn primary tt-imp no-guest" id="ttImp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Importer un GPX</button>
       <p class="tt-sub">Ou dans Mes parcours</p>
       <ul class="tt-list" id="ttList"></ul>
+    </dialog>
+    <dialog class="exp-dlg tt-dlg" id="poiMineDlg" aria-labelledby="poiMineT">
+      <div class="tt-dhead"><h2 id="poiMineT">Mes points ajoutés</h2><button type="button" class="tt-x" id="poiMineX" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <p class="hint" id="poiMineTxt"></p>
+      <ul class="tt-list" id="poiMineList"></ul>
     </dialog>
     <section aria-label="Résumé">
       <p class="vkick" id="verdictKick" hidden></p>
@@ -7137,6 +7154,32 @@ try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pm
 if (location.hash === '#carte') { history.replaceState(null, '', location.pathname + location.search); if (!document.body.classList.contains('gated')) setTimeout(pmOpen, 0); }
 // Moi · Mon trajet Commute (06/11/2026) : aller (pmr-taf-route) et retour (pmr-taf-ret, '' = même trace à l'envers)
 const ME = { tafOther: false }; // « Une autre trace » choisi mais pas encore de parcours
+/* « Points ajoutés » de la page Moi (06/11/2026, demande d'Antoine) : liste des points créés par le compte ;
+   toucher un point ouvre la Carte centrée dessus avec sa fiche. */
+async function poiMineOpen() {
+  const d = $('#poiMineDlg'), ul = $('#poiMineList'), txt = $('#poiMineTxt');
+  ul.innerHTML = ''; txt.textContent = T("Chargement…"); if (!d.open) d.showModal();
+  let rows = [];
+  try { const sb = await sbIfLogged(); if (!sb) throw 0;
+    const { data, error } = await sb.from('poi').select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').eq('user_id', SB_UID).order('created_at', { ascending: false }).limit(300);
+    if (error) throw error; rows = data || []; } catch (e) { txt.textContent = T("Liste indisponible pour l'instant."); return; }
+  $('#meKPoi').textContent = rows.length;
+  txt.textContent = rows.length ? T("Touche un point pour le voir sur la carte.") : T("Tu n'as pas encore ajouté de point. Sur la Carte, touche « Ajouter » pour partager une fontaine, un abri, un bivouac…");
+  const df = new Intl.DateTimeFormat(LOC, { day: 'numeric', month: 'short', year: 'numeric' });
+  const ST = { pending: ['pend', T("En validation")], valid: ['', T("Validé")], removed: ['off', T("Retiré")] };
+  ul.innerHTML = rows.map(p => { const t = PM_TYPES[p.type] || { lbl: p.type, col: '#888', d: '' }, st = ST[p.status] || ['', p.status || ''];
+    return `<li><button type="button" class="tt-opt" data-poi="${p.id}"><span class="pmm-ic"><span class="pm-pin usr" style="--c:${t.col}">${pmSvg(t.d)}</span></span><span class="pmm-t"><b>${escH(p.name || t.lbl)}</b><span>${escH(t.lbl)} · ${df.format(new Date(p.created_at))}</span></span><span class="pmm-st ${st[0]}">${escH(st[1])}</span></button></li>`; }).join('');
+  ME.poiRows = new Map(rows.map(p => [p.id, p]));
+}
+$('#meKPoiBtn').addEventListener('click', poiMineOpen);
+$('#poiMineX').addEventListener('click', () => $('#poiMineDlg').close());
+$('#poiMineDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#poiMineList').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-poi]'); if (!b) return; const p = ME.poiRows && ME.poiRows.get(b.dataset.poi); if (!p) return;
+  $('#poiMineDlg').close();
+  PM.focusTo = { src: 'usr', key: 'p:' + p.id, type: p.type, name: p.name, lat: p.lat, lon: p.lon, poi: p };
+  pmOpen();
+});
 function meTafSel() {
   const go = $('#meTaf'), rt = $('#meTafRet'); if (!go || !rt) return;
   const fx = tafFixed(), opts = LIB.list.filter(x => !x.demo && (kindOf(x) === 'taf' || (fx && (x.id === fx.go || x.id === fx.ret)))).slice().sort((a, b) => a.name.localeCompare(b.name, LANG)); // seulement le dossier Commute (06/11/2026)
@@ -7663,10 +7706,12 @@ async function pmOpen() {
   await pmInit(); if (!PM.map || $('#mapPage').hidden) return;
   setTimeout(() => {
     PM.map.invalidateSize();
-    const fresh = pmRouteDraw();
-    if (fresh && !PM.placing) pmFitRoute();
+    const fresh = pmRouteDraw(), fo = PM.focusTo; PM.focusTo = null;
+    if (fo) { PM.map.setView([fo.lat, fo.lon], Math.max(PM.map.getZoom(), 16), { animate: false }); if (PM.loc) PM.loc.follow = false; }
+    else if (fresh && !PM.placing) pmFitRoute();
     pmLoadOsm(); pmLoadUsr(true);
-    pmLocResume(!fresh); pmCompSync();
+    pmLocResume(!fresh && !fo); pmCompSync();
+    if (fo) { PM.usr.set(fo.poi.id, fo); pmRender(); pmShow(fo); }
   }, 30);
 }
 $('#tabMap').addEventListener('click', pmOpen);

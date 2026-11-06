@@ -1310,6 +1310,13 @@ window.PMR_I18N = {
     "sans vent": "no wind",
     "trajet complet, sans arrêts": "whole trip, no stops",
     "{0} {1} h · {2}, départ {3}": "{0} {1}:00 · {2}, start {3}",
-    "Aucun autre parcours dans le dossier Commute": "No other route in the Commute folder"
+    "Aucun autre parcours dans le dossier Commute": "No other route in the Commute folder",
+    "Mes points ajoutés": "My added points",
+    "Liste indisponible pour l'instant.": "List unavailable for now.",
+    "Touche un point pour le voir sur la carte.": "Tap a point to see it on the map.",
+    "Tu n'as pas encore ajouté de point. Sur la Carte, touche « Ajouter » pour partager une fontaine, un abri, un bivouac…": "You haven't added any points yet. On the Map, tap “Add” to share a water tap, a shelter, a bivouac spot…",
+    "En validation": "Under review",
+    "Validé": "Approved",
+    "Retiré": "Removed"
   }
 };
