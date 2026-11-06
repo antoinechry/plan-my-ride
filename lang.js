@@ -1309,6 +1309,7 @@ window.PMR_I18N = {
     "points ajoutés": "points added",
     "sans vent": "no wind",
     "trajet complet, sans arrêts": "whole trip, no stops",
-    "{0} {1} h · {2}, départ {3}": "{0} {1}:00 · {2}, start {3}"
+    "{0} {1} h · {2}, départ {3}": "{0} {1}:00 · {2}, start {3}",
+    "Aucun autre parcours dans le dossier Commute": "No other route in the Commute folder"
   }
 };

@@ -7139,12 +7139,13 @@ if (location.hash === '#carte') { history.replaceState(null, '', location.pathna
 const ME = { tafOther: false }; // « Une autre trace » choisi mais pas encore de parcours
 function meTafSel() {
   const go = $('#meTaf'), rt = $('#meTafRet'); if (!go || !rt) return;
-  const fx = tafFixed(), opts = LIB.list.filter(x => !x.demo).slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
+  const fx = tafFixed(), opts = LIB.list.filter(x => !x.demo && (kindOf(x) === 'taf' || (fx && (x.id === fx.go || x.id === fx.ret)))).slice().sort((a, b) => a.name.localeCompare(b.name, LANG)); // seulement le dossier Commute (06/11/2026)
   const opt = r => `<option value="${r.id}">${escH(r.name)} · ${fD(r.km || 0)} ${UL.km}</option>`;
   go.innerHTML = `<option value="">${T("Aucun : le parcours ouvert")}</option>` + opts.map(opt).join('');
   go.value = fx ? fx.go : '';
   const other = !!(fx && (fx.ret || ME.tafOther)); ME.tafOther = other;
-  rt.innerHTML = `<option value="">${T("Choisis la trace du retour…")}</option>` + opts.filter(r => !fx || r.id !== fx.go).map(opt).join('');
+  const rOpts = opts.filter(r => !fx || r.id !== fx.go), none = `<option value="" disabled>${T("Aucun autre parcours dans le dossier Commute")}</option>`;
+  rt.innerHTML = `<option value="">${T("Choisis la trace du retour…")}</option>` + (rOpts.length ? rOpts.map(opt).join('') : none);
   rt.value = fx ? fx.ret : '';
   for (const el of document.querySelectorAll('#meTafCard .me-ret')) el.hidden = !fx;
   for (const b of document.querySelectorAll('#meTafKind button')) b.setAttribute('aria-pressed', String((b.dataset.k === 'other') === other));
