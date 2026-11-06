@@ -40,6 +40,9 @@
   var splashCss =
     '.app-splash{position:fixed;inset:0;z-index:2147483100;background:#14201b;transition:opacity .3s ease}' +
     '.app-splash.out{opacity:0;pointer-events:none}' +
+    // l'écran de connexion masque tout le body sauf lui (body.gated > :not(.gate){display:none!important}) :
+    // notre écran doit rester visible, connecté·e ou pas (spécificité plus forte que cette règle)
+    'html.native body.gated>.app-splash,html.native body.public>.app-splash{display:block!important}' +
     '.app-splash-logo{position:absolute;left:50%;top:calc(50% - 2.8vmax);width:27.8vmax;height:25.3vmax;transform:translate(-50%,-50%)}' +
     '.app-splash-logo .ink{fill:#eef1ec}' +
     '.app-splash-logo .wheel{transform-origin:70px 48px;animation:app-wheel 2.4s linear infinite}' +
