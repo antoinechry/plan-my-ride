@@ -1164,9 +1164,10 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent;overflow:hidden}
   .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
   .opt-h.best{border:2px solid var(--tail)}
-  .opt-h .b{width:16px}
   .opt-h .t{font-size:11px}
-  .opt-h .w{font-size:9px;letter-spacing:-.02em;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .opt-h .w{display:none}
+  .opt-h.mine .w,.opt-h.best .w{display:block;font-size:9px;letter-spacing:-.02em;max-width:100%;overflow:hidden}
+  .opt-h .b{width:18px;border-radius:7px}
   .opt-h .wl,.opt-h .tl{display:none}
   .opt-h .ws,.opt-h .ts{display:inline}
   .opt{grid-template-columns:70px minmax(0,1fr)}
