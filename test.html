@@ -1765,7 +1765,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     </ol>
     <ol data-h="more" hidden>
       <li><i>1</i><div><b>Mes parcours</b><span>Tous tes parcours, avec recherche, tri, «&nbsp;Renommer&nbsp;» et «&nbsp;Supprimer&nbsp;». Touche un parcours pour l'ouvrir.</span></div></li>
-      <li><i>2</i><div><b>Mes sorties</b><span>Tes parcours classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.</span></div></li>
+      <li><i>2</i><div><b>Mes sorties</b><span>Tes parcours du dossier Sortie classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.</span></div></li>
       <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
       <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet Commute, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
     </ol>
@@ -6817,7 +6817,9 @@ async function outRun() {
   $('#outPace').textContent = `· ${fV(opt.speed, 1)} ${UL.kmh}`;
   const [hh, mm] = time.split(':').map(Number), t0 = new Date(day); t0.setHours(hh, mm, 0, 0);
   const end = outDays()[3], to = new Date(day); to.setDate(to.getDate() + 1); const toD = to > end ? end : to;
-  const list = LIB.list.slice(), res = [], long = [];
+  // seulement les parcours du dossier Sortie (06/11/2026, demande d'Antoine) : Ultra et Commute ont leurs propres pages
+  const list = LIB.list.filter(m => kindOf(m) === 'ride'), res = [], long = [];
+  if (!list.length && LIB.list.length) { $('#outProg').textContent = ''; $('#outList').innerHTML = T("<li class=\"lp-empty\"><b>Aucun parcours dans le dossier Sortie.</b><br>Range-y un parcours depuis Mes parcours (menu « ⋯ »), ou importe un GPX : il sera classé ici selon la météo.</li>"); $('#outLong').innerHTML = ''; return; }
   if (!list.length) { $('#outProg').textContent = ''; $('#outList').innerHTML = T("<li class=\"lp-empty\"><b>Aucun parcours enregistré.</b><br>Importe un GPX : il sera classé ici selon la météo.</li>"); $('#outLong').innerHTML = ''; return; }
   let done = 0; const prog = () => { if (id === OUT.run) $('#outProg').textContent = done < list.length ? T("Météo de {0} parcours sur {1}…", [done, list.length]) : T("{0} parcours classés pour {1}, départ {2}.", [res.length, OUT.day === 0 ? T("aujourd'hui") : OUT.day === 1 ? T('demain') : dayFmt.format(day), time]); };
   prog();

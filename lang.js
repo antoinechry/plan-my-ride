@@ -658,6 +658,8 @@ window.PMR_I18N = {
     "C'est parti": "Let's go",
     "Trois jours de vélotaf": "Three days of commuting",
     "Mes sorties, avec un compte gratuit": "My rides, with a free account",
+    "<li class=\"lp-empty\"><b>Aucun parcours dans le dossier Sortie.</b><br>Range-y un parcours depuis Mes parcours (menu « ⋯ »), ou importe un GPX : il sera classé ici selon la météo.</li>": "<li class=\"lp-empty\"><b>No routes in the Ride folder.</b><br>Move a route there from My routes (“⋯” menu), or import a GPX: it will be ranked here by the weather.</li>",
+    "Tes parcours du dossier Sortie classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.": "Your Ride-folder routes ranked from best to worst according to the weather, for today or the next three days, at the start time of your choice.",
     "Tous tes parcours enregistrés, classés du plus au moins favorable selon la météo du jour choisi.": "All your saved routes, ranked from best to worst for the weather on the chosen day.",
     "Tes traces ne sont pas enregistrées": "Your routes aren't saved",
     "Sans compte, une trace disparaît quand tu quittes la page. Avec un compte gratuit, tu retrouves tous tes parcours ici et sur tes autres appareils.": "Without an account, a route disappears when you leave the page. With a free account, you'll find all your routes here and on your other devices.",
