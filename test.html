@@ -4258,9 +4258,11 @@ function renderOpts(opts, opt) {
   else if (isBest) html += T("<p class=\"hint\" style=\"padding:8px 14px 12px\">Ton heure de départ est déjà le meilleur créneau de la journée.</p>");
   // refonte v2.0 : toute la journée en une rangée d'heures (note de chaque départ), puis les deux lignes habituelles
   const qOf = o => okRun(o.r) && valid.length ? (hi - lo < 1e-6 ? 1 : clamp(1 - (o.sc - lo) / (hi - lo), 0, 1)) : -1;
+  const why = st => { const cov = S.P.total - st.missKm || 1;
+    return st.rain >= 0.3 ? T("Pluie") : st.hasGust && st.gust >= GUST_WARN ? T("Rafales") : st.headKm / cov >= 0.5 ? T("Vent") : st.amin < 3 ? T("Froid") : st.amax > 30 ? T("Chaud") : T("Moins bien"); };
   const strip = opts.map(o => {
     const q = qOf(o), isMine = o.time === mine.time, isTop = best && o.time === best.time;
-    const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [T("Bof"), 'var(--head)'];
+    const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [why(o.r.st), 'var(--head)'];
     const night = okRun(o.r) && o.r.st.nightH > 0.5 * Math.max(o.r.st.rideH || 0, 0.1);
     return `<button type="button" class="opt-h${isMine ? ' mine' : ''}${isTop && !isMine ? ' best' : ''}${q < 0 ? ' off' : ''}" data-time="${o.time}" aria-pressed="${isMine}" aria-label="${T('Départ à {0} : {1}', [hLbl(o.time), lv[0]])}">` +
       `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
