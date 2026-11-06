@@ -1344,6 +1344,21 @@ window.PMR_I18N = {
     "Aller {0}, retour {1}": "Out {0}, back {1}",
     "À la maison à {0}.": "Home at {0}.",
     "Au travail à {0}.": "At work at {0}.",
-    "Trajet affiché": "Trip shown"
+    "Trajet affiché": "Trip shown",
+    "{0} parcours": "{0} routes",
+    "Actions pour {0}": "Actions for {0}",
+    "Y retourner": "Go back to it",
+    "Ouvrir dans {0}": "Open in {0}",
+    "sens inverse": "reversed",
+    "sens du GPX": "GPX direction",
+    "Confirmer": "Confirm",
+    "deux appuis": "tap twice",
+    "Trace introuvable pour ce parcours.": "No track found for this route.",
+    "Tri": "Sort",
+    "Distance": "Distance",
+    "Inverser le sens": "Reverse direction",
+    "Exporter le GPX": "Export the GPX",
+    "Nouveau nom": "New name",
+    "Ouvrir": "Open"
   }
 };
