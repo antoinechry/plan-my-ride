@@ -111,8 +111,10 @@
     for (var i = 0; i < all.length; i++) {
       var x = all[i], r = x.getBoundingClientRect();
       if (!r.width || r.right <= vw + 1 || getComputedStyle(x).position === 'fixed') continue;
+      // coupé par un parent qui tient dans l'écran (pas seulement le plus proche : le <svg> des tracés
+      // Leaflet déborde de la carte par construction, mais la carte, elle, le coupe)
       var p = x.parentElement, clipped = false;
-      while (p && p !== document.body) { var o = getComputedStyle(p).overflowX; if (o !== 'visible') { clipped = p.getBoundingClientRect().right <= vw + 1; break; } p = p.parentElement; }
+      while (p && p !== document.body) { if (getComputedStyle(p).overflowX !== 'visible' && p.getBoundingClientRect().right <= vw + 1) { clipped = true; break; } p = p.parentElement; }
       if (clipped) continue;
       if (!worst || r.width > worst.w) worst = { el: x, w: r.width, right: r.right };
     }
