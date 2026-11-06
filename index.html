@@ -57,6 +57,28 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:0 32px}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+/* tendance sur 5 semaines (ensemble GFS, essai admin du 31/10/2026) */
+.tr-lead{margin:0;padding:12px 14px;font-size:15px;line-height:1.45}
+.tr-lead b{font-weight:700}
+.tr-list{max-height:460px;overflow:auto;border-top:1px solid var(--line);position:relative}
+.tr-wk{font-family:var(--f-display);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 4px;position:sticky;top:0;background:var(--panel);z-index:1}
+.tr-row{display:grid;grid-template-columns:78px 58px minmax(60px,1fr) 64px 70px 12px;gap:10px;align-items:center;padding:6px 14px;border-bottom:1px solid var(--line);font-size:13px;cursor:default}
+.tr-row.on{background:color-mix(in srgb,var(--sun) 18%,transparent);box-shadow:inset 3px 0 0 var(--sun)}
+.tr-d b{display:block;font-weight:600;white-space:nowrap}
+.tr-d span,.tr-n,.tr-r small,.tr-w small{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.tr-n{color:var(--ink);font-size:12px;white-space:nowrap}
+.tr-bar{position:relative;height:14px}
+.tr-bar i{position:absolute;top:4px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--muted) 30%,transparent)}
+.tr-bar b{position:absolute;top:2px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--rain),var(--sun),var(--head))}
+.tr-r,.tr-w{display:flex;flex-direction:column;line-height:1.15;white-space:nowrap}
+.tr-r span{font-family:var(--f-mono);font-weight:500;font-size:12px}
+.tr-w span{display:flex;align-items:center;gap:3px;font-family:var(--f-mono);font-size:12px}
+.tr-w .arrow{width:14px;height:14px}
+.tr-c{width:10px;height:10px;border-radius:50%;background:var(--lv0)}
+.tr-c.c1{background:var(--lv1)}.tr-c.c2{background:var(--lv2)}
+.tr-note{margin:0;padding:10px 14px 14px}
+.tr-sw{margin-left:auto}
+@media (max-width:520px){.tr-row{grid-template-columns:56px 48px minmax(24px,1fr) 58px 44px 10px;gap:6px;padding:6px 10px;font-size:12px}.tr-wk{padding:10px 10px 4px}}
 .label{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted);font-weight:600}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -840,6 +862,16 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 .me-cvd span{display:inline-flex;align-items:center;gap:6px}
 .me-cvd i{display:inline-block;width:22px;height:8px;border-radius:4px}
 .me-cvd i.vdot{width:12px;height:12px;border-radius:50%;margin-right:2px}
+.gate-soc{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.soc-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;padding:10px 14px;border-radius:10px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.soc-btn[hidden]{display:none}
+.soc-btn svg{flex:none}
+.soc-apple{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.soc-btn:disabled{opacity:.6;cursor:wait}
+.gate-or{display:flex;align-items:center;gap:10px;margin:8px 0 6px;color:var(--muted);font-size:12.5px}
+.gate-or::before,.gate-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.gc-row{display:flex;justify-content:space-between;gap:10px}
+#gcCode{letter-spacing:.3em;font-family:var(--f-mono);font-size:20px;text-align:center}
 /* Carte des points utiles (essai du 31/10/2026) */
 #mapPage{padding:0;overflow:hidden;display:flex;flex-direction:column}
 #mapPage[hidden]{display:none}
@@ -898,6 +930,25 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 .pm-cmp.head{background:var(--accent);border-color:var(--accent)}
 .pm-cmp.head .n{fill:#fff}
 .pm-cmp.head .s{fill:color-mix(in srgb,#fff 55%,transparent)}
+.pm-cmp{position:relative}
+.pm-cmp .pm-cb{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(20,32,27,.12)}
+.pm-cmp .pm-cb:empty{display:none}
+.pm-cmp .pm-cb svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:none}
+.pm-cmp.head .pm-cb{color:var(--accent)}
+.pm-ori{position:absolute;right:64px;top:12px;z-index:7;width:min(276px,calc(100% - 80px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:2px;box-shadow:0 2px 6px rgba(20,32,27,.1),0 14px 36px rgba(20,32,27,.18)}
+.pm-ori[hidden]{display:none}
+.pm-ori [data-ori]{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;border-radius:11px;padding:8px 10px 8px 8px;color:var(--ink);font:inherit;cursor:pointer}
+.pm-ori [data-ori]:hover:not(:disabled){background:var(--elev)}
+.pm-ori [data-ori] i{flex:none;width:36px;height:36px;border-radius:999px;background:var(--elev);display:flex;align-items:center;justify-content:center}
+.pm-ori svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pm-ori b{display:block;font-size:14.5px;font-weight:700;line-height:1.2}
+.pm-ori small{display:block;font-size:12.5px;line-height:1.3;color:var(--muted);margin-top:2px}
+.pm-ori [aria-checked="true"]{background:color-mix(in srgb,var(--accent) 11%,transparent)}
+.pm-ori [aria-checked="true"]:hover{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.pm-ori [aria-checked="true"] i{background:var(--accent);color:#fff}
+.pm-ori [data-ori]:disabled{opacity:.5;cursor:default}
+.pm-ori-n{margin:4px 4px 2px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:9px 12px;font:700 13px/1 var(--f-body);color:var(--accent);cursor:pointer}
+.pm-ori-n[hidden]{display:none}
 .pm-note button{pointer-events:auto;margin-left:8px;border:0;border-radius:999px;background:var(--brand);color:var(--brand-ink);font:700 12.5px/1 var(--f-body);padding:5px 10px;cursor:pointer}
 .pm-me-ic{background:none;border:0}
 .pm-me{position:relative;display:block;width:22px;height:22px}
@@ -999,6 +1050,7 @@ body.pm-placing .pm-loc{bottom:16px}
 .nav-row a{font-weight:600;white-space:nowrap}
 .pm-big{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
 .pm-big img{max-width:100%;max-height:100%;border-radius:8px}
+@media (max-width:420px){.pm-legend{width:170px}.pm-legend b{font-size:13px}}
 /* Refonte v2.0 « D · tout garder, en plus clair » (essai du 06/11/2026, maquette canevas « Sillage v2.0 · écran Sortie ») :
    mêmes blocs que la v1.0, cartes arrondies, chiffres en Plex Mono, étiquettes en capitales, verdict en carte avec « Partir à … »,
    tuiles séparées, barre du vent ressenti, rangée d'heures de départ, pastilles « Pour vous » dans la feuille de route. */
@@ -1139,6 +1191,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 </style>
 </head>
 <body>
+<script>/* retour de Google / Apple / lien de connexion par e-mail (04/11/2026) : jetons gardés pour accessCheck, adresse nettoyée avant le script principal */try{var h0=location.hash;if(/access_token=|error_description=/.test(h0)&&!/type=recovery/.test(h0)){sessionStorage.setItem('pmr-auth-ret',h0.slice(1));history.replaceState(null,'',location.pathname+location.search)}}catch(e){}</script>
 <script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
 <div class="gate" id="gate">
   <div class="gate-card">
@@ -1151,12 +1204,24 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><button type="button" class="btn primary" id="gateResend" hidden>Renvoyer l'e-mail</button><button type="button" class="btn" id="gateRetry">Réessayer</button><button type="button" class="btn" id="gateOut">Se déconnecter</button></div>
     </div>
     <div id="gateForms">
+      <div class="gate-soc" id="gateSoc" hidden>
+        <button type="button" class="soc-btn soc-apple" data-soc="apple" hidden><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z"/></svg>Continuer avec Apple</button>
+        <button type="button" class="soc-btn soc-google" data-soc="google" hidden><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continuer avec Google</button>
+        <p class="gate-or"><span>ou avec ton e-mail</span></p>
+      </div>
       <div class="gate-tabs" role="group" aria-label="Accès"><button type="button" data-g="in" aria-pressed="true">Se connecter</button><button type="button" data-g="up" aria-pressed="false">Créer un compte</button></div>
       <form id="gateIn">
         <label>E-mail<input type="email" id="giEmail" autocomplete="username" required></label>
         <label>Mot de passe<input type="password" id="giPw" autocomplete="current-password" required></label>
         <button type="submit" class="btn primary" id="giGo">Se connecter</button>
+        <button type="button" class="btn" id="giCode">Recevoir un code par e-mail</button>
         <button type="button" class="lnk" id="giForgot">Mot de passe oublié ?</button>
+      </form>
+      <form id="gateCode" hidden>
+        <p class="note" id="gcTxt"></p>
+        <label>Code reçu par e-mail<input type="text" id="gcCode" inputmode="numeric" autocomplete="one-time-code" maxlength="12" required></label>
+        <button type="submit" class="btn primary" id="gcGo">Me connecter</button>
+        <div class="gc-row"><button type="button" class="lnk" id="gcResend">Renvoyer un code</button><button type="button" class="lnk" id="gcBack">← Retour</button></div>
       </form>
       <form id="gateUp" hidden>
         <p class="note" id="guInvite"></p>
@@ -1265,9 +1330,10 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <div id="pmMap" class="pm-map"></div>
     <p class="pm-note" id="pmNote" aria-live="polite" hidden></p>
     <div class="pm-ctl">
-      <button type="button" class="pm-round pm-cmp" id="pmCompass" aria-label="Orientation de la carte : nord en haut" title="Nord en haut · toucher pour orienter la carte dans ton sens de déplacement"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="n" d="M12 2.5l3.6 9.5H8.4z"/><path class="s" d="M12 21.5L8.4 12h7.2z"/></svg></button>
+      <button type="button" class="pm-round pm-cmp" id="pmCompass" aria-haspopup="menu" aria-expanded="false" aria-controls="pmOri" aria-label="Orientation de la carte : nord toujours en haut" title="Nord toujours en haut · toucher pour changer"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="n" d="M12 2.5l3.6 9.5H8.4z"/><path class="s" d="M12 21.5L8.4 12h7.2z"/></svg><span class="pm-cb" aria-hidden="true"></span></button>
       <button type="button" class="pm-round" id="pmRoute" aria-label="Recentrer sur mon parcours" title="Recentrer sur mon parcours" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></button>
     </div>
+    <div class="pm-ori" id="pmOri" role="menu" aria-label="Orientation de la carte" hidden></div>
     <div class="pm-legend" role="group" aria-label="Sources des points">
       <button type="button" id="pmSrcOsm" aria-pressed="true"><span class="pm-sw osm" aria-hidden="true"></span><span><b>OpenStreetMap</b><small id="pmCntOsm"></small></span></button>
       <button type="button" id="pmSrcUsr" aria-pressed="true"><span class="pm-sw usr" aria-hidden="true"></span><span><b>Par les cyclistes</b><small id="pmCntUsr"></small></span></button>
@@ -1530,6 +1596,13 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
           <tfoot id="planFoot"></tfoot>
         </table>
       </div>
+    </section>
+
+    <section class="card" id="trendCard" hidden>
+      <div class="card-head"><h2>Tendance sur 5 semaines</h2><span class="hint">Essai admin · 31 scénarios du modèle GFS</span><label class="switch tr-sw"><input type="checkbox" id="trendListOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher la liste</label></div>
+      <p class="tr-lead" id="trendLead"></p>
+      <div class="tr-list" id="trendList"></div>
+      <p class="hint tr-note" id="trendNote">Au-delà d'une dizaine de jours, ce n'est plus une prévision heure par heure mais une tendance : la barre montre où tombent la plupart des 31 scénarios de l'ensemble GFS (NOAA, maille de 50 km), le trait foncé le scénario médian. Pluie = part des scénarios avec au moins 1 mm sur la journée. La confiance baisse quand les scénarios ne sont pas d'accord.</p>
     </section>
 
     <section class="card" id="lapCard" hidden>
@@ -1946,7 +2019,7 @@ async function omFetch(url, ms) {
       const sb = await sbIfLogged(), tok = sb && (await sb.auth.getSession()).data.session?.access_token;
       if (tok) {
         const r = await fetch(SB_URL + '/functions/v1/open-meteo', { method: 'POST', signal: sig(),
-          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ q: url.split('?')[1] || '' }) });
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ q: url.split('?')[1] || '', ...(url.includes('ensemble-api') ? { api: 'ensemble' } : {}) }) });
         if (r.headers.get('x-om')) return r;
       }
     } catch (e) { if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw e; }
@@ -2660,6 +2733,7 @@ async function run() {
   if (from > maxDay) {
     S.wxBase = S.wxAltBase = null; S.wxKey = ''; S.wxUsed = ''; S.wxFallback = '';
     note = T("Les prévisions s'arrêtent le {0}. Choisissez une date de départ plus proche pour avoir la météo.", [dayFmt.format(maxDay)]);
+    if (MB_ADMIN && S.mode !== 'taf') note = T("Les prévisions détaillées s'arrêtent le {0} : voir la tendance sur 5 semaines plus bas.", [dayFmt.format(maxDay)]);
   } else if (key !== S.wxKey) {
     setStatus(T("Récupération des prévisions {0} le long du parcours…", [WX_SRC[src]]), 'load');
     try {
@@ -2694,6 +2768,7 @@ async function run() {
     return { date: ymd(d), go: o.time, arr: o.arrTarget, back: o.tafBack, trips: S.laps && S.laps.taf ? lapSummaries(r) : [] };
   });
   renderAll(opts, opt);
+  trendUpdate();
 }
 
 function setStatus(msg, kind) {
@@ -2824,6 +2899,139 @@ function whenTxt(t, ref) {
 }
 
 /* ---------- rendu ---------- */
+/* ---------- tendance sur 5 semaines (essai admin du 31/10/2026) ----------
+   API Ensemble d'Open-Meteo, modèle GFS Ensemble 0,5° (gfs05 : 31 scénarios, 35 jours ; données jusqu'à J+33 environ),
+   valeurs par jour pour chaque scénario, sur 3 points du parcours (5 au-delà de 300 km), arrondis au quart de degré
+   (maille de 50 km : même requête et même cache pour des parcours voisins). Par jour et par scénario : max / min sur les
+   points, pluie moyenne ; puis quantiles sur les scénarios. Seulement pour les admins (MB_ADMIN), pages Sortie et Ultra. */
+const TREND_MODEL = 'gfs05', TREND_DAYS = 35, TREND_TTL = 3 * 3600e3, TREND_LS = 'pmr-trend1';
+const TREND_VARS = ['temperature_2m_max', 'temperature_2m_min', 'apparent_temperature_min', 'precipitation_sum', 'wind_speed_10m_max', 'wind_direction_10m_dominant'];
+const TREND = { url: '', days: null, err: '', req: 0 };
+const trendQ = (a, p) => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y), i = (s.length - 1) * p, k = Math.floor(i); return s[k] + ((s[k + 1] ?? s[k]) - s[k]) * (i - k); };
+function trendUrl() {
+  const smp = wxSmp(); if (!smp || !smp.length) return '';
+  const n = Math.min(smp.length, wxTrk().total > 300 ? 5 : 3), seen = new Set(), pts = [];
+  for (let i = 0; i < n; i++) { const s = smp[Math.round(i * (smp.length - 1) / Math.max(1, n - 1))];
+    const la = (Math.round(s.lat * 4) / 4).toFixed(2), lo = (Math.round(s.lon * 4) / 4).toFixed(2);
+    if (!seen.has(la + ',' + lo)) { seen.add(la + ',' + lo); pts.push([la, lo]); } }
+  let tz = 'GMT'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'GMT'; } catch (e) {}
+  return `https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${pts.map(p => p[0]).join(',')}&longitude=${pts.map(p => p[1]).join(',')}`
+    + `&daily=${TREND_VARS.join(',')}&models=${TREND_MODEL}&forecast_days=${TREND_DAYS}&wind_speed_unit=kmh&timezone=${encodeURIComponent(tz)}`;
+}
+// Réponse de l'API → une ligne par jour : quantiles sur les scénarios
+function trendStats(json) {
+  const L = Array.isArray(json) ? json : [json], d0 = L[0] && L[0].daily;
+  if (!d0 || !Array.isArray(d0.time)) throw new Error(T("réponse incomplète d'Open-Meteo."));
+  const base = 'temperature_2m_max', suf = Object.keys(d0).filter(k => k === base || k.startsWith(base + '_member')).map(k => k.slice(base.length));
+  const mid = L[Math.floor(L.length / 2)].daily, today = new Date(); today.setHours(0, 0, 0, 0);
+  const g = (d, v, s, i) => { const a = d[v + s]; const x = a ? a[i] : null; return x == null ? NaN : x; };
+  const days = [];
+  d0.time.forEach((date, i) => {
+    const tx = [], tn = [], ap = [], pr = [], ws = [];
+    let u = 0, v = 0, nd = 0;
+    for (const s of suf) {
+      let a = -Infinity, b = Infinity, c = Infinity, p = 0, pn = 0, w = -Infinity, ok = true;
+      for (const l of L) { const d = l.daily, x = g(d, 'temperature_2m_max', s, i), y = g(d, 'temperature_2m_min', s, i);
+        if (isNaN(x) || isNaN(y)) { ok = false; break; }
+        a = Math.max(a, x); b = Math.min(b, y);
+        const z = g(d, 'apparent_temperature_min', s, i); if (!isNaN(z)) c = Math.min(c, z);
+        const q = g(d, 'precipitation_sum', s, i); if (!isNaN(q)) { p += q; pn++; }
+        const ww = g(d, 'wind_speed_10m_max', s, i); if (!isNaN(ww)) w = Math.max(w, ww); }
+      if (!ok) continue;
+      tx.push(a); tn.push(b); if (isFinite(c)) ap.push(c); if (pn) pr.push(p / pn); if (isFinite(w)) ws.push(w);
+      const dir = g(mid, 'wind_direction_10m_dominant', s, i); if (!isNaN(dir)) { u += Math.sin(dir * Math.PI / 180); v += Math.cos(dir * Math.PI / 180); nd++; }
+    }
+    if (tx.length < 5) return;
+    const wet = pr.filter(x => x >= 1), lead = Math.round((new Date(date + 'T00:00') - today) / 864e5);
+    const spread = trendQ(tx, .9) - trendQ(tx, .1), rainP = pr.length ? wet.length / pr.length : 0;
+    let conf = spread < 3.5 && lead <= 10 ? 0 : spread < 7 ? 1 : 2;
+    if (lead > 14) conf = Math.max(conf, 1);
+    if (lead > 7 && rainP > .3 && rainP < .7) conf = Math.max(conf, 1);
+    days.push({ date, lead, n: tx.length, tn10: trendQ(tn, .1), tn50: trendQ(tn, .5), tx50: trendQ(tx, .5), tx90: trendQ(tx, .9),
+      ap50: trendQ(ap, .5), rainN: wet.length, nPr: pr.length, rainP, wetMm: wet.length ? wet.reduce((x, y) => x + y, 0) / wet.length : 0,
+      ws50: trendQ(ws, .5), ws90: trendQ(ws, .9), dir: nd ? (Math.atan2(u, v) * 180 / Math.PI + 360) % 360 : NaN, dirR: nd ? Math.hypot(u, v) / nd : 0, conf });
+  });
+  return days;
+}
+async function trendFetch(url) {
+  try { const c = JSON.parse(localStorage.getItem(TREND_LS) || 'null'); if (c && c.url === url && Date.now() - c.at < TREND_TTL && Array.isArray(c.days)) return c.days; } catch (e) {}
+  let res; try { res = await omFetch(url, 40000); }
+  catch (e) { throw new Error(e.name === 'TimeoutError' || e.name === 'AbortError' ? T("Open-Meteo ne répond pas pour l'instant.") : T("pas de connexion au service Open-Meteo.")); }
+  let json = await res.json().catch(() => null);
+  // L'abonnement « API Standard » ne donne pas l'API Ensemble (offre Professional) : pour l'essai admin,
+  // API gratuite en direct (usage non commercial, limitée à la minute ; vérifié le 31/10/2026)
+  if (json && json.error && /professional|enterprise/i.test(String(json.reason || ''))) {
+    try { res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined }); json = await res.json().catch(() => null); }
+    catch (e) { throw new Error(T("pas de connexion au service Open-Meteo.")); }
+  }
+  if (!json) throw new Error(T("réponse coupée d'Open-Meteo."));
+  if (json.reason === 'quota' && json.relay) throw new Error(T("quota de prévisions du jour atteint pour ton compte."));
+  if (!res.ok || json.error) throw new Error(json.reason || T("Le service météo a répondu {0}.", [res.status]));
+  const days = trendStats(json);
+  try { localStorage.setItem(TREND_LS, JSON.stringify({ url, at: Date.now(), days })); } catch (e) {}
+  return days;
+}
+// « Afficher la liste » : masque les lignes par jour et la note (la phrase de tête reste) ; localStorage pmr-trend-list
+function applyTrendList() { const on = $('#trendListOn').checked; $('#trendList').hidden = $('#trendNote').hidden = !on;
+  try { localStorage.setItem('pmr-trend-list', on ? '1' : '0'); } catch (e) {}
+  if (on) { const row = $('#trendList .tr-row.on'); if (row) $('#trendList').scrollTop = Math.max(0, row.offsetTop - 34); } }
+try { if (localStorage.getItem('pmr-trend-list') === '0') $('#trendListOn').checked = false; } catch (e) {}
+$('#trendListOn').addEventListener('change', applyTrendList); applyTrendList();
+const TR_CONF = LANG === 'fr' ? ['bonne', 'moyenne', 'faible'] : ['good', 'medium', 'low']; // sans T : « faible » est déjà traduit « light » (vent)
+async function trendUpdate() {
+  const card = $('#trendCard'); if (!card) return;
+  const on = MB_ADMIN && S.P && S.mode !== 'taf';
+  card.hidden = !on; if (!on) return;
+  const url = trendUrl(), id = ++TREND.req;
+  if (url !== TREND.url || !TREND.days) {
+    $('#trendLead').textContent = T("Chargement de la tendance (31 scénarios)…"); $('#trendList').innerHTML = '';
+    try { TREND.days = await trendFetch(url); TREND.url = url; TREND.err = ''; }
+    catch (e) { if (id !== TREND.req) return; TREND.days = null; TREND.url = ''; $('#trendLead').textContent = T("Tendance indisponible : {0}", [e.message || e]); return; }
+    if (id !== TREND.req) return;
+  }
+  trendRender();
+}
+function trendRender() {
+  const days = TREND.days; if (!days || !days.length) return;
+  const tl = S.tl, ride = new Set();
+  if (tl) { const a = new Date(tl.start); a.setHours(0, 0, 0, 0); for (const t = a; t.getTime() <= tl.end; t.setDate(t.getDate() + 1)) ride.add(ymd(t)); }
+  const lo = Math.min(...days.map(d => d.tn10)), hi = Math.max(...days.map(d => d.tx90)), X = x => ((x - lo) / Math.max(1, hi - lo) * 100).toFixed(1);
+  const df = new Intl.DateTimeFormat(LOC, { weekday: 'short', day: 'numeric', month: 'numeric' }), wf = new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' });
+  const dt = d => new Date(d.date + 'T12:00');
+  let html = '', first = true;
+  for (const d of days) {
+    if (first || dt(d).getDay() === 1) html += `<div class="tr-wk">${first ? T("Cette semaine") : T("Semaine du {0}", [wf.format(dt(d))])}${first ? ` · ${UL.C} · ${UL.mm} · ${UL.kmh}` : ''}</div>`;
+    first = false;
+    const rp = Math.round(d.rainP * 100), dirTxt = isFinite(d.dir) && d.dirR > .35 ? compass(d.dir) : 'var.';
+    html += `<div class="tr-row${ride.has(d.date) ? ' on' : ''}" data-d="${d.date}" title="${T("Températures (scénarios du milieu) : {0} à {1} °C · {2} scénarios sur {3} avec de la pluie · confiance {4}", [fT(d.tn50), fT(d.tx50), d.rainN, d.nPr, TR_CONF[d.conf]])}">`
+      + `<div class="tr-d"><b>${df.format(dt(d))}</b><span>${d.lead ? 'J+' + d.lead : T("auj.")}</span></div>`
+      + `<div class="tr-n">${fT(d.tn50)} / ${fT(d.tx50)}°</div>`
+      + `<div class="tr-bar"><i style="left:${X(d.tn10)}%;width:${(X(d.tx90) - X(d.tn10)).toFixed(1)}%"></i><b style="left:${X(d.tn50)}%;width:${Math.max(2, X(d.tx50) - X(d.tn50)).toFixed(1)}%"></b></div>`
+      + `<div class="tr-r"><span style="color:${rp >= 50 ? 'var(--rain)' : rp >= 25 ? 'var(--ink)' : 'var(--muted)'}">💧 ${rp} %</span>${rp >= 20 ? `<small>~${fR(d.wetMm)} ${UL.mm}</small>` : ''}</div>`
+      + `<div class="tr-w"><span>${isFinite(d.dir) && d.dirR > .35 ? arrowSvg((d.dir + 180) % 360, windStrength(d.ws50)[1]) : ''}${fV(d.ws50)}</span><small>${dirTxt}</small></div>`
+      + `<span class="tr-c c${d.conf}" title="${T("Confiance {0}", [TR_CONF[d.conf]])}"></span></div>`;
+  }
+  $('#trendList').innerHTML = html;
+  // phrase de tête : les jours de la sortie
+  const rd = days.filter(d => ride.has(d.date)), last = days[days.length - 1];
+  let lead;
+  if (!tl) lead = '';
+  else if (!rd.length) lead = tl.start > dt(last).getTime() ? T("Ta sortie est trop loin : la tendance s'arrête le {0}.", [wf.format(dt(last))]) : T("La tendance commence aujourd'hui.");
+  else {
+    const tn = Math.min(...rd.map(d => d.tn50)), tx = Math.max(...rd.map(d => d.tx50)), ap = Math.min(...rd.map(d => d.ap50));
+    const wr = rd.reduce((a, d) => d.rainP > a.rainP ? d : a, rd[0]), wv = rd.reduce((a, d) => d.ws50 > a.ws50 ? d : a, rd[0]), cf = Math.max(...rd.map(d => d.conf));
+    const when = rd.length > 1 ? T("Du {0} au {1}", [wf.format(dt(rd[0])), wf.format(dt(rd[rd.length - 1]))]) : T("Le {0}", [wf.format(dt(rd[0]))]);
+    const rainTxt = wr.rainP < .2 ? T("plutôt au sec ({0} scénarios sur {1} avec de la pluie)", [wr.rainN, wr.nPr])
+      : wr.rainP < .5 ? T("pluie possible ({0} scénarios sur {1})", [wr.rainN, wr.nPr]) : T("pluie probable ({0} scénarios sur {1})", [wr.rainN, wr.nPr]);
+    const windTxt = isFinite(wv.dir) && wv.dirR > .35 ? T("vent du {0}, environ {1} km/h au plus fort", [compass(wv.dir), fV(wv.ws50)]) : T("vent variable, environ {0} km/h au plus fort", [fV(wv.ws50)]);
+    lead = T("<b>{0}</b> (J+{1}) : {2} à {3} °C, ressenti au plus froid {4} °C ; {5} ; {6}. Confiance <b>{7}</b>{8}", [when, rd[0].lead, fT(tn), fT(tx), fT(ap), rainTxt, windTxt, TR_CONF[cf],
+      cf ? T(" : une tendance, à revoir quand la date approche.") : '.']);
+  }
+  $('#trendLead').innerHTML = lead;
+  const row = $('#trendList .tr-row.on'), box = $('#trendList');
+  if (row && box) box.scrollTop = Math.max(0, row.offsetTop - 34);
+}
+
 function renderAll(opts, opt) {
   renderSummary(opt); renderMap(); renderChart(); renderTable(); renderOpts(opts, opt); renderHours(); renderPois(); renderPlan(); renderLaps(); renderWeek();
 }
@@ -5751,11 +5959,11 @@ function gateShow(mode, msg) {
   document.body.classList.add('gated');
   $('#gateForms').hidden = mode === 'wait'; $('#gateWait').hidden = mode !== 'wait';
   if (mode === 'wait') $('#gateWaitTxt').textContent = msg || '';
-  else gateTab(mode === 'up' || (INVITE && mode !== 'in') ? 'up' : 'in');
+  else socInit(), gateTab(mode === 'up' || (INVITE && mode !== 'in') ? 'up' : 'in');
 }
 function gateTab(t) {
   document.querySelectorAll('#gate [data-g]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.g === t)));
-  $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateErr').hidden = true;
+  $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateCode').hidden = true; $('#gateErr').hidden = true;
   $('#guInvite').textContent = INVITE ? T("🎟️ Invitation testeur : ton accès sera ouvert tout de suite.") : T("Tu recevras un e-mail pour confirmer ton adresse : ton compte s'ouvre dès que tu touches le lien.");
   $('#guInvite').classList.toggle('ok', !!INVITE);
 }
@@ -5775,6 +5983,7 @@ function logOnce(key, event, extra) {
   logAct(event, extra);
 }
 async function accessCheck() {
+  const ret = authReturn(); if (ret) { await ret; return; }
   if (!hasSbToken()) { gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
   try {
     const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession();
@@ -5794,8 +6003,8 @@ async function accessCheck() {
     }
     document.body.classList.remove('gated');
     document.body.classList.toggle('admin', !!data.is_admin);
-    { const was = wxSrc(); mbAdmin(!!data.is_admin); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } }
-    try { localStorage.removeItem('pmr-invite'); } catch (e) {}
+    { const was = wxSrc(); mbAdmin(!!data.is_admin); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } trendUpdate(); }
+      try { localStorage.removeItem('pmr-invite'); } catch (e) {}
     try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); sessionStorage.setItem('pmr-act-mode-' + S.mode, '1'); logAct('open'); } } catch (e) {}
     if (S.P && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   } catch (e) { /* réseau : on laisse l'app, les fonctions serveur vérifient l'accès */ }
@@ -5829,6 +6038,123 @@ $('#gateUp').addEventListener('submit', async e => {
     location.reload();
   } catch (err) { gateErr(err.message || String(err)); $('#guGo').disabled = false; }
 });
+/* ---------- connexion Google, Apple et code par e-mail (04/11/2026) ----------
+   Web : redirection Supabase (signInWithOAuth), jetons repris au retour par authReturn.
+   App : fenêtre native (extension Capacitor SocialLogin), puis signInWithIdToken avec un nonce.
+   Apple : web et iPhone (pas sur Android). Boutons affichés seulement si le fournisseur est activé
+   dans Supabase (/auth/v1/settings) et, dans l'app, si les identifiants Google sont renseignés.
+   Après connexion : auth_welcome (compte en attente ouvert, lien testeur, prénom), puis rechargement. */
+const GOOGLE_IDS = { web: '710289641305-sosjj1lojuj2brrmm1fjosbumupab329.apps.googleusercontent.com', ios: '710289641305-hptmm9jvhqnfd3ijbe6kq1gqdmit24a2.apps.googleusercontent.com' }; // identifiants OAuth Google Cloud : « web » (aussi dans Supabase) et « iOS »
+const SOC = { init: false };
+const socPlug = () => { const C = window.Capacitor; return C && C.Plugins && C.Plugins.SocialLogin; };
+async function socSettings() {
+  try { const c = sessionStorage.getItem('pmr-auth-set'); if (c) return JSON.parse(c); } catch (e) {}
+  const r = await fetch(SB_URL + '/auth/v1/settings', { headers: { apikey: SB_KEY } });
+  const ex = (await r.json()).external || {}, o = { google: !!ex.google, apple: !!ex.apple };
+  try { sessionStorage.setItem('pmr-auth-set', JSON.stringify(o)); } catch (e) {}
+  return o;
+}
+async function socInit() {
+  let set; try { set = await socSettings(); } catch (e) { return; }
+  const nat = window.SILLAGE_NATIVE, plug = !!socPlug();
+  const g = set.google && (!nat || (plug && !!GOOGLE_IDS.web && (nat !== 'ios' || !!GOOGLE_IDS.ios)));
+  const a = set.apple && (!nat || (nat === 'ios' && plug));
+  $('#gate [data-soc=google]').hidden = !g; $('#gate [data-soc=apple]').hidden = !a; $('#gateSoc').hidden = !g && !a;
+}
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+async function socApp(p) {
+  const SL = socPlug();
+  if (!SOC.init) {
+    const cfg = {};
+    if (GOOGLE_IDS.web) cfg.google = { webClientId: GOOGLE_IDS.web, iOSClientId: GOOGLE_IDS.ios || undefined, mode: 'online' };
+    if (window.SILLAGE_NATIVE === 'ios') cfg.apple = { clientId: 'cc.sillage.app' };
+    await SL.initialize(cfg); SOC.init = true;
+  }
+  const raw = hex(crypto.getRandomValues(new Uint8Array(16)));
+  const nonce = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw)));
+  const res = await SL.login({ provider: p, options: p === 'apple' ? { scopes: ['email', 'name'], nonce } : { nonce } });
+  const out = (res && res.result) || {}, tok = out.idToken;
+  if (!tok) throw new Error(T("pas de jeton reçu"));
+  const sb = await sbClient();
+  const { error } = await sb.auth.signInWithIdToken({ provider: p, token: tok, nonce: raw });
+  if (error) throw error;
+  const pr = out.profile || {};
+  await socDone(pr.givenName || (pr.name || '').split(' ')[0] || '');
+}
+async function socWeb(p) {
+  const sb = await sbClient(), back = location.origin + location.pathname;
+  const { error } = await sb.auth.signInWithOAuth({ provider: p, options: { redirectTo: back, queryParams: p === 'google' ? { prompt: 'select_account' } : undefined } });
+  if (error) throw error;
+}
+async function socDone(name) {
+  try { localStorage.removeItem('pmr-guest'); } catch (e) {}
+  try { const sb = await sbClient(); await sb.rpc('auth_welcome', { p_code: INVITE || null, p_name: name || null }); } catch (e) {}
+  location.reload();
+}
+const socErr = m => /signups? not allowed/i.test(m) ? T("La création de compte n'est pas encore ouverte de cette façon. Crée ton compte avec ton e-mail.")
+  : /cancel|canceled|cancelled|access_denied|1001|12501/i.test(m) ? '' : T("Connexion impossible : {0}", [m]);
+document.querySelectorAll('#gate [data-soc]').forEach(b => b.addEventListener('click', async () => {
+  gateErr(''); b.disabled = true;
+  try { if (window.SILLAGE_NATIVE) await socApp(b.dataset.soc); else await socWeb(b.dataset.soc); }
+  catch (err) { const m = socErr(String((err && err.message) || err)); if (m) gateErr(m); b.disabled = false; }
+}));
+// retour de Google / Apple / lien de connexion de l'e-mail (jetons gardés par le petit script du début de <body>)
+function authReturn() {
+  let h = ''; try { h = sessionStorage.getItem('pmr-auth-ret') || ''; sessionStorage.removeItem('pmr-auth-ret'); } catch (e) {}
+  if (!h) return null;
+  const q = new URLSearchParams(h);
+  return (async () => {
+    try {
+      if (!q.get('access_token')) throw new Error(q.get('error_description') || q.get('error') || '?');
+      const sb = await sbClient();
+      const { error } = await sb.auth.setSession({ access_token: q.get('access_token'), refresh_token: q.get('refresh_token') || '' });
+      if (error) throw error;
+      await socDone();
+    } catch (err) { gateShow('in'); const m = socErr(String((err && err.message) || err).replace(/\+/g, ' ')); if (m) gateErr(m); }
+  })();
+}
+// code à usage unique par e-mail (comptes existants seulement : la création passe par app-signup ou Google / Apple)
+const OTP = { email: '', at: 0 };
+async function otpSend(email) {
+  const sb = await sbClient();
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: window.SILLAGE_WEB || location.href.split(/[?#]/)[0] } });
+  if (error) throw error;
+  OTP.email = email; OTP.at = Date.now();
+}
+$('#giCode').addEventListener('click', async () => {
+  const email = $('#giEmail').value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { gateErr(T("Entre ton e-mail, puis touche à nouveau « Recevoir un code par e-mail ».")); $('#giEmail').focus(); return; }
+  gateErr(''); $('#giCode').disabled = true;
+  try {
+    await otpSend(email);
+    $('#gateIn').hidden = true; $('#gateCode').hidden = false;
+    $('#gcTxt').textContent = T("On t'a envoyé un code à {0}. Il reste valable une heure.", [email]);
+    $('#gcCode').value = ''; $('#gcCode').focus();
+  } catch (err) {
+    const m = String((err && err.message) || err);
+    gateErr(/signups? not allowed|not found|user/i.test(m) && !/rate|seconds/i.test(m) ? T("Aucun compte avec cet e-mail. Crée ton compte d'abord.")
+      : /rate|seconds|security purposes/i.test(m) ? T("Attends une minute avant de redemander un code.") : T("Envoi impossible : {0}", [m]));
+  }
+  $('#giCode').disabled = false;
+});
+$('#gateCode').addEventListener('submit', async e => {
+  e.preventDefault(); gateErr(''); $('#gcGo').disabled = true;
+  try {
+    const sb = await sbClient();
+    const { error } = await sb.auth.verifyOtp({ email: OTP.email, token: $('#gcCode').value.replace(/\D/g, ''), type: 'email' });
+    if (error) throw error;
+    await socDone();
+  } catch (err) {
+    gateErr(/expired|invalid/i.test(String(err && err.message)) ? T("Code incorrect ou expiré.") : T("Connexion impossible : {0}", [(err && err.message) || err]));
+    $('#gcGo').disabled = false;
+  }
+});
+$('#gcResend').addEventListener('click', async () => {
+  if (Date.now() - OTP.at < 60000) { gateErr(T("Attends une minute avant de redemander un code.")); return; }
+  try { await otpSend(OTP.email); gateErr(''); $('#gateErr').hidden = false; $('#gateErr').textContent = T("Nouveau code envoyé."); }
+  catch (err) { gateErr(T("Envoi impossible : {0}", [(err && err.message) || err])); }
+});
+$('#gcBack').addEventListener('click', () => gateTab('in'));
 $('#gateRetry').addEventListener('click', () => location.reload());
 // Compte en attente de confirmation de l'adresse (inscription ouverte, 29/10/2026) : nouveau lien par e-mail (2 min d'écart au plus côté serveur).
 $('#gateResend').addEventListener('click', async () => {
@@ -6677,7 +7003,7 @@ function pmNote(txt, btn) {
   if (txt && btn) { const b = document.createElement('button'); b.type = 'button'; b.textContent = btn[0]; b.addEventListener('click', btn[1]); n.appendChild(b); }
 }
 function pmStatus() {
-  if (!PM.map) return;
+  if (!PM.map || PM.flashUntil > Date.now()) return;
   if (PM.placing) return pmNote('');
   if (PM.map.getZoom() < PM_MINZ) return PM.loc.watch == null && navigator.geolocation
     ? pmNote(T("Zoome pour voir les points OpenStreetMap"), [T("Me localiser"), () => pmLocStart()])
@@ -6920,18 +7246,26 @@ function pmInitMap(rot) {
   PM.layer = L.layerGroup().addTo(PM.map);
   let v = null; try { v = JSON.parse(localStorage.getItem('pmr-pm-view') || 'null'); } catch (e) {}
   if (v && isFinite(v.lat)) PM.map.setView([v.lat, v.lon], v.z); else PM.map.setView([46.6, 2.4], 6);
+  if (rot && PM.ori === 'free' && v && isFinite(v.b) && v.b) PM.map.setBearing(v.b); // rotation au choix : la carte reprend l'angle où on l'a laissée
+  const saveView = () => {
+    const c = PM.map.getCenter(), o = { lat: +c.lat.toFixed(5), lon: +c.lng.toFixed(5), z: PM.map.getZoom() };
+    if (PM.ori === 'free') o.b = Math.round(pmBear());
+    try { localStorage.setItem('pmr-pm-view', JSON.stringify(o)); } catch (e) {}
+  };
   let tm = 0;
   PM.map.on('moveend', () => {
-    const c = PM.map.getCenter(); try { localStorage.setItem('pmr-pm-view', JSON.stringify({ lat: +c.lat.toFixed(5), lon: +c.lng.toFixed(5), z: PM.map.getZoom() })); } catch (e) {}
+    saveView();
     pmRender(); clearTimeout(tm); tm = setTimeout(() => { pmLoadOsm(); pmLoadUsr(); }, 350);
   });
   let tr = 0;
-  PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
+  PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { saveView(); pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
   // Filet de sécurité : après chaque zoom, le dessin vectoriel (tracé GPX, cercle de position) est recalé sur la vue
   PM.map.on('zoomend', () => { requestAnimationFrame(() => { const r = PM.map && PM.map._renderer; if (r && r._reset && !PM.map._animatingZoom) r._reset(); }); });
-  PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow || L0.head) { L0.follow = false; L0.head = false; pmLocUI(); } });
-  PM.map.getContainer().addEventListener('touchstart', e => { if (e.touches.length > 1 && PM.loc.head) { PM.loc.head = false; pmLocUI(); } }, { passive: true });
-  pmChips(); pmCompassUI();
+  // déplacer la carte arrête de me suivre ; le mode d'orientation, lui, reste celui choisi
+  PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow) { L0.follow = false; pmLocUI(); } });
+  // rotation au choix : deux doigts posés = on arrête une rotation animée en cours (« Remettre le nord en haut »)
+  PM.map.getContainer().addEventListener('touchstart', e => { const L0 = PM.loc; if (e.touches.length > 1 && L0.raf && PM.ori === 'free') { cancelAnimationFrame(L0.raf); L0.raf = 0; } }, { passive: true });
+  pmChips(); pmOriSet(PM.ori); pmCompassUI();
 }
 async function pmOpen() {
   pageOpen('mapPage', '#tabMap');
@@ -6941,15 +7275,18 @@ async function pmOpen() {
     const fresh = pmRouteDraw();
     if (fresh && !PM.placing) pmFitRoute();
     pmLoadOsm(); pmLoadUsr(true);
-    pmLocResume(!fresh);
+    pmLocResume(!fresh); pmCompSync();
   }, 30);
 }
 $('#tabMap').addEventListener('click', pmOpen);
 $('#pmRoute').addEventListener('click', pmFitRoute);
-/* Ma position et orientation de la carte (31/10/2026). Suivi continu (watchPosition) ; la position reste sur l'appareil.
-   Carte nord en haut ou tournée dans le sens de déplacement (boussole #pmCompass, comme Google Maps) : cap GPS quand on roule
-   (≥ 7 km/h), sinon cap calculé entre deux positions, sinon boussole de l'appareil. Rotation par leaflet-rotate 0.2.8 (jsDelivr,
-   chargé à l'ouverture de la carte ; rotateControl coupé pour les autres cartes). Bouton #pmLocate : suivre → sens de déplacement → suivre. */
+/* Ma position et orientation de la carte (31/10/2026 ; trois modes d'orientation le 06/11/2026). Suivi continu (watchPosition) ;
+   la position reste sur l'appareil. Boussole #pmCompass → menu #pmOri, trois modes (PM.ori, localStorage pmr-pm-ori) :
+   'north' nord toujours en haut (rotation à deux doigts et Maj + molette coupées), 'free' rotation au choix (à deux doigts ou
+   Maj + molette, la carte garde l'angle où on la laisse, gardé dans pmr-pm-view), 'comp' suivi de la boussole du téléphone
+   (cap de la boussole ; sans boussole, cap GPS quand on roule ≥ 7 km/h ou calculé entre deux positions). Rotation par
+   leaflet-rotate 0.2.8 (jsDelivr, chargé à l'ouverture de la carte ; rotateControl coupé pour les autres cartes).
+   Bouton #pmLocate : me localiser → suivre la boussole → me suivre dans le mode d'avant (PM.oriPrev, pmr-pm-ori0). */
 const PM_ROT_JS = 'https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js';
 let pmRotP = null;
 function pmRotLoad() {
@@ -6974,34 +7311,101 @@ function pmRotLoad() {
   });
   return (pmRotP = Promise.race([ld, sleep(5000)]).then(() => !!L.Map.prototype.setBearing, () => false));
 }
-PM.loc = { watch: null, follow: false, head: false, ll: null, acc: 0, prev: null, course: null, courseAt: 0, comp: null, compAt: 0, compOn: null, mk: null, circ: null, bt: 0, raf: 0, first: false, errShown: false };
+PM.loc = { watch: null, follow: false, ll: null, acc: 0, prev: null, course: null, courseAt: 0, comp: null, compAt: 0, compOn: null, compT: 0, compAsked: false, mk: null, circ: null, bt: 0, raf: 0, first: false, errShown: false };
+const PM_ORI = ['north', 'free', 'comp'];
+PM.ori = 'north'; PM.oriPrev = 'north';
+try {
+  const o = localStorage.getItem('pmr-pm-ori'); if (PM_ORI.includes(o)) PM.ori = o;
+  if (localStorage.getItem('pmr-pm-ori0') === 'free') PM.oriPrev = 'free';
+} catch (e) {}
+const PM_ORI_TXT = { north: () => T("Nord toujours en haut"), free: () => T("Rotation au choix"), comp: () => T("Suivi de la boussole") };
+const PM_ORI_ICO = {
+  north: '<path d="M12 3 15.5 9.5h-7z" fill="currentColor"/><path d="M9 20.5v-7.5l6 7.5v-7.5"/>',
+  free: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 3.6v3.6H16"/>',
+  comp: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M12 6.8l2.2 5.6h-4.4z" fill="currentColor"/><path d="M10.3 17.8h3.4"/>'
+};
+const pmOriSvg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${PM_ORI_ICO[k]}</svg>`;
+// petit message qui reste affiché ms millisecondes (sinon la position suivante le remplaçait aussitôt par l'état des points)
+function pmFlash(txt, ms, btn) {
+  PM.flashUntil = Date.now() + ms; pmNote(txt, btn);
+  clearTimeout(PM.flashT); PM.flashT = setTimeout(() => { PM.flashUntil = 0; pmStatus(); }, ms);
+}
 const pmWrap = a => ((a % 360) + 540) % 360 - 180; // écart d'angle ramené entre -180 et 180
 function pmBear() { return PM.map && PM.rot ? PM.map.getBearing() : 0; }
-function pmHeading() { // cap à afficher (degrés depuis le nord) ou null
+function pmHeading() { // cap à afficher (degrés depuis le nord) ou null : boussole d'abord en mode boussole, cap GPS d'abord sinon
   const L0 = PM.loc, now = Date.now();
-  if (L0.course != null && now - L0.courseAt < 10000) return L0.course;
-  if (L0.comp != null && now - L0.compAt < 3000) return L0.comp;
-  return null;
+  const comp = L0.comp != null && now - L0.compAt < 3000 ? L0.comp : null;
+  const course = L0.course != null && now - L0.courseAt < 10000 ? L0.course : null;
+  return PM.ori === 'comp' ? (comp != null ? comp : course) : (course != null ? course : comp);
 }
 function pmCompassUI() {
   const b = $('#pmCompass'); if (!b) return;
-  const br = pmBear(), head = PM.loc.head;
+  const br = pmBear(), m = PM.ori, turned = Math.abs(pmWrap(br)) > 0.5;
   b.querySelector('svg').style.transform = `rotate(${br.toFixed(1)}deg)`;
-  b.classList.toggle('head', head);
-  const t = head ? T("Carte dans ton sens de déplacement · toucher pour remettre le nord en haut")
-    : Math.abs(pmWrap(br)) > 0.5 ? T("Carte tournée · toucher pour remettre le nord en haut")
-    : T("Nord en haut · toucher pour orienter la carte dans ton sens de déplacement");
-  b.title = t; b.setAttribute('aria-label', T("Orientation de la carte") + ' : ' + t);
-  b.setAttribute('aria-pressed', head ? 'true' : 'false');
+  if (b.dataset.ori !== m) { b.dataset.ori = m; b.classList.toggle('head', m === 'comp'); b.querySelector('.pm-cb').innerHTML = pmOriSvg(m); }
+  const t = (m === 'free' && turned ? T("Rotation au choix · carte tournée") : PM_ORI_TXT[m]()) + ' · ' + T("toucher pour changer");
+  if (b.title !== t) { b.title = t; b.setAttribute('aria-label', T("Orientation de la carte") + ' : ' + t); }
+  pmOriMenuUI();
 }
 function pmLocUI() {
   const b = $('#pmLocate'), L0 = PM.loc; if (!b) return;
-  b.classList.toggle('on', L0.watch != null && L0.follow && !L0.head);
-  b.classList.toggle('head', L0.watch != null && L0.head);
+  const comp = PM.ori === 'comp', on = L0.watch != null && L0.follow;
+  b.classList.toggle('on', on && !comp);
+  b.classList.toggle('head', on && comp);
   const t = L0.watch == null ? T("Me localiser") : !L0.follow ? T("Revenir sur ma position")
-    : L0.head || !PM.rot ? T("Me suivre, nord en haut") : T("Orienter la carte dans mon sens de déplacement");
+    : !PM.rot ? T("Me suivre, nord en haut")
+    : comp ? (PM.oriPrev === 'free' ? T("Me suivre, rotation au choix") : T("Me suivre, nord en haut"))
+    : T("Suivre la boussole du téléphone");
   b.title = t; b.setAttribute('aria-label', t);
   pmCompassUI();
+}
+/* menu des trois modes, sous la boussole */
+function pmOriSub(k) {
+  if (!PM.rot && k !== 'north') return T("Indisponible ici (connexion requise)");
+  return k === 'north' ? T("La carte ne tourne jamais")
+    : k === 'free' ? (MAP_TOUCH ? T("Tourne-la à deux doigts, elle reste où tu la laisses") : T("Tourne-la avec Maj + molette, elle reste où tu la laisses"))
+    : T("La carte tourne avec ton téléphone");
+}
+function pmOriMenuUI() {
+  const mn = $('#pmOri'); if (!mn || mn.hidden) return;
+  mn.querySelectorAll('[data-ori]').forEach(x => x.setAttribute('aria-checked', x.dataset.ori === PM.ori ? 'true' : 'false'));
+  const n = $('#pmOriN'); if (n) n.hidden = !(PM.ori === 'free' && Math.abs(pmWrap(pmBear())) > 0.5);
+}
+function pmOriOpen() {
+  const mn = $('#pmOri'); if (!mn || !PM.map) return;
+  mn.innerHTML = PM_ORI.map(k => `<button type="button" role="menuitemradio" data-ori="${k}"${!PM.rot && k !== 'north' ? ' disabled' : ''}><i>${pmOriSvg(k)}</i><span><b>${escH(PM_ORI_TXT[k]())}</b><small>${escH(pmOriSub(k))}</small></span></button>`).join('')
+    + `<button type="button" class="pm-ori-n" id="pmOriN" hidden>${escH(T("Remettre le nord en haut"))}</button>`;
+  mn.hidden = false; $('#pmCompass').setAttribute('aria-expanded', 'true');
+  pmOriMenuUI();
+  const f = mn.querySelector('[aria-checked="true"]:not(:disabled)') || mn.querySelector('[data-ori]'); if (f) f.focus({ preventScroll: true });
+}
+function pmOriClose(back) {
+  const mn = $('#pmOri'); if (!mn || mn.hidden) return;
+  mn.hidden = true; $('#pmCompass').setAttribute('aria-expanded', 'false');
+  if (back) $('#pmCompass').focus({ preventScroll: true });
+}
+// change de mode ; user = choix de la personne (pendant l'appui : enregistré, message, autorisation de la boussole sur iPhone)
+function pmOriSet(m, user) {
+  if (!PM_ORI.includes(m)) m = 'north';
+  if (m !== 'north' && PM.map && !PM.rot) {
+    if (user) pmFlash(T("La carte ne peut pas tourner ici (connexion requise)"), 3500);
+    m = 'north';
+  }
+  if (m === 'comp' && PM.ori !== 'comp') PM.oriPrev = PM.ori;
+  PM.ori = m;
+  if (user) try { localStorage.setItem('pmr-pm-ori', m); localStorage.setItem('pmr-pm-ori0', PM.oriPrev); } catch (e) {}
+  if (PM.map && PM.rot) {
+    const fr = m === 'free', M = PM.map;
+    ['touchRotate', 'shiftKeyRotate'].forEach(h => { if (M[h] && M[h].enabled() !== fr) M[h][fr ? 'enable' : 'disable'](); });
+    if (fr && M.scrollWheelZoom.enabled()) { M.scrollWheelZoom.disable(); M.scrollWheelZoom.enable(); } // Maj + molette passe avant le zoom
+    if (m === 'north') pmBearTo(0);
+    else if (PM.loc.raf && m === 'free') { cancelAnimationFrame(PM.loc.raf); PM.loc.raf = 0; } // on laisse la carte où elle est
+  }
+  if (m === 'comp' && user) { pmCompAsk(); if (PM.loc.watch == null || !PM.loc.follow) pmLocStart(); }
+  pmCompSync(); pmLocUI(); pmHeadTick();
+  if (user) pmFlash(m === 'north' ? T("Nord toujours en haut")
+    : m === 'free' ? (MAP_TOUCH ? T("Rotation au choix : tourne la carte à deux doigts") : T("Rotation au choix : Maj + molette pour tourner la carte"))
+    : T("La carte suit la boussole du téléphone"), 2600);
 }
 // rotation animée vers le cap visé (PM.loc.bt), image par image
 function pmBearTo(deg) {
@@ -7028,8 +7432,8 @@ function pmMeDraw() {
 }
 function pmHeadTick() {
   pmMeDraw();
-  const L0 = PM.loc, h = pmHeading();
-  if (L0.head && h != null) pmBearTo(-h);
+  const h = pmHeading();
+  if (PM.ori === 'comp' && !PM.placing && h != null) pmBearTo(-h);
 }
 function pmLocFix(p) {
   const L0 = PM.loc, c = p.coords, ll = { lat: c.latitude, lon: c.longitude };
@@ -7045,13 +7449,13 @@ function pmLocFix(p) {
 }
 function pmLocErr(e) {
   const L0 = PM.loc; $('#pmLocate').classList.remove('busy');
-  if (e && e.code === 1) { pmLocStop(); pmNote(T("Localisation refusée : autorise-la dans les réglages de ton navigateur ou de ton téléphone")); setTimeout(pmStatus, 5000); return; }
-  if (!L0.ll && !L0.errShown) { L0.errShown = true; pmNote(T("Position introuvable pour l'instant, on continue d'essayer…")); setTimeout(pmStatus, 4000); }
+  if (e && e.code === 1) { pmLocStop(); pmFlash(T("Localisation refusée : autorise-la dans les réglages de ton navigateur ou de ton téléphone"), 5000); return; }
+  if (!L0.ll && !L0.errShown) { L0.errShown = true; pmFlash(T("Position introuvable pour l'instant, on continue d'essayer…"), 4000); }
 }
-function pmLocStart(head) {
+function pmLocStart() {
   const L0 = PM.loc;
-  if (!navigator.geolocation || !PM.map) { pmNote(T("Localisation indisponible sur cet appareil")); setTimeout(pmStatus, 3500); return false; }
-  L0.follow = true; if (head) L0.head = true;
+  if (!navigator.geolocation || !PM.map) { pmFlash(T("Localisation indisponible sur cet appareil"), 3500); return false; }
+  L0.follow = true;
   if (L0.watch == null) {
     $('#pmLocate').classList.add('busy'); L0.first = true;
     L0.watch = navigator.geolocation.watchPosition(pmLocFix, pmLocErr, { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 });
@@ -7063,29 +7467,31 @@ function pmLocStop(pause) { // pause : page fermée ou appli en arrière-plan, o
   const L0 = PM.loc;
   if (L0.watch != null) navigator.geolocation.clearWatch(L0.watch);
   L0.watch = null; $('#pmLocate').classList.remove('busy');
-  pmCompOff();
   if (!pause) {
-    L0.follow = L0.head = false;
+    L0.follow = false;
     if (L0.mk) { L0.mk.remove(); L0.circ.remove(); L0.mk = L0.circ = null; }
     L0.ll = null; try { localStorage.setItem('pmr-pm-loc', '0'); } catch (e) {}
   }
-  pmLocUI();
+  pmCompSync(); pmLocUI();
 }
 // Reprise à l'ouverture de la carte : seulement si la personne s'est déjà localisée et que l'autorisation est déjà donnée.
 async function pmLocResume(follow) {
   const L0 = PM.loc; if (L0.watch != null || !navigator.geolocation) return;
-  if (L0.paused) { L0.paused = false; const f = L0.follow, h = L0.head; pmLocStart(); L0.follow = f; L0.head = h; if (h) pmCompOn(); return pmLocUI(); }
+  if (L0.paused) { L0.paused = false; const f = L0.follow; pmLocStart(); L0.follow = f; return pmLocUI(); }
   let want = false; try { want = localStorage.getItem('pmr-pm-loc') === '1'; } catch (e) {}
   if (!want) return pmStatus();
   try { const st = await navigator.permissions.query({ name: 'geolocation' }); if (st.state !== 'granted') return; } catch (e) { return; }
   if ($('#mapPage').hidden) return;
-  pmLocStart(); L0.follow = follow && !L0.ll; L0.first = L0.follow; if (L0.head) pmCompOn(); pmLocUI();
+  pmLocStart(); L0.follow = follow && !L0.ll; L0.first = L0.follow; pmLocUI();
 }
-// Boussole de l'appareil (sert à l'arrêt ; en roulant, le cap GPS prend le dessus)
+/* Boussole de l'appareil : écoutée seulement en mode « Suivi de la boussole », carte ouverte et appli au premier plan (batterie). */
+function pmCompSync() {
+  const want = PM.ori === 'comp' && !!PM.map && !$('#mapPage').hidden && !document.hidden;
+  if (want) pmCompOn(); else pmCompOff();
+}
 function pmCompOn() {
   if (PM.loc.compOn) return;
   const ev = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'ondeviceorientation' in window ? 'deviceorientation' : '';
-  if (!ev) return;
   let last = 0;
   const h = e => {
     let hd = null;
@@ -7097,42 +7503,76 @@ function pmCompOn() {
     const t = performance.now(); if (t - last < 80) return; last = t;
     pmHeadTick();
   };
-  window.addEventListener(ev, h); PM.loc.compOn = { ev, h };
+  if (ev) window.addEventListener(ev, h);
+  PM.loc.compOn = { ev, h };
+  pmCompWatch();
 }
-function pmCompOff() { const c = PM.loc.compOn; if (c) { window.removeEventListener(c.ev, c.h); PM.loc.compOn = null; } PM.loc.comp = null; }
-// iPhone : la boussole demande une autorisation, à appeler pendant l'appui sur le bouton
+function pmCompOff() {
+  const c = PM.loc.compOn; clearTimeout(PM.loc.compT);
+  if (c) { if (c.ev) window.removeEventListener(c.ev, c.h); PM.loc.compOn = null; }
+  PM.loc.comp = null;
+}
+// Pas de cap de la boussole au bout de 3 s : sur iPhone, il faut une autorisation donnée par un appui (bouton « Activer ») ;
+// ailleurs (ordinateur…), pas de boussole : la carte suit le cap GPS quand on roule.
+function pmCompWatch() {
+  const L0 = PM.loc; clearTimeout(L0.compT);
+  L0.compT = setTimeout(() => {
+    if (PM.ori !== 'comp' || !L0.compOn || L0.comp != null) return;
+    if (L0.compPending) return pmCompWatch(); // la demande d'autorisation est encore affichée : on repasse plus tard
+    const D = window.DeviceOrientationEvent;
+    if (D && typeof D.requestPermission === 'function' && !L0.compAsked)
+      return pmFlash(T("Active la boussole du téléphone"), 12000, [T("Activer"), () => { pmCompAsk(); pmFlash('', 10); }]);
+    pmFlash(L0.compDenied ? T("Boussole refusée : la carte suit ton sens de déplacement")
+      : T("Pas de boussole sur cet appareil : la carte suit ton sens de déplacement"), 4500);
+  }, 3000);
+}
+// iPhone : la boussole demande une autorisation, à appeler pendant l'appui
 function pmCompAsk() {
-  const D = window.DeviceOrientationEvent;
+  const D = window.DeviceOrientationEvent, L0 = PM.loc; L0.compAsked = true;
   // (Chrome récent l'a aussi et peut répondre « refusé » sans appui : on écoute quand même, sans risque)
-  if (D && typeof D.requestPermission === 'function') return D.requestPermission().then(pmCompOn, pmCompOn);
-  pmCompOn(); return Promise.resolve();
+  if (!D || typeof D.requestPermission !== 'function') return Promise.resolve();
+  L0.compPending = true;
+  return D.requestPermission().then(r => { L0.compDenied = r === 'denied'; }, () => {})
+    .then(() => { L0.compPending = false; pmCompOff(); pmCompSync(); }); // réécoute une fois l'autorisation donnée
 }
-function pmHeadOn() {
-  if (!PM.rot) { pmNote(T("La carte ne peut pas tourner ici (connexion requise)")); setTimeout(pmStatus, 3500); return; }
-  pmCompAsk(); pmLocStart(true);
-  pmNote(T("Carte orientée dans ton sens de déplacement")); setTimeout(pmStatus, 2500);
-}
-function pmNorth() {
-  PM.loc.head = false; pmBearTo(0); pmLocUI();
-  pmNote(T("Nord en haut")); setTimeout(pmStatus, 1800);
-}
-$('#pmLocate').addEventListener('click', () => {
-  const L0 = PM.loc; if (!PM.map) return;
-  if (L0.watch == null || !L0.follow) { L0.head = false; return pmLocStart(); }
-  if (L0.head || !PM.rot) { pmNorth(); return; }
-  pmHeadOn();
-});
 $('#pmCompass').addEventListener('click', () => {
   if (!PM.map) return;
-  if (PM.loc.head || Math.abs(pmWrap(pmBear())) > 0.5) return pmNorth();
-  pmHeadOn();
+  if ($('#pmOri').hidden) pmOriOpen(); else pmOriClose();
+});
+$('#pmOri').addEventListener('click', e => {
+  if (e.target.closest('#pmOriN')) { pmOriClose(); pmBearTo(0); pmFlash(T("Nord en haut"), 1800); return; }
+  const x = e.target.closest('[data-ori]'); if (!x || x.disabled) return;
+  pmOriClose(); pmOriSet(x.dataset.ori, true);
+});
+$('#pmOri').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  const it = [...$('#pmOri').querySelectorAll('button:not(:disabled):not([hidden])')], i = it.indexOf(document.activeElement);
+  it[(i + (e.key === 'ArrowDown' ? 1 : it.length - 1)) % it.length].focus(); e.preventDefault();
+});
+// toucher ailleurs ou Échap (et retour Android) : on referme le menu
+document.addEventListener('pointerdown', e => { if (!$('#pmOri').hidden && !e.target.closest('#pmOri, #pmCompass')) pmOriClose(); }, true);
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || $('#pmOri').hidden) return;
+  pmOriClose(true); e.stopImmediatePropagation(); e.preventDefault();
+}, true);
+$('#pmLocate').addEventListener('click', () => {
+  const L0 = PM.loc; if (!PM.map) return;
+  pmOriClose();
+  if (L0.watch == null || !L0.follow || !PM.rot) return pmLocStart();
+  if (PM.ori === 'comp') return pmOriSet(PM.oriPrev === 'free' ? 'free' : 'north', true);
+  pmOriSet('comp', true);
 });
 // Carte fermée ou appli en arrière-plan : on arrête le GPS et la boussole (batterie), on reprend en revenant.
-new MutationObserver(() => { if ($('#mapPage').hidden && PM.loc.watch != null) { PM.loc.paused = true; pmLocStop(true); } }).observe($('#mapPage'), { attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => {
+  if (!$('#mapPage').hidden) return;
+  if (PM.loc.watch != null) { PM.loc.paused = true; pmLocStop(true); }
+  pmCompSync(); pmOriClose();
+}).observe($('#mapPage'), { attributes: true, attributeFilter: ['hidden'] });
 document.addEventListener('visibilitychange', () => {
   const L0 = PM.loc;
-  if (document.hidden) { if (L0.watch != null) { L0.paused = true; pmLocStop(true); } return; }
-  if (L0.paused && !$('#mapPage').hidden && PM.map) { L0.paused = false; const f = L0.follow, h = L0.head; pmLocStart(); L0.follow = f; L0.head = h; if (h) pmCompOn(); pmLocUI(); }
+  if (document.hidden) { if (L0.watch != null) { L0.paused = true; pmLocStop(true); } pmCompSync(); return; }
+  if (L0.paused && !$('#mapPage').hidden && PM.map) { L0.paused = false; const f = L0.follow; pmLocStart(); L0.follow = f; pmLocUI(); }
+  pmCompSync();
 });
 
 /* feuille du bas : fiche d'un point, ajout, avis */
@@ -7346,8 +7786,8 @@ function pmAddStart() {
   if (!PM.map) return;
   if (!pmCanWrite()) return pmGuestSheet();
   const was = PM.placing;
-  if (PM.loc.follow || PM.loc.head) { PM.loc.follow = PM.loc.head = false; pmLocUI(); }
-  if (PM.rot && PM.map.getBearing()) PM.map.setBearing(0);
+  if (PM.loc.follow) { PM.loc.follow = false; pmLocUI(); }
+  if (PM.rot && PM.map.getBearing()) { PM.loc.bt = 0; PM.map.setBearing(0); } // nord en haut pour placer le repère (le suivi de la boussole reprend après)
   PM.sel = null; PM.placing = true; document.body.classList.add('pm-placing');
   PM.form = { type: PM.form && PM.form.type || 'fontaine', name: '', details: '', rating: 0, comment: '', photo: null, photoUrl: '' };
   $('#pmAim').hidden = false; pmAimPlace(); pmNote('');
