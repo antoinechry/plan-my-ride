@@ -917,6 +917,25 @@ body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,bo
 .pm-cmp.head{background:var(--accent);border-color:var(--accent)}
 .pm-cmp.head .n{fill:#fff}
 .pm-cmp.head .s{fill:color-mix(in srgb,#fff 55%,transparent)}
+.pm-cmp{position:relative}
+.pm-cmp .pm-cb{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(20,32,27,.12)}
+.pm-cmp .pm-cb:empty{display:none}
+.pm-cmp .pm-cb svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:none}
+.pm-cmp.head .pm-cb{color:var(--accent)}
+.pm-ori{position:absolute;right:64px;top:12px;z-index:7;width:min(276px,calc(100% - 80px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:2px;box-shadow:0 2px 6px rgba(20,32,27,.1),0 14px 36px rgba(20,32,27,.18)}
+.pm-ori[hidden]{display:none}
+.pm-ori [data-ori]{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:transparent;border-radius:11px;padding:8px 10px 8px 8px;color:var(--ink);font:inherit;cursor:pointer}
+.pm-ori [data-ori]:hover:not(:disabled){background:var(--elev)}
+.pm-ori [data-ori] i{flex:none;width:36px;height:36px;border-radius:999px;background:var(--elev);display:flex;align-items:center;justify-content:center}
+.pm-ori svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pm-ori b{display:block;font-size:14.5px;font-weight:700;line-height:1.2}
+.pm-ori small{display:block;font-size:12.5px;line-height:1.3;color:var(--muted);margin-top:2px}
+.pm-ori [aria-checked="true"]{background:color-mix(in srgb,var(--accent) 11%,transparent)}
+.pm-ori [aria-checked="true"]:hover{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.pm-ori [aria-checked="true"] i{background:var(--accent);color:#fff}
+.pm-ori [data-ori]:disabled{opacity:.5;cursor:default}
+.pm-ori-n{margin:4px 4px 2px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:9px 12px;font:700 13px/1 var(--f-body);color:var(--accent);cursor:pointer}
+.pm-ori-n[hidden]{display:none}
 .pm-note button{pointer-events:auto;margin-left:8px;border:0;border-radius:999px;background:var(--brand);color:var(--brand-ink);font:700 12.5px/1 var(--f-body);padding:5px 10px;cursor:pointer}
 .pm-me-ic{background:none;border:0}
 .pm-me{position:relative;display:block;width:22px;height:22px}
@@ -1165,9 +1184,10 @@ body.pm-placing .pm-loc{bottom:16px}
     <div id="pmMap" class="pm-map"></div>
     <p class="pm-note" id="pmNote" aria-live="polite" hidden></p>
     <div class="pm-ctl">
-      <button type="button" class="pm-round pm-cmp" id="pmCompass" aria-label="Orientation de la carte : nord en haut" title="Nord en haut · toucher pour orienter la carte dans ton sens de déplacement"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="n" d="M12 2.5l3.6 9.5H8.4z"/><path class="s" d="M12 21.5L8.4 12h7.2z"/></svg></button>
+      <button type="button" class="pm-round pm-cmp" id="pmCompass" aria-haspopup="menu" aria-expanded="false" aria-controls="pmOri" aria-label="Orientation de la carte : nord toujours en haut" title="Nord toujours en haut · toucher pour changer"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="n" d="M12 2.5l3.6 9.5H8.4z"/><path class="s" d="M12 21.5L8.4 12h7.2z"/></svg><span class="pm-cb" aria-hidden="true"></span></button>
       <button type="button" class="pm-round" id="pmRoute" aria-label="Recentrer sur mon parcours" title="Recentrer sur mon parcours" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></button>
     </div>
+    <div class="pm-ori" id="pmOri" role="menu" aria-label="Orientation de la carte" hidden></div>
     <div class="pm-legend" role="group" aria-label="Sources des points">
       <button type="button" id="pmSrcOsm" aria-pressed="true"><span class="pm-sw osm" aria-hidden="true"></span><span><b>OpenStreetMap</b><small id="pmCntOsm"></small></span></button>
       <button type="button" id="pmSrcUsr" aria-pressed="true"><span class="pm-sw usr" aria-hidden="true"></span><span><b>Par les cyclistes</b><small id="pmCntUsr"></small></span></button>
@@ -6866,7 +6886,7 @@ function pmNote(txt, btn) {
   if (txt && btn) { const b = document.createElement('button'); b.type = 'button'; b.textContent = btn[0]; b.addEventListener('click', btn[1]); n.appendChild(b); }
 }
 function pmStatus() {
-  if (!PM.map) return;
+  if (!PM.map || PM.flashUntil > Date.now()) return;
   if (PM.placing) return pmNote('');
   if (PM.map.getZoom() < PM_MINZ) return PM.loc.watch == null && navigator.geolocation
     ? pmNote(T("Zoome pour voir les points OpenStreetMap"), [T("Me localiser"), () => pmLocStart()])
@@ -7109,18 +7129,26 @@ function pmInitMap(rot) {
   PM.layer = L.layerGroup().addTo(PM.map);
   let v = null; try { v = JSON.parse(localStorage.getItem('pmr-pm-view') || 'null'); } catch (e) {}
   if (v && isFinite(v.lat)) PM.map.setView([v.lat, v.lon], v.z); else PM.map.setView([46.6, 2.4], 6);
+  if (rot && PM.ori === 'free' && v && isFinite(v.b) && v.b) PM.map.setBearing(v.b); // rotation au choix : la carte reprend l'angle où on l'a laissée
+  const saveView = () => {
+    const c = PM.map.getCenter(), o = { lat: +c.lat.toFixed(5), lon: +c.lng.toFixed(5), z: PM.map.getZoom() };
+    if (PM.ori === 'free') o.b = Math.round(pmBear());
+    try { localStorage.setItem('pmr-pm-view', JSON.stringify(o)); } catch (e) {}
+  };
   let tm = 0;
   PM.map.on('moveend', () => {
-    const c = PM.map.getCenter(); try { localStorage.setItem('pmr-pm-view', JSON.stringify({ lat: +c.lat.toFixed(5), lon: +c.lng.toFixed(5), z: PM.map.getZoom() })); } catch (e) {}
+    saveView();
     pmRender(); clearTimeout(tm); tm = setTimeout(() => { pmLoadOsm(); pmLoadUsr(); }, 350);
   });
   let tr = 0;
-  PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
+  PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { saveView(); pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
   // Filet de sécurité : après chaque zoom, le dessin vectoriel (tracé GPX, cercle de position) est recalé sur la vue
   PM.map.on('zoomend', () => { requestAnimationFrame(() => { const r = PM.map && PM.map._renderer; if (r && r._reset && !PM.map._animatingZoom) r._reset(); }); });
-  PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow || L0.head) { L0.follow = false; L0.head = false; pmLocUI(); } });
-  PM.map.getContainer().addEventListener('touchstart', e => { if (e.touches.length > 1 && PM.loc.head) { PM.loc.head = false; pmLocUI(); } }, { passive: true });
-  pmChips(); pmCompassUI();
+  // déplacer la carte arrête de me suivre ; le mode d'orientation, lui, reste celui choisi
+  PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow) { L0.follow = false; pmLocUI(); } });
+  // rotation au choix : deux doigts posés = on arrête une rotation animée en cours (« Remettre le nord en haut »)
+  PM.map.getContainer().addEventListener('touchstart', e => { const L0 = PM.loc; if (e.touches.length > 1 && L0.raf && PM.ori === 'free') { cancelAnimationFrame(L0.raf); L0.raf = 0; } }, { passive: true });
+  pmChips(); pmOriSet(PM.ori); pmCompassUI();
 }
 async function pmOpen() {
   pageOpen('mapPage', '#tabMap');
@@ -7130,15 +7158,18 @@ async function pmOpen() {
     const fresh = pmRouteDraw();
     if (fresh && !PM.placing) pmFitRoute();
     pmLoadOsm(); pmLoadUsr(true);
-    pmLocResume(!fresh);
+    pmLocResume(!fresh); pmCompSync();
   }, 30);
 }
 $('#tabMap').addEventListener('click', pmOpen);
 $('#pmRoute').addEventListener('click', pmFitRoute);
-/* Ma position et orientation de la carte (31/10/2026). Suivi continu (watchPosition) ; la position reste sur l'appareil.
-   Carte nord en haut ou tournée dans le sens de déplacement (boussole #pmCompass, comme Google Maps) : cap GPS quand on roule
-   (≥ 7 km/h), sinon cap calculé entre deux positions, sinon boussole de l'appareil. Rotation par leaflet-rotate 0.2.8 (jsDelivr,
-   chargé à l'ouverture de la carte ; rotateControl coupé pour les autres cartes). Bouton #pmLocate : suivre → sens de déplacement → suivre. */
+/* Ma position et orientation de la carte (31/10/2026 ; trois modes d'orientation le 06/11/2026). Suivi continu (watchPosition) ;
+   la position reste sur l'appareil. Boussole #pmCompass → menu #pmOri, trois modes (PM.ori, localStorage pmr-pm-ori) :
+   'north' nord toujours en haut (rotation à deux doigts et Maj + molette coupées), 'free' rotation au choix (à deux doigts ou
+   Maj + molette, la carte garde l'angle où on la laisse, gardé dans pmr-pm-view), 'comp' suivi de la boussole du téléphone
+   (cap de la boussole ; sans boussole, cap GPS quand on roule ≥ 7 km/h ou calculé entre deux positions). Rotation par
+   leaflet-rotate 0.2.8 (jsDelivr, chargé à l'ouverture de la carte ; rotateControl coupé pour les autres cartes).
+   Bouton #pmLocate : me localiser → suivre la boussole → me suivre dans le mode d'avant (PM.oriPrev, pmr-pm-ori0). */
 const PM_ROT_JS = 'https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js';
 let pmRotP = null;
 function pmRotLoad() {
@@ -7163,34 +7194,101 @@ function pmRotLoad() {
   });
   return (pmRotP = Promise.race([ld, sleep(5000)]).then(() => !!L.Map.prototype.setBearing, () => false));
 }
-PM.loc = { watch: null, follow: false, head: false, ll: null, acc: 0, prev: null, course: null, courseAt: 0, comp: null, compAt: 0, compOn: null, mk: null, circ: null, bt: 0, raf: 0, first: false, errShown: false };
+PM.loc = { watch: null, follow: false, ll: null, acc: 0, prev: null, course: null, courseAt: 0, comp: null, compAt: 0, compOn: null, compT: 0, compAsked: false, mk: null, circ: null, bt: 0, raf: 0, first: false, errShown: false };
+const PM_ORI = ['north', 'free', 'comp'];
+PM.ori = 'north'; PM.oriPrev = 'north';
+try {
+  const o = localStorage.getItem('pmr-pm-ori'); if (PM_ORI.includes(o)) PM.ori = o;
+  if (localStorage.getItem('pmr-pm-ori0') === 'free') PM.oriPrev = 'free';
+} catch (e) {}
+const PM_ORI_TXT = { north: () => T("Nord toujours en haut"), free: () => T("Rotation au choix"), comp: () => T("Suivi de la boussole") };
+const PM_ORI_ICO = {
+  north: '<path d="M12 3 15.5 9.5h-7z" fill="currentColor"/><path d="M9 20.5v-7.5l6 7.5v-7.5"/>',
+  free: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 3.6v3.6H16"/>',
+  comp: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M12 6.8l2.2 5.6h-4.4z" fill="currentColor"/><path d="M10.3 17.8h3.4"/>'
+};
+const pmOriSvg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${PM_ORI_ICO[k]}</svg>`;
+// petit message qui reste affiché ms millisecondes (sinon la position suivante le remplaçait aussitôt par l'état des points)
+function pmFlash(txt, ms, btn) {
+  PM.flashUntil = Date.now() + ms; pmNote(txt, btn);
+  clearTimeout(PM.flashT); PM.flashT = setTimeout(() => { PM.flashUntil = 0; pmStatus(); }, ms);
+}
 const pmWrap = a => ((a % 360) + 540) % 360 - 180; // écart d'angle ramené entre -180 et 180
 function pmBear() { return PM.map && PM.rot ? PM.map.getBearing() : 0; }
-function pmHeading() { // cap à afficher (degrés depuis le nord) ou null
+function pmHeading() { // cap à afficher (degrés depuis le nord) ou null : boussole d'abord en mode boussole, cap GPS d'abord sinon
   const L0 = PM.loc, now = Date.now();
-  if (L0.course != null && now - L0.courseAt < 10000) return L0.course;
-  if (L0.comp != null && now - L0.compAt < 3000) return L0.comp;
-  return null;
+  const comp = L0.comp != null && now - L0.compAt < 3000 ? L0.comp : null;
+  const course = L0.course != null && now - L0.courseAt < 10000 ? L0.course : null;
+  return PM.ori === 'comp' ? (comp != null ? comp : course) : (course != null ? course : comp);
 }
 function pmCompassUI() {
   const b = $('#pmCompass'); if (!b) return;
-  const br = pmBear(), head = PM.loc.head;
+  const br = pmBear(), m = PM.ori, turned = Math.abs(pmWrap(br)) > 0.5;
   b.querySelector('svg').style.transform = `rotate(${br.toFixed(1)}deg)`;
-  b.classList.toggle('head', head);
-  const t = head ? T("Carte dans ton sens de déplacement · toucher pour remettre le nord en haut")
-    : Math.abs(pmWrap(br)) > 0.5 ? T("Carte tournée · toucher pour remettre le nord en haut")
-    : T("Nord en haut · toucher pour orienter la carte dans ton sens de déplacement");
-  b.title = t; b.setAttribute('aria-label', T("Orientation de la carte") + ' : ' + t);
-  b.setAttribute('aria-pressed', head ? 'true' : 'false');
+  if (b.dataset.ori !== m) { b.dataset.ori = m; b.classList.toggle('head', m === 'comp'); b.querySelector('.pm-cb').innerHTML = pmOriSvg(m); }
+  const t = (m === 'free' && turned ? T("Rotation au choix · carte tournée") : PM_ORI_TXT[m]()) + ' · ' + T("toucher pour changer");
+  if (b.title !== t) { b.title = t; b.setAttribute('aria-label', T("Orientation de la carte") + ' : ' + t); }
+  pmOriMenuUI();
 }
 function pmLocUI() {
   const b = $('#pmLocate'), L0 = PM.loc; if (!b) return;
-  b.classList.toggle('on', L0.watch != null && L0.follow && !L0.head);
-  b.classList.toggle('head', L0.watch != null && L0.head);
+  const comp = PM.ori === 'comp', on = L0.watch != null && L0.follow;
+  b.classList.toggle('on', on && !comp);
+  b.classList.toggle('head', on && comp);
   const t = L0.watch == null ? T("Me localiser") : !L0.follow ? T("Revenir sur ma position")
-    : L0.head || !PM.rot ? T("Me suivre, nord en haut") : T("Orienter la carte dans mon sens de déplacement");
+    : !PM.rot ? T("Me suivre, nord en haut")
+    : comp ? (PM.oriPrev === 'free' ? T("Me suivre, rotation au choix") : T("Me suivre, nord en haut"))
+    : T("Suivre la boussole du téléphone");
   b.title = t; b.setAttribute('aria-label', t);
   pmCompassUI();
+}
+/* menu des trois modes, sous la boussole */
+function pmOriSub(k) {
+  if (!PM.rot && k !== 'north') return T("Indisponible ici (connexion requise)");
+  return k === 'north' ? T("La carte ne tourne jamais")
+    : k === 'free' ? (MAP_TOUCH ? T("Tourne-la à deux doigts, elle reste où tu la laisses") : T("Tourne-la avec Maj + molette, elle reste où tu la laisses"))
+    : T("La carte tourne avec ton téléphone");
+}
+function pmOriMenuUI() {
+  const mn = $('#pmOri'); if (!mn || mn.hidden) return;
+  mn.querySelectorAll('[data-ori]').forEach(x => x.setAttribute('aria-checked', x.dataset.ori === PM.ori ? 'true' : 'false'));
+  const n = $('#pmOriN'); if (n) n.hidden = !(PM.ori === 'free' && Math.abs(pmWrap(pmBear())) > 0.5);
+}
+function pmOriOpen() {
+  const mn = $('#pmOri'); if (!mn || !PM.map) return;
+  mn.innerHTML = PM_ORI.map(k => `<button type="button" role="menuitemradio" data-ori="${k}"${!PM.rot && k !== 'north' ? ' disabled' : ''}><i>${pmOriSvg(k)}</i><span><b>${escH(PM_ORI_TXT[k]())}</b><small>${escH(pmOriSub(k))}</small></span></button>`).join('')
+    + `<button type="button" class="pm-ori-n" id="pmOriN" hidden>${escH(T("Remettre le nord en haut"))}</button>`;
+  mn.hidden = false; $('#pmCompass').setAttribute('aria-expanded', 'true');
+  pmOriMenuUI();
+  const f = mn.querySelector('[aria-checked="true"]:not(:disabled)') || mn.querySelector('[data-ori]'); if (f) f.focus({ preventScroll: true });
+}
+function pmOriClose(back) {
+  const mn = $('#pmOri'); if (!mn || mn.hidden) return;
+  mn.hidden = true; $('#pmCompass').setAttribute('aria-expanded', 'false');
+  if (back) $('#pmCompass').focus({ preventScroll: true });
+}
+// change de mode ; user = choix de la personne (pendant l'appui : enregistré, message, autorisation de la boussole sur iPhone)
+function pmOriSet(m, user) {
+  if (!PM_ORI.includes(m)) m = 'north';
+  if (m !== 'north' && PM.map && !PM.rot) {
+    if (user) pmFlash(T("La carte ne peut pas tourner ici (connexion requise)"), 3500);
+    m = 'north';
+  }
+  if (m === 'comp' && PM.ori !== 'comp') PM.oriPrev = PM.ori;
+  PM.ori = m;
+  if (user) try { localStorage.setItem('pmr-pm-ori', m); localStorage.setItem('pmr-pm-ori0', PM.oriPrev); } catch (e) {}
+  if (PM.map && PM.rot) {
+    const fr = m === 'free', M = PM.map;
+    ['touchRotate', 'shiftKeyRotate'].forEach(h => { if (M[h] && M[h].enabled() !== fr) M[h][fr ? 'enable' : 'disable'](); });
+    if (fr && M.scrollWheelZoom.enabled()) { M.scrollWheelZoom.disable(); M.scrollWheelZoom.enable(); } // Maj + molette passe avant le zoom
+    if (m === 'north') pmBearTo(0);
+    else if (PM.loc.raf && m === 'free') { cancelAnimationFrame(PM.loc.raf); PM.loc.raf = 0; } // on laisse la carte où elle est
+  }
+  if (m === 'comp' && user) { pmCompAsk(); if (PM.loc.watch == null || !PM.loc.follow) pmLocStart(); }
+  pmCompSync(); pmLocUI(); pmHeadTick();
+  if (user) pmFlash(m === 'north' ? T("Nord toujours en haut")
+    : m === 'free' ? (MAP_TOUCH ? T("Rotation au choix : tourne la carte à deux doigts") : T("Rotation au choix : Maj + molette pour tourner la carte"))
+    : T("La carte suit la boussole du téléphone"), 2600);
 }
 // rotation animée vers le cap visé (PM.loc.bt), image par image
 function pmBearTo(deg) {
@@ -7217,8 +7315,8 @@ function pmMeDraw() {
 }
 function pmHeadTick() {
   pmMeDraw();
-  const L0 = PM.loc, h = pmHeading();
-  if (L0.head && h != null) pmBearTo(-h);
+  const h = pmHeading();
+  if (PM.ori === 'comp' && !PM.placing && h != null) pmBearTo(-h);
 }
 function pmLocFix(p) {
   const L0 = PM.loc, c = p.coords, ll = { lat: c.latitude, lon: c.longitude };
@@ -7234,13 +7332,13 @@ function pmLocFix(p) {
 }
 function pmLocErr(e) {
   const L0 = PM.loc; $('#pmLocate').classList.remove('busy');
-  if (e && e.code === 1) { pmLocStop(); pmNote(T("Localisation refusée : autorise-la dans les réglages de ton navigateur ou de ton téléphone")); setTimeout(pmStatus, 5000); return; }
-  if (!L0.ll && !L0.errShown) { L0.errShown = true; pmNote(T("Position introuvable pour l'instant, on continue d'essayer…")); setTimeout(pmStatus, 4000); }
+  if (e && e.code === 1) { pmLocStop(); pmFlash(T("Localisation refusée : autorise-la dans les réglages de ton navigateur ou de ton téléphone"), 5000); return; }
+  if (!L0.ll && !L0.errShown) { L0.errShown = true; pmFlash(T("Position introuvable pour l'instant, on continue d'essayer…"), 4000); }
 }
-function pmLocStart(head) {
+function pmLocStart() {
   const L0 = PM.loc;
-  if (!navigator.geolocation || !PM.map) { pmNote(T("Localisation indisponible sur cet appareil")); setTimeout(pmStatus, 3500); return false; }
-  L0.follow = true; if (head) L0.head = true;
+  if (!navigator.geolocation || !PM.map) { pmFlash(T("Localisation indisponible sur cet appareil"), 3500); return false; }
+  L0.follow = true;
   if (L0.watch == null) {
     $('#pmLocate').classList.add('busy'); L0.first = true;
     L0.watch = navigator.geolocation.watchPosition(pmLocFix, pmLocErr, { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 });
@@ -7252,29 +7350,31 @@ function pmLocStop(pause) { // pause : page fermée ou appli en arrière-plan, o
   const L0 = PM.loc;
   if (L0.watch != null) navigator.geolocation.clearWatch(L0.watch);
   L0.watch = null; $('#pmLocate').classList.remove('busy');
-  pmCompOff();
   if (!pause) {
-    L0.follow = L0.head = false;
+    L0.follow = false;
     if (L0.mk) { L0.mk.remove(); L0.circ.remove(); L0.mk = L0.circ = null; }
     L0.ll = null; try { localStorage.setItem('pmr-pm-loc', '0'); } catch (e) {}
   }
-  pmLocUI();
+  pmCompSync(); pmLocUI();
 }
 // Reprise à l'ouverture de la carte : seulement si la personne s'est déjà localisée et que l'autorisation est déjà donnée.
 async function pmLocResume(follow) {
   const L0 = PM.loc; if (L0.watch != null || !navigator.geolocation) return;
-  if (L0.paused) { L0.paused = false; const f = L0.follow, h = L0.head; pmLocStart(); L0.follow = f; L0.head = h; if (h) pmCompOn(); return pmLocUI(); }
+  if (L0.paused) { L0.paused = false; const f = L0.follow; pmLocStart(); L0.follow = f; return pmLocUI(); }
   let want = false; try { want = localStorage.getItem('pmr-pm-loc') === '1'; } catch (e) {}
   if (!want) return pmStatus();
   try { const st = await navigator.permissions.query({ name: 'geolocation' }); if (st.state !== 'granted') return; } catch (e) { return; }
   if ($('#mapPage').hidden) return;
-  pmLocStart(); L0.follow = follow && !L0.ll; L0.first = L0.follow; if (L0.head) pmCompOn(); pmLocUI();
+  pmLocStart(); L0.follow = follow && !L0.ll; L0.first = L0.follow; pmLocUI();
 }
-// Boussole de l'appareil (sert à l'arrêt ; en roulant, le cap GPS prend le dessus)
+/* Boussole de l'appareil : écoutée seulement en mode « Suivi de la boussole », carte ouverte et appli au premier plan (batterie). */
+function pmCompSync() {
+  const want = PM.ori === 'comp' && !!PM.map && !$('#mapPage').hidden && !document.hidden;
+  if (want) pmCompOn(); else pmCompOff();
+}
 function pmCompOn() {
   if (PM.loc.compOn) return;
   const ev = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'ondeviceorientation' in window ? 'deviceorientation' : '';
-  if (!ev) return;
   let last = 0;
   const h = e => {
     let hd = null;
@@ -7286,42 +7386,76 @@ function pmCompOn() {
     const t = performance.now(); if (t - last < 80) return; last = t;
     pmHeadTick();
   };
-  window.addEventListener(ev, h); PM.loc.compOn = { ev, h };
+  if (ev) window.addEventListener(ev, h);
+  PM.loc.compOn = { ev, h };
+  pmCompWatch();
 }
-function pmCompOff() { const c = PM.loc.compOn; if (c) { window.removeEventListener(c.ev, c.h); PM.loc.compOn = null; } PM.loc.comp = null; }
-// iPhone : la boussole demande une autorisation, à appeler pendant l'appui sur le bouton
+function pmCompOff() {
+  const c = PM.loc.compOn; clearTimeout(PM.loc.compT);
+  if (c) { if (c.ev) window.removeEventListener(c.ev, c.h); PM.loc.compOn = null; }
+  PM.loc.comp = null;
+}
+// Pas de cap de la boussole au bout de 3 s : sur iPhone, il faut une autorisation donnée par un appui (bouton « Activer ») ;
+// ailleurs (ordinateur…), pas de boussole : la carte suit le cap GPS quand on roule.
+function pmCompWatch() {
+  const L0 = PM.loc; clearTimeout(L0.compT);
+  L0.compT = setTimeout(() => {
+    if (PM.ori !== 'comp' || !L0.compOn || L0.comp != null) return;
+    if (L0.compPending) return pmCompWatch(); // la demande d'autorisation est encore affichée : on repasse plus tard
+    const D = window.DeviceOrientationEvent;
+    if (D && typeof D.requestPermission === 'function' && !L0.compAsked)
+      return pmFlash(T("Active la boussole du téléphone"), 12000, [T("Activer"), () => { pmCompAsk(); pmFlash('', 10); }]);
+    pmFlash(L0.compDenied ? T("Boussole refusée : la carte suit ton sens de déplacement")
+      : T("Pas de boussole sur cet appareil : la carte suit ton sens de déplacement"), 4500);
+  }, 3000);
+}
+// iPhone : la boussole demande une autorisation, à appeler pendant l'appui
 function pmCompAsk() {
-  const D = window.DeviceOrientationEvent;
+  const D = window.DeviceOrientationEvent, L0 = PM.loc; L0.compAsked = true;
   // (Chrome récent l'a aussi et peut répondre « refusé » sans appui : on écoute quand même, sans risque)
-  if (D && typeof D.requestPermission === 'function') return D.requestPermission().then(pmCompOn, pmCompOn);
-  pmCompOn(); return Promise.resolve();
+  if (!D || typeof D.requestPermission !== 'function') return Promise.resolve();
+  L0.compPending = true;
+  return D.requestPermission().then(r => { L0.compDenied = r === 'denied'; }, () => {})
+    .then(() => { L0.compPending = false; pmCompOff(); pmCompSync(); }); // réécoute une fois l'autorisation donnée
 }
-function pmHeadOn() {
-  if (!PM.rot) { pmNote(T("La carte ne peut pas tourner ici (connexion requise)")); setTimeout(pmStatus, 3500); return; }
-  pmCompAsk(); pmLocStart(true);
-  pmNote(T("Carte orientée dans ton sens de déplacement")); setTimeout(pmStatus, 2500);
-}
-function pmNorth() {
-  PM.loc.head = false; pmBearTo(0); pmLocUI();
-  pmNote(T("Nord en haut")); setTimeout(pmStatus, 1800);
-}
-$('#pmLocate').addEventListener('click', () => {
-  const L0 = PM.loc; if (!PM.map) return;
-  if (L0.watch == null || !L0.follow) { L0.head = false; return pmLocStart(); }
-  if (L0.head || !PM.rot) { pmNorth(); return; }
-  pmHeadOn();
-});
 $('#pmCompass').addEventListener('click', () => {
   if (!PM.map) return;
-  if (PM.loc.head || Math.abs(pmWrap(pmBear())) > 0.5) return pmNorth();
-  pmHeadOn();
+  if ($('#pmOri').hidden) pmOriOpen(); else pmOriClose();
+});
+$('#pmOri').addEventListener('click', e => {
+  if (e.target.closest('#pmOriN')) { pmOriClose(); pmBearTo(0); pmFlash(T("Nord en haut"), 1800); return; }
+  const x = e.target.closest('[data-ori]'); if (!x || x.disabled) return;
+  pmOriClose(); pmOriSet(x.dataset.ori, true);
+});
+$('#pmOri').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  const it = [...$('#pmOri').querySelectorAll('button:not(:disabled):not([hidden])')], i = it.indexOf(document.activeElement);
+  it[(i + (e.key === 'ArrowDown' ? 1 : it.length - 1)) % it.length].focus(); e.preventDefault();
+});
+// toucher ailleurs ou Échap (et retour Android) : on referme le menu
+document.addEventListener('pointerdown', e => { if (!$('#pmOri').hidden && !e.target.closest('#pmOri, #pmCompass')) pmOriClose(); }, true);
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || $('#pmOri').hidden) return;
+  pmOriClose(true); e.stopImmediatePropagation(); e.preventDefault();
+}, true);
+$('#pmLocate').addEventListener('click', () => {
+  const L0 = PM.loc; if (!PM.map) return;
+  pmOriClose();
+  if (L0.watch == null || !L0.follow || !PM.rot) return pmLocStart();
+  if (PM.ori === 'comp') return pmOriSet(PM.oriPrev === 'free' ? 'free' : 'north', true);
+  pmOriSet('comp', true);
 });
 // Carte fermée ou appli en arrière-plan : on arrête le GPS et la boussole (batterie), on reprend en revenant.
-new MutationObserver(() => { if ($('#mapPage').hidden && PM.loc.watch != null) { PM.loc.paused = true; pmLocStop(true); } }).observe($('#mapPage'), { attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => {
+  if (!$('#mapPage').hidden) return;
+  if (PM.loc.watch != null) { PM.loc.paused = true; pmLocStop(true); }
+  pmCompSync(); pmOriClose();
+}).observe($('#mapPage'), { attributes: true, attributeFilter: ['hidden'] });
 document.addEventListener('visibilitychange', () => {
   const L0 = PM.loc;
-  if (document.hidden) { if (L0.watch != null) { L0.paused = true; pmLocStop(true); } return; }
-  if (L0.paused && !$('#mapPage').hidden && PM.map) { L0.paused = false; const f = L0.follow, h = L0.head; pmLocStart(); L0.follow = f; L0.head = h; if (h) pmCompOn(); pmLocUI(); }
+  if (document.hidden) { if (L0.watch != null) { L0.paused = true; pmLocStop(true); } pmCompSync(); return; }
+  if (L0.paused && !$('#mapPage').hidden && PM.map) { L0.paused = false; const f = L0.follow; pmLocStart(); L0.follow = f; pmLocUI(); }
+  pmCompSync();
 });
 
 /* feuille du bas : fiche d'un point, ajout, avis */
@@ -7535,8 +7669,8 @@ function pmAddStart() {
   if (!PM.map) return;
   if (!pmCanWrite()) return pmGuestSheet();
   const was = PM.placing;
-  if (PM.loc.follow || PM.loc.head) { PM.loc.follow = PM.loc.head = false; pmLocUI(); }
-  if (PM.rot && PM.map.getBearing()) PM.map.setBearing(0);
+  if (PM.loc.follow) { PM.loc.follow = false; pmLocUI(); }
+  if (PM.rot && PM.map.getBearing()) { PM.loc.bt = 0; PM.map.setBearing(0); } // nord en haut pour placer le repère (le suivi de la boussole reprend après)
   PM.sel = null; PM.placing = true; document.body.classList.add('pm-placing');
   PM.form = { type: PM.form && PM.form.type || 'fontaine', name: '', details: '', rating: 0, comment: '', photo: null, photoUrl: '' };
   $('#pmAim').hidden = false; pmAimPlace(); pmNote('');
