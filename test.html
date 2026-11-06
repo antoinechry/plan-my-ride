@@ -4275,31 +4275,30 @@ function renderHours() {
   const tl = S.tl, P = S.P;
   const off = () => { el.hidden = true; el.innerHTML = ''; };
   if (!tl || !S.wx || S.mode !== 'ride' || !S.samples || S.samples.length < 2) return off();
-  const pts = S.samples.map((s, k) => { const t = tl.times[s.i], w = isFinite(t) ? wxAt(k, t) : null;
-    return { s, t, w, ele: P.es[s.i], head: w ? w.ws * Math.cos((w.wd - P.b[s.i]) * RAD) : 0 }; }).filter(p => p.w && isFinite(p.w.app));
-  if (pts.length < 2) return off();
-  const near = t => pts.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
-  const step = (tl.end - tl.start) / 3600e3 > 7 ? 2 : 1, pick = [{ p: pts[0], tag: 'dep' }];
-  const h0 = new Date(tl.start); h0.setMinutes(0, 0, 0);
-  for (let h = +h0 + step * 3600e3; h < tl.end - 10 * 60e3; h += step * 3600e3) { const p = near(h); if (Math.abs(p.t - h) < 25 * 60e3) pick.push({ p }); }
-  const top = P.hasEle ? pts.reduce((a, b) => b.ele > a.ele ? b : a) : null;
-  if (top && top.ele - Math.min(pts[0].ele, pts[pts.length - 1].ele) > 80) {
-    const i = pick.findIndex(x => Math.abs(x.p.t - top.t) < 12 * 60e3);
-    if (i > 0) pick[i] = { p: top, tag: 'top' }; else if (i < 0) pick.push({ p: top, tag: 'top' });
-  }
-  pick.sort((a, b) => a.p.t - b.p.t);
-  const list = pick.filter((x, i) => i === 0 || x.p.t - pick[i - 1].p.t > 8 * 60e3 || x.tag).slice(0, 9);
+  // point de la trace atteint à l'heure t (tl.times croissant par point de trace), météo du point d'échantillonnage le plus proche
+  const at = t => { let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (tl.times[m] < t) lo = m + 1; else hi = m; }
+    const k = sIdx(P.d[lo]), w = wxAt(k, t); return w && isFinite(w.app) ? { i: lo, km: P.d[lo], t, w, ele: P.es[lo], head: w.ws * Math.cos((w.wd - P.b[lo]) * RAD) } : null; };
+  // départ, puis toutes les heures après l'heure de départ (toutes les 2 h, 3 h… au-delà de 12 lignes)
+  const dur = (tl.end - tl.start) / 3600e3, step = Math.max(1, Math.ceil(dur / 12)) * 3600e3;
+  const list = []; const p0 = at(tl.start); if (!p0) return off(); list.push({ p: p0, tag: 'dep' });
+  for (let t = tl.start + step; t < tl.end - 10 * 60e3; t += step) { const p = at(t); if (p) list.push({ p }); }
   const row = ({ p, tag }) => { const rel = relLabel(p.head), sky = skyLabel(p.w.code, p.w.day);
-    const lbl = tag === 'dep' ? T("Départ · {0}", [sky.toLowerCase()]) : tag === 'top' ? T("Point haut · {0}", [sky.toLowerCase()]) : sky;
-    return `<li${tag === 'top' ? ' class="hi"' : ''}><span class="t">${hm.format(new Date(p.t))}</span>${skySvg(p.w, 22)}` +
-      `<span class="w"><b>${lbl}</b><small>${T("km {0} · {1} m", [fD(p.s.km), fE(p.ele)])}</small></span>` +
+    const lbl = tag === 'dep' ? T("Départ · {0}", [sky.toLowerCase()]) : sky;
+    return `<li><span class="t">${hm.format(new Date(p.t))}</span>${skySvg(p.w, 22)}` +
+      `<span class="w"><b>${lbl}</b><small>${T("km {0} · {1} m", [fD(p.km), fE(p.ele)])}</small></span>` +
       `<span class="a">${fT(p.w.app)} ${UL.C}</span><span class="rel ${rel.cls}">${rel.txt}</span></li>`; };
-  const cold = pts.reduce((a, b) => b.w.app < a.w.app ? b : a);
-  const note = cold.w.app < pts[0].w.app - 1 && cold.s.km > 1
-    ? `<p class="note">${T("Le plus froid vers {0} au km {1} : ressenti {2} °C.", [hm.format(new Date(cold.t)), fD(cold.s.km, 0), fT(cold.w.app)])}</p>` : '';
-  el.innerHTML = `<div class="vh-head"><b>${T("Ta sortie heure par heure")}</b><span>${T("ressenti · vent pour toi")}</span></div><ol>` + list.map(row).join('') +
+  // notes : point haut et moment le plus froid (points météo de la trace)
+  const pts = S.samples.map((sm, k) => { const t = tl.times[sm.i], w = isFinite(t) ? wxAt(k, t) : null; return { sm, t, w, ele: P.es[sm.i] }; }).filter(x => x.w && isFinite(x.w.app));
+  const notes = [];
+  if (P.hasEle && pts.length) { const top = pts.reduce((a, b) => b.ele > a.ele ? b : a);
+    if (top.ele - Math.min(P.es[0], P.es[P.n - 1]) > 80) notes.push(T("Point haut à {0} m vers {1}, au km {2} : ressenti {3} °C.", [fE(top.ele), hm.format(new Date(top.t)), fD(top.sm.km, 0), fT(top.w.app)])); }
+  if (pts.length) { const cold = pts.reduce((a, b) => b.w.app < a.w.app ? b : a);
+    if (cold.w.app < p0.w.app - 1 && cold.sm.km > 1) notes.push(T("Le plus froid vers {0} au km {1} : ressenti {2} °C.", [hm.format(new Date(cold.t)), fD(cold.sm.km, 0), fT(cold.w.app)])); }
+  const hdr = step > 3600e3 ? T("Ta sortie toutes les {0} h", [step / 3600e3]) : T("Ta sortie heure par heure");
+  el.innerHTML = `<div class="vh-head"><b>${hdr}</b><span>${T("ressenti · vent pour toi")}</span></div><ol>` + list.map(row).join('') +
     `<li class="end"><span class="t">${hm.format(new Date(tl.end))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></svg>` +
-    `<span class="w"><b>${T("Arrivée")}</b><small>${T("km {0} · {1} au total", [fD(P.total), durTxt((tl.end - tl.start) / 3600e3)])}</small></span></li></ol>` + note;
+    `<span class="w"><b>${T("Arrivée")}</b><small>${T("km {0} · {1} au total", [fD(P.total), durTxt(dur)])}</small></span></li></ol>` +
+    notes.map(n => `<p class="note">${n}</p>`).join('');
   el.hidden = false;
 }
 

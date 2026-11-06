@@ -1208,6 +1208,8 @@ window.PMR_I18N = {
     "km {0} · {1} m": "km {0} · {1} m",
     "Le plus froid vers {0} au km {1} : ressenti {2} °C.": "Coldest around {0} at km {1}: feels like {2} °C.",
     "Ta sortie heure par heure": "Your ride hour by hour",
+    "Point haut à {0} m vers {1}, au km {2} : ressenti {3} °C.": "High point at {0} m around {1}, km {2}: feels like {3} °C.",
+    "Ta sortie toutes les {0} h": "Your ride every {0} h",
     "ressenti · vent pour toi": "feels like · wind for you",
     "km {0} · {1} au total": "km {0} · {1} in total",
     "Chaud": "Hot",
