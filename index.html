@@ -6532,6 +6532,8 @@ function pmInitMap(rot) {
   });
   let tr = 0;
   PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
+  // Filet de sécurité : après chaque zoom, le dessin vectoriel (tracé GPX, cercle de position) est recalé sur la vue
+  PM.map.on('zoomend', () => { requestAnimationFrame(() => { const r = PM.map && PM.map._renderer; if (r && r._reset && !PM.map._animatingZoom) r._reset(); }); });
   PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow || L0.head) { L0.follow = false; L0.head = false; pmLocUI(); } });
   PM.map.getContainer().addEventListener('touchstart', e => { if (e.touches.length > 1 && PM.loc.head) { PM.loc.head = false; pmLocUI(); } }, { passive: true });
   pmChips(); pmCompassUI();
@@ -6558,11 +6560,22 @@ let pmRotP = null;
 function pmRotLoad() {
   if (pmRotP) return pmRotP;
   if (typeof L === 'undefined' || !L.Browser.any3d) return (pmRotP = Promise.resolve(false));
+  const TZ0 = L.Map.TouchZoom; // pincement d'origine de Leaflet, avant que leaflet-rotate le remplace
   const ld = loadScript(PM_ROT_JS).then(() => {
     if (!L.Map.prototype.setBearing) return;
     L.Map.mergeOptions({ rotateControl: false }); // sinon chaque nouvelle carte (Vélotaf, export image) aurait un bouton de rotation
     const ini = L.Map.prototype.initialize; // le module plante sur L.map(el) sans options
     L.Map.include({ initialize(id, o) { return ini.call(this, id, o || {}); } });
+    // leaflet-rotate ajoute son propre pincement (TouchGestures) sans retirer celui de Leaflet : les deux réagissaient
+    // à chaque pincement (deux zoomstart, deux zoomanim, le second après zoomend), ce qui laissait le tracé GPX
+    // (SVG) à la mauvaise échelle ou invisible sur iPhone après un zoom. On coupe celui d'origine sur toute carte créée ensuite.
+    L.Map.addInitHook(function () { (this._handlers || []).forEach(h => { if (TZ0 && h instanceof TZ0) h.disable(); }); });
+    // Pas de rotation pendant l'animation d'un zoom (suivi du cap, Ajouter) : elle est reportée à la fin du zoom.
+    const sb = L.Map.prototype.setBearing;
+    L.Map.include({ setBearing(t) {
+      if (this._animatingZoom) { if (this._bearingLater == null) this.once('zoomend', () => { const b = this._bearingLater; this._bearingLater = null; this.setBearing(b); }); this._bearingLater = t; return; }
+      return sb.call(this, t);
+    } });
   });
   return (pmRotP = Promise.race([ld, sleep(5000)]).then(() => !!L.Map.prototype.setBearing, () => false));
 }
