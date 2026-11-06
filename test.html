@@ -101,6 +101,8 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .modes a{padding:8px 14px;text-decoration:none;color:var(--muted);font-weight:700;font-family:var(--f-display);font-size:14px;letter-spacing:.03em;text-transform:uppercase}
 .modes a+a{border-left:1px solid var(--line)}
 .modes a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.modes a{display:inline-flex;align-items:center;gap:7px}
+.modes .mi{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .mode-ultra{display:flex;flex-direction:column;gap:18px}
 .seg2{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
 .seg2 button{border:0;background:transparent;padding:6px 8px;font-size:13.5px;cursor:pointer;color:var(--muted)}
@@ -1147,7 +1149,8 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 /* téléphone : règles de la maquette mobile A, en fin de feuille pour passer devant .opt-h / .opt-strip */
 @media (max-width:700px){
   header.top .modes{border:0;border-radius:999px;background:var(--line);padding:3px;gap:2px;overflow:visible}
-  header.top .modes a{border:0!important;border-radius:999px;text-transform:none;letter-spacing:0;font-size:14px;min-height:38px;padding:8px 4px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  header.top .modes a{border:0!important;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;font-size:12px;min-height:40px;padding:8px 0;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--ink)}
+  header.top .modes .mi{width:19px;height:19px}
   header.top .modes a[aria-current="page"]{background:var(--ink);color:var(--panel)}
   body:not([data-mode="taf"]) .verdict{font-size:26px;line-height:1.15}
   body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{padding:18px 16px}
@@ -1230,9 +1233,9 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <p id="brandSub">Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.</p>
   </div>
   <nav class="modes" aria-label="Page">
-    <a href="#" data-mode="ride">Sortie</a>
-    <a href="#ultra" data-mode="ultra">Ultra</a>
-    <a href="#velotaf" data-mode="taf">Commute</a>
+    <a href="#" data-mode="ride"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg><span>Sortie</span></a>
+    <a href="#ultra" data-mode="ultra"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg><span>Ultra</span></a>
+    <a href="#velotaf" data-mode="taf"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/></svg><span>Commute</span></a>
   </nav>
   <div class="theme-seg" role="group" aria-label="Thème" id="themeSeg">
     <button type="button" data-t="light" title="Thème clair" aria-label="Thème clair">☀︎</button>
