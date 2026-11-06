@@ -7514,7 +7514,9 @@ function pmInit() {
 }
 function pmInitMap(rot) {
   PM.rot = rot; // carte tournante (leaflet-rotate) ; sans le module, la carte reste nord en haut
-  PM.map = L.map('pmMap', Object.assign({ zoomControl: !MAP_TOUCH, attributionControl: true },
+  // preferCanvas : sur iPhone, le tracé en SVG (calque tourné par leaflet-rotate) ne suivait pas le fond pendant
+  // un zoom au pincement ; dessiné sur un canvas, il bouge avec les tuiles (06/11/2026)
+  PM.map = L.map('pmMap', Object.assign({ zoomControl: !MAP_TOUCH, attributionControl: true, preferCanvas: true },
     rot ? { rotate: true, bearing: 0, rotateControl: false, touchRotate: true, shiftKeyRotate: true } : {}));
   const bases = makeBases(); let bn = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)');
   try { const sv = localStorage.getItem('pmr-pm-base'); if (sv && bases[sv]) bn = sv; } catch (e) {}
