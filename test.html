@@ -4278,8 +4278,8 @@ function renderHours() {
   // point de la trace atteint à l'heure t (tl.times croissant par point de trace), météo du point d'échantillonnage le plus proche
   const at = t => { let lo = 0, hi = P.n - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (tl.times[m] < t) lo = m + 1; else hi = m; }
     const k = sIdx(P.d[lo]), w = wxAt(k, t); return w && isFinite(w.app) ? { i: lo, km: P.d[lo], t, w, ele: P.es[lo], head: w.ws * Math.cos((w.wd - P.b[lo]) * RAD) } : null; };
-  // départ, puis toutes les heures après l'heure de départ (toutes les 2 h, 3 h… au-delà de 12 lignes)
-  const dur = (tl.end - tl.start) / 3600e3, step = Math.max(1, Math.ceil(dur / 12)) * 3600e3;
+  // départ, puis toutes les heures après l'heure de départ (toujours 1 h, demande d'Antoine du 06/11/2026)
+  const dur = (tl.end - tl.start) / 3600e3, step = 3600e3;
   const list = []; const p0 = at(tl.start); if (!p0) return off(); list.push({ p: p0, tag: 'dep' });
   for (let t = tl.start + step; t < tl.end - 10 * 60e3; t += step) { const p = at(t); if (p) list.push({ p }); }
   const row = ({ p, tag }) => { const rel = relLabel(p.head), sky = skyLabel(p.w.code, p.w.day);
@@ -4294,7 +4294,7 @@ function renderHours() {
     if (top.ele - Math.min(P.es[0], P.es[P.n - 1]) > 80) notes.push(T("Point haut à {0} m vers {1}, au km {2} : ressenti {3} °C.", [fE(top.ele), hm.format(new Date(top.t)), fD(top.sm.km, 0), fT(top.w.app)])); }
   if (pts.length) { const cold = pts.reduce((a, b) => b.w.app < a.w.app ? b : a);
     if (cold.w.app < p0.w.app - 1 && cold.sm.km > 1) notes.push(T("Le plus froid vers {0} au km {1} : ressenti {2} °C.", [hm.format(new Date(cold.t)), fD(cold.sm.km, 0), fT(cold.w.app)])); }
-  const hdr = step > 3600e3 ? T("Ta sortie toutes les {0} h", [step / 3600e3]) : T("Ta sortie heure par heure");
+  const hdr = T("Ta sortie heure par heure");
   el.innerHTML = `<div class="vh-head"><b>${hdr}</b><span>${T("ressenti · vent pour toi")}</span></div><ol>` + list.map(row).join('') +
     `<li class="end"><span class="t">${hm.format(new Date(tl.end))}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></svg>` +
     `<span class="w"><b>${T("Arrivée")}</b><small>${T("km {0} · {1} au total", [fD(P.total), durTxt(dur)])}</small></span></li></ol>` +
