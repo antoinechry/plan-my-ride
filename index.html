@@ -860,6 +860,69 @@ aside.settings #startRow>*{min-width:0;flex:1 1 0}
 #meMotion,#meFont{grid-template-columns:1fr 1fr}
 .me-cvd{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 2px;font-size:13px;color:var(--muted)}
 .me-cvd span{display:inline-flex;align-items:center;gap:6px}
+/* Page Moi v2.0 (06/11/2026, maquette « D · Le mélange retenu ») */
+.me2 .me-card{border-radius:16px}
+.me2 .me-card h3{font-size:20px;font-weight:700}
+.me-hero{background:var(--ink);color:var(--bg);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:16px;margin-top:4px}
+.me-hrow{display:flex;align-items:center;gap:14px}
+.me-av{width:56px;height:56px;border-radius:999px;background:var(--brand);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;flex:none;text-transform:uppercase}
+.me-hid{flex:1;min-width:0}
+.me-hid h3{margin:0;font-size:26px;line-height:30px;font-weight:800;letter-spacing:-.5px}
+.me-hid p{margin:2px 0 0;font-size:13px;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-adm{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;background:color-mix(in srgb,var(--bg) 14%,var(--ink));color:var(--brand);font-size:13px;font-weight:700;text-decoration:none}
+body:not(.admin) .me-adm{display:none}
+.me-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.me-kpis div{background:color-mix(in srgb,var(--bg) 10%,var(--ink));border-radius:12px;padding:10px}
+.me-kpis b{display:block;font-family:var(--f-mono);font-weight:500;font-size:22px}
+.me-kpis b.on{color:var(--brand)}
+.me-kpis span{font-size:12px;opacity:.72}
+.me-kpis .me-kbtn{background:color-mix(in srgb,var(--bg) 10%,var(--ink));border-radius:12px;padding:10px;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;position:relative}
+.me-kpis .me-kbtn::after{content:"›";position:absolute;right:10px;top:8px;font-size:18px;opacity:.6}
+.me-kpis .me-kbtn:hover,.me-kpis .me-kbtn:focus-visible{background:color-mix(in srgb,var(--bg) 18%,var(--ink))}
+.pmm-ic{flex:none;width:36px;height:36px}
+.pmm-ic .pm-pin{background:var(--c);color:#fff}
+.pmm-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pmm-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pmm-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmm-t span{font-size:12.5px;color:var(--muted)}
+.pmm-st{flex:none;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--bg)}
+.pmm-st.pend{background:color-mix(in srgb,var(--brand) 25%,var(--panel))}
+.pmm-st.off{color:var(--head)}
+.me-hero .me-btns .btn{background:var(--panel);color:var(--ink)}
+.me-mseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:color-mix(in srgb,var(--line) 55%,var(--bg));border-radius:999px;padding:3px;gap:2px;margin-top:12px}
+.me-mseg button{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink);border-radius:999px;min-height:40px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.me-mseg button svg{width:18px;height:18px;flex:none}
+.me-mseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.me-step{display:flex;align-items:center;gap:10px;margin-top:12px}
+.me-step .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.me-step .t b{font-size:15px;font-weight:600}
+.me-step .t span{font-size:12px;color:var(--muted)}
+.me-step button{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font:inherit;font-size:20px;font-weight:600;color:var(--ink);cursor:pointer;flex:none}
+.me-step button:disabled{opacity:.4;cursor:default}
+.me-step output{font-family:var(--f-mono);font-weight:500;font-size:17px;min-width:88px;text-align:center}
+.me2 #meTafKind{grid-template-columns:1fr 1fr}
+.me-next{background:color-mix(in srgb,var(--brand) 20%,var(--panel));border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.me-next span{font-family:var(--f-mono);font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--brand-text,var(--ink))}
+.me-next b{font-size:15px}
+.me-more{margin-top:10px;border-top:1px solid var(--line)}
+.me-more>summary,.me-li>summary,.me-row2{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 0;cursor:pointer;list-style:none;color:var(--ink)}
+.me-more>summary::-webkit-details-marker,.me-li>summary::-webkit-details-marker{display:none}
+.me-lt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left}
+.me-lt b{font-weight:600;font-size:16px}
+.me-lt span{font-size:13px;color:var(--muted)}
+.me-lv{font-size:15px;color:var(--muted);text-align:right}
+.me-chev{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;transition:transform .15s}
+details[open]>summary .me-chev{transform:rotate(90deg)}
+.me-gl{font-family:var(--f-mono);font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:24px 0 8px 4px}
+.me-list{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.me-list>*+*{border-top:1px solid color-mix(in srgb,var(--line) 60%,var(--panel))}
+.me-li>summary,.me-row2{padding:10px 16px}
+.me-row2{width:100%;border:0;background:none;font:inherit;box-sizing:border-box}
+.me-li .me-lb{padding:0 16px 16px}
+.me-li .me-lb .me-theme:first-child{margin-top:0}
+.me-out{color:var(--accent)}
+.me-del2{text-align:center;margin:12px 0 0}
+.me-del2 .linkbtn{color:var(--head);font-weight:600;font-size:14px;min-height:44px}
 .me-cvd i{display:inline-block;width:22px;height:8px;border-radius:4px}
 .me-cvd i.vdot{width:12px;height:12px;border-radius:50%;margin-right:2px}
 .gate-soc{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
@@ -1288,21 +1351,27 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <div id="outLong"></div>
   <p class="hint out-note">Météo : le modèle le plus précis à l'endroit de chaque parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, ECMWF hors des zones couvertes…). Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
 </section>
-<section class="libpage" id="mePage" hidden aria-labelledby="meTitle">
+<section class="libpage me2" id="mePage" hidden aria-labelledby="meTitle">
   <div class="lp-head"><h2 id="meTitle">Moi</h2><button type="button" class="btn small pg-x">Fermer</button></div>
-  <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
-    <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div>
-    <p class="me-del"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
-  <div class="me-card" id="meTafCard"><h3>Mon trajet Commute</h3><p class="hint">Choisis ta trace aller et ton retour. Ce trajet s'ouvre tout seul sur Commute et y reste fixe : pour en changer, reviens ici. Une nouvelle trace s'importe dans Parcours.</p>
+  <div class="me-hero">
+    <div class="me-hrow"><div class="me-av" id="meAv" aria-hidden="true">?</div><div class="me-hid"><h3 id="meHello">Salut</h3><p id="meWho"></p></div>
+      <a class="me-adm adm" href="admin.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/></svg>Admin</a></div>
+    <div class="me-kpis no-guest"><div><b id="meKRoutes">–</b><span>parcours</span></div><button type="button" class="me-kbtn" id="meKPoiBtn" aria-haspopup="dialog"><b id="meKPoi">–</b><span>points ajoutés</span></button><div><b id="meKAl">–</b><span>alertes</span></div></div>
+  </div>
+  <div class="me-card"><h3>Ma façon de rouler</h3><p class="hint">Sert à calculer tes horaires de passage. Chaque mode garde les siens.</p>
+    <div class="me-mseg" id="meModeSeg" role="group" aria-label="Mode"></div>
+    <div id="meModes"></div></div>
+  <div class="me-card no-guest" id="meTafCard"><h3>Mon trajet Commute</h3><p class="hint">S'ouvre tout seul sur Commute et y reste fixe.</p>
     <label class="al-l" for="meTaf">Aller · maison → travail</label><select id="meTaf" class="me-sel" aria-label="Trajet Commute : aller"></select>
     <span class="al-l me-ret">Retour · travail → maison</span>
-    <div class="seg2 me-theme me-ret" id="meTafKind" role="group" aria-label="Trace du retour"><button type="button" data-k="rev" aria-pressed="true">Même trace, à l'envers</button><button type="button" data-k="other" aria-pressed="false">Une autre trace</button></div>
+    <div class="seg2 me-theme me-ret" id="meTafKind" role="group" aria-label="Trace du retour"><button type="button" data-k="rev" aria-pressed="true">À l'envers</button><button type="button" data-k="other" aria-pressed="false">Une autre trace</button></div>
     <select id="meTafRet" class="me-sel me-ret" aria-label="Trajet Commute : trace du retour" hidden></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
-    <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
-    <p class="al-why" id="alWhy" hidden></p>
-    <div id="alBox">
+    <p class="hint">La météo de ton parcours à ton heure de départ, la veille au soir ou le matin même.</p><div class="me-next" id="alNext" hidden><span>Prochaine alerte</span><b id="alNextTxt"></b></div>
+    <p class="al-why no-lim" id="alWhy" hidden></p>
+    <div id="alBox" class="no-lim">
       <div class="me-btns al-dev"><button type="button" class="btn small primary" id="alOn">Activer sur cet appareil</button><span class="al-state" id="alState"></span></div>
+      <details class="me-more" id="alMore"><summary><span class="me-lt"><b>Régler les alertes</b><span>Parcours, heure, la veille ou le matin, jours</span></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary>
       <label class="al-l" for="alRoute">Parcours</label>
       <select id="alRoute" class="me-sel"></select>
       <div class="al-grid">
@@ -1312,26 +1381,25 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <span class="al-l">Jours de sortie</span>
       <div class="al-days" id="alDays" role="group" aria-label="Jours de sortie"></div>
       <div class="me-btns"><button type="button" class="btn small" id="alTest">Envoyer l'alerte maintenant</button><button type="button" class="btn small" id="alOff">Couper les alertes</button></div>
+      </details>
       <p class="hint al-msg" id="alMsg" aria-live="polite"></p>
     </div></div>
-  <div class="me-card"><h3>Mes réglages par mode</h3><p class="hint">Utilisés pour calculer tes horaires de passage. Chaque mode garde les siens.</p><div id="meModes"></div></div>
-  <div class="me-card"><h3>Affichage</h3>
-    <div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div>
-    <span class="al-l">Couleurs</span>
-    <select id="meCvd" class="me-sel" aria-label="Couleurs"><option value="">Standard</option><option value="deutan">Daltonisme rouge-vert (deutéranopie, protanopie)</option><option value="tritan">Daltonisme bleu-jaune (tritanopie)</option><option value="mono">Contraste élevé, noir et blanc</option></select>
-    <div class="me-cvd" aria-hidden="true"><span><i style="background:var(--tail)"></i>Vent de dos</span><span><i style="background:var(--head)"></i>Vent de face</span><span><i class="vdot l0"></i><i class="vdot l1"></i><i class="vdot l2"></i>Bon, moyen, difficile</span></div>
-    <p class="hint">Change les couleurs du vent, des pastilles, de la carte et des graphiques. Les pictogrammes et les mots restent toujours affichés.</p>
-    <span class="al-l">Animations</span>
-    <div class="seg2 me-theme" id="meMotion" role="group" aria-label="Animations"><button type="button" data-v="">Normales</button><button type="button" data-v="reduce">Réduites</button></div>
-    <span class="al-l">Police</span>
-    <div class="seg2 me-theme" id="meFont" role="group" aria-label="Police"><button type="button" data-v="">Sillage (Archivo)</button><button type="button" data-v="hyper">Très lisible</button></div>
-    <span class="al-l">Langue</span>
-    <div class="seg2 me-theme" id="meLang" role="group" aria-label="Langue · Language"><button type="button" data-l="fr" lang="fr">Français</button><button type="button" data-l="en" lang="en">English</button></div>
-    <span class="al-l">Distances et vitesses</span>
-    <div class="seg2 me-theme" id="meDist" role="group" aria-label="Distances et vitesses"><button type="button" data-u="km">Métrique (km)</button><button type="button" data-u="mi">Impérial (mi)</button></div>
-    <span class="al-l">Température</span>
-    <div class="seg2 me-theme" id="meTemp" role="group" aria-label="Température"><button type="button" data-u="c">°C</button><button type="button" data-u="f">°F</button></div>
-    <div class="me-btns"><button type="button" class="btn small" id="meHelp">Mode d'emploi</button></div></div>
+  <p class="me-gl">Affichage</p>
+  <div class="me-list">
+    <details class="me-li" id="meLiTheme"><summary><span class="me-lt"><b>Thème</b></span><span class="me-lv" id="meVTheme"></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary><div class="me-lb"><div class="seg2 me-theme" id="meTheme" role="group" aria-label="Thème"><button type="button" data-t="light">Clair</button><button type="button" data-t="auto">Automatique</button><button type="button" data-t="dark">Sombre</button></div></div></details>
+    <details class="me-li" id="meLiLang"><summary><span class="me-lt"><b>Langue</b></span><span class="me-lv" id="meVLang"></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary><div class="me-lb"><div class="seg2 me-theme" id="meLang" role="group" aria-label="Langue · Language"><button type="button" data-l="fr" lang="fr">Français</button><button type="button" data-l="en" lang="en">English</button></div></div></details>
+    <details class="me-li" id="meLiUnits"><summary><span class="me-lt"><b>Unités</b></span><span class="me-lv" id="meVUnits"></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary><div class="me-lb"><span class="al-l">Distances et vitesses</span><div class="seg2 me-theme" id="meDist" role="group" aria-label="Distances et vitesses"><button type="button" data-u="km">Métrique (km)</button><button type="button" data-u="mi">Impérial (mi)</button></div><span class="al-l">Température</span><div class="seg2 me-theme" id="meTemp" role="group" aria-label="Température"><button type="button" data-u="c">°C</button><button type="button" data-u="f">°F</button></div></div></details>
+    <details class="me-li" id="meLiCvd"><summary><span class="me-lt"><b>Couleurs</b><span>Daltonisme, contraste élevé</span></span><span class="me-lv" id="meVCvd"></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary><div class="me-lb"><select id="meCvd" class="me-sel" aria-label="Couleurs"><option value="">Standard</option><option value="deutan">Daltonisme rouge-vert (deutéranopie, protanopie)</option><option value="tritan">Daltonisme bleu-jaune (tritanopie)</option><option value="mono">Contraste élevé, noir et blanc</option></select><div class="me-cvd" aria-hidden="true"><span><i style="background:var(--tail)"></i>Vent de dos</span><span><i style="background:var(--head)"></i>Vent de face</span><span><i class="vdot l0"></i><i class="vdot l1"></i><i class="vdot l2"></i>Bon, moyen, difficile</span></div><p class="hint">Change les couleurs du vent, des pastilles, de la carte et des graphiques. Les pictogrammes et les mots restent toujours affichés.</p></div></details>
+    <details class="me-li" id="meLiMotion"><summary><span class="me-lt"><b>Animations</b></span><span class="me-lv" id="meVMotion"></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary><div class="me-lb"><div class="seg2 me-theme" id="meMotion" role="group" aria-label="Animations"><button type="button" data-v="">Normales</button><button type="button" data-v="reduce">Réduites</button></div></div></details>
+    <details class="me-li" id="meLiFont"><summary><span class="me-lt"><b>Police</b></span><span class="me-lv" id="meVFont"></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary><div class="me-lb"><div class="seg2 me-theme" id="meFont" role="group" aria-label="Police"><button type="button" data-v="">Sillage (Archivo)</button><button type="button" data-v="hyper">Très lisible</button></div></div></details>
+  </div>
+  <p class="me-gl">Aide et compte</p>
+  <div class="me-list">
+    <button type="button" class="me-row2" id="meHelp"><span class="me-lt"><b>Mode d'emploi</b></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button type="button" class="me-row2 no-guest" id="mePw"><span class="me-lt"><b>Changer mon mot de passe</b></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button type="button" class="me-row2 no-guest" id="meOut"><span class="me-lt"><b class="me-out">Se déconnecter</b></span></button>
+  </div>
+  <p class="me-del2 no-guest"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p>
 </section>
 <section class="libpage pm-page" id="mapPage" hidden aria-labelledby="pmTitle">
   <div class="pm-top">
@@ -1542,6 +1610,11 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <button type="button" class="btn primary tt-imp no-guest" id="ttImp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Importer un GPX</button>
       <p class="tt-sub">Ou dans Mes parcours</p>
       <ul class="tt-list" id="ttList"></ul>
+    </dialog>
+    <dialog class="exp-dlg tt-dlg" id="poiMineDlg" aria-labelledby="poiMineT">
+      <div class="tt-dhead"><h2 id="poiMineT">Mes points ajoutés</h2><button type="button" class="tt-x" id="poiMineX" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <p class="hint" id="poiMineTxt"></p>
+      <ul class="tt-list" id="poiMineList"></ul>
     </dialog>
     <section aria-label="Résumé">
       <p class="vkick" id="verdictKick" hidden></p>
@@ -6741,22 +6814,40 @@ function meSet(m, k, v) {
 }
 function meRender() {
   let who = ''; try { const t = JSON.parse(localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token') || 'null'); who = t && t.user ? t.user.email : ''; } catch (e) {}
-  $('#meWho').textContent = who ? T("Connecté avec {0}.{1}", [who, LIB.list.length ? T(" {0} parcours dans ton compte.", [LIB.list.length]) : '']) : T("Pas connecté.");
-  const row = (m, k, label, min, max, step, v, unit) => `<div class="me-row"><label for="me-${m}-${k}">${label}</label><output id="me-${m}-${k}-o">${unit(v)}</output>
-    <input type="range" id="me-${m}-${k}" data-m="${m}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"></div>`;
-  const kmh = v => fV(+v, 1) + ' ' + UL.kmh, mh = v => fE(+v) + ' ' + UL.mh, mn = v => v + ' min / h';
-  $('#meModes').innerHTML = ['ride', 'ultra', 'taf'].map(m => { const g = meGet(m);
-    return `<div class="me-mode"><h4>${ME_NAME[m]}${m === S.mode ? T(" · mode en cours") : ''}</h4>`
-      + row(m, 'speed', m === 'taf' ? T("Vitesse moyenne") : T("Vitesse sur le plat"), 12, 40, 0.5, g.speed, kmh)
-      + (m === 'taf' ? '' : row(m, 'vam', T("Vitesse de montée (VAM)"), 300, 1400, 50, g.vam, mh) + row(m, 'pmin', T("Arrêts par heure de pédalage"), 0, 30, 1, g.pmin, mn))
-      + '</div>'; }).join('');
-  meTafSel();
+  // v2.0 (06/11/2026) : bandeau « Salut … », compteurs, réglages par mode en − / +, valeurs de l'affichage en résumé
+  const pre = (ACC.row && ACC.row.prenom) || (who ? who.split('@')[0].split(/[._-]/)[0] : '');
+  const name = pre ? pre.charAt(0).toUpperCase() + pre.slice(1) : '';
+  $('#meHello').textContent = name ? T("Salut {0}", [name]) : T("Salut");
+  $('#meAv').textContent = (name || who || '?').charAt(0);
+  $('#meWho').textContent = who || T("Pas connecté.");
+  $('#meKRoutes').textContent = LIB.list.filter(x => !x.demo).length;
+  const alOnNow = !!(AL.row && AL.row.enabled); $('#meKAl').textContent = alOnNow ? 'ON' : 'OFF'; $('#meKAl').classList.toggle('on', alOnNow);
+  if (!ME.poiAsked) { ME.poiAsked = 1; sbIfLogged().then(sb => sb && sb.from('poi').select('id', { count: 'exact', head: true }).eq('user_id', SB_UID)).then(r => { if (r && r.count != null) $('#meKPoi').textContent = r.count; }).catch(() => {}); }
+  if (!ME.mode) ME.mode = S.mode;
+  $('#meModeSeg').innerHTML = ['ride', 'ultra', 'taf'].map(m => `<button type="button" data-mm="${m}" aria-pressed="${m === ME.mode}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TAB_ICO[m] || ''}</svg>${ME_NAME[m]}</button>`).join('');
+  meModesRender();
+  const seg = id => { const b = document.querySelector(`#${id} button[aria-pressed="true"]`); return b ? b.textContent : ''; };
   const th = document.documentElement.dataset.theme || 'auto';
   for (const b of document.querySelectorAll('#meTheme button')) b.setAttribute('aria-pressed', String(b.dataset.t === th));
+  $('#meVTheme').textContent = seg('meTheme'); $('#meVLang').textContent = seg('meLang');
+  $('#meVUnits').textContent = `${UNITS.mi ? 'mi' : 'km'} · ${UNITS.f ? '°F' : '°C'}`;
+  $('#meVCvd').textContent = { '': T("Standard"), deutan: T("Rouge-vert"), tritan: T("Bleu-jaune"), mono: T("Contraste élevé") }[CVD || ''] || T("Standard");
+  $('#meVMotion').textContent = seg('meMotion'); $('#meVFont').textContent = seg('meFont').replace(/\s*\(.*\)/, '');
+  meTafSel();
 }
-function meOpen() { pageOpen('mePage', '#tabMe'); meRender(); alRender(); alLoad(); }
-$('#meModes').addEventListener('input', e => { const i = e.target.closest('input[data-k]'); if (!i) return; const v = +i.value, k = i.dataset.k;
-  $('#' + i.id + '-o').textContent = k === 'speed' ? fV(v, 1) + ' ' + UL.kmh : k === 'vam' ? fE(v) + ' ' + UL.mh : v + ' min / h'; meSet(i.dataset.m, k, v); });
+function meOpen() { pageOpen('mePage', '#tabMe'); ME.mode = S.mode; meRender(); alRender(); alLoad(); }
+const ME_STEP = { speed: [12, 40, 0.5], vam: [300, 1400, 50], pmin: [0, 30, 1] };
+function meModesRender() {
+  const m = ME.mode, g = meGet(m), fmt = { speed: v => fV(+v, 1) + ' ' + UL.kmh, vam: v => fE(+v) + ' ' + UL.mh, pmin: v => v + ' min' };
+  const rows = m === 'taf' ? [['speed', T("Vitesse moyenne"), T("trajet complet, sans arrêts")]]
+    : [['speed', T("Vitesse sur le plat"), T("sans vent")], ['vam', T("VAM"), T("mètres grimpés par heure")], ['pmin', T("Arrêts courts"), T("par heure de pédalage")]];
+  $('#meModes').innerHTML = rows.map(([k, lb, sub]) => { const [lo, hi] = ME_STEP[k], v = +g[k];
+    return `<div class="me-step"><div class="t"><b>${lb}</b><span>${sub}</span></div><button type="button" data-k="${k}" data-d="-1" aria-label="${T("Moins")} · ${lb}"${v <= lo ? ' disabled' : ''}>−</button><output>${fmt[k](v)}</output><button type="button" data-k="${k}" data-d="1" aria-label="${T("Plus")} · ${lb}"${v >= hi ? ' disabled' : ''}>+</button></div>`; }).join('');
+}
+$('#meModes').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; const k = b.dataset.k, [lo, hi, st] = ME_STEP[k];
+  const v = Math.round(Math.min(hi, Math.max(lo, +meGet(ME.mode)[k] + st * +b.dataset.d)) / st) * st; meSet(ME.mode, k, v); meModesRender(); });
+$('#meModeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-mm]'); if (!b) return; ME.mode = b.dataset.mm;
+  for (const x of document.querySelectorAll('#meModeSeg button')) x.setAttribute('aria-pressed', String(x === b)); meModesRender(); });
 for (const b of document.querySelectorAll('#meLang button')) b.setAttribute('aria-pressed', String(b.dataset.l === LANG));
 { const g = $('#gateLang'); if (g) { if (LANG === 'en') { g.dataset.l = 'fr'; g.lang = 'fr'; g.textContent = 'Français'; } g.addEventListener('click', () => setLang(g.dataset.l)); } }
 for (const b of document.querySelectorAll('#meDist button')) b.setAttribute('aria-pressed', String((b.dataset.u === 'mi') === UNITS.mi));
@@ -6764,7 +6855,7 @@ for (const b of document.querySelectorAll('#meTemp button')) b.setAttribute('ari
 $('#meDist').addEventListener('click', e => { const b = e.target.closest('button[data-u]'); if (b) setUnits({ dist: b.dataset.u }); });
 $('#meTemp').addEventListener('click', e => { const b = e.target.closest('button[data-u]'); if (b) setUnits({ temp: b.dataset.u }); });
 $('#meLang').addEventListener('click', e => { const b = e.target.closest('button[data-l]'); if (b) setLang(b.dataset.l); });
-$('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); });
+$('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); $('#meVTheme').textContent = b.textContent; });
 $('#meHelp').addEventListener('click', () => $('#helpBtn').click());
 /* Accessibilité (28/10/2026) : couleurs, animations, police. Gardés dans localStorage pmr-a11y ({ cvd, motion, font }),
    appliqués en tête de page ; chaque changement recharge la page (échelles de couleur du script), puis rouvre Moi. */
@@ -6785,6 +6876,32 @@ try { if (sessionStorage.getItem('pmr-open-me')) { sessionStorage.removeItem('pm
 if (location.hash === '#carte') { history.replaceState(null, '', location.pathname + location.search); if (!document.body.classList.contains('gated')) setTimeout(pmOpen, 0); }
 // Moi · Mon trajet Commute (06/11/2026) : aller (pmr-taf-route) et retour (pmr-taf-ret, '' = même trace à l'envers)
 const ME = { tafOther: false }; // « Une autre trace » choisi mais pas encore de parcours
+/* « Points ajoutés » de la page Moi (06/11/2026, demande d'Antoine) : liste des points créés par le compte ;
+   toucher un point ouvre la Carte centrée dessus avec sa fiche. */
+async function poiMineOpen() {
+  const d = $('#poiMineDlg'), ul = $('#poiMineList'), txt = $('#poiMineTxt');
+  ul.innerHTML = ''; txt.textContent = T("Chargement…"); if (!d.open) d.showModal();
+  let rows = [];
+  try { const sb = await sbIfLogged(); if (!sb) throw 0;
+    const { data, error } = await sb.from('poi').select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').eq('user_id', SB_UID).order('created_at', { ascending: false }).limit(300);
+    if (error) throw error; rows = data || []; } catch (e) { txt.textContent = T("Liste indisponible pour l'instant."); return; }
+  $('#meKPoi').textContent = rows.length;
+  txt.textContent = rows.length ? T("Touche un point pour le voir sur la carte.") : T("Tu n'as pas encore ajouté de point. Sur la Carte, touche « Ajouter » pour partager une fontaine, un abri, un bivouac…");
+  const df = new Intl.DateTimeFormat(LOC, { day: 'numeric', month: 'short', year: 'numeric' });
+  const ST = { pending: ['pend', T("En validation")], valid: ['', T("Validé")], removed: ['off', T("Retiré")] };
+  ul.innerHTML = rows.map(p => { const t = PM_TYPES[p.type] || { lbl: p.type, col: '#888', d: '' }, st = ST[p.status] || ['', p.status || ''];
+    return `<li><button type="button" class="tt-opt" data-poi="${p.id}"><span class="pmm-ic"><span class="pm-pin usr" style="--c:${t.col}">${pmSvg(t.d)}</span></span><span class="pmm-t"><b>${escH(p.name || t.lbl)}</b><span>${escH(t.lbl)} · ${df.format(new Date(p.created_at))}</span></span><span class="pmm-st ${st[0]}">${escH(st[1])}</span></button></li>`; }).join('');
+  ME.poiRows = new Map(rows.map(p => [p.id, p]));
+}
+$('#meKPoiBtn').addEventListener('click', poiMineOpen);
+$('#poiMineX').addEventListener('click', () => $('#poiMineDlg').close());
+$('#poiMineDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#poiMineList').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-poi]'); if (!b) return; const p = ME.poiRows && ME.poiRows.get(b.dataset.poi); if (!p) return;
+  $('#poiMineDlg').close();
+  PM.focusTo = { src: 'usr', key: 'p:' + p.id, type: p.type, name: p.name, lat: p.lat, lon: p.lon, poi: p };
+  pmOpen();
+});
 function meTafSel() {
   const go = $('#meTaf'), rt = $('#meTafRet'); if (!go || !rt) return;
   const fx = tafFixed(), opts = LIB.list.filter(x => !x.demo && (kindOf(x) === 'taf' || (fx && (x.id === fx.go || x.id === fx.ret)))).slice().sort((a, b) => a.name.localeCompare(b.name, LANG)); // seulement le dossier Commute (06/11/2026)
@@ -6895,6 +7012,16 @@ function alRender() {
   $('#alDays').innerHTML = AL_DAYS.map((l, i) => `<button type="button" data-d="${i + 1}" aria-pressed="${days.has(i + 1)}" title="${AL_DAYN[i]}">${l}</button>`).join('');
   $('#alBox').classList.toggle('off', !on);
   $('#alOff').hidden = !on; $('#alTest').hidden = !dev;
+  // prochaine alerte (page Moi v2.0) : la veille à 20 h ou le jour même à 7 h d'un jour de sortie coché
+  let nx = null; if (on && days.size) { const now = new Date();
+    for (let k = 0; k < 9 && !nx; k++) { const d = new Date(now); d.setDate(d.getDate() + k); const iso = (d.getDay() + 6) % 7 + 1;
+      if (!days.has(iso)) continue; const at = new Date(d); if (r.notify === 'morn') at.setHours(7, 0, 0, 0); else { at.setDate(at.getDate() - 1); at.setHours(20, 0, 0, 0); }
+      if (at > now) nx = at; } }
+  $('#alNext').hidden = !nx;
+  if (nx) { const t0 = new Date(); t0.setHours(0, 0, 0, 0); const dd = Math.round((new Date(nx).setHours(0, 0, 0, 0) - t0) / 864e5);
+    const when = dd === 0 ? T("Aujourd'hui") : dd === 1 ? T("Demain") : dayFmt.format(nx);
+    $('#alNextTxt').textContent = T("{0} {1} h · {2}, départ {3}", [when, nx.getHours(), r.route_name || ($('#alRoute').selectedOptions[0] || {}).text || T("Parcours"), r.dep_time || '09:00']); }
+  if ($('#meKAl')) { $('#meKAl').textContent = on ? 'ON' : 'OFF'; $('#meKAl').classList.toggle('on', on); }
 }
 async function alSave(patch) {
   const sb = await sbIfLogged(); if (!sb) { alMsg(T("Connecte-toi pour régler les alertes.")); return false; }
@@ -7301,10 +7428,12 @@ async function pmOpen() {
   await pmInit(); if (!PM.map || $('#mapPage').hidden) return;
   setTimeout(() => {
     PM.map.invalidateSize();
-    const fresh = pmRouteDraw();
-    if (fresh && !PM.placing) pmFitRoute();
+    const fresh = pmRouteDraw(), fo = PM.focusTo; PM.focusTo = null;
+    if (fo) { PM.map.setView([fo.lat, fo.lon], Math.max(PM.map.getZoom(), 16), { animate: false }); if (PM.loc) PM.loc.follow = false; }
+    else if (fresh && !PM.placing) pmFitRoute();
     pmLoadOsm(); pmLoadUsr(true);
-    pmLocResume(!fresh); pmCompSync();
+    pmLocResume(!fresh && !fo); pmCompSync();
+    if (fo) { PM.usr.set(fo.poi.id, fo); pmRender(); pmShow(fo); }
   }, 30);
 }
 $('#tabMap').addEventListener('click', pmOpen);
