@@ -1263,6 +1263,54 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   #optList .opt .h{font-size:15px;white-space:nowrap}
   .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
 }
+
+/* Commute v2.0 (06/11/2026, maquette « A · Aujourd'hui d'abord ») : carte du jour #tafDay, un trajet à la fois sur téléphone */
+body[data-mode="taf"] #results>*{order:7}
+body[data-mode="taf"] #results>#chips{order:0}
+body[data-mode="taf"] #results>#tafTrips{order:1}
+body[data-mode="taf"] #results>#tafDay{order:2}
+body[data-mode="taf"] #results>#tafDuo{order:3}
+body[data-mode="taf"] #results>#stats{order:4}
+body[data-mode="taf"] #results>#tafWarn{order:5}
+body[data-mode="taf"] #results>#weekCard{order:6}
+body[data-mode="taf"] #results .card{border-radius:16px}
+.td-day{padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.td-kick{margin:0;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--lv1t,var(--ink))}
+.td-kick.l0{color:var(--lv0t,var(--tail))}.td-kick.l2{color:var(--lv2t,var(--head))}
+.td-ttl{margin:0;font-family:var(--f-display);font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-.4px}
+.td-trips{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:821px){.td-trips{grid-template-columns:1fr 1fr}.td-ttl{font-size:30px}}
+.td-trip{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;background:color-mix(in srgb,var(--sun) 14%,var(--panel))}
+.td-trip.l0{background:color-mix(in srgb,var(--tail) 12%,var(--panel))}
+.td-trip.l2{background:color-mix(in srgb,var(--head) 12%,var(--panel))}
+.td-trip.lx{background:var(--bg)}
+.td-trip .vdot{margin-top:4px;flex:none}
+.td-trip>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.td-trip .h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.td-trip .h b{font-size:16px}
+.td-trip .h span{font-family:var(--f-mono);font-size:14px}
+.td-trip .w{font-size:14px}
+.td-trip .a{font-size:13px;color:var(--muted)}
+.duo-seg{display:none}
+@media (max-width:820px){
+  #tafDuo .card-head{flex-wrap:wrap}
+  .duo-seg{display:grid;grid-template-columns:1fr 1fr;flex:1 0 100%;order:5;background:color-mix(in srgb,var(--line) 55%,var(--bg));border-radius:999px;padding:3px;gap:2px}
+  .duo-seg button{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink);border-radius:999px;min-height:40px;cursor:pointer}
+  .duo-seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+  #tafDuo[data-show="0"] .duo-col:nth-child(2),#tafDuo[data-show="1"] .duo-col:nth-child(1){display:none}
+  #stats.duo-stats[data-show="0"] .sd:nth-child(2),#stats.duo-stats[data-show="1"] .sd:nth-child(1){display:none}
+}
+@media (max-width:640px){
+  body[data-mode="taf"] .week-table tbody tr{display:grid;grid-template-columns:78px minmax(0,1fr) minmax(0,1fr);align-items:center;gap:8px;padding:6px 10px}
+  body[data-mode="taf"] .week-table td{padding:2px 0}
+  body[data-mode="taf"] .week-table td:first-child{padding-top:2px;font-size:14px}
+  body[data-mode="taf"] .week-table td[data-k]{display:block}
+  body[data-mode="taf"] .week-table td[data-k]::before{content:none}
+  body[data-mode="taf"] .week-table td[data-k] .wk svg,body[data-mode="taf"] .week-table td[data-k] .vtxt{display:none}
+  body[data-mode="taf"] .week-table td[data-k] .wk b{font-family:var(--f-mono);font-weight:500;font-size:12.5px;line-height:1.35}
+  body[data-mode="taf"] .week-table tr.wkend td.wkend-msg{grid-column:span 2;padding:0;font-size:13px}
+  body[data-mode="taf"] .week-table tr.wkend .wkend-2{display:none}
+}
 </style>
 </head>
 <body>
@@ -1605,6 +1653,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <div id="results" hidden style="display:flex;flex-direction:column;gap:20px;min-width:0">
     <div class="chips" id="chips" aria-label="Réglages rapides"></div>
     <section class="card tt" id="tafTrips" aria-label="Mes trajets" hidden></section>
+    <section class="card td-day" id="tafDay" aria-label="Aujourd'hui" hidden></section>
     <dialog class="exp-dlg tt-dlg" id="ttDlg" aria-labelledby="ttDlgT">
       <div class="tt-dhead"><h2 id="ttDlgT">Trace</h2><button type="button" class="tt-x" id="ttDlgX" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <button type="button" class="btn primary tt-imp no-guest" id="ttImp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Importer un GPX</button>
@@ -1702,7 +1751,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     </section>
 
     <section class="card" id="tafDuo" hidden>
-      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><span class="hint" id="duoHint"></span><label class="arrows-toggle"><input type="checkbox" id="flowOn2"> Vent animé</label><button class="btn small" id="exportImg2" type="button" title="Image PNG de l'aller, du retour et des deux semaines">Exporter l'image</button></div>
+      <div class="card-head"><h2 id="duoTitle">Aller et retour</h2><div class="duo-seg" id="duoSeg" role="group" aria-label="Trajet affiché"><button type="button" data-k="0">Aller</button><button type="button" data-k="1">Retour</button></div><span class="hint" id="duoHint"></span><label class="arrows-toggle"><input type="checkbox" id="flowOn2"> Vent animé</label><button class="btn small" id="exportImg2" type="button" title="Image PNG de l'aller, du retour et des deux semaines">Exporter l'image</button></div>
       <div class="duo">
         <div class="duo-col"><div class="duo-head" id="duoHead0"></div><div class="duo-map" id="duoMap0"></div><canvas data-wx="0" aria-label="Météo de l'aller"></canvas></div>
         <div class="duo-col"><div class="duo-head" id="duoHead1"></div><div class="duo-map" id="duoMap1"></div><canvas data-wx="1" aria-label="Météo du retour"></canvas></div>
@@ -4626,7 +4675,7 @@ function applyModeUI() {
   $('label[for="speed"]').textContent = taf ? T("Vitesse moyenne") : T("Vitesse sur le plat");
   $('#tripSeg').hidden = !taf; $('#optCard').hidden = taf; $('#flowOnLbl').hidden = taf; tripsRender();
   // Vélotaf : deux colonnes au lieu de la carte unique, pas de feuille de route
-  $('#mapCard').hidden = taf; $('#roadCard').hidden = taf; if (!taf) { $('#tafDuo').hidden = true; for (const f of DUO.flows) if (f) f.off(); }
+  $('#mapCard').hidden = taf; $('#roadCard').hidden = taf; if (!taf) { $('#tafDuo').hidden = true; $('#tafDay').hidden = true; for (const f of DUO.flows) if (f) f.off(); }
   if (!taf && map) setTimeout(() => { map.invalidateSize(); renderWindArrows(); }, 50);
   $('label[for="date"]').textContent = taf ? T("Premier jour") : T("Départ"); $('label[for="time"]').textContent = taf ? T("Départ de l'aller") : T("Heure");
   if (!taf) { $('#weekCard').hidden = true; }
@@ -5841,10 +5890,62 @@ function renderDuo(laps, opt) {
   });
   if (typeof L === 'undefined') return;
   requestAnimationFrame(() => { for (let k = 0; k < 2; k++) duoMap(k); drawPlanWx(); duoFlows();
-    if (TAF.scrollTo) { TAF.scrollTo = false; $('#stats').scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+    if (TAF.scrollTo) { TAF.scrollTo = false; $('#tafDay').scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
   const fmtL = new Intl.DateTimeFormat(LOC, { weekday: 'long', day: 'numeric', month: 'long' });
   $('#duoTitle').textContent = T("Aller et retour · {0}", [fmtL.format(new Date(laps[0].a.t))]);
+  tafDayRender(laps, vs, fmtL);
 }
+/* Commute v2.0 : carte du jour (#tafDay) et un trajet à la fois sur téléphone (#duoSeg, DUO.show) */
+function tdWord(w) {
+  if (!w) return T("pas encore de prévision");
+  const base = w.rain >= 1 ? 'r' : w.rain >= 0.2 ? 'g' : 's';
+  if (w.headAvg >= 12) return base === 's' ? T("au sec, mais vent de face") : base === 'r' ? T("sous la pluie et vent de face") : T("avec quelques gouttes et vent de face");
+  if (w.headAvg <= -12 && base === 's') return T("au sec, vent dans le dos");
+  return base === 'r' ? T("sous la pluie") : base === 'g' ? T("avec quelques gouttes") : T("au sec");
+}
+function tdLine(w) {
+  if (!w) return T("Pas encore de prévision pour ce trajet.");
+  const a = Math.round(uT(w.tmin)), b = Math.round(uT(w.tmax)), out = [w.rain >= 0.1 ? T("Pluie {0} mm", [fR(w.rain)]) : T("Au sec"),
+    a === b ? T("ressenti {0} °C", [fT(w.tmin)]) : T("ressenti {0} à {1} °C", [fT(w.tmin), fT(w.tmax)]),
+    w.headAvg >= 12 ? T("vent de face {0} km/h", [fV(w.headAvg)]) : w.headAvg <= -12 ? T("vent de dos") : w.wsDom >= 10 ? T("vent de travers") : T("vent faible")];
+  if (w.dark > 0.3) out.push(T("de nuit"));
+  return out.join(' · ');
+}
+function tdAdvice(w) {
+  if (!w) return '';
+  const out = [];
+  if (w.rain >= 0.2) out.push(T("veste de pluie"));
+  if (w.tmin < 0) out.push(T("gants d'hiver et couvre-chef")); else if (w.tmin < 4) out.push(T("gants longs")); else if (w.tmin < 8) out.push(T("manchettes ou coupe-vent"));
+  if (w.dark > 0.3) out.push(T("lumières"));
+  if (w.gust >= GUST_WARN) out.push(T("prudence, rafales à {0} km/h", [fV(w.gust)]));
+  if (w.tmax > 28) out.push(T("bidon plein"));
+  if (!out.length) return T("Rien de spécial à prévoir.");
+  const t = out.join(', '); return t.charAt(0).toUpperCase() + t.slice(1) + '.';
+}
+function tafDayRender(laps, vs, fmtL) {
+  const el = $('#tafDay'); el.hidden = false;
+  const lv = Math.max(...vs.map(v => v.lvl)), w0 = laps[0].wx, w1 = laps[1].wx;
+  const ttl = !w0 && !w1 ? T("Pas encore de prévision pour ce jour") : tdWord(w0) === tdWord(w1) ? T("Aller et retour {0}", [tdWord(w0)]) : T("Aller {0}, retour {1}", [tdWord(w0), tdWord(w1)]);
+  const kick = lv < 0 ? '' : [T("Conditions favorables"), T("Bien, avec quelques réserves"), T("Conditions difficiles")][lv];
+  const day = fmtL.format(new Date(laps[0].a.t)), Day = day.charAt(0).toUpperCase() + day.slice(1);
+  el.innerHTML = `<p class="td-kick l${Math.max(0, lv)}">${vdot({ lvl: lv })}${Day}${kick ? ' · ' + kick : ''}</p><h2 class="td-ttl">${ttl.charAt(0).toUpperCase() + ttl.slice(1)}</h2>
+    <div class="td-trips">${laps.map((d, k) => `<div class="td-trip ${vs[k].lvl < 0 ? 'lx' : 'l' + vs[k].lvl}">${vdot(vs[k])}<div>
+      <div class="h"><b>${S.laps.names[k]}</b><span>${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}</span></div>
+      <span class="w">${tdLine(d.wx)}</span><span class="a">${tdAdvice(d.wx)} ${k ? T("À la maison à {0}.", [hm.format(new Date(d.b.t))]) : T("Au travail à {0}.", [hm.format(new Date(d.b.t))])}</span></div></div>`).join('')}</div>`;
+  // trajet affiché sur téléphone : celui que la personne a choisi pour ce jour, sinon le moins favorable (l'aller à égalité)
+  const key = TAF.sel || readOpt().date;
+  if (DUO.showFor !== key) { DUO.showFor = key; DUO.show = vs[1].lvl > vs[0].lvl ? 1 : 0; }
+  duoShowUI();
+}
+function duoShowUI() {
+  const k = DUO.show || 0;
+  $('#tafDuo').dataset.show = k; $('#stats').dataset.show = k;
+  for (const b of document.querySelectorAll('#duoSeg button')) b.setAttribute('aria-pressed', String(+b.dataset.k === k));
+}
+$('#duoSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-k]'); if (!b) return; DUO.show = +b.dataset.k; duoShowUI();
+  if (typeof L !== 'undefined' && S.laps && S.laps.taf) requestAnimationFrame(() => { duoMap(DUO.show); drawPlanWx(); });
+});
 function duoMap(k) {
   let m = DUO.maps[k];
   if (!m) {
@@ -5870,7 +5971,7 @@ function duoMap(k) {
   L.circleMarker([p1.lat, p1.lon], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--head'), fillOpacity: 1 }).bindTooltip(k ? T("Arrivée à la maison") : T("Arrivée au travail")).addTo(lay);
   // cadrage sur le trajet à la première ouverture de ce parcours (ensuite on garde le zoom choisi)
   const key = S.lapN + ':' + k;
-  if (DUO.fit[k] !== key) { DUO.fit[k] = key; m.fitBounds(L.latLngBounds(ll), { padding: [20, 20] }); }
+  if (DUO.fit[k] !== key && m.getContainer().offsetWidth) { DUO.fit[k] = key; m.fitBounds(L.latLngBounds(ll), { padding: [20, 20] }); }
   if (DUO.winds[k]) DUO.winds[k].remove();
   DUO.winds[k] = drawArrowsOn(m, rg, P.d[rg[0]], true); // Vélotaf : pas de flèches, seulement ciel et température
 }
