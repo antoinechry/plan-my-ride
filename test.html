@@ -4575,6 +4575,11 @@ function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du doss
     d.showModal();
   });
 }
+// Tous les parcours sont rangés (06/11/2026, demande d'Antoine) : un parcours sans dossier (importé avant les dossiers,
+// ou venu d'un autre appareil) reçoit le dossier deviné par kindOf, enregistré dans le navigateur et dans le compte.
+async function kindFix() {
+  for (const m of LIB.list.filter(x => !x.demo && !KINDS.includes(x.kind))) { try { await kindSet(m.id, kindOf(m)); } catch (e) {} }
+}
 async function kindSet(id, kind) { // changer le dossier d'un parcours : liste, navigateur, compte
   if (!KINDS.includes(kind)) return; const m = LIB.list.find(x => x.id === id); if (!m) return;
   libUpsert({ id, kind });
@@ -6479,7 +6484,8 @@ async function libSave(raw, name, P = S.lapBase || S.P, setCurrent = true, kind 
       libRender(); return;
     }
     const prev = LIB.list.find(x => x.id === id);
-    const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now, kind: KINDS.includes(kind) ? kind : (prev && prev.kind) || null };
+    const meta = { id, name: name || T("Trace sans nom"), km: +P.total.toFixed(2), dplus: Math.round(P.up), used_at: now, kind: KINDS.includes(kind) ? kind : (prev && prev.kind) || '' };
+    if (!meta.kind) meta.kind = kindOf({ id, name: meta.name, km: meta.km }); // toujours rangé dans un dossier (06/11/2026)
     if (setCurrent) { LIB.current = id; try { localStorage.setItem('pmr-last-route', id); } catch (e) {} }
     try { await idbRun('pts', 'readwrite', st => st.put({ id, pts })); await idbRun('meta', 'readwrite', st => st.put(meta)); } catch (e) {}
     libUpsert({ ...meta, local: true });
@@ -6600,6 +6606,7 @@ async function libInit() {
   // parcours de départ : celui du dossier du mode (06/11/2026) ; en Commute, le trajet fixé dans Moi d'abord
   const startId = () => (S.mode === 'taf' && tafDefault()) || lastFor(S.mode);
   let last = startId();
+  await kindFix();
   libRender(); tafFixedRet();
   if (last && !S.P) { LIB.keepMode = true; try { await libOpen(last); } finally { LIB.keepMode = false; } }
   // Compte : récupère la liste, et envoie les parcours qui ne sont que sur ce navigateur.
@@ -6613,6 +6620,7 @@ async function libInit() {
     if (LIB.current === r.id) { LIB.current = ''; try { localStorage.removeItem('pmr-last-route'); } catch (e) {} }
   }
   for (const r of (data || []).filter(r => !r.deleted_at)) { const { deleted_at, ...m } = r; if (!m.kind) delete m.kind; libUpsert({ ...m, remote: true }); }
+  await kindFix();
   libRender(); tafFixedRet();
   if (!S.P) { last = startId(); if (last) { LIB.keepMode = true; try { await libOpen(last); } finally { LIB.keepMode = false; } } }
   // une seule fois : un admin voyait les parcours de tous les comptes ; ceux qu'il a ouverts sont restés dans son navigateur.
