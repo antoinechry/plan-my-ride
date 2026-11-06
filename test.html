@@ -1106,6 +1106,12 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind .wtxt .s{font-size
 body:not([data-mode="taf"]) .stats:not(.duo-stats)>.stat.wind .wtxt .s b{font-family:var(--f-mono);font-weight:500}
 .wbar{display:none;width:100%;margin:2px 0 4px;height:14px;border-radius:999px;overflow:hidden;background:var(--bg)}
 .wbar i{display:block;height:100%}
+body:not([data-mode="taf"]) .stats:not(.duo-stats) .wtxt .s.wpill{border-radius:999px;padding:2px 9px;font-weight:600}
+.wtxt .s.wf{background:var(--head);color:var(--panel)!important}
+.wtxt .s.wc{background:var(--sun);color:#14201b!important}
+.wtxt .s.wt{background:var(--tail);color:var(--panel)!important}
+.wtxt .s.wk{background:var(--bg);color:var(--ink)!important}
+.wtxt .s.wpill b{color:inherit}
 body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 .opt-strip{display:flex;gap:6px;overflow-x:auto;padding:14px 18px 6px;scrollbar-width:thin}
 .opt-h{flex:1 0 58px;min-width:58px;height:112px;box-sizing:border-box;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;padding:9px 4px;font-family:inherit}
@@ -3043,7 +3049,11 @@ function renderSummary(opt) {
       bar.className = 'wbar'; bar.setAttribute('role', 'img');
       bar.setAttribute('aria-label', T("Vent : {0} % de face, {1} % de travers, {2} % de dos, {3} % calme", [p(rs.face), p(rs.cross), p(rs.tail), p(rs.calm)]));
       bar.innerHTML = `<i style="width:${p(rs.face)}%;background:var(--head)"></i><i style="width:${p(rs.cross)}%;background:var(--sun)"></i><i style="width:${p(rs.tail)}%;background:var(--tail)"></i>`;
-      const lb = w.querySelector('.wtxt .label'); if (lb) lb.after(bar); } }
+      const lb = w.querySelector('.wtxt .label'); if (lb) lb.after(bar);
+      // textes surlignés de la couleur de leur part de la barre (face, travers, dos, puis calme s'il est affiché)
+      const ss = [...w.querySelectorAll('.wtxt .s')], cl = ['wf', 'wc', 'wt'];
+      if (rs.calm > 0.02) cl.push('wk');
+      cl.forEach((c, i) => { if (ss[i]) ss[i].classList.add('wpill', c); }); } }
   // Vélotaf : résumé coupé en deux (Aller | Retour), une rose par trajet
   $('#stats').classList.toggle('duo-stats', !!tafSum); S.roses = null;
   if (tafSum) {
