@@ -1001,6 +1001,18 @@ body.guest .lp-more,body.guest #libPage .lp-tools,body.lim #outPage .lp-tools,bo
 .pm-add svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
 body.pm-placing .pm-add,body.pm-placing .pm-legend{display:none}
 body.pm-placing .pm-loc{bottom:16px}
+/* ajout d'un point en trois étapes (06/11/2026) */
+.pm-step{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+#pmSheet.pm-compact .pm-sh{margin-bottom:10px}
+.pm-newpin{display:flex;flex-direction:column;align-items:center;background:none;border:0}
+.pm-newpin .pm-aim-pin{width:40px;height:40px;border-radius:999px;background:var(--pmc);border:3px solid #fff;box-shadow:0 0 0 1px var(--pmc),0 4px 10px rgba(20,32,27,.3);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.pm-newpin .pm-aim-pin svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pm-newpin .pm-aim-stem{width:2px;height:17px;background:var(--ink)}
+.pm-chosen{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.pm-chosen i{width:32px;height:32px;border-radius:999px;background:var(--c);display:flex;align-items:center;justify-content:center;flex:none}
+.pm-chosen i svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pm-chosen span{flex:1}
+.pm-chosen small{color:var(--accent);font-weight:600;font-size:13px}
 .pm-aim{position:absolute;left:50%;top:50%;z-index:4;pointer-events:none;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%)}
 .pm-aim[hidden]{display:none}
 .pm-aim-pin{width:40px;height:40px;border-radius:999px;background:var(--pmc,#1c87d6);border:3px solid #fff;box-shadow:0 0 0 1px var(--pmc,#1c87d6),0 4px 10px rgba(20,32,27,.3);display:flex;align-items:center;justify-content:center}
@@ -8060,19 +8072,31 @@ function pmReviewForm(it) {
   $('#pmRevForm').scrollIntoView({ block: 'nearest' });
 }
 
-/* ajout d'un point : repère fixe au-dessus de la feuille, on déplace la carte dessous */
+/* ajout d'un point, en trois temps (06/11/2026, demande d'Antoine) :
+   1. placer le repère (carte dégagée, petite barre « Valider l'emplacement ») ;
+   2. choisir le type ; 3. nom, infos, avis, photo, puis « Publier le point ».
+   L'emplacement validé est gardé dans PM.form.ll et marqué sur la carte (PM.addMk) : on peut ensuite bouger la carte librement. */
 function pmAimPos() {
   const wrap = $('.pm-mapwrap'), W = wrap.clientWidth, H = wrap.clientHeight, wide = innerWidth > 700;
-  return wide ? { x: Math.round((W - 416) / 2), y: Math.round(H * 0.5) } : { x: Math.round(W / 2), y: Math.round(H * 0.3) };
+  return wide ? { x: Math.round((W - 416) / 2), y: Math.round(H * 0.5) } : { x: Math.round(W / 2), y: Math.round(H * 0.42) };
 }
+const PM_PIN0 = { col: '#14201b', d: 'M12 5v14M5 12h14' }; // repère avant le choix du type
 function pmAimPlace() {
-  const a = $('#pmAim'), p = pmAimPos(), t = PM_TYPES[PM.form.type];
+  const a = $('#pmAim'), p = pmAimPos(), t = PM_TYPES[PM.form.type] || PM_PIN0;
   a.style.left = p.x + 'px'; a.style.top = p.y + 'px'; a.style.setProperty('--pmc', t.col);
   a.querySelector('.pm-aim-pin').innerHTML = pmSvg(t.d);
 }
 function pmAimLatLng() { const p = pmAimPos(); return PM.map.containerPointToLatLng([p.x, p.y]); }
+function pmAddMark() { // repère posé (étapes 2 et 3), à la couleur du type choisi
+  const f = PM.form, t = PM_TYPES[f.type] || PM_PIN0;
+  const icon = L.divIcon({ className: 'pm-newpin', iconSize: [40, 57], iconAnchor: [20, 57],
+    html: `<span class="pm-aim-pin" style="--pmc:${t.col}">${pmSvg(t.d)}</span><span class="pm-aim-stem"></span>` });
+  if (PM.addMk) PM.addMk.setLatLng(f.ll).setIcon(icon); else PM.addMk = L.marker(f.ll, { icon, interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(PM.map);
+}
 function pmPlacingOff() {
   PM.placing = false; document.body.classList.remove('pm-placing'); $('#pmAim').hidden = true;
+  if (PM.addMk) { PM.addMk.remove(); PM.addMk = null; }
+  $('#pmSheet').classList.remove('pm-compact');
   if (PM.form && PM.form.photoUrl) URL.revokeObjectURL(PM.form.photoUrl);
   pmStatus();
 }
@@ -8083,29 +8107,55 @@ function pmAddStart() {
   if (PM.loc.follow) { PM.loc.follow = false; pmLocUI(); }
   if (PM.rot && PM.map.getBearing()) { PM.loc.bt = 0; PM.map.setBearing(0); } // nord en haut pour placer le repère (le suivi de la boussole reprend après)
   PM.sel = null; PM.placing = true; document.body.classList.add('pm-placing');
-  PM.form = { type: PM.form && PM.form.type || 'fontaine', name: '', details: '', rating: 0, comment: '', photo: null, photoUrl: '' };
-  $('#pmAim').hidden = false; pmAimPlace(); pmNote('');
+  PM.form = { step: 'place', ll: null, type: '', name: '', details: '', rating: 0, comment: '', photo: null, photoUrl: '' };
   if (!was) { const c = PM.map.getSize(), p = pmAimPos(); PM.map.panBy([c.x / 2 - p.x, c.y / 2 - p.y], { animate: false }); }
   pmAddDraw();
 }
+function pmAddGo(step) { // passer d'une étape à l'autre (le formulaire garde ce qui a été saisi)
+  const f = PM.form; if (!f) return;
+  if (f.step === 'details' && $('#pmName')) { f.name = $('#pmName').value; f.details = $('#pmDet').value; f.comment = $('#pmCom').value; }
+  if (step === 'place' && f.ll) { // revenir au placement : la carte se recale pour que le repère reste au même endroit
+    if (PM.addMk) { PM.addMk.remove(); PM.addMk = null; }
+    const p = pmAimPos(), q = PM.map.latLngToContainerPoint(f.ll); PM.map.panBy([q.x - p.x, q.y - p.y], { animate: false });
+  }
+  f.step = step; pmAddDraw();
+}
 function pmAddDraw() {
-  const f = PM.form, t = PM_TYPES[f.type];
-  pmSheet(`<div class="pm-sh"><div><h3 id="pmSheetTitle">${escH(T("Ajouter un point"))}</h3><span class="pm-src">${escH(T("Place le repère au bon endroit en déplaçant la carte."))}</span></div>
-      <button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Annuler"))}">✕</button></div>
+  const f = PM.form, t = PM_TYPES[f.type], x = `<button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Annuler"))}">✕</button>`;
+  const head = (title, sub, n) => `<div class="pm-sh"><div><span class="pm-step">${escH(T("Étape {0} sur 3", [n]))}</span><h3 id="pmSheetTitle">${escH(title)}</h3>${sub ? `<span class="pm-src">${escH(sub)}</span>` : ''}</div>${x}</div>`;
+  $('#pmAim').hidden = f.step !== 'place';
+  if (f.step === 'place') {
+    pmAimPlace();
+    pmSheet(`${head(T("Où est ce point ?"), T("Déplace la carte pour mettre le repère au bon endroit, puis valide."), 1)}
+      <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" data-pm-close>${escH(T("Annuler"))}</button><button type="button" class="btn primary" id="pmPlaceOk">${escH(T("Valider l'emplacement"))}</button></div>`);
+    $('#pmSheet').classList.add('pm-compact');
+    $('#pmPlaceOk').addEventListener('click', () => { f.ll = pmAimLatLng(); pmAddMark(); pmAddGo(f.type ? 'details' : 'type'); });
+    return;
+  }
+  $('#pmSheet').classList.remove('pm-compact');
+  pmAddMark();
+  if (f.step === 'type') {
+    pmSheet(`${head(T("Quel type de point ?"), '', 2)}
+      <div class="pm-form"><div class="pm-types" role="radiogroup" aria-labelledby="pmSheetTitle">${PM_ORDER.map(k => { const y = PM_TYPES[k];
+        return `<button type="button" class="pm-type" role="radio" aria-checked="${k === f.type}" data-type="${k}" style="--c:${y.col}"><i>${pmSvg(y.d)}</i>${escH(y.lbl)}</button>`; }).join('')}</div>
+      <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" data-step="place">${escH(T("← Déplacer le repère"))}</button></div></div>`);
+    $('#pmSheetBody').querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => { f.type = b.dataset.type; pmAddGo('details'); }));
+    $('#pmSheetBody').querySelector('[data-step]').addEventListener('click', () => pmAddGo('place'));
+    return;
+  }
+  pmSheet(`${head(T("Ajouter un point"), '', 3)}
     <div class="pm-form">
-      <div><span class="pm-lbl" id="pmTypeLbl">${escH(T("Type de point"))}</span>
-        <div class="pm-types" role="radiogroup" aria-labelledby="pmTypeLbl">${PM_ORDER.map(k => { const x = PM_TYPES[k];
-          return `<button type="button" class="pm-type" role="radio" aria-checked="${k === f.type}" data-type="${k}" style="--c:${x.col}"><i>${pmSvg(x.d)}</i>${escH(x.lbl)}</button>`; }).join('')}</div></div>
+      <button type="button" class="pm-chosen" data-step="type" style="--c:${t.col}"><i>${pmSvg(t.d)}</i><span>${escH(t.lbl)}</span><small>${escH(T("Changer"))}</small></button>
       <label><span>${escH(T("Nom du lieu"))}</span><input type="text" id="pmName" maxlength="80" value="${escH(f.name)}" placeholder="${escH(t.lbl)}"></label>
       <label><span>${escH(T("Infos utiles · facultatif"))}</span><textarea id="pmDet" maxlength="500" placeholder="${escH(t.hint)}">${escH(f.details)}</textarea></label>
       ${pmRevFields(f, T("Ton avis sur ce lieu"))}
       ${f.type === 'bivouac' ? `<p class="pm-warn">${pmSvg('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5M12 16.5v.1').replace('<svg', '<svg width="18" height="18" style="flex:none" fill="none" stroke="var(--lv1t)" stroke-width="2"')}${escH(T("Le bivouac est réglementé selon les lieux (parcs, réserves, forêts). Indique si c'est autorisé ou toléré."))}</p>` : ''}
       <p class="pm-msg">${escH(T("Ton point est visible tout de suite, avec la mention « en cours de validation » le temps qu'on le vérifie."))}</p>
       <p class="pm-msg" id="pmFormMsg" aria-live="polite"></p>
-      <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" data-pm-close>${escH(T("Annuler"))}</button><button type="button" class="btn primary" id="pmAddSend">${escH(T("Publier le point"))}</button></div>
+      <div class="pm-acts" style="margin-top:0"><button type="button" class="btn" data-step="place">${escH(T("← Déplacer le repère"))}</button><button type="button" class="btn primary" id="pmAddSend">${escH(T("Publier le point"))}</button></div>
     </div>`);
   const keep = () => { f.name = $('#pmName').value; f.details = $('#pmDet').value; f.comment = $('#pmCom').value; };
-  $('#pmSheetBody').querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => { keep(); f.type = b.dataset.type; pmAimPlace(); pmAddDraw(); }));
+  $('#pmSheetBody').querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => pmAddGo(b.dataset.step)));
   pmBindRevFields(f, () => { keep(); pmAddDraw(); });
   $('#pmAddSend').addEventListener('click', pmAddSend);
 }
@@ -8115,7 +8165,7 @@ async function pmAddSend() {
   btn.disabled = true; msg.className = 'pm-msg'; msg.textContent = T("Envoi…");
   try {
     const sb = await sbIfLogged(); if (!sb) throw new Error(T("Connecte-toi pour ajouter un point."));
-    const ll = pmAimLatLng(), name = (f.name.trim() || t.lbl).slice(0, 80);
+    const ll = f.ll || pmAimLatLng(), name = (f.name.trim() || t.lbl).slice(0, 80);
     const { data, error } = await sb.from('poi').insert({ type: f.type, name, lat: +ll.lat.toFixed(6), lon: +ll.lng.toFixed(6), details: f.details.trim().slice(0, 500) || null })
       .select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').single();
     if (error || !data) throw new Error(/row-level|policy|permission/i.test(error && error.message || '') ? T("Ton compte ne peut pas encore ajouter de point.") : T("Le point n'a pas pu être enregistré."));
@@ -8128,7 +8178,7 @@ async function pmAddSend() {
   } catch (er) { btn.disabled = false; msg.className = 'pm-msg err'; msg.textContent = er.message; }
 }
 $('#pmAdd').addEventListener('click', pmAddStart);
-addEventListener('resize', () => { if (PM.placing) pmAimPlace(); });
+addEventListener('resize', () => { if (PM.placing && PM.form && PM.form.step === 'place') pmAimPlace(); });
 // Échap (et retour Android) : ferme d'abord la feuille du bas, puis la page.
 addEventListener('keydown', e => {
   if (e.key !== 'Escape' || $('#mapPage').hidden || $('#pmSheet').hidden) return;
