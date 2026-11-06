@@ -7539,8 +7539,12 @@ function pmInitMap(rot) {
   });
   let tr = 0;
   PM.map.on('rotate', () => { pmCompassUI(); pmMeDraw(); clearTimeout(tr); tr = setTimeout(() => { saveView(); pmRender(); pmLoadOsm(); pmLoadUsr(); }, 400); });
-  // Filet de sécurité : après chaque zoom, le dessin vectoriel (tracé GPX, cercle de position) est recalé sur la vue
-  PM.map.on('zoomend', () => { requestAnimationFrame(() => { const r = PM.map && PM.map._renderer; if (r && r._reset && !PM.map._animatingZoom) r._reset(); }); });
+  // Dessin vectoriel (tracé GPX, cercle de position) redessiné à chaque pas de zoom et de rotation : leaflet-rotate le
+  // décale dès que la carte tourne pendant un pincement (rotation à deux doigts, suivi de la boussole) ; reproduit et
+  // corrigé le 06/11/2026. Pas pendant l'animation CSS d'un zoom (le renderer s'en charge), et encore une fois à la fin.
+  const pmVecReset = () => { const r = PM.map && PM.map._renderer; if (r && r._reset && !PM.map._animatingZoom) r._reset(); };
+  PM.map.on('zoom rotate', pmVecReset);
+  PM.map.on('zoomend', () => requestAnimationFrame(pmVecReset));
   // déplacer la carte arrête de me suivre ; le mode d'orientation, lui, reste celui choisi
   PM.map.on('dragstart', () => { const L0 = PM.loc; if (L0.follow) { L0.follow = false; pmLocUI(); } });
   // rotation au choix : deux doigts posés = on arrête une rotation animée en cours (« Remettre le nord en haut »)
