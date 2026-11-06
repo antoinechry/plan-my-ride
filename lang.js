@@ -1195,6 +1195,15 @@ window.PMR_I18N = {
     "S'ouvre tout seul en arrivant sur Vélotaf": "Opens by itself when you arrive in Commute",
     "Maison": "Home",
     "Travail": "Work",
-    "{0} min": "{0} min"
+    "{0} min": "{0} min",
+    "Vent : {0} % de face, {1} % de travers, {2} % de dos, {3} % calme": "Wind: {0} % head, {1} % cross, {2} % tail, {3} % calm",
+    "Ton départ": "Your start",
+    "Incomplet": "Incomplete",
+    "Top": "Best",
+    "Bien": "Good",
+    "Moyen": "Fair",
+    "Bof": "Poor",
+    "Départ à {0} : {1}": "Start at {0}: {1}",
+    "<p><b>Meilleur créneau : {0}.</b> Arrivée {1}, pluie {2} mm, face {3} %.</p><button type=\"button\" class=\"btn primary\" data-time=\"{4}\">Partir à {4}</button>": "<p><b>Best slot: {0}.</b> Arrival {1}, rain {2} mm, headwind {3} %.</p><button type=\"button\" class=\"btn primary\" data-time=\"{4}\">Start at {4}</button>"
   }
 };
