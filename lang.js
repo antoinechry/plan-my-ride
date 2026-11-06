@@ -117,7 +117,6 @@ window.PMR_I18N = {
     "Une sortie à la journée": "A one-day ride",
     "Plusieurs jours, planification journalière": "Several days, day-by-day planning",
     "Mes trajets maison → travail": "My home → work trips",
-    "Plus tard": "Later",
     "<li class=\"lp-empty\"><b>Aucun parcours dans le dossier {0}.</b><br>Range-y un parcours depuis son menu « ⋯ », ou importe un GPX.</li>": "<li class=\"lp-empty\"><b>No route in the {0} folder.</b><br>File a route here from its “⋯” menu, or import a GPX.</li>",
     "<option value=\"\">Aucun : le parcours ouvert</option>{0}": "<option value=\"\">None: the open route</option>{0}",
     "<option value=\"\">Aucun parcours dans ton compte</option>": "<option value=\"\">No routes in your account</option>",
