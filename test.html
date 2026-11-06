@@ -1097,41 +1097,7 @@ body[data-mode="taf"] .vkick{display:none}
 .vlines .vk{display:none}
 .qs-meta{font:400 13px var(--f-body);color:var(--muted);margin-left:8px}
 @media (min-width:1100px){.vkick,.qs-meta{display:none!important}}
-@media (max-width:700px){
-  header.top .modes{border:0;border-radius:999px;background:var(--line);padding:3px;gap:2px;overflow:visible}
-  header.top .modes a{border:0!important;border-radius:999px;text-transform:none;letter-spacing:0;font-size:14px;min-height:38px;padding:8px 4px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
-  header.top .modes a[aria-current="page"]{background:var(--ink);color:var(--panel)}
-  body:not([data-mode="taf"]) .verdict{font-size:26px;line-height:1.15}
-  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{padding:18px 16px}
-  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li{gap:10px;padding:9px 0;font-size:14px;line-height:1.4}
-  .vlines svg{display:none}
-  .vlines .vk{display:block;flex:0 0 84px;padding-top:2px;font:500 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  .verdict-go{flex-wrap:nowrap;background:color-mix(in srgb,var(--tail) 10%,var(--panel));padding:10px 12px;gap:10px;margin-top:12px}
-  .verdict-go p{font-size:13.5px;max-width:none;flex:1;min-width:0}
-  .verdict-go .btn{background:var(--ink);color:var(--panel);border-color:var(--ink);padding:9px 13px;font-size:13px}
-  #mapCard .seg{display:flex;width:100%}
-  #mapCard .seg button{flex:1 1 auto;white-space:nowrap;padding:7px 8px;font-size:12.5px}
-  .chart-keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11.5px}
-  .opt-strip{gap:2px;padding:10px 12px 4px;overflow:visible}
-  .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent}
-  .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
-  .opt-h.best{border:2px solid var(--tail)}
-  .opt-h .b{width:16px}
-  .opt-h .t{font-size:10.5px}
-  .opt-h .w{font-size:0;line-height:12px}
-  .opt-h .w::after{content:attr(data-s);font-size:9.5px;letter-spacing:-.01em}
-  .opt{grid-template-columns:70px minmax(0,1fr)}
-  #optList .opt .h{font-size:15px;white-space:nowrap}
-}
 @media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:2px 8px}.vhours li>.t,.vhours li>svg,.vhours li>.wsky,.vhours li>.w{grid-row:span 2}.vhours li>.a{align-self:end}.vhours li .rel{grid-column:4;justify-self:end;align-self:start;padding:2px 8px;font-size:11.5px}.vhours li.end>*{grid-row:auto}}
-@media (max-width:700px){
-  .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
-  .opt-strip{gap:4px;padding:12px 14px 6px}
-  .opt-h{flex:0 0 48px;min-width:48px;height:100px;padding:8px 2px}
-  .opt-h .t{font-size:12px}
-  .opt-h .w{font-size:10px}
-  .chart-keys{gap:6px 14px;font-size:12px}
-}
 .verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .verdict-go p{margin:0;font-size:14px;line-height:1.4;max-width:30ch}
 .verdict-go p b{font-weight:700}
@@ -1177,6 +1143,39 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 #roadCard .rel.h{background:color-mix(in srgb,var(--head) 14%,var(--panel))}
 #roadCard .rel.t{background:color-mix(in srgb,var(--tail) 14%,var(--panel))}
 #roadCard tbody tr:nth-child(even):not(.stop){background:color-mix(in srgb,var(--bg) 55%,var(--panel))}
+/* téléphone : règles de la maquette mobile A, en fin de feuille pour passer devant .opt-h / .opt-strip */
+@media (max-width:700px){
+  header.top .modes{border:0;border-radius:999px;background:var(--line);padding:3px;gap:2px;overflow:visible}
+  header.top .modes a{border:0!important;border-radius:999px;text-transform:none;letter-spacing:0;font-size:14px;min-height:38px;padding:8px 4px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  header.top .modes a[aria-current="page"]{background:var(--ink);color:var(--panel)}
+  body:not([data-mode="taf"]) .verdict{font-size:26px;line-height:1.15}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{padding:18px 16px}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li{gap:10px;padding:9px 0;font-size:14px;line-height:1.4}
+  .vlines svg{display:none}
+  .vlines .vk{display:block;flex:0 0 84px;padding-top:2px;font:500 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .verdict-go{flex-wrap:nowrap;background:color-mix(in srgb,var(--tail) 10%,var(--panel));padding:10px 12px;gap:10px;margin-top:12px}
+  .verdict-go p{font-size:13.5px;max-width:none;flex:1;min-width:0}
+  .verdict-go .btn{background:var(--ink);color:var(--panel);border-color:var(--ink);padding:9px 13px;font-size:13px}
+  #mapCard .seg{display:flex;width:100%}
+  #mapCard .seg button{flex:1 1 auto;white-space:nowrap;padding:7px 8px;font-size:12.5px}
+  .chart-keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11.5px}
+  .opt-strip{gap:2px;padding:10px 12px 4px;overflow:visible}
+  .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent}
+  .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
+  .opt-h.best{border:2px solid var(--tail)}
+  .opt-h .b{width:16px}
+  .opt-h .t{font-size:10.5px}
+  .opt-h .w{font-size:0;line-height:12px}
+  .opt-h .w::after{content:attr(data-s);font-size:9.5px;letter-spacing:-.01em}
+  .opt{grid-template-columns:70px minmax(0,1fr)}
+  #optList .opt .h{font-size:15px;white-space:nowrap}
+  .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
+  .opt-strip{gap:4px;padding:12px 14px 6px}
+  .opt-h{flex:0 0 48px;min-width:48px;height:100px;padding:8px 2px}
+  .opt-h .t{font-size:12px}
+  .opt-h .w{font-size:10px}
+  .chart-keys{gap:6px 14px;font-size:12px}
+}
 </style>
 </head>
 <body>
