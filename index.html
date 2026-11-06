@@ -79,6 +79,8 @@ header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block
 .modes a{padding:8px 14px;text-decoration:none;color:var(--muted);font-weight:700;font-family:var(--f-display);font-size:14px;letter-spacing:.03em;text-transform:uppercase}
 .modes a+a{border-left:1px solid var(--line)}
 .modes a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.modes a{display:inline-flex;align-items:center;gap:7px}
+.modes .mi{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .mode-ultra{display:flex;flex-direction:column;gap:18px}
 .seg2{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
 .seg2 button{border:0;background:transparent;padding:6px 8px;font-size:13.5px;cursor:pointer;color:var(--muted)}
@@ -999,7 +1001,21 @@ body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{mar
 .vhours li.end{grid-template-columns:50px 24px minmax(0,1fr)}
 .vhours li.end svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .vhours .note{margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
-@media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:8px}.vhours li .rel{grid-column:3/-1;justify-self:start}}
+/* téléphone et tablette (maquette mobile A, 06/11/2026) : la frise sort du verdict et passe sous les tuiles, dans sa propre carte */
+.hours-card{border-radius:16px;padding:16px}
+.hours-card .vhours{margin-top:0}
+.hours-card .vhours .vh-head b{font:700 18px var(--f-display);letter-spacing:0;text-transform:none;color:var(--ink)}
+@media (max-width:1099px){body:not([data-mode="taf"]) #results>#hoursCard{order:4}}
+/* niveau au-dessus du verdict, étiquettes des lignes du verdict (maquette mobile A) */
+.vkick{margin:0 0 8px;display:flex;align-items:center;gap:8px;font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vkick::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--lv0,var(--tail));flex:none}
+.vkick.lv1::before{background:var(--lv1,var(--sun))}
+.vkick.lv2::before{background:var(--lv2,var(--head))}
+body[data-mode="taf"] .vkick{display:none}
+.vlines .vk{display:none}
+.qs-meta{font:400 13px var(--f-body);color:var(--muted);margin-left:8px}
+@media (min-width:1100px){.vkick,.qs-meta{display:none!important}}
+@media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:2px 8px}.vhours li>.t,.vhours li>svg,.vhours li>.wsky,.vhours li>.w{grid-row:span 2}.vhours li>.a{align-self:end}.vhours li .rel{grid-column:4;justify-self:end;align-self:start;padding:2px 8px;font-size:11.5px}.vhours li.end>*{grid-row:auto}}
 .verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .verdict-go p{margin:0;font-size:14px;line-height:1.4;max-width:30ch}
 .verdict-go p b{font-weight:700}
@@ -1035,6 +1051,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 .opt-h .b{display:block;width:24px;border-radius:6px}
 .opt-h .t{font:500 13px var(--f-mono)}
 .opt-h .w{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.opt-h .ws,.opt-h .ts{display:none}
 .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
 .opt-h.best{border:2px solid var(--tail)}
 .opt-h.off{opacity:.45}
@@ -1045,6 +1062,37 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
 #roadCard .rel.h{background:color-mix(in srgb,var(--head) 14%,var(--panel))}
 #roadCard .rel.t{background:color-mix(in srgb,var(--tail) 14%,var(--panel))}
 #roadCard tbody tr:nth-child(even):not(.stop){background:color-mix(in srgb,var(--bg) 55%,var(--panel))}
+/* téléphone : règles de la maquette mobile A, en fin de feuille pour passer devant .opt-h / .opt-strip */
+@media (max-width:700px){
+  header.top .modes{border:0;border-radius:999px;background:var(--line);padding:3px;gap:2px;overflow:visible}
+  header.top .modes a{border:0!important;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;font-size:12px;min-height:40px;padding:8px 0;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--ink)}
+  header.top .modes .mi{width:19px;height:19px}
+  header.top .modes a[aria-current="page"]{background:var(--ink);color:var(--panel)}
+  body:not([data-mode="taf"]) .verdict{font-size:26px;line-height:1.15}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"]{padding:18px 16px}
+  body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .vlines li{gap:10px;padding:9px 0;font-size:14px;line-height:1.4}
+  .vlines svg{display:none}
+  .vlines .vk{display:block;flex:0 0 84px;padding-top:2px;font:500 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .verdict-go{flex-wrap:nowrap;background:color-mix(in srgb,var(--tail) 10%,var(--panel));padding:10px 12px;gap:10px;margin-top:12px}
+  .verdict-go p{font-size:13.5px;max-width:none;flex:1;min-width:0}
+  .verdict-go .btn{background:var(--ink);color:var(--panel);border-color:var(--ink);padding:9px 13px;font-size:13px}
+  #mapCard .seg{display:flex;width:100%}
+  #mapCard .seg button{flex:1 1 auto;white-space:nowrap;padding:7px 8px;font-size:12.5px}
+  .chart-keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11.5px}
+  .opt-strip{gap:2px;padding:10px 10px 4px;overflow:hidden}
+  .opt-h{flex:1 1 0;min-width:0;height:96px;padding:6px 0;border-color:transparent;background:transparent;overflow:hidden}
+  .opt-h.mine{border:2px solid var(--ink);background:var(--bg)}
+  .opt-h.best{border:2px solid var(--tail)}
+  .opt-h .t{font-size:11px}
+  .opt-h .w{display:none}
+  .opt-h.mine .w,.opt-h.best .w{display:block;font-size:9px;letter-spacing:-.02em;margin:0 -6px}
+  .opt-h .b{width:18px;border-radius:7px}
+  .opt-h .wl,.opt-h .tl{display:none}
+  .opt-h .ws,.opt-h .ts{display:inline}
+  .opt{grid-template-columns:70px minmax(0,1fr)}
+  #optList .opt .h{font-size:15px;white-space:nowrap}
+  .vhours .vh-head{flex-wrap:wrap;row-gap:2px}
+}
 </style>
 </head>
 <body>
@@ -1085,9 +1133,9 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <p id="brandSub">Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.</p>
   </div>
   <nav class="modes" aria-label="Page">
-    <a href="#" data-mode="ride">Sortie</a>
-    <a href="#ultra" data-mode="ultra">Ultra</a>
-    <a href="#velotaf" data-mode="taf">Vélotaf</a>
+    <a href="#" data-mode="ride"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg><span>Sortie</span></a>
+    <a href="#ultra" data-mode="ultra"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg><span>Ultra</span></a>
+    <a href="#velotaf" data-mode="taf"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/></svg><span>Commute</span></a>
   </nav>
   <div class="theme-seg" role="group" aria-label="Thème" id="themeSeg">
     <button type="button" data-t="light" title="Thème clair" aria-label="Thème clair">☀︎</button>
@@ -1124,8 +1172,8 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <div class="me-card"><h3>Mon compte</h3><p class="hint" id="meWho"></p>
     <div class="me-btns"><button type="button" class="btn small" id="mePw">Changer mon mot de passe</button><a class="btn small adm" href="admin.html">Admin</a><button type="button" class="btn small" id="meOut">Se déconnecter</button></div>
     <p class="me-del"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p></div>
-  <div class="me-card"><h3>Mon trajet de vélotaf</h3><p class="hint">Ouvert tout seul quand tu passes sur Vélotaf. Les autres pages gardent leur parcours.</p>
-    <select id="meTaf" class="me-sel" aria-label="Trajet de vélotaf par défaut"></select></div>
+  <div class="me-card"><h3>Mon trajet Commute</h3><p class="hint">Ouvert tout seul quand tu passes sur Commute. Les autres pages gardent leur parcours.</p>
+    <select id="meTaf" class="me-sel" aria-label="Trajet Commute par défaut"></select></div>
   <div class="me-card" id="alCard"><h3>Alertes météo</h3>
     <p class="hint">Une notification la veille au soir ou le matin même : la météo de ton parcours à ton heure de départ (pastille verte, orange ou rouge), et un meilleur créneau s'il y en a un.</p>
     <p class="al-why" id="alWhy" hidden></p>
@@ -1183,7 +1231,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     <div class="pm-sheet" id="pmSheet" hidden role="dialog" aria-labelledby="pmSheetTitle"><div id="pmSheetBody"></div></div>
   </div>
 </section>
-<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/></svg></span>Vélotaf</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabMap"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21c-4-5-7-8-7-11.5a7 7 0 0 1 14 0C19 13 16 16 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>Carte</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
+<nav class="tabbar" aria-label="Navigation"><a href="#" class="rail-mode" data-mode="ride"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span>Sortie</a><a href="#ultra" class="rail-mode" data-mode="ultra"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span>Ultra</a><a href="#velotaf" class="rail-mode" data-mode="taf"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/></svg></span>Commute</a><span class="rail-sep" aria-hidden="true"></span><button type="button" id="tabMode" aria-current="page"><span class="ic"><svg viewBox="0 0 24 24" id="tabModeIco"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><span id="tabModeTxt">Sortie</span></button><button type="button" id="tabLib"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></span>Parcours</button><button type="button" id="tabMap"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21c-4-5-7-8-7-11.5a7 7 0 0 1 14 0C19 13 16 16 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>Carte</button><button type="button" id="tabOut"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/><path d="M12 10.8v.6M12 17.6v.6M8.3 14.5h.6M15.1 14.5h.6"/></svg></span>Sorties</button><a href="admin.html" class="rail-admin adm" title="Supervision : comptes, quotas, parcours"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Admin</a><button type="button" id="tabMe"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/></svg></span>Moi</button></nav>
 <div class="app">
   <div class="sheet-bg" id="sheetBg"></div>
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
@@ -1371,12 +1419,14 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <ul class="tt-list" id="ttList"></ul>
     </dialog>
     <section aria-label="Résumé">
+      <p class="vkick" id="verdictKick" hidden></p>
       <p class="verdict" id="verdict">Calcul en cours…</p>
       <div class="verdict-more" id="verdictMore" hidden></div>
       <div class="vhours" id="verdictHours" hidden></div>
       <div class="verdict-go" id="verdictGo" hidden></div>
     </section>
     <div class="stats" id="stats"></div>
+    <section class="card hours-card" id="hoursCard" hidden></section>
     <p class="hint taf-warn" id="tafWarn" hidden>Heure de départ conseillée, calculée selon la distance et votre vitesse. Prévoyez une marge selon les conditions de circulation et la météo.</p>
 
     <section class="card" id="mapCard">
@@ -1456,7 +1506,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
     </section>
 
     <section class="card" id="weekCard" hidden>
-      <div class="card-head"><h2>Deux semaines de vélotaf</h2><span class="hint" id="weekHint"></span></div>
+      <div class="card-head"><h2>Deux semaines de trajets</h2><span class="hint" id="weekHint"></span></div>
       <div class="week-scroll">
         <table class="week-table">
           <thead><tr><th>Jour</th><th>Aller <span class="hint" id="weekGoH"></span></th><th>Retour <span class="hint" id="weekBackH"></span></th></tr></thead>
@@ -1533,7 +1583,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
   <div class="bd">
     <p>Sillage calcule ton heure de passage à chaque point d'un parcours et te donne la météo prévue à cet endroit, à ce moment-là. Trois modes selon ta sortie, et ton espace pour le reste&nbsp;:</p>
     <div class="seg2 help-tabs" role="tablist" aria-label="Pages">
-      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Vélotaf</button><button type="button" role="tab" data-h="more">Et aussi</button>
+      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Commute</button><button type="button" role="tab" data-h="more">Et aussi</button>
     </div>
     <ol data-h="ride">
       <li><i>1</i><div><b>Importe une trace GPX</b><span>«&nbsp;Importer un GPX&nbsp;» dans les réglages, ou glisse le fichier sur la page. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Le parcours est gardé dans ton compte et se retrouve sur tous tes appareils. «&nbsp;⇄ Inverser le sens&nbsp;» pour le rouler à l'envers.</span></div></li>
@@ -1548,7 +1598,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <li><i>4</i><div><b>Trouve tes ravitos</b><span>Coche «&nbsp;Rechercher les lieux&nbsp;»&nbsp;: épiceries, boulangeries, restos, points d'eau et hébergements le long de la trace, ouverts ou non à ton passage, avec les plus longs tronçons sans ravito.</span></div></li>
     </ol>
     <ol data-h="taf" hidden>
-      <li><i>1</i><div><b>Choisis ton trajet maison → travail</b><span>Importe-le une fois et fais-en ton trajet de vélotaf dans Moi&nbsp;: il s'ouvre tout seul sur Vélotaf. Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours («&nbsp;Trace du retour&nbsp;»).</span></div></li>
+      <li><i>1</i><div><b>Choisis ton trajet maison → travail</b><span>Importe-le une fois et fais-en ton trajet Commute dans Moi&nbsp;: il s'ouvre tout seul sur Commute. Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours («&nbsp;Trace du retour&nbsp;»).</span></div></li>
       <li><i>2</i><div><b>Règle tes horaires</b><span>Heure de départ, ou heure d'arrivée au travail avec une marge&nbsp;: tu obtiens alors l'heure de départ conseillée. Heure du retour, et des horaires différents selon le jour si besoin. Vitesse moyenne seulement.</span></div></li>
       <li><i>3</i><div><b>Aller et retour en un coup d'œil</b><span>Pour chaque trajet&nbsp;: carte, pastille verte, orange ou rouge (pluie, vent de face, rafales, froid, nuit), températures et vent ressenti.</span></div></li>
       <li><i>4</i><div><b>Anticipe deux semaines</b><span>Les jours ouvrés des deux prochaines semaines aux mêmes horaires&nbsp;; touche un jour pour le voir en détail. L'heure de départ est une estimation&nbsp;: prévois une marge selon la circulation et la météo.</span></div></li>
@@ -1557,7 +1607,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <li><i>1</i><div><b>Mes parcours</b><span>Tous tes parcours, avec recherche, tri, «&nbsp;Renommer&nbsp;» et «&nbsp;Supprimer&nbsp;». Touche un parcours pour l'ouvrir.</span></div></li>
       <li><i>2</i><div><b>Mes sorties</b><span>Tes parcours classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.</span></div></li>
       <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
-      <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet de vélotaf, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
+      <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet Commute, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
     </ol>
     <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
   </div>
@@ -2716,6 +2766,7 @@ function renderAll(opts, opt) {
 }
 
 function renderSummary(opt) {
+  { const k = $('#verdictKick'); if (k) k.hidden = true; }
   const P = S.P, tl = S.tl, st = tl.st, has = !!S.wx && st.missKm < P.total;
   const covered = P.total - st.missKm;
   const pct = x => covered > 0 ? Math.round(x / covered * 100) : 0;
@@ -2819,7 +2870,9 @@ function renderSummary(opt) {
     const keys = ['clock', 'rain', 'wind', 'temp', 'sun'];
     S.sumLvl = !neg.length ? 0 : (st.rain >= 3 || st.amin < 3 || (st.hasGust && st.gust >= GUST_DANGER)) ? 2 : 1; // niveau pour l'export image
     S.sumLines = S1.map(x => xPlain(x));
-    more = `<ul class="vlines">${S1.map((x, k) => `<li class="${keys[k]}${k === 1 && !dry ? '' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${VI[keys[k]]}</svg><span>${x}</span></li>`).join('')}</ul>`;
+    { const k = $('#verdictKick'); if (k) { k.className = 'vkick lv' + S.sumLvl; k.textContent = [T("Conditions favorables"), T("Bien, avec quelques réserves"), T("Conditions difficiles")][S.sumLvl]; k.hidden = false; } }
+    const VL = [T("Heures"), T("Pluie"), T("Vent"), T("Températures"), T("Ciel")];
+    more = `<ul class="vlines">${S1.map((x, k) => `<li class="${keys[k]}"><svg viewBox="0 0 24 24" aria-hidden="true">${VI[keys[k]]}</svg><small class="vk">${VL[k]}</small><span>${x}</span></li>`).join('')}</ul>`;
   }
   if (tafSum) { // Vélotaf : une phrase par trajet
     const vs = tafSum.map(d => tripVerdict(d.wx));
@@ -3020,7 +3073,7 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
    la vue (élargie de 35 %), toutes les heures ; grilles gardées et partagées entre les cartes (FLOW_GRIDS), redemandées
    quand la vue sort de la grille, qu'on zoome beaucoup ou que les dates changent. Champ interpolé dans le temps et dans
    l'espace sur des cases de 10 px. Un moteur par carte (`flowEngine`) : carte principale (heure du curseur sous la
-   carte, point du cycliste à cette heure) et cartes Aller / Retour du Vélotaf (heure du milieu du trajet). */
+   carte, point du cycliste à cette heure) et cartes Aller / Retour du Commute (heure du milieu du trajet). */
 const FLOW = { on: false, t: null, start: null, a: 0, rider: null, status: '', main: null };
 try { FLOW.on = localStorage.getItem('pmr-flow') !== '0'; } catch (e) {}
 $('#flowOn').checked = FLOW.on; $('#flowOn2').checked = FLOW.on;
@@ -3270,7 +3323,7 @@ function wrapText(c, text, maxW) {
 }
 /* ---------- Export image, charte Sillage (essai du 26/10/2026) ----------
    Trois formats au choix (#expDlg) : 'full' = image complète (1200 px de large, hauteur selon le contenu),
-   'wide' = écran 16:9 (1600 × 900), 'story' = 9:16 (540 × 960, en sombre). Pages Sortie, Ultra et Vélotaf.
+   'wide' = écran 16:9 (1600 × 900), 'story' = 9:16 (540 × 960, en sombre). Pages Sortie, Ultra et Commute.
    Étapes : expModel (données) → expAssets (carte(s) rendue(s) hors écran, profil et graphes du jour recopiés
    en thème clair) → expFull / expWide / expStory (dessin synchrone ; l'image complète est d'abord mise en page
    sur un canvas de 1 px pour connaître sa hauteur). PNG ×2, partage natif sur téléphone, sinon téléchargement. */
@@ -3534,7 +3587,7 @@ function expFull(c, M, A) {
     y = yy + 24;
     // deux semaines
     const rows = M.weeks.length, cellH = 74, h = 70 + 24 + rows * (cellH + 8) + 40;
-    xR(c, x, y, w, h, 16, P.card, P.line); xT(c, T("Deux semaines de vélotaf"), x + 24, y + 40, xF(800, 22, P.fd), P.ink);
+    xR(c, x, y, w, h, 16, P.card, P.line); xT(c, T("Deux semaines de trajets"), x + 24, y + 40, xF(800, 22, P.fd), P.ink);
     xT(c, T("ressenti à l'aller / au retour"), x + w - 24, y + 40, xF(400, 14, P.fd), P.muted, 'right');
     const cw = (w - 48 - 5 * 8) / 6, fWd = new Intl.DateTimeFormat(LOC, { weekday: 'short' }), mon = new Date(2024, 0, 1);
     for (let k = 0; k < 6; k++) { const lbl = k < 5 ? fWd.format(new Date(mon.getTime() + k * 864e5)).toUpperCase() : T("WEEK-END"); xT(c, lbl, x + 24 + k * (cw + 8), y + 76, xF(500, 11, P.fm), P.muted); }
@@ -3957,7 +4010,18 @@ function renderTable() {
 
 /* refonte v2.0, maquette « 2 · Ta sortie heure par heure » (06/11/2026) : sous le verdict de la page Sortie,
    le départ, une ligne par heure (toutes les 2 h au-delà de 7 h), le point haut, puis l'arrivée ; le moment le plus froid en note */
-function renderHours() {
+// frise sous les tuiles sous 1100 px, dans le verdict au-delà
+const HOURS_MQ = matchMedia('(max-width:1099px)');
+function placeHours() {
+  const el = $('#verdictHours'), box = $('#hoursCard'); if (!el || !box) return;
+  const narrow = HOURS_MQ.matches;
+  if (narrow && el.parentNode !== box) box.appendChild(el);
+  if (!narrow && el.parentNode === box) $('#verdictGo').before(el);
+  box.hidden = !narrow || el.hidden;
+}
+HOURS_MQ.addEventListener?.('change', placeHours);
+function renderHours() { try { renderHours0(); } finally { placeHours(); } }
+function renderHours0() {
   const el = $('#verdictHours'); if (!el) return;
   const tl = S.tl, P = S.P;
   const off = () => { el.hidden = true; el.innerHTML = ''; };
@@ -4019,9 +4083,10 @@ function renderOpts(opts, opt) {
     const lv = q < 0 ? [T("Incomplet"), 'var(--line)'] : isTop ? [T("Top"), 'var(--tail)'] : q >= .6 ? [T("Bien"), 'var(--tail)'] : q >= .3 ? [T("Moyen"), 'var(--sun)'] : [why(o.r.st), 'var(--head)'];
     const night = okRun(o.r) && o.r.st.nightH > 0.5 * Math.max(o.r.st.rideH || 0, 0.1);
     return `<button type="button" class="opt-h${isMine ? ' mine' : ''}${isTop && !isMine ? ' best' : ''}${q < 0 ? ' off' : ''}" data-time="${o.time}" aria-pressed="${isMine}" aria-label="${T('Départ à {0} : {1}', [hLbl(o.time), lv[0]])}">` +
-      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t">${o.time.replace(/^0/, '')}</span><span class="w">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span></button>`;
+      `<span class="b" style="height:${q < 0 ? 10 : Math.round(16 + q * 50)}px;background:${lv[1]}"></span><span class="t"><span class="tl">${o.time.replace(/^0/, '')}</span><span class="ts">${o.time.replace(/^0/, '').replace(/:00$/, 'h').replace(':', 'h')}</span></span><span class="w"><span class="wl">${isMine ? T("Ton départ") : night ? T("Nuit") : lv[0]}</span><span class="ws">${isMine ? T("Toi") : night ? T("Nuit") : ({ [T("Moins bien")]: T("Moins"), [T("Incomplet")]: T("Inc."), [T("Rafales")]: T("Raf.") })[lv[0]] || lv[0]}</span></span></button>`;
   }).join('');
   el.innerHTML = `<div class="opt-strip">${strip}</div>` + html;
+  { const sc = el.querySelector('.opt-strip'), m = sc && sc.querySelector('.opt-h.mine'); if (m && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = Math.max(0, m.offsetLeft - sc.offsetLeft - (sc.clientWidth - m.offsetWidth) / 2); }
   // sous le verdict : « Meilleur créneau : 14 h » + bouton « Partir à 14:00 », si un autre départ est meilleur
   if (go && best && !isBest) {
     const st = best.r.st, cov = S.P.total - st.missKm || 1;
@@ -4159,8 +4224,8 @@ function applyModeUI() {
   $('label[for="date"]').textContent = taf ? T("Premier jour") : T("Départ"); $('label[for="time"]').textContent = taf ? T("Départ de l'aller") : T("Heure");
   if (!taf) { $('#weekCard').hidden = true; }
   tafPerDayUI();
-  $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Vélotaf : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
-  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Vélotaf") : 'Sillage');
+  $('#brandSub').textContent = ultra ? T("Ultra et voyage : ravitos ouverts à ton passage, hébergements et planification jour par jour.") : taf ? T("Commute : la météo de ton trajet aller et retour, et la semaine d'un coup d'œil.") : T("Votre trace GPX, l'heure de passage et la météo à chaque kilomètre.");
+  document.title = (IS_TEST ? '🧪 ' : '') + (ultra ? 'Sillage · Ultra' : taf ? T("Sillage · Commute") : 'Sillage');
 }
 function switchMode(m) {
   if (m === S.mode) return;
@@ -4788,7 +4853,7 @@ function roseCanvas(cv, rs, w, hh) {
 // Demi-soleil sur l'horizon (dir 1 = lever, flèche orange vers le haut ; −1 = coucher, flèche bleue vers le bas), base en (x, y).
 /* Lune : phase (0 = nouvelle, 0,5 = pleine) d'après une nouvelle lune de référence et le mois synodique,
    pictogramme avec la partie éclairée (côté droit quand elle croît, vu de l'hémisphère nord) et pourcentage éclairé.
-   Dessinée dans les parties de nuit des graphes (profil de la page Sortie, graphes du jour en Ultra et en Vélotaf). */
+   Dessinée dans les parties de nuit des graphes (profil de la page Sortie, graphes du jour en Ultra et en Commute). */
 const moonPhase = ms => { const SYN = 29.530588853, d = (ms - Date.UTC(2000, 0, 6, 18, 14)) / 864e5; return ((d % SYN) + SYN) % SYN / SYN; };
 const moonLit = p => (1 - Math.cos(2 * Math.PI * p)) / 2;
 function drawMoon(c, x, y, r, p) {
@@ -5187,7 +5252,7 @@ function tripsRender() {
     box.innerHTML = `<div class="tt-head"><h2>${T('Mes trajets')}</h2><button type="button" class="btn small tt-tog" data-tt="toggle" aria-expanded="true">${T('Replier')}${chev(true)}</button></div>
       <div class="tt-body">${big ? `<svg class="tt-map" viewBox="0 0 420 240" role="img" aria-label="${T('Les deux trajets sur la même carte')}">${big}</svg>` : lmap ? '<div class="tt-lslot"></div>' : ''}
       <div class="tt-rows">${line(0, go, false)}<div class="tt-mid"><button type="button" class="tt-swap" data-tt="swap"${ret ? '' : ' disabled'} title="${T("Échanger l'aller et le retour")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v14l-4-4M16 20V6l4 4"/></svg>${T('Échanger')}</button></div>${line(1, ret || go, !ret)}</div></div>
-      <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Vélotaf")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
+      <label class="tt-dsw"><span><b>${T('Mon trajet quotidien')}</b><small>${T("S'ouvre tout seul en arrivant sur Commute")}</small></span><input type="checkbox" id="ttDef" role="switch"${daily ? ' checked' : ''}></label>`;
     if (lmap) ttLeaflet(box.querySelector('.tt-lslot'));
   } catch (e) { box.hidden = true; }
 }
@@ -6088,7 +6153,7 @@ function chipsRender() {
   const tm = $('#time').value || '';
   const esc = v => String(v).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
   const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${CHIP_I[k]}</svg>`;
-  box.innerHTML = `<button type="button" class="chip qs-route" data-go="@lib">${ico('route')}<span>${esc(S.name || T("Parcours"))}</span><svg class="qs-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`
+  box.innerHTML = `<button type="button" class="chip qs-route" data-go="@lib">${ico('route')}<span>${esc(S.name || T("Parcours"))}${S.P ? `<small class="qs-meta">${fD((S.lapBase || S.P).total)} ${UL.km} · ${fE((S.lapBase || S.P).up)} ${UL.m} D+</small>` : ''}</span><svg class="qs-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`
     + `<div class="qs-row">`
     + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planStartSlot' : '#startRow'}"><small>${S.mode === 'taf' ? T("Aller") : T("Départ")}</small><b>${d ? esc(dayFmt.format(d)) + ' · ' : ''}<span class="qs-num">${esc(tm)}</span></b></button>`
     + `<button type="button" class="chip qs-cell" data-go="${S.mode === 'ultra' ? '#planSpeedSlot' : '#speed'}"><small>${T("Vitesse")}</small><b class="qs-num">${fV(+$('#speed').value, 1)} ${UL.kmh}</b></button>`
@@ -6147,16 +6212,16 @@ function setTheme(t) {
 for (const b of document.querySelectorAll('#themeSeg button')) b.setAttribute('aria-pressed', String(b.dataset.t === (document.documentElement.dataset.theme || 'auto')));
 $('#themeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) setTheme(b.dataset.t); });
 /* Onglet « Mode » : icône et nom du mode en cours ; le choix du mode se fait en haut de l'écran. */
-const TAB_ICO = { ride: '<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/>', ultra: '<path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/>', taf: '<rect x="3.5" y="8" width="17" height="11.5" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2M3.5 13h17M12 12v2"/>' };
-function tabModeRender() { const ic = $('#tabModeIco'); if (!ic) return; ic.innerHTML = TAB_ICO[S.mode] || TAB_ICO.ride; $('#tabModeTxt').textContent = S.mode === 'ultra' ? 'Ultra' : S.mode === 'taf' ? T("Vélotaf") : T("Sortie"); }
+const TAB_ICO = { ride: '<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/>', ultra: '<path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/>', taf: '<rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/>' };
+function tabModeRender() { const ic = $('#tabModeIco'); if (!ic) return; ic.innerHTML = TAB_ICO[S.mode] || TAB_ICO.ride; $('#tabModeTxt').textContent = S.mode === 'ultra' ? 'Ultra' : S.mode === 'taf' ? T("Commute") : T("Sortie"); }
 $('#tabMode').addEventListener('click', () => { const was = document.body.classList.contains('lib-open'); pageClose(); if (!was) window.scrollTo({ top: 0, behavior: 'smooth' }); });
 $('#tabOut').addEventListener('click', outOpen);
 $('#tabMe').addEventListener('click', meOpen);
 tabModeRender();
 /* Page « Moi » (essai du 24/10/2026) : compte, réglages de vitesse par mode (Sortie, Ultra : vitesse sur le plat, VAM,
-   arrêts en minutes par heure de pédalage ; Vélotaf : vitesse moyenne), thème et mode d'emploi. Le mode en cours est
+   arrêts en minutes par heure de pédalage ; Commute : vitesse moyenne), thème et mode d'emploi. Le mode en cours est
    réglé directement dans la page ; les autres dans leurs réglages enregistrés (pmr-opt, pmr-opt-ultra, pmr-opt-taf). */
-const ME_KEY = { ride: 'pmr-opt', ultra: 'pmr-opt-ultra', taf: 'pmr-opt-taf' }, ME_NAME = { ride: T("Sortie"), ultra: 'Ultra', taf: T("Vélotaf") };
+const ME_KEY = { ride: 'pmr-opt', ultra: 'pmr-opt-ultra', taf: 'pmr-opt-taf' }, ME_NAME = { ride: T("Sortie"), ultra: 'Ultra', taf: T("Commute") };
 function meGet(m) {
   if (m === S.mode) { const o = readOpt(); return { speed: o.speed, vam: o.vam, pmin: o.pauseMode === 'min' ? Math.round(o.pauseMin / o.pauseEvery) : Math.round(o.pause * 0.6) }; }
   let sv = {}; try { sv = JSON.parse(localStorage.getItem(ME_KEY[m]) || '{}') || {}; } catch (e) {}
