@@ -1311,6 +1311,75 @@ body[data-mode="taf"] #results .card{border-radius:16px}
   body[data-mode="taf"] .week-table tr.wkend td.wkend-msg{grid-column:span 2;padding:0;font-size:13px}
   body[data-mode="taf"] .week-table tr.wkend .wkend-2{display:none}
 }
+
+/* Mes parcours v2.0 (06/11/2026, maquette « B · Grille de vignettes » + fiche D) : vignettes sur fond de carte, dossiers en pastilles, fiche en feuille */
+.lp2{padding-bottom:120px}
+.lp2 .lp-head h2{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.lp2 .lp-head h2 small{font:500 14px var(--f-mono);color:var(--muted);margin-left:6px}
+.lp2 .lp-count{margin:0 auto;font-size:13px}
+.lp2 .lp-tools{gap:10px;margin-bottom:12px}
+.lp-search{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.lp-search svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round}
+.lp-search #lpQ{flex:1;min-width:0;min-height:42px;border:0;border-radius:0;background:none;font:inherit;font-size:16px;color:var(--ink);outline:none;padding:0}
+.lp2 .lp-kind{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;border:0;background:none;border-radius:0;padding:1px 0}
+.lp2 .lp-kind::-webkit-scrollbar{display:none}
+.lp2 .lp-kind button{flex:none;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.lp2 .lp-kind button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lp2 .lp-kind button small{font:500 11px var(--f-mono);color:inherit;opacity:.75;background:none;padding:0}
+.lp2 .lp-kind button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lp-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px}
+.lp-n{font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.lp-sortl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.lp-sortl select{border:0;background:none;font:600 13px var(--f-body);color:var(--accent);padding:6px 2px;cursor:pointer}
+.lp2 .lp-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:560px){.lp2 .lp-list{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
+.lp2 .lp-item{display:flex;flex-direction:column;position:relative;overflow:hidden;border-radius:14px;grid-template-columns:none}
+.lp2 .lp-item.cur{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent)}
+.lp2 .lp-open{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;border-radius:14px;width:100%;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.lp-map{position:relative;aspect-ratio:160/118;background:var(--bg);overflow:hidden}
+.lp-map img{display:block;width:100%;height:100%;object-fit:cover}
+.lp-map .lp-thumb{width:100%;height:100%;flex:none;border-radius:0}
+.lp-map .lp-thumb path{stroke:var(--ink)}
+html[data-theme="dark"] .lp-map img{filter:brightness(.82)}
+.lp2 .lp-tag{position:absolute;top:8px;left:8px;background:var(--panel);border:0;color:var(--ink);font-weight:700;padding:3px 8px;z-index:1}
+.lp2 .lp-more{position:absolute;top:6px;right:6px;width:34px;height:34px;margin:0;border-radius:999px;background:var(--panel);color:var(--ink);font-size:18px;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.lp2 .lp-txt{padding:10px 12px 12px;gap:3px}
+.lp2 .lp-txt b{font-size:14px;line-height:18px}
+.lp2 .lp-txt .lp-km{font:500 13px var(--f-mono);color:var(--ink)}
+.lp2 .lp-txt span{font-size:12.5px}
+.lp2 .lp-imp{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(360px,calc(100% - 32px));margin:0;min-height:52px;border-radius:999px;box-shadow:0 6px 18px rgba(20,32,27,.22);z-index:3;gap:8px;font-size:15px;font-weight:700}
+.lp2 .lp-imp svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:700px){.lp2 .lp-imp{bottom:calc(73px + env(safe-area-inset-bottom,0px))}}
+@media (min-width:701px){.lp2 .lp-imp{left:calc(50% + 48px)}}
+dialog.lp-dlg{max-width:440px;padding:8px 16px 20px;flex-direction:column;gap:14px}
+dialog.lp-dlg[open]{display:flex}
+dialog.lp-dlg::backdrop{background:rgba(20,32,27,.38)}
+.lp-grab{width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center}
+.lp-dhead{display:flex;gap:12px;align-items:center}
+.lp-dth{width:72px;height:72px;border-radius:12px;background:var(--bg);flex:none;overflow:hidden;display:grid;place-items:center}
+.lp-dth img{width:100%;height:100%;object-fit:cover;display:block}
+.lp-dth .lp-thumb{width:64px;height:64px;flex:none}
+.lp-dtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.lp-dtxt h2{margin:0;font-size:19px;line-height:23px;font-weight:800}
+.lp-dnum{font:500 14px var(--f-mono)}
+.lp-dlg .tt-x{align-self:flex-start;margin:-4px -8px 0 0}
+.lp-dopen{min-height:50px;border-radius:999px;justify-content:center;font-size:15px;font-weight:700}
+.lp-dl{margin:0 0 6px;font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.lp-dkind{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.lp-dkind button{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font:inherit;font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.lp-dkind button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lp-dkind button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lp-dacts{display:flex;flex-direction:column}
+.lp-dacts button{display:flex;align-items:center;gap:12px;min-height:50px;padding:0 4px;border:0;border-top:1px solid var(--line);background:none;width:100%;text-align:left;font:inherit;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer}
+.lp-dacts button:first-child{border-top:0}
+.lp-dacts button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lp-dacts button .r{margin-left:auto;font-size:13px;font-weight:500;color:var(--muted)}
+.lp-dacts button.danger{color:var(--head)}
+.lp-dacts button.danger.arm{background:color-mix(in srgb,var(--head) 12%,var(--panel));border-radius:10px;padding:0 10px}
+.lp-dlg .lp-ren{padding:0;grid-column:auto}
+@media (max-width:700px){
+  dialog.lp-dlg{margin:auto 0 0;max-width:none;width:100%;border-radius:20px 20px 0 0;border-bottom:0;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 </head>
 <body>
@@ -1376,16 +1445,29 @@ body[data-mode="taf"] #results .card{border-radius:16px}
   <button type="button" class="btn helpbtn" id="helpBtn" title="Comment ça marche ?" aria-label="Comment ça marche ?">?</button>
 </header>
 
-<section class="libpage" id="libPage" hidden aria-labelledby="libPageTitle">
-  <div class="lp-head"><h2 id="libPageTitle">Mes parcours</h2><button type="button" class="btn small" id="libPageX">Fermer</button></div>
+<section class="libpage lp2" id="libPage" hidden aria-labelledby="libPageTitle">
+  <div class="lp-head"><h2 id="libPageTitle">Mes parcours <small id="lpN"></small></h2><button type="button" class="btn small" id="libPageX">Fermer</button></div>
   <p class="hint lp-count" id="lpCount"></p>
-  <label class="btn primary lp-imp" for="file">Importer un GPX</label>
   <div class="lp-tools">
-    <div class="seg2 lp-kind" id="lpKind" role="group" aria-label="Dossier"><button type="button" data-v="all" aria-pressed="true">Tous</button><button type="button" data-v="ride" aria-pressed="false">Sortie</button><button type="button" data-v="ultra" aria-pressed="false">Ultra</button><button type="button" data-v="taf" aria-pressed="false">Commute</button></div>
-    <input type="search" id="lpQ" placeholder="Rechercher un parcours" autocomplete="off" aria-label="Rechercher un parcours">
-    <div class="seg2 lp-sort" id="lpSort" role="group" aria-label="Trier les parcours"><button type="button" data-v="recent" aria-pressed="true">Récents</button><button type="button" data-v="km" aria-pressed="false">Distance</button><button type="button" data-v="name" aria-pressed="false">Nom</button></div>
+    <label class="lp-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="lpQ" placeholder="Rechercher un parcours" autocomplete="off" aria-label="Rechercher un parcours"></label>
+    <div class="lp-kind" id="lpKind" role="group" aria-label="Dossier"><button type="button" data-v="all" aria-pressed="true">Tous</button><button type="button" data-v="ride" aria-pressed="false">Sortie</button><button type="button" data-v="ultra" aria-pressed="false">Ultra</button><button type="button" data-v="taf" aria-pressed="false">Commute</button></div>
+    <div class="lp-bar"><span class="lp-n" id="lpShown"></span><label class="lp-sortl"><span>Tri</span><select id="lpSort" aria-label="Trier les parcours"><option value="recent">Récents</option><option value="km">Distance</option><option value="name">Nom</option></select></label></div>
   </div>
   <ul class="lp-list" id="lpList"></ul>
+  <label class="btn primary lp-imp no-guest" for="file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Importer un GPX</label>
+  <dialog class="exp-dlg lp-dlg" id="lpDlg" aria-labelledby="lpDlgT">
+    <span class="lp-grab" aria-hidden="true"></span>
+    <div class="lp-dhead"><span class="lp-dth" id="lpDlgTh"></span><div class="lp-dtxt"><h2 id="lpDlgT"></h2><span class="lp-dnum" id="lpDlgNum"></span><span class="hint" id="lpDlgWhen"></span></div><button type="button" class="tt-x" id="lpDlgX" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="lp-ren" id="lpDlgRen" hidden><input type="text" id="lpRenIn" aria-label="Nouveau nom"><button type="button" class="btn small primary" data-renok="1">Renommer</button><button type="button" class="btn small" data-renx="1">Annuler</button></div>
+    <button type="button" class="btn primary lp-dopen" id="lpDlgOpen">Ouvrir</button>
+    <div class="no-guest"><p class="lp-dl">Dossier</p><div class="lp-dkind" id="lpDlgKind"></div></div>
+    <div class="lp-dacts no-guest">
+      <button type="button" data-act="ren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16zM13 7l4 4"/></svg>Renommer</button>
+      <button type="button" data-act="rev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 17h10M4 4l3 3-3 3M20 14l-3 3 3 3"/></svg>Inverser le sens<span class="r" id="lpDlgRev"></span></button>
+      <button type="button" data-act="gpx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Exporter le GPX</button>
+      <button type="button" data-act="del" class="danger" id="lpDlgDel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Supprimer<span class="r">deux appuis</span></button>
+    </div>
+  </dialog>
 </section>
 <section class="libpage" id="outPage" hidden aria-labelledby="outTitle">
   <div class="lp-head"><h2 id="outTitle">Mes sorties</h2><button type="button" class="btn small pg-x">Fermer</button></div>
@@ -6584,7 +6666,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.b
 $('#tabLib').addEventListener('click', lpOpen);
 /* Page « Mes parcours » (essai du 24/10/2026) : liste des parcours en fiches (miniature du tracé, km, D+, dernière ouverture),
    recherche, tri, ouvrir / renommer / supprimer. Onglet « Parcours » sur téléphone, bouton « Voir tous mes parcours » ailleurs. */
-const LP = { sort: 'recent', kind: 'all', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false };
+const LP = { sort: 'recent', kind: 'all', open: '', ren: '', del: '', delT: 0, thumbs: null, fetching: false, maps: {}, mapsLoaded: false, mapsBusy: 0, mapsFail: new Set(), sheet: '', press: null };
 function lpThumbs() { if (!LP.thumbs) { try { LP.thumbs = JSON.parse(localStorage.getItem('pmr-thumbs') || '{}') || {}; } catch (e) { LP.thumbs = {}; } } return LP.thumbs; }
 function thumbOf(pts) { // tracé ramené dans un carré de 64 (projection simple, ~90 points)
   const step = Math.max(1, Math.floor(pts.length / 90)), q = []; for (let i = 0; i < pts.length; i += step) q.push(pts[i]); q.push(pts[pts.length - 1]);
@@ -6608,7 +6690,7 @@ function lpRender() {
   let items = LIB.list.filter(r => q.every(w => fold(r.name).includes(w)));
   // dossiers (06/11/2026) : compte par dossier sur les pastilles, liste filtrée sur le dossier choisi
   const cnt = { all: items.length, ride: 0, ultra: 0, taf: 0 }; for (const r of items) cnt[kindOf(r)]++;
-  for (const b of document.querySelectorAll('#lpKind button')) { const k = b.dataset.v; b.innerHTML = `${k === 'all' ? T('Tous') : kindName(k)}${n ? ` <small>${cnt[k]}</small>` : ''}`; b.setAttribute('aria-pressed', String(k === LP.kind)); }
+  for (const b of document.querySelectorAll('#lpKind button')) { const k = b.dataset.v; b.innerHTML = `${k === 'all' ? T('Tous') : kindIco(k) + kindName(k)}${n ? ` <small>${cnt[k]}</small>` : ''}`; b.setAttribute('aria-pressed', String(k === LP.kind)); }
   if (LP.kind !== 'all') items = items.filter(r => kindOf(r) === LP.kind);
   if (LP.sort === 'km') items = items.slice().sort((a, b) => (b.km || 0) - (a.km || 0));
   else if (LP.sort === 'name') items = items.slice().sort((a, b) => a.name.localeCompare(b.name, LANG));
@@ -6616,16 +6698,19 @@ function lpRender() {
   if (!items.length) { $('#lpList').innerHTML = q.length ? T("<li class=\"lp-empty\">Aucun parcours ne correspond à « {0} ».</li>", [escH($('#lpQ').value)])
     : T("<li class=\"lp-empty\"><b>Aucun parcours dans le dossier {0}.</b><br>Range-y un parcours depuis son menu « ⋯ », ou importe un GPX.</li>", [kindName(LP.kind)]); return; }
   const tag = r => LP.kind === 'all' ? `<span class="lp-tag">${kindIco(kindOf(r))}${kindName(kindOf(r))}</span>` : '';
-  const move = r => `<div class="lp-move"><span>${T('Dossier')}</span><div class="seg2" role="group" aria-label="${T('Dossier')}">${KINDS.map(k => `<button type="button" data-mv="${r.id}" data-k="${k}" aria-pressed="${kindOf(r) === k}">${kindName(k)}</button>`).join('')}</div></div>`;
+  $('#lpN').textContent = n || ''; $('#lpShown').textContent = T("{0} parcours", [items.length]) + (LP.kind !== 'all' ? ' · ' + kindName(LP.kind) : '');
   $('#lpList').innerHTML = items.map(r => {
-    const th = t[r.id], cur = r.id === LIB.current;
+    const th = t[r.id], cur = r.id === LIB.current, mp = LP.maps[lpMapKey(r.id)];
     const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
-    return T("<li class=\"lp-item{0}\" data-id=\"{1}\">\n      <button type=\"button\" class=\"lp-open\" data-open=\"{2}\"><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{3}</svg>\n        <span class=\"lp-txt\"><b>{4}</b><span>{5} km · D+ {6} m{12}</span><span>{7}</span></span></button>\n      <button type=\"button\" class=\"lp-more\" data-more=\"{8}\" aria-expanded=\"{9}\" aria-label=\"Actions pour {10}\">⋯</button>\n      {11}\n    </li>", [cur ? ' cur' : '', r.id, r.id, svg, escH(r.name), fD(r.km || 0), fE(r.dplus || 0), cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at)), r.id, LP.open === r.id, escH(r.name), LP.ren === r.id ? T("<div class=\"lp-ren\"><input type=\"text\" id=\"lpRenIn\" value=\"{0}\" aria-label=\"Nouveau nom\"><button type=\"button\" class=\"btn small primary\" data-renok=\"{1}\">Renommer</button><button type=\"button\" class=\"btn small\" data-renx=\"1\">Annuler</button></div>", [escH(r.name), r.id])
-        : LP.open === r.id ? T("<div class=\"lp-acts\"><button type=\"button\" class=\"btn small\" data-ren=\"{0}\">Renommer</button><button type=\"button\" class=\"btn small{1}\" data-del=\"{2}\">{3}</button></div>", [r.id, LP.del === r.id ? ' danger' : '', r.id, LP.del === r.id ? T("Confirmer la suppression") : T("Supprimer")]) + move(r) : '', tag(r)]); }).join('');
-  if (LP.ren) { const i = $('#lpRenIn'); if (i) { i.focus(); i.select(); } }
-  lpFillThumbs();
+    const pic = mp ? `<img src="${mp}" alt="" loading="lazy">` : `<svg class="lp-thumb" viewBox="0 0 64 64" aria-hidden="true">${svg}</svg>`;
+    return `<li class="lp-item${cur ? ' cur' : ''}" data-id="${r.id}">
+      <button type="button" class="lp-open" data-open="${r.id}"><span class="lp-map">${pic}${tag(r)}</span>
+        <span class="lp-txt"><b>${escH(r.name)}</b><span class="lp-km">${fD(r.km || 0)} ${UL.km} · D+ ${fE(r.dplus || 0)} ${UL.m}</span><span>${cur ? T("<span class=\"lp-cur\">Parcours ouvert</span>") : escH(agoTxt(r.used_at))}</span></span></button>
+      <button type="button" class="lp-more" data-more="${r.id}" aria-haspopup="dialog" aria-label="${escH(T("Actions pour {0}", [r.name]))}">⋯</button>
+    </li>`; }).join('');
+  lpFillThumbs(); lpFillMaps(items);
 }
-function lpOpen() { LP.open = LP.ren = LP.del = ''; LP.kind = KINDS.includes(S.mode) ? S.mode : 'all'; $('#lpQ').value = ''; pageOpen('libPage', '#tabLib'); lpRender(); }
+function lpOpen() { LP.open = LP.ren = LP.del = ''; LP.kind = KINDS.includes(S.mode) ? S.mode : 'all'; $('#lpQ').value = ''; $('#lpSort').value = LP.sort; pageOpen('libPage', '#tabLib'); lpMapsLoad().then(lpRender); }
 function lpClose() { pageClose(); }
 async function lpRename(id, name) {
   const m = LIB.list.find(x => x.id === id); name = (name || '').trim(); if (!m || !name || name === m.name) return;
@@ -6654,7 +6739,7 @@ function pageClose() {
   for (const a of document.querySelectorAll('.tabbar a[data-mode]')) { if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page'); }
 }
 for (const b of document.querySelectorAll('.pg-x')) b.addEventListener('click', pageClose);
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('lib-open') && !LP.ren) pageClose(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('lib-open') && !LP.ren && !document.querySelector('dialog[open]')) pageClose(); });
 
 /* Page « Mes sorties » (essai du 24/10/2026) : tous les parcours enregistrés, météo AROME pour le jour choisi (aujourd'hui → J+3)
    à l'heure de départ choisie, réglages de la page Sortie ; classés du plus au moins favorable (score par heure de selle,
@@ -6800,22 +6885,122 @@ $('#outPage').addEventListener('click', e => { const b = e.target.closest('butto
 $('#libPageX').addEventListener('click', lpClose);
 for (const a of document.querySelectorAll('.modes a, .tabbar a[data-mode]')) a.addEventListener('click', pageClose);
 $('#lpQ').addEventListener('input', () => { LP.open = LP.ren = ''; lpRender(); });
-$('#lpSort').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.sort = b.dataset.v; setSeg('#lpSort', LP.sort); lpRender(); });
+$('#lpSort').addEventListener('change', () => { LP.sort = $('#lpSort').value; lpRender(); });
 $('#lpKind').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; LP.kind = b.dataset.v; LP.open = LP.ren = LP.del = ''; lpRender(); });
 $('#lpList').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
-  if (d.mv) { await kindSet(d.mv, d.k); lpRender(); return; }
+  if (Date.now() < (LP.swallow || 0)) { LP.swallow = 0; return; } // un appui long vient d'ouvrir la fiche : ce clic ne compte pas
   if (d.open) { lpClose(); window.scrollTo(0, 0); if (d.open !== LIB.current) await libOpen(d.open); return; }
-  if (d.more) { LP.open = LP.open === d.more ? '' : d.more; LP.ren = LP.del = ''; lpRender(); return; }
-  if (d.ren) { LP.ren = d.ren; lpRender(); return; }
-  if (d.renx) { LP.ren = ''; lpRender(); return; }
-  if (d.renok) { const v = $('#lpRenIn').value; LP.ren = LP.open = ''; await lpRename(d.renok, v); lpRender(); return; }
-  if (d.del) { if (LP.del !== d.del) { LP.del = d.del; clearTimeout(LP.delT); LP.delT = setTimeout(() => { LP.del = ''; if (!$('#libPage').hidden) lpRender(); }, 4000); lpRender(); return; }
-    clearTimeout(LP.delT); LP.del = LP.open = ''; const t = lpThumbs(); delete t[d.del]; try { localStorage.setItem('pmr-thumbs', JSON.stringify(t)); } catch (e) {} await libDelete(d.del); lpRender(); }
+  if (d.more) lpSheetOpen(d.more);
 });
-$('#lpList').addEventListener('keydown', e => { if (e.target.id !== 'lpRenIn') return;
-  if (e.key === 'Enter') { e.preventDefault(); const id = LP.ren; const v = e.target.value; LP.ren = LP.open = ''; lpRename(id, v).then(lpRender); }
-  else if (e.key === 'Escape') { LP.ren = ''; lpRender(); } });
+// appui long (ou clic droit) sur une vignette : la fiche du parcours
+$('#lpList').addEventListener('pointerdown', e => { const b = e.target.closest('.lp-open'); if (!b || e.button) return;
+  LP.press = { id: b.dataset.open, x: e.clientX, y: e.clientY, fired: false, t: setTimeout(() => { if (!LP.press) return; LP.press.fired = true; LP.swallow = Date.now() + 800; lpSheetOpen(LP.press.id); }, 550) }; });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('#lpList').addEventListener(ev, () => { if (LP.press) { clearTimeout(LP.press.t); LP.press = null; } });
+$('#lpList').addEventListener('pointermove', e => { if (LP.press && !LP.press.fired && Math.hypot(e.clientX - LP.press.x, e.clientY - LP.press.y) > 10) { clearTimeout(LP.press.t); LP.press = null; } });
+$('#lpList').addEventListener('contextmenu', e => { const b = e.target.closest('.lp-open'); if (!b) return; e.preventDefault(); if (LP.press) clearTimeout(LP.press.t); LP.press = null; LP.swallow = Date.now() + 800; lpSheetOpen(b.dataset.open); });
+
+/* Fiche d'un parcours (feuille #lpDlg) : ouvrir, dossier, renommer, inverser le sens, exporter le GPX, supprimer */
+function lpSheetOpen(id) {
+  const r = LIB.list.find(x => x.id === id); if (!r) return; LP.sheet = id; LP.ren = LP.del = ''; lpSheetFill(); const d = $('#lpDlg'); if (!d.open) d.showModal();
+}
+function lpSheetFill() {
+  const r = LIB.list.find(x => x.id === LP.sheet); if (!r) return; const t = lpThumbs()[r.id], mp = LP.maps[lpMapKey(r.id)], k = kindOf(r);
+  $('#lpDlgTh').innerHTML = mp ? `<img src="${mp}" alt="">` : `<svg class="lp-thumb" viewBox="0 0 64 64" aria-hidden="true">${t ? `<path d="${t.d}"/><circle cx="${t.s[0]}" cy="${t.s[1]}" r="3.5"/>` : ''}</svg>`;
+  $('#lpDlgT').textContent = r.name; $('#lpDlgNum').textContent = `${fD(r.km || 0)} ${UL.km} · D+ ${fE(r.dplus || 0)} ${UL.m}`;
+  $('#lpDlgWhen').textContent = r.id === LIB.current ? T("Parcours ouvert") : agoTxt(r.used_at) ? agoTxt(r.used_at).replace(/^./, c => c.toUpperCase()) : '';
+  $('#lpDlgOpen').textContent = r.id === LIB.current ? T("Y retourner") : T("Ouvrir dans {0}", [kindName(k)]);
+  $('#lpDlgKind').innerHTML = KINDS.map(x => `<button type="button" data-k="${x}" aria-pressed="${k === x}">${kindIco(x)}${kindName(x)}</button>`).join('');
+  $('#lpDlgRev').textContent = revGet(r.id) ? T("sens inverse") : T("sens du GPX");
+  $('#lpDlgRen').hidden = LP.ren !== r.id; if (LP.ren === r.id) { const i = $('#lpRenIn'); i.value = r.name; i.focus(); i.select(); }
+  const del = $('#lpDlgDel'); del.classList.toggle('arm', LP.del === r.id); del.querySelector('.r').textContent = LP.del === r.id ? T("Confirmer") : T("deux appuis");
+}
+$('#lpDlgX').addEventListener('click', () => $('#lpDlg').close());
+$('#lpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#lpDlg').addEventListener('close', () => { LP.sheet = LP.ren = LP.del = ''; clearTimeout(LP.delT); });
+$('#lpDlgOpen').addEventListener('click', async () => { const id = LP.sheet; $('#lpDlg').close(); lpClose(); window.scrollTo(0, 0); if (id && id !== LIB.current) await libOpen(id); });
+$('#lpDlgKind').addEventListener('click', async e => { const b = e.target.closest('button[data-k]'); if (!b) return; await kindSet(LP.sheet, b.dataset.k); lpSheetFill(); lpRender(); });
+$('#lpDlg').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act], button[data-renok], button[data-renx]'); if (!b) return; const id = LP.sheet, act = b.dataset.act, r = LIB.list.find(x => x.id === id); if (!r) return;
+  if (b.dataset.renx) { LP.ren = ''; lpSheetFill(); return; }
+  if (b.dataset.renok) { const v = $('#lpRenIn').value; LP.ren = ''; await lpRename(id, v); lpSheetFill(); lpRender(); return; }
+  if (act === 'ren') { LP.ren = id; lpSheetFill(); return; }
+  if (act === 'rev') { const rev = !revGet(id); revSet(id, rev); if (id === LIB.current && S.fwd) { try { loadRoute(S.fwd, S.baseName, rev); } catch (err) { setStatus(err.message, 'err'); } } lpSheetFill(); return; }
+  if (act === 'gpx') { lpGpx(id); return; }
+  if (act === 'del') {
+    if (LP.del !== id) { LP.del = id; clearTimeout(LP.delT); LP.delT = setTimeout(() => { LP.del = ''; if ($('#lpDlg').open) lpSheetFill(); }, 4000); lpSheetFill(); return; }
+    clearTimeout(LP.delT); LP.del = ''; const t = lpThumbs(); delete t[id]; try { localStorage.setItem('pmr-thumbs', JSON.stringify(t)); } catch (err) {}
+    $('#lpDlg').close(); await libDelete(id); lpRender();
+  }
+});
+$('#lpDlg').addEventListener('keydown', e => { if (e.target.id !== 'lpRenIn') return;
+  if (e.key === 'Enter') { e.preventDefault(); const v = e.target.value; LP.ren = ''; lpRename(LP.sheet, v).then(() => { lpSheetFill(); lpRender(); }); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); LP.ren = ''; lpSheetFill(); } });
+// export GPX du parcours (trace simplifiée gardée dans le navigateur, sinon dans le compte) : partage natif sur téléphone, téléchargement sinon
+async function lpGpx(id) {
+  const m = LIB.list.find(x => x.id === id); if (!m) return; let pts = null;
+  if (m.demo) { try { pts = await demoPts(DEMO.find(d => d.id === id)); } catch (e) {} }
+  else { try { const rec = await idbRun('pts', 'readonly', st => st.get(id)); pts = rec && rec.pts; } catch (e) {}
+    if (!pts && m.remote) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', id).maybeSingle(); pts = data && data.pts; } } }
+  if (!pts || pts.length < 2) { toast(T("Trace introuvable pour ce parcours.")); return; }
+  const escX = x => String(x).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  const txt = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Sillage" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>${escX(m.name)}</name><trkseg>\n${pts.map(q => `<trkpt lat="${q[0]}" lon="${q[1]}">${q[2] != null ? `<ele>${q[2]}</ele>` : ''}</trkpt>`).join('\n')}\n</trkseg></trk></gpx>\n`;
+  const name = (m.name || 'parcours').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) + '.gpx', blob = new Blob([txt], { type: 'application/gpx+xml' });
+  try { const f = new File([blob], name, { type: 'application/gpx+xml' }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: m.name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* Vignettes sur fond de carte (v2.0) : tuiles du fond choisi (pmr-base2) dessinées sur un canvas 320 × 236 avec la trace,
+   gardées en JPEG dans IndexedDB (store pois, clé thumb1|<fond>|<id>). Tuile refusée (CORS, hors ligne) : on garde le dessin SVG. */
+const LP_MAP_W = 320, LP_MAP_H = 236;
+function lpBaseName() { let name = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)'); try { const b = localStorage.getItem('pmr-base2'); if (b && !(location.protocol === 'file:' && b === T('Plan (OSM)'))) name = b; } catch (e) {} return name; }
+function lpMapKey(id) { return lpBaseName() + '|' + id; }
+async function lpMapsLoad() {
+  if (LP.mapsLoaded) return; LP.mapsLoaded = true; const base = lpBaseName();
+  await Promise.all(LIB.list.map(async m => { try { const rec = await idbRun('pois', 'readonly', st => st.get('thumb1|' + base + '|' + m.id)); if (rec && rec.img) LP.maps[base + '|' + m.id] = rec.img; } catch (e) {} }));
+}
+function lpTileUrl(name, z, x, y) {
+  if (typeof L === 'undefined') return null; const bases = makeBases(), tl = bases[name] || bases[lpBaseName()]; if (!tl) return null;
+  const sd = tl.options.subdomains || 'abc', s = typeof sd === 'string' ? sd[Math.abs(x + y) % sd.length] : sd[Math.abs(x + y) % sd.length];
+  return L.Util.template(tl._url, { s, x, y, z, r: '' });
+}
+async function lpMapDraw(pts) { // null si une tuile manque ou si le canvas est « teinté » (fond sans CORS)
+  const base = lpBaseName(), maxZ = /OpenTopoMap/.test(base) ? 16 : 18, pad = 22, lat2y = la => { const r = la * RAD; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2; };
+  let la0 = 90, la1 = -90, lo0 = 180, lo1 = -180; for (const q of pts) { la0 = Math.min(la0, q[0]); la1 = Math.max(la1, q[0]); lo0 = Math.min(lo0, q[1]); lo1 = Math.max(lo1, q[1]); }
+  const wx = (lo1 - lo0) / 360, wy = lat2y(la0) - lat2y(la1); let z = maxZ;
+  while (z > 2 && (wx * 256 * 2 ** z > LP_MAP_W - 2 * pad || wy * 256 * 2 ** z > LP_MAP_H - 2 * pad)) z--;
+  const scale = 256 * 2 ** z, cx = ((lo0 + lo1) / 2 + 180) / 360 * scale, cy = (lat2y(la0) + lat2y(la1)) / 2 * scale, ox = cx - LP_MAP_W / 2, oy = cy - LP_MAP_H / 2, n = 2 ** z;
+  const cv = document.createElement('canvas'); cv.width = LP_MAP_W; cv.height = LP_MAP_H; const c = cv.getContext('2d'); c.fillStyle = '#eef0e6'; c.fillRect(0, 0, LP_MAP_W, LP_MAP_H);
+  const jobs = []; let miss = 0;
+  for (let tx = Math.floor(ox / 256); tx * 256 < ox + LP_MAP_W; tx++) for (let ty = Math.floor(oy / 256); ty * 256 < oy + LP_MAP_H; ty++) {
+    if (ty < 0 || ty >= n) continue; const url = lpTileUrl(base, z, ((tx % n) + n) % n, ty); if (!url) return null;
+    jobs.push(loadImg(url).then(im => { if (im) c.drawImage(im, tx * 256 - ox, ty * 256 - oy, 256.5, 256.5); else miss++; }));
+  }
+  await Promise.all(jobs); if (miss) return null;
+  const P = pts.map(q => [(q[1] + 180) / 360 * scale - ox, lat2y(q[0]) * scale - oy]);
+  c.lineJoin = c.lineCap = 'round'; c.beginPath(); P.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]));
+  c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 7; c.stroke(); c.strokeStyle = '#14201b'; c.lineWidth = 3.2; c.stroke();
+  c.beginPath(); c.arc(P[0][0], P[0][1], 5, 0, 7); c.fillStyle = '#2e7d4f'; c.fill(); c.lineWidth = 1.8; c.strokeStyle = '#fff'; c.stroke();
+  try { return cv.toDataURL('image/jpeg', .82); } catch (e) { return null; }
+}
+async function lpFillMaps(items) {
+  if (LP.mapsBusy || typeof L === 'undefined' || !navigator.onLine) return;
+  const base = lpBaseName(), todo = items.filter(m => !LP.maps[base + '|' + m.id] && !LP.mapsFail.has(base + '|' + m.id)).slice(0, 12); if (!todo.length) return;
+  LP.mapsBusy = 1;
+  for (let i = 0; i < todo.length; i += 2) await Promise.all(todo.slice(i, i + 2).map(async m => {
+    let pts = null;
+    if (m.demo) { try { pts = await demoPts(DEMO.find(d => d.id === m.id)); } catch (e) {} }
+    else { try { const rec = await idbRun('pts', 'readonly', st => st.get(m.id)); pts = rec && rec.pts; } catch (e) {} }
+    if (!pts || pts.length < 2) { LP.mapsFail.add(base + '|' + m.id); return; }
+    const step = Math.max(1, Math.floor(pts.length / 400)), q = pts.filter((_, k) => k % step === 0); if (q[q.length - 1] !== pts[pts.length - 1]) q.push(pts[pts.length - 1]);
+    let img = null; try { img = await lpMapDraw(q); } catch (e) {}
+    if (!img) { LP.mapsFail.add(base + '|' + m.id); return; }
+    LP.maps[base + '|' + m.id] = img; try { await idbRun('pois', 'readwrite', st => st.put({ key: 'thumb1|' + base + '|' + m.id, at: Date.now(), img })); } catch (e) {}
+    const el = document.querySelector(`#lpList .lp-item[data-id="${m.id}"] .lp-map`); if (el && !el.querySelector('img')) { el.insertAdjacentHTML('afterbegin', `<img src="${img}" alt="">`); el.querySelector('.lp-thumb')?.remove(); }
+    if (LP.sheet === m.id) lpSheetFill();
+  }));
+  LP.mapsBusy = 0; if (!$('#libPage').hidden) lpFillMaps(items);
+}
 $('#mapOptsBtn').addEventListener('click', () => { const on = document.body.classList.toggle('map-opts'); $('#mapOptsBtn').setAttribute('aria-pressed', String(on)); });
 const CHIP_I = { route: '<path d="M5 4h11l3 3v13H5zM9 10h6M9 14h6"/>', when: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   speed: '<path d="M4 16a8 8 0 0116 0M12 16l4-5"/>', set: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>' };
