@@ -1083,6 +1083,11 @@ body:not([data-mode="taf"]) #results>section[aria-label="Résumé"] .verdict{mar
 .vhours li.end{grid-template-columns:50px 24px minmax(0,1fr)}
 .vhours li.end svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .vhours .note{margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
+/* téléphone et tablette (maquette mobile A, 06/11/2026) : la frise sort du verdict et passe sous les tuiles, dans sa propre carte */
+.hours-card{border-radius:16px;padding:16px}
+.hours-card .vhours{margin-top:0}
+.hours-card .vhours .vh-head b{font:700 18px var(--f-display);letter-spacing:0;text-transform:none;color:var(--ink)}
+@media (max-width:1099px){body:not([data-mode="taf"]) #results>#hoursCard{order:4}}
 @media (max-width:420px){.vhours li{grid-template-columns:44px 22px minmax(0,1fr) auto;gap:8px}.vhours li .rel{grid-column:3/-1;justify-self:start}}
 .verdict-go{margin-top:16px;background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .verdict-go p{margin:0;font-size:14px;line-height:1.4;max-width:30ch}
@@ -1483,6 +1488,7 @@ body:not([data-mode="taf"]) .stats:not(.duo-stats) .wbar{display:flex}
       <div class="verdict-go" id="verdictGo" hidden></div>
     </section>
     <div class="stats" id="stats"></div>
+    <section class="card hours-card" id="hoursCard" hidden></section>
     <p class="hint taf-warn" id="tafWarn" hidden>Heure de départ conseillée, calculée selon la distance et votre vitesse. Prévoyez une marge selon les conditions de circulation et la météo.</p>
 
     <section class="card" id="mapCard">
@@ -4270,7 +4276,18 @@ function renderTable() {
 
 /* refonte v2.0, maquette « 2 · Ta sortie heure par heure » (06/11/2026) : sous le verdict de la page Sortie,
    le départ, une ligne par heure (toutes les 2 h au-delà de 7 h), le point haut, puis l'arrivée ; le moment le plus froid en note */
-function renderHours() {
+// frise sous les tuiles sous 1100 px, dans le verdict au-delà
+const HOURS_MQ = matchMedia('(max-width:1099px)');
+function placeHours() {
+  const el = $('#verdictHours'), box = $('#hoursCard'); if (!el || !box) return;
+  const narrow = HOURS_MQ.matches;
+  if (narrow && el.parentNode !== box) box.appendChild(el);
+  if (!narrow && el.parentNode === box) $('#verdictGo').before(el);
+  box.hidden = !narrow || el.hidden;
+}
+HOURS_MQ.addEventListener?.('change', placeHours);
+function renderHours() { try { renderHours0(); } finally { placeHours(); } }
+function renderHours0() {
   const el = $('#verdictHours'); if (!el) return;
   const tl = S.tl, P = S.P;
   const off = () => { el.hidden = true; el.innerHTML = ''; };
