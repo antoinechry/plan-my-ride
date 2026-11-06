@@ -4514,7 +4514,7 @@ function kindOf(m) {
   if (m.kind && KINDS.includes(m.kind)) return m.kind;
   let fx = null; try { fx = tafFixed(); } catch (e) {}
   if (fx && (m.id === fx.go || m.id === fx.ret)) return 'taf';
-  if (/\b(commute|v[ée]lotaf|taf|trajet|boulot|travail|bureau)\b/i.test(m.name || '')) return 'taf';
+  if (/\b(commute|v[ée]lo ?taff?|taff?|trajet|boulot|travail|bureau)\b/i.test(m.name || '')) return 'taf';
   return (m.km || 0) > 300 ? 'ultra' : 'ride';
 }
 function kindAsk(name) { // fenêtre « Ranger ce parcours » : promesse du dossier choisi (celui du mode en cours si on referme)
