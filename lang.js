@@ -1428,6 +1428,7 @@ window.PMR_I18N = {
     "Un jour de moins": "One day less",
     "Un jour de plus": "One day more",
     "Coche « Rechercher les lieux » pour lister les commerces, restos, bars, stations, points d'eau et hébergements le long de la trace, jour par jour, avec leurs horaires à ton passage. La recherche interroge OpenStreetMap portion par portion : compte quelques minutes pour un long parcours ; le résultat est ensuite gardé 14 jours.": "Tick “Search for places” to list shops, restaurants, bars, petrol stations, water points and accommodation along the track, day by day, with their opening hours when you pass. The search queries OpenStreetMap section by section: allow a few minutes for a long route; the result is then kept for 14 days.",
-    "via Overpass et base Sillage. Horaires tels que saisis dans OpenStreetMap, évalués à ton heure de passage : à vérifier pour les lieux clés ; les lieux sans horaires sont comptés comme possibles.": "via Overpass and the Sillage database. Opening hours as entered in OpenStreetMap, evaluated at your time of passage: check them for key places; places without hours are counted as possible."
+    "via Overpass et base Sillage. Horaires tels que saisis dans OpenStreetMap, évalués à ton heure de passage : à vérifier pour les lieux clés ; les lieux sans horaires sont comptés comme possibles.": "via Overpass and the Sillage database. Opening hours as entered in OpenStreetMap, evaluated at your time of passage: check them for key places; places without hours are counted as possible.",
+    "Finit après le départ du jour {0} : pas de nuit · ajoute un jour ou avance une fin": "Ends after the start of day {0}: no night · add a day or bring an end forward"
   }
 };

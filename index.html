@@ -1468,7 +1468,8 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
 .pd-rng,.rb-rng{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .pd-time{font-family:var(--f-display);font-size:19px;line-height:1.2;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
 .pday.open .pd-time{font-size:24px}
-.pd-time .late{color:var(--head);font-size:.75em;vertical-align:middle}
+.pd-time small{font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--muted);margin-left:6px;vertical-align:middle}
+.pd-warn{color:var(--head);font-size:12.5px;font-weight:600;line-height:16px}
 .pd-meta{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
 .pd-head .chev,.rb-head .chev{width:20px;height:20px;flex:none;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
 .pd-head[aria-expanded="true"] .chev,.rb-head[aria-expanded="true"] .chev{transform:rotate(90deg)}
@@ -5794,11 +5795,12 @@ function renderPlan() {
   const html = days.map((d, k) => {
     const isLate = d.night && d.night.late; if (isLate) late++;
     const open = k === PLAN.open, ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km);
-    const nightH = d.night ? (d.night.to - d.night.from) / 3600e3 : 0;
+    const nightH = d.night ? (d.night.to - d.night.from) / 3600e3 : 0, dd = Math.round((new Date(d.b.t).setHours(0, 0, 0, 0) - new Date(d.a.t).setHours(0, 0, 0, 0)) / 864e5);
     const nightTxt = d.night ? (nightH > 0 ? T("nuit {0}", [durShort(nightH)]) : T("pas de nuit")) : T("arrivée");
     const head = `<button type="button" class="pd-head" data-pd="${k}" aria-expanded="${open}">${open ? '' : planThumb(ia, ib)}
       <span class="pd-txt"><span class="pd-lbl"><span class="lbl">${T("Jour {0} · {1}", [k + 1, dayFmt.format(new Date(d.a.t))])}</span>${open ? `<span class="pd-rng">${fD(d.a.km, 0)} → ${fD(d.b.km, 0)} ${UL.km}</span>` : ''}</span>
-      <b class="pd-time">${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}${isLate ? ' <span class="late" title="' + escH(T("L'étape finit après l'heure de départ prévue le lendemain : pas de nuit")) + '">⚠</span>' : ''}</b>
+      ${isLate ? `<span class="pd-warn">⚠ ${T("Finit après le départ du jour {0} : pas de nuit · ajoute un jour ou avance une fin", [k + 2])}</span>` : ''}
+      <b class="pd-time">${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}${dd > 0 ? `<small>+${dd} j</small>` : ''}</b>
       <span class="pd-meta">${open ? fD(d.dist, 0) : fD(d.a.km, 0) + ' → ' + fD(d.b.km, 0)} ${UL.km} · D+ ${fE(d.dplus)} ${UL.m} · ${nightTxt}</span></span>${chev}</button>`;
     if (!open) return `<article class="pday" data-k="${k}">${head}</article>`;
     const times = custom ? `<div class="pd-times">${k ? T("<label>Départ <input type=\"time\" step=\"900\" data-day=\"{0}\" value=\"{1}\" aria-label=\"Heure de départ du jour {2}\"></label>", [k, PLAN.times[k] || defT, k + 1]) : `<span class="hint">${T("Départ {0}", [hm.format(new Date(d.a.t))])}</span>`}${d.night ? T("<label>Fin <input type=\"time\" step=\"900\" data-end=\"{0}\" value=\"{1}\" class=\"{2}\" aria-label=\"Heure de fin du jour {3}\"></label>", [k, PLAN.ends[k] || hm.format(new Date(d.b.t)), PLAN.ends[k] ? 'set' : '', k + 1]) : ''}</div>` : '';
