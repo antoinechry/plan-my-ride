@@ -1517,49 +1517,144 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
 .rbday .gapb{background:color-mix(in srgb,var(--head) 12%,var(--panel));border-radius:10px;padding:8px 10px}
 .rbday .gapb b,.rbday .gapb span{color:var(--head)}
 .rb-more{margin:0 14px 12px}
+
+/* Écran de connexion v2.0 (07/11/2026, maquette « B · Bandeau sombre » + parcours e-mail C1 / C2 / C3 du canevas « Sillage v2.0 · écran de connexion ») :
+   bandeau encre (logo, promesse, les trois modes), carte d'accès qui chevauche le bandeau ; étapes data-step / [data-gs] (gateStep). */
+.gate2{padding:0;place-items:start center}
+.gate-wrap{width:100%;max-width:440px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
+@media (min-width:700px){.gate2{place-items:center;padding:24px 16px}.gate-wrap{max-width:460px;min-height:0;border-radius:28px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.1);border:1px solid var(--line)}}
+.gate-band{background:#14201b;color:#f1f3f0;padding:max(18px,env(safe-area-inset-top)) 24px 84px}
+.gate-top{display:flex;align-items:center;gap:10px;margin-bottom:22px;min-height:24px}
+.gate-top .sp{flex:1}
+.gate-back{background:none;border:0;color:#c9d1cc;font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:0;min-height:24px}
+.gate-top .lnk{color:#c9d1cc;text-decoration:none;font-weight:600;font-size:13px;align-self:auto}
+.gate2 .gate-logo{color:#f1f3f0;font-size:34px;margin:0 0 14px}
+.gate2 .gate-logo.sm{font-size:24px;margin-bottom:16px}
+.gate-band .mark .mk-rain{stroke:#5ba3da}
+.gate-tag{margin:0 0 20px;font-size:22px;line-height:27px;font-weight:700;letter-spacing:-.3px;font-family:var(--f-display)}
+.gate-feats{display:flex;flex-direction:column;gap:12px}
+.gate-feat{display:flex;align-items:center;gap:12px;font-size:14px;line-height:18px}
+.gate-feat .i{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.08);display:grid;place-items:center;flex:none}
+.gate-feat .i svg{width:22px;height:22px;fill:none;stroke:#f1f3f0;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gate-feat b{display:block;font-weight:700}.gate-feat span{display:block;color:#c9d1cc;font-size:12.5px}
+.gate-band h2{margin:0 0 8px;font-size:28px;line-height:32px;font-weight:800;letter-spacing:-.4px;font-family:var(--f-display)}
+.gate-band .gate-sub{color:#c9d1cc;font-size:14.5px;line-height:19px;margin:0}
+.gate-band .gate-sub b{color:#f1f3f0;overflow-wrap:anywhere}
+.gate-band .gate-sub .lnk{color:#f1f3f0;font-size:inherit;display:inline;text-decoration:underline}
+.gate-who{display:flex;align-items:center;gap:14px}
+.gate-av{width:56px;height:56px;border-radius:999px;background:#f1f3f0;color:#14201b;display:grid;place-items:center;font-size:24px;font-weight:800;flex:none;font-family:var(--f-display)}
+.gate-body{padding:0 16px 24px;margin-top:-64px;display:flex;flex-direction:column;gap:14px;flex:1}
+#gateForms{display:flex;flex-direction:column;gap:14px}
+#gateForms[hidden]{display:none}
+.gate2 .gate-card{max-width:none;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;position:relative;z-index:1;box-shadow:0 10px 30px rgba(20,32,27,.08)}
+.gate2 .gate-card.lo{z-index:0;box-shadow:none}
+.gate2 .gate-card[hidden]{display:none}
+.gate2 .btn.big{min-height:50px;border-radius:999px;font-size:16px;font-weight:700;padding:0 16px}
+.gate2 .gate-soc{gap:10px;margin:0}
+.gate2 .soc-btn{min-height:50px;border-radius:999px;font-weight:700}
+.gate2 .gate-or{margin:4px 0 0}
+.gate2 .gate-card .gate-or{margin:0}
+.gate2 label{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;gap:6px}
+.gate2 label small{text-transform:none;letter-spacing:0;font-family:var(--f-body);font-weight:400;font-size:12px}
+.gate2 input:not([type=hidden]){min-height:48px;border-radius:12px;padding:0 14px}
+.gate2 .gate-codein{font-family:var(--f-mono);font-size:24px;letter-spacing:.45em;text-align:center}
+.gate2 .note{font-size:12.5px;line-height:16px}
+.gate2 .note.center,.gate2 .lnk.center{text-align:center;align-self:center}
+.gate2 .lnk{text-decoration:none;color:var(--accent);font-weight:600;font-size:14px}
+.gate2 .lnk.center{color:var(--muted)}
+.gate2 .gc-row .lnk{font-size:13px}
+.gate2 .gate-guest{border:0;margin:4px 0 0;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.gate2 .gate-guest .lnk{align-self:center}
+.gate2 .gate-top .lnk{color:#c9d1cc}
+.gate2 .gate-guest .note{margin:0}
+.gate2 .gate-acts{display:flex;flex-direction:column;gap:10px}
+.gate2 .err{text-align:center;padding:0 4px}
+.gate-foot{margin:auto 0 0;padding-top:20px;text-align:center;font-size:12.5px;color:var(--muted)}
+.gate-foot a{color:var(--muted)}
+.gate2 [data-gs][hidden]{display:none}
+@media (min-width:700px){.gate-band{padding-top:22px}}
 </style>
 </head>
 <body>
 <script>/* retour de Google / Apple / lien de connexion par e-mail (04/11/2026) : jetons gardés pour accessCheck, adresse nettoyée avant le script principal */try{var h0=location.hash;if(/access_token=|error_description=/.test(h0)&&!/type=recovery/.test(h0)){sessionStorage.setItem('pmr-auth-ret',h0.slice(1));history.replaceState(null,'',location.pathname+location.search)}}catch(e){}</script>
 <script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
-<div class="gate" id="gate">
-  <div class="gate-card">
-    <p class="gate-logo"><svg class="mark" width="50" height="45" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
-    <p class="gate-sub" id="gateSub">La météo sur ta trace, heure par heure. Crée ton compte en une minute.</p>
-    <p class="gate-lang"><button type="button" class="lnk" id="gateLang" data-l="en" lang="en">English</button></p>
-    <div id="gateWait" hidden>
-      <p class="note" id="gateWaitTxt"></p>
-      <p class="note" id="gateResendMsg" hidden></p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><button type="button" class="btn primary" id="gateResend" hidden>Renvoyer l'e-mail</button><button type="button" class="btn" id="gateRetry">Réessayer</button><button type="button" class="btn" id="gateOut">Se déconnecter</button></div>
-    </div>
-    <div id="gateForms">
-      <div class="gate-soc" id="gateSoc" hidden>
-        <button type="button" class="soc-btn soc-apple" data-soc="apple" hidden><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z"/></svg>Continuer avec Apple</button>
-        <button type="button" class="soc-btn soc-google" data-soc="google" hidden><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continuer avec Google</button>
-        <p class="gate-or"><span>ou avec ton e-mail</span></p>
+<div class="gate gate2" id="gate" data-step="home">
+  <div class="gate-wrap">
+    <div class="gate-band">
+      <div class="gate-top"><button type="button" class="gate-back" id="gateBack" hidden>← Retour</button><span class="sp"></span><button type="button" class="lnk" id="gateLang" data-l="en" lang="en">English</button></div>
+      <div data-gs="home">
+        <p class="gate-logo"><svg class="mark" width="50" height="45" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
+        <p class="gate-tag">La météo sur ta trace,<br>heure par heure.</p>
+        <div class="gate-feats"><div class="gate-feat"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h7l2.5 7.5M9 9l3 7.5h-6.5M12 16.5 16 9M7.5 7h3M15 6.5l1 2.5"/></svg></span><div><b>Sortie</b><span>Verdict, meilleure heure de départ, vent ressenti</span></div></div><div class="gate-feat"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 20 9 9.5l3.5 5.5 2.5-3.5L21.5 20z"/><path d="M15.8 3.2a3 3 0 1 0 3.5 3.5 2.5 2.5 0 0 1-3.5-3.5z"/></svg></span><div><b>Ultra</b><span>Jour par jour, roadbook des ravitos et des nuits</span></div></div><div class="gate-feat"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2M3 12.5h18M10.5 12.5v2.5h3v-2.5"/></svg></span><div><b>Commute</b><span>Aller et retour, deux semaines d'un coup d'œil</span></div></div></div>
       </div>
-      <div class="gate-tabs" role="group" aria-label="Accès"><button type="button" data-g="in" aria-pressed="true">Se connecter</button><button type="button" data-g="up" aria-pressed="false">Créer un compte</button></div>
-      <form id="gateIn">
-        <label>E-mail<input type="email" id="giEmail" autocomplete="username" required></label>
-        <label>Mot de passe<input type="password" id="giPw" autocomplete="current-password" required></label>
-        <button type="submit" class="btn primary" id="giGo">Se connecter</button>
-        <button type="button" class="btn" id="giCode">Recevoir un code par e-mail</button>
-        <button type="button" class="lnk" id="giForgot">Mot de passe oublié ?</button>
-      </form>
-      <form id="gateCode" hidden>
-        <p class="note" id="gcTxt"></p>
-        <label>Code reçu par e-mail<input type="text" id="gcCode" inputmode="numeric" autocomplete="one-time-code" maxlength="12" required></label>
-        <button type="submit" class="btn primary" id="gcGo">Me connecter</button>
-        <div class="gc-row"><button type="button" class="lnk" id="gcResend">Renvoyer un code</button><button type="button" class="lnk" id="gcBack">← Retour</button></div>
-      </form>
-      <form id="gateUp" hidden>
-        <p class="note" id="guInvite"></p>
-        <label>Prénom<input type="text" id="guName" autocomplete="given-name" maxlength="40" required></label>
-        <label>E-mail<input type="email" id="guEmail" autocomplete="email" required></label>
-        <label>Mot de passe <small>8 caractères minimum</small><input type="password" id="guPw" autocomplete="new-password" minlength="8" required></label>
-        <button type="submit" class="btn primary" id="guGo">Créer mon compte</button>
-      </form>
-      <p class="err" id="gateErr" hidden></p>
+      <div data-gs="email" hidden>
+        <p class="gate-logo sm"><svg class="mark" width="40" height="36" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate2"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate2)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
+        <h2>Ton e-mail,<br>et c'est parti.</h2>
+        <p class="gate-sub">Déjà un compte ? On te reconnaît.<br>Pas encore ? On le crée en une minute.</p>
+      </div>
+      <div data-gs="known" hidden>
+        <div class="gate-who"><span class="gate-av" id="gateAv" aria-hidden="true">A</span><div><h2>Content de te revoir</h2><p class="gate-sub"><span id="gateKnownMail"></span> · <button type="button" class="lnk" data-gback="email">pas toi ?</button></p></div></div>
+      </div>
+      <div data-gs="new" hidden>
+        <p class="gate-logo sm"><svg class="mark" width="40" height="36" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate3"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate3)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
+        <h2>Bienvenue !</h2>
+        <p class="gate-sub">On ne connaît pas encore <b id="gateNewMail"></b> · <button type="button" class="lnk" data-gback="email">pas toi ?</button><br>Deux infos et ton compte est prêt.</p>
+      </div>
+      <div data-gs="wait" hidden>
+        <p class="gate-logo sm"><svg class="mark" width="40" height="36" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkGate4"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkGate4)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</p>
+        <h2 id="gateWaitTitle">Presque fini</h2>
+      </div>
+    </div>
+    <div class="gate-body">
+      <div class="gate-card" id="gateWait" hidden>
+        <p class="note" id="gateWaitTxt"></p>
+        <p class="note" id="gateResendMsg" hidden></p>
+        <div class="gate-acts"><button type="button" class="btn primary big" id="gateRetry">Réessayer</button><button type="button" class="btn big" id="gateResend" hidden>Renvoyer l'e-mail</button><button type="button" class="lnk center" id="gateOut">Se déconnecter</button></div>
+      </div>
+      <div id="gateForms">
+        <section class="gate-card" data-gs="home" aria-label="Accès">
+          <div class="gate-soc" id="gateSoc" hidden>
+            <button type="button" class="soc-btn soc-apple" data-soc="apple" hidden><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z"/></svg>Continuer avec Apple</button>
+            <button type="button" class="soc-btn soc-google" data-soc="google" hidden><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continuer avec Google</button>
+            <p class="gate-or"><span>ou</span></p>
+          </div>
+          <button type="button" class="btn primary big" id="gateEmailGo">Continuer avec mon e-mail</button>
+          <p class="note center">Compte existant ou nouveau : on te demande juste ton e-mail, le reste suit.</p>
+        </section>
+        <form class="gate-card" id="gateMail" data-gs="email" hidden>
+          <label>E-mail<input type="email" id="gmEmail" autocomplete="username" inputmode="email" autocapitalize="off" required></label>
+          <button type="submit" class="btn primary big" id="gmGo">Continuer</button>
+          <p class="note center">Pas de mot de passe à retenir si tu préfères : un code par e-mail suffit.</p>
+        </form>
+        <div data-gs="known" hidden>
+          <form class="gate-card" id="gateIn">
+            <input type="hidden" id="giEmail" autocomplete="username">
+            <label>Mot de passe<input type="password" id="giPw" autocomplete="current-password" required></label>
+            <button type="submit" class="btn primary big" id="giGo">Se connecter</button>
+            <button type="button" class="lnk center" id="giForgot">Mot de passe oublié ?</button>
+          </form>
+          <p class="gate-or"><span>ou sans mot de passe</span></p>
+          <div class="gate-card lo">
+            <p class="note" id="gcTxt">On t'envoie un code à 6 chiffres par e-mail, tu le tapes ici.</p>
+            <button type="button" class="btn big" id="giCode">Envoyer un code</button>
+            <form id="gateCode" hidden>
+              <label>Code reçu par e-mail<input type="text" id="gcCode" class="gate-codein" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="······" required></label>
+              <button type="submit" class="btn primary big" id="gcGo">Me connecter</button>
+              <div class="gc-row"><button type="button" class="lnk" id="gcResend">Renvoyer un code</button><button type="button" class="lnk" id="gcBack">Annuler</button></div>
+            </form>
+          </div>
+          <p class="note center">Compte créé avec Apple ou Google ? Reviens en arrière et utilise son bouton.</p>
+        </div>
+        <form class="gate-card" id="gateUp" data-gs="new" hidden>
+          <input type="hidden" id="guEmail" autocomplete="email">
+          <label>Prénom<input type="text" id="guName" autocomplete="given-name" maxlength="40" required></label>
+          <label>Mot de passe<input type="password" id="guPw" autocomplete="new-password" minlength="8" placeholder="8 caractères minimum" required></label>
+          <button type="submit" class="btn primary big" id="guGo">Créer mon compte</button>
+          <p class="note center" id="guInvite"></p>
+        </form>
+        <p class="err" id="gateErr" hidden></p>
+      </div>
+      <p class="gate-foot">Beyond The Track · <a href="https://sillage-ride.eu/confidentialite/" target="_blank" rel="noopener">Confidentialité</a> · <a href="https://sillage-ride.eu/mentions-legales/" target="_blank" rel="noopener">Mentions légales</a></p>
     </div>
   </div>
 </div>
@@ -6510,19 +6605,44 @@ $('#logoutLink').addEventListener('click', async e => {
 // tester_links) donne l'accès dès la création du compte ; sinon le compte attend la validation d'un administrateur.
 const ACC = { row: null };
 let INVITE = ''; try { INVITE = localStorage.getItem('pmr-invite') || ''; } catch (e) {}
+/* Écran de connexion v2.0 (07/11/2026) : étapes home (Apple / Google / « Continuer avec mon e-mail ») → email (une adresse)
+   → known (mot de passe, ou code par e-mail) ou new (prénom + mot de passe) selon auth_email_known ; wait = compte en attente. */
+const GATE = { step: 'home', email: '' };
+function gateStep(s) {
+  GATE.step = s; $('#gate').dataset.step = s;
+  document.querySelectorAll('#gate [data-gs]').forEach(el => { el.hidden = el.dataset.gs !== s; });
+  $('#gateBack').hidden = s === 'home' || s === 'wait';
+  $('#gateWait').hidden = s !== 'wait'; $('#gateForms').hidden = s === 'wait';
+  $('#gateErr').hidden = true;
+  if (s === 'known') { $('#gateCode').hidden = true; $('#giCode').hidden = false; $('#gcTxt').textContent = T("On t'envoie un code à 6 chiffres par e-mail, tu le tapes ici."); $('#giPw').value = ''; }
+  if (s === 'new') { $('#guInvite').textContent = INVITE ? T("🎟️ Invitation testeur : ton accès sera ouvert tout de suite.") : T("Tu recevras un e-mail pour confirmer ton adresse : ton compte s'ouvre dès que tu touches le lien."); $('#guInvite').classList.toggle('ok', !!INVITE); }
+  const f = { email: '#gmEmail', known: '#giPw', new: '#guName' }[s]; if (f) setTimeout(() => { try { $(f).focus({ preventScroll: true }); } catch (e) {} }, 60);
+  window.scrollTo(0, 0);
+}
 function gateShow(mode, msg) {
   document.body.classList.add('gated');
-  $('#gateForms').hidden = mode === 'wait'; $('#gateWait').hidden = mode !== 'wait';
-  if (mode === 'wait') $('#gateWaitTxt').textContent = msg || '';
-  else socInit(), gateTab(mode === 'up' || (INVITE && mode !== 'in') ? 'up' : 'in');
+  if (mode === 'wait') { $('#gateWaitTxt').textContent = msg || ''; $('#gateWaitTitle').textContent = $('#gateResend').hidden ? T("Un instant") : T("Presque fini"); gateStep('wait'); return; }
+  socInit(); gateStep(mode === 'up' || INVITE ? 'email' : 'home');
 }
-function gateTab(t) {
-  document.querySelectorAll('#gate [data-g]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.g === t)));
-  $('#gateIn').hidden = t !== 'in'; $('#gateUp').hidden = t !== 'up'; $('#gateCode').hidden = true; $('#gateErr').hidden = true;
-  $('#guInvite').textContent = INVITE ? T("🎟️ Invitation testeur : ton accès sera ouvert tout de suite.") : T("Tu recevras un e-mail pour confirmer ton adresse : ton compte s'ouvre dès que tu touches le lien.");
-  $('#guInvite').classList.toggle('ok', !!INVITE);
-}
-document.querySelectorAll('#gate [data-g]').forEach(b => b.addEventListener('click', () => gateTab(b.dataset.g)));
+const gateBack = () => gateStep(GATE.step === 'email' ? 'home' : 'email');
+$('#gateBack').addEventListener('click', gateBack);
+document.querySelectorAll('#gate [data-gback]').forEach(b => b.addEventListener('click', () => gateStep(b.dataset.gback)));
+$('#gateEmailGo').addEventListener('click', () => gateStep('email'));
+// une adresse → compte connu (mot de passe ou code) ou nouveau compte ; auth_email_known répond seulement oui / non
+$('#gateMail').addEventListener('submit', async e => {
+  e.preventDefault(); const email = $('#gmEmail').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { gateErr(T("Entre une adresse e-mail valide.")); return; }
+  gateErr(''); $('#gmGo').disabled = true;
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/auth_email_known', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_email: email }) });
+    if (!r.ok) throw new Error('rpc ' + r.status);
+    const known = (await r.json()) === true;
+    GATE.email = email; $('#giEmail').value = email; $('#guEmail').value = email;
+    $('#gateKnownMail').textContent = email; $('#gateNewMail').textContent = email; $('#gateAv').textContent = email[0].toUpperCase();
+    gateStep(known ? 'known' : 'new');
+  } catch (err) { gateErr(T("Vérification impossible pour l'instant. Réessaie dans un moment.")); }
+  $('#gmGo').disabled = false;
+});
 const gateErr = t => { $('#gateErr').textContent = t; $('#gateErr').hidden = !t; };
 // Journal par compte (table activity_log, lu par la page Admin) : ouverture de l'app (une fois par onglet) et GPX importés.
 async function logAct(event, extra) {
@@ -6682,7 +6802,7 @@ $('#giCode').addEventListener('click', async () => {
   gateErr(''); $('#giCode').disabled = true;
   try {
     await otpSend(email);
-    $('#gateIn').hidden = true; $('#gateCode').hidden = false;
+    $('#giCode').hidden = true; $('#gateCode').hidden = false;
     $('#gcTxt').textContent = T("On t'a envoyé un code à {0}. Il reste valable une heure.", [email]);
     $('#gcCode').value = ''; $('#gcCode').focus();
   } catch (err) {
@@ -6709,7 +6829,7 @@ $('#gcResend').addEventListener('click', async () => {
   try { await otpSend(OTP.email); gateErr(''); $('#gateErr').hidden = false; $('#gateErr').textContent = T("Nouveau code envoyé."); }
   catch (err) { gateErr(T("Envoi impossible : {0}", [(err && err.message) || err])); }
 });
-$('#gcBack').addEventListener('click', () => gateTab('in'));
+$('#gcBack').addEventListener('click', () => gateStep('known'));
 $('#gateRetry').addEventListener('click', () => location.reload());
 // Compte en attente de confirmation de l'adresse (inscription ouverte, 29/10/2026) : nouveau lien par e-mail (2 min d'écart au plus côté serveur).
 $('#gateResend').addEventListener('click', async () => {
