@@ -1104,6 +1104,7 @@ window.PMR_I18N = {
     "Chercher une ville": "Search for a town",
     "Aucune ville trouvée": "No town found",
     "Recherche indisponible": "Search unavailable",
+    "Source : © OpenStreetMap": "Source: © OpenStreetMap",
     "Y aller": "Get directions",
     "Plans (Apple)": "Apple Maps",
     "Autre appli": "Other app",

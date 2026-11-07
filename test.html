@@ -8989,7 +8989,7 @@ function pmShow(it) {
   const own = u && p.user_id === SB_UID;
   pmSheet(`<div class="pm-sh"><div>
       <div class="pm-badges"><span class="pm-tb${u ? '' : ' osm'}" style="--c:${t.col}">${pmSvg(t.d)}${escH(t.lbl)}</span>
-        <span class="pm-src">${u ? escH(p.author ? T("Ajouté par {0}", [p.author]) : T("Ajouté par un cycliste")) : escH(T("Source : OpenStreetMap"))}</span>
+        <span class="pm-src">${u ? escH(p.author ? T("Ajouté par {0}", [p.author]) : T("Ajouté par un cycliste")) : escH(T("Source : © OpenStreetMap"))}</span>
         <span class="pm-ver" id="pmVer"${!u && PM.ver.has(it.ref) ? '' : ' hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${escH(T("Vérifié par les cyclistes"))}</span></div>
       <h3 id="pmSheetTitle">${escH(title)}</h3>
       ${!u && it.name && pmKind(it.tags) ? `<span class="pm-src">${escH(pmKind(it.tags))}</span>` : ''}
@@ -9003,7 +9003,6 @@ function pmShow(it) {
     <div id="pmRevForm"></div>
     <div class="pm-acts" id="pmActs"><button type="button" class="btn primary" id="pmRevBtn">${escH(T("Laisser un avis"))}</button><button type="button" class="btn" id="pmNavBtn" aria-expanded="false" aria-controls="pmNav">${escH(T("Y aller"))}</button></div>
     <div class="pm-nav" id="pmNav" hidden>${navApps(it.lat, it.lon, title).map(x => navA(x, 'nav-app')).join('')}<p class="hint">${escH(T("Le guidage s'ouvre dans l'appli choisie."))}</p></div>
-    ${u ? '' : `<p class="hint" style="margin-top:12px">${escH(T("Données © les contributeurs d'OpenStreetMap, licence ODbL"))}</p>`}
     ${own && p.status === 'pending' ? `<p style="margin-top:12px"><button type="button" class="linkbtn" id="pmDelMine">${escH(T("Supprimer mon point"))}</button></p>` : ''}`);
   $('#pmRevBtn').addEventListener('click', () => pmCanWrite() ? pmReviewForm(it) : pmGuestSheet());
   $('#pmNavBtn').addEventListener('click', e => { const n = $('#pmNav'), op = n.hidden; n.hidden = !op; e.currentTarget.setAttribute('aria-expanded', op); if (op) n.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
