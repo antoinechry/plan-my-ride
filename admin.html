@@ -1171,7 +1171,27 @@ function pActs(kind, x) {
   if (x.status !== 'pending') return '<button type="button" class="b sm" data-undo="' + kind + '" data-id="' + x.id + '">Annuler</button>';
   const canVal = kind === 'r' || !(P.dup[x.id] && P.dup[x.id].list.length);
   return (canVal ? '<button type="button" class="b sm ok" data-val="' + kind + '" data-id="' + x.id + '">✓ Valider</button>' : '')
-    + '<button type="button" class="b sm bad' + (ask ? ' ask' : '') + '" data-rm="' + kind + '" data-id="' + x.id + '">' + (ask ? 'Confirmer le retrait' : 'Retirer') + '</button>';
+    + '<button type="button" class="b sm bad' + (ask ? ' ask' : '') + '" data-rm="' + kind + '" data-id="' + x.id + '">' + (ask ? 'Confirmer le retrait' : 'Retirer') + '</button>'
+    + pBlockBtn(kind, x);
+}
+// Bloquer l'auteur (modération, exigée par l'App Store : bloquer un utilisateur abusif). Deux appuis ; bloque le compte et retire tous ses points et avis.
+function pBlockBtn(kind, x) {
+  const u = (S.users || []).find(y => y.user_id === x.user_id);
+  if (!u || u.is_admin || (S.me && u.user_id === S.me.id)) return '';
+  if (u.status === 'blocked') return '<span class="muted" style="font-size:13px">Auteur bloqué</span>';
+  const ask = P.ask === 'b' + kind + x.id;
+  return '<button type="button" class="b sm bad' + (ask ? ' ask' : '') + '" data-blk="' + kind + '" data-id="' + x.id + '">' + (ask ? 'Bloquer et tout retirer ?' : 'Bloquer l\'auteur') + '</button>';
+}
+async function pBlockAuthor(kind, id) {
+  const x = (kind === 'p' ? P.pois : P.revs).find(y => y.id === id); if (!x) return;
+  const uid = x.user_id, now = new Date().toISOString();
+  if (!(await save(uid, { status: 'blocked' }))) return;
+  for (const [tb, arr] of [['poi', P.pois], ['poi_review', P.revs]]) {
+    const { error } = await sb.from(tb).update({ status: 'removed', reviewed_at: now }).eq('user_id', uid).neq('status', 'removed');
+    if (error) { alertMsg(error.message); continue; }
+    arr.forEach(y => { if (y.user_id === uid) { y.status = 'removed'; y.reviewed_at = now; } });
+  }
+  P.ask = ''; pBadge(); pRender(); if (typeof render === 'function') render();
 }
 function pDupHtml(p) {
   const d = P.dup[p.id];
@@ -1245,6 +1265,7 @@ $('pList').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   const id = b.dataset.id;
   if (b.dataset.val) return pSet(b.dataset.val, id, 'valid');
+  if (b.dataset.blk) { if (P.ask !== 'b' + b.dataset.blk + id) { P.ask = 'b' + b.dataset.blk + id; return pRender(); } return pBlockAuthor(b.dataset.blk, id); }
   if (b.dataset.rm) { if (P.ask !== b.dataset.rm + id) { P.ask = b.dataset.rm + id; return pRender(); } return pSet(b.dataset.rm, id, 'removed'); }
   if (b.dataset.undo) {
     const x = (b.dataset.undo === 'p' ? P.pois : P.revs).find(y => y.id === id);
