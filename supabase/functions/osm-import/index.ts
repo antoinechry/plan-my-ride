@@ -12,7 +12,6 @@ const SERVERS = [
   'https://overpass.openstreetmap.fr/api/interpreter', // OSM France : le seul qui répondait le 31/10/2026
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
 ];
 const KEEP = ['name', 'opening_hours', 'addr:housenumber', 'addr:street', 'addr:city', 'phone', 'website', 'drinking_water', 'seasonal', 'fee',
   'backcountry', 'camp_site', 'amenity', 'shop', 'tourism', 'man_made', 'bicycle', 'shelter_type'];

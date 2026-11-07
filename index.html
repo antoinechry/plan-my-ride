@@ -5190,7 +5190,7 @@ const POI_TYPES = {
   'tourism=wilderness_hut': ['sleep', T("Abri")], 'tourism=chalet': ['sleep', T("Gîte")],
   'shop=bicycle': ['bike', T("Magasin de vélo")], 'amenity=pharmacy': ['health', T("Pharmacie")]
 };
-const OVERPASS = 'https://overpass-api.de/api'; // les serveurs miroirs (kumi.systems…) ne répondent plus aux navigateurs
+const OVERPASS = 'https://overpass-api.de/api'; // les serveurs miroirs ne répondent plus aux navigateurs
 const OH_JS = ['https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js', 'https://cdn.jsdelivr.net/npm/opening_hours@3.15.0/build/opening_hours.js'];
 const POI = { key: '', list: [], loading: '', error: '', seq: 0, layer: null, groups: new Set(Object.keys(POI_GROUPS)), ohState: '' };
 try { const g = JSON.parse(localStorage.getItem('pmr-poi-groups') || 'null'); if (Array.isArray(g)) POI.groups = new Set(g.filter(k => POI_GROUPS[k])); } catch (e) {}

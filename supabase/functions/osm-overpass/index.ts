@@ -15,7 +15,6 @@ const json = (body: unknown, status = 200) =>
 const SERVERS = [
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
 ];
 
 Deno.serve(async (req: Request) => {
