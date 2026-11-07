@@ -299,3 +299,7 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 
 ## Adresse de la supervision (07/11/2026)
 - La supervision n'est plus à `admin.html` / `admin-test.html` : elle est à `sup-k7q2x9.html` (prod) et `sup-test-k7q2x9.html` (test), pour ne pas être devinable. `admin.html` et `admin-test.html` sont des pages vides « Page introuvable » (noindex). Les notes ci-dessus qui disent `admin.html` / `admin-test.html` désignent ces deux pages renommées ; liens dans index.html, test.html et `app/scripts/build-www.mjs`. Ne pas lier cette adresse depuis le site vitrine.
+
+## Décision du 07/11/2026 : pas d'usage web grand public pour l'instant
+- Sillage reste utilisé sur mobile et tablette (app des stores). Pas d'ouverture au grand public de la version web PC / Mac pour le moment (le compte gratuit y reste refusé, voir « Trois offres »). À reprendre plus tard : domaine unique (vitrine à la racine, app web et supervision sur un sous-domaine, ex. `app.sillage.cc`), migration des données locales du navigateur, URL de redirection Supabase / Google / Apple, pages légales, règle du compte gratuit sur le web.
+- La supervision reste sur GitHub Pages à son adresse non devinable (`sup-k7q2x9.html`), sans lien depuis la vitrine.
