@@ -1,9 +1,11 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Sillage : suppression du compte par son titulaire (page Moi → « Supprimer mon compte », depuis le 29/10/2026 ;
 // exigée par l'App Store et Google Play).
-// POST { password } avec le jeton de session du compte.
-//   → vérifie le mot de passe (évite une suppression depuis un appareil laissé ouvert),
+// POST { password } ou { code: true } avec le jeton de session du compte.
+//   → vérifie le mot de passe (évite une suppression depuis un appareil laissé ouvert) ; pour un compte sans mot de passe
+//     (Apple, Google), { code: true } : le jeton doit sortir d'un code reçu par e-mail il y a moins de 10 minutes
+//     (amr « otp » / « magiclink » du jeton, déjà vérifié par Auth),
 //   → refuse si c'est le dernier administrateur actif,
 //   → retire le contact de Brevo (lettre d'info), s'il existe,
 //   → supprime l'utilisateur Auth : la cascade efface app_users, routes, push_alerts, push_subs, usage_log, activity_log.
@@ -31,15 +33,27 @@ Deno.serve(async (req: Request) => {
   const user = who?.user;
   if (!user?.email) return json({ error: 'auth' }, 401);
 
-  // Mot de passe : même contrôle qu'une connexion.
-  const password = typeof body.password === 'string' ? body.password.slice(0, 200) : '';
-  if (!password) return json({ error: 'password' }, 403);
-  const chk = await fetch(`${URL_}/auth/v1/token?grant_type=password`, {
-    method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: user.email, password }),
-  });
-  await chk.arrayBuffer().catch(() => null);
-  if (!chk.ok) return json({ error: 'password' }, 403);
+  if (body.code === true) {
+    // Preuve par code e-mail : le jeton doit venir d'une connexion par code (otp / magiclink) de moins de 10 minutes.
+    let amr: Array<{ method?: string; timestamp?: number }> = [];
+    try {
+      const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      amr = JSON.parse(atob(b64 + '='.repeat((4 - b64.length % 4) % 4))).amr ?? [];
+    } catch (_) { /* jeton illisible : refusé plus bas */ }
+    const now = Math.floor(Date.now() / 1000);
+    const fresh = amr.some((a) => (a.method === 'otp' || a.method === 'magiclink') && typeof a.timestamp === 'number' && now - a.timestamp <= 600);
+    if (!fresh) return json({ error: 'password' }, 403);
+  } else {
+    // Mot de passe : même contrôle qu'une connexion.
+    const password = typeof body.password === 'string' ? body.password.slice(0, 200) : '';
+    if (!password) return json({ error: 'password' }, 403);
+    const chk = await fetch(`${URL_}/auth/v1/token?grant_type=password`, {
+      method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, password }),
+    });
+    await chk.arrayBuffer().catch(() => null);
+    if (!chk.ok) return json({ error: 'password' }, 403);
+  }
 
   // Garder au moins un administrateur actif.
   const { data: me } = await db.from('app_users').select('is_admin').eq('user_id', user.id).maybeSingle();
