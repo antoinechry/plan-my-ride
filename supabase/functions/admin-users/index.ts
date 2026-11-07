@@ -1,6 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-// Gestion des comptes pour la page Admin (admin.html), réservée aux administrateurs actifs (app_users.is_admin).
+// Gestion des comptes pour la page Admin (sup-k7q2x9.html), réservée aux administrateurs actifs (app_users.is_admin).
 // POST (jeton de session de l'admin) :
 //   { action: 'list' }                                   → { ok, users: [{ id, email, created_at, last_sign_in_at, routes, routes_last }] }
 //   { action: 'create', email, password, prenom? } → { ok, id }  (compte actif tout de suite, adresse confirmée d'office)

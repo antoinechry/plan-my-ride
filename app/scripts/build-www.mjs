@@ -76,7 +76,7 @@ swap('Leaflet JS', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet
 // « Mot de passe oublié ? » : le lien de l'e-mail ne peut pas revenir dans l'app → page web
 swap('redirection du mot de passe oublié', 'redirectTo: location.origin + location.pathname', `redirectTo: (window.SILLAGE_WEB || location.origin + location.pathname)`);
 // Admin : reste une page web (ouverte dans le navigateur du téléphone)
-swap('lien Admin', `href="${TEST ? 'admin-test.html' : 'admin.html'}"`, `href="${WEB}${TEST ? 'admin-test.html' : 'admin.html'}"`, true);
+swap('lien Admin', `href="${TEST ? 'sup-test-k7q2x9.html' : 'sup-k7q2x9.html'}"`, `href="${WEB}${TEST ? 'sup-test-k7q2x9.html' : 'sup-k7q2x9.html'}"`, true);
 
 fs.writeFileSync(path.join(WWW, 'index.html'), h);
 

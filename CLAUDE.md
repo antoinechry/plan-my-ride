@@ -296,3 +296,6 @@ Application web statique de planification de sorties vélo : trace GPX + prévis
 - Interrupteur « Afficher la liste » (`#trendListOn`, en-tête de la carte, comme celui des ravitos ; `applyTrendList`, `localStorage` `pmr-trend-list`) : masque la liste par jour et la note, garde la phrase de tête (31/10/2026).
 - Pistes : ajouter GEM (21 scénarios, 39 jours les lundis et jeudis) pour élargir l'ensemble ; ouvrir à Sillage.cc + ; textes anglais dans `lang.js`.
 
+
+## Adresse de la supervision (07/11/2026)
+- La supervision n'est plus à `admin.html` / `admin-test.html` : elle est à `sup-k7q2x9.html` (prod) et `sup-test-k7q2x9.html` (test), pour ne pas être devinable. `admin.html` et `admin-test.html` sont des pages vides « Page introuvable » (noindex). Les notes ci-dessus qui disent `admin.html` / `admin-test.html` désignent ces deux pages renommées ; liens dans index.html, test.html et `app/scripts/build-www.mjs`. Ne pas lier cette adresse depuis le site vitrine.
