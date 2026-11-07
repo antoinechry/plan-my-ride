@@ -1605,6 +1605,85 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
 .gate-foot a{color:var(--muted)}
 .gate2 [data-gs][hidden]{display:none}
 @media (min-width:700px){.gate-band{padding-top:22px}}
+/* Aide v2.0 (07/11/2026) : page « Aide » (accueil, une page par écran, dépannage, lexique), ouverte par « ? » et par Moi */
+.help2 .hp{display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto;padding-bottom:24px}
+.hp h3{margin:0;font-size:28px;line-height:32px;font-weight:800;letter-spacing:-.5px}
+.hp .hp-sub{font-size:14.5px;line-height:19px;color:var(--muted);margin:6px 0 0}
+.hp .hp-search{display:flex;align-items:center;gap:10px;min-height:48px;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:0 16px;color:var(--muted)}
+.hp .hp-search svg{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-search input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:16px;color:var(--ink);outline:0;padding:0}
+.hp .hp-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.hp .hp-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.hp .hp-card.rows{padding-top:6px;padding-bottom:6px;gap:0}
+.hp .hp-lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
+.hp ol.hp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.hp ol.hp-steps li{display:flex;gap:12px;align-items:flex-start}
+.hp ol.hp-steps i{flex:none;width:26px;height:26px;border-radius:999px;background:var(--ink);color:var(--bg);font-style:normal;display:grid;place-items:center;font-family:var(--f-mono);font-weight:500;font-size:13px;margin-top:1px}
+.hp ol.hp-steps li>div>b{display:block;font-size:14.5px;line-height:19px}
+.hp ol.hp-steps li>div>span{display:block;font-size:13.5px;line-height:18px;color:var(--muted)}
+.hp .hp-row{display:flex;align-items:center;gap:12px;padding:12px 0;border:0;border-top:1px solid color-mix(in srgb,var(--line) 60%,var(--panel));background:none;color:var(--ink);font:inherit;text-align:left;width:100%;cursor:pointer}
+.hp .hp-row:first-child{border-top:0}
+.hp .hp-row .ic{width:40px;height:40px;border-radius:12px;background:var(--bg);display:grid;place-items:center;flex:none}
+.hp .hp-row svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-row b{display:block;font-size:15px;line-height:19px}
+.hp .hp-row .d{display:block;font-size:12.5px;line-height:16px;color:var(--muted)}
+.hp .hp-row .go{margin-left:auto;flex:none;color:var(--muted);width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-sos{background:#14201b;color:#eef1ec;border-radius:16px;padding:16px;gap:14px;border:0;display:flex;align-items:center;width:100%;font:inherit;text-align:left;cursor:pointer}
+.hp .hp-sos .ic{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.1);display:grid;place-items:center;flex:none}
+.hp .hp-sos svg.i{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-sos b{display:block;font-size:16px;line-height:20px}
+.hp .hp-sos span.d{display:block;font-size:13px;line-height:17px;color:#c9d1cc}
+.hp .hp-sos .go{margin-left:auto;flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-back{align-self:flex-start;display:inline-flex;align-items:center;gap:2px;border:0;background:none;color:var(--accent);font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:6px 0}
+.hp .hp-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-head{display:flex;gap:14px;align-items:center}
+.hp .hp-head .big{width:52px;height:52px;border-radius:16px;background:var(--ink);color:var(--bg);display:grid;place-items:center;flex:none}
+.hp .hp-head .big.rust{background:var(--head);color:#fff}.hp .hp-head .big.blue{background:var(--accent);color:#fff}
+.hp .hp-head .big svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hp .hp-acc{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.hp .hp-acc details{border-top:1px solid color-mix(in srgb,var(--line) 60%,var(--panel))}
+.hp .hp-acc details:first-child{border-top:0}
+.hp .hp-acc summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 16px;font-size:15px;font-weight:700;line-height:19px;cursor:pointer}
+.hp .hp-acc summary::-webkit-details-marker{display:none}
+.hp .hp-acc summary .n{flex:none;font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--muted);width:22px}
+.hp .hp-acc summary .c{margin-left:auto;flex:none;width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.hp .hp-acc details[open]>summary .c{transform:rotate(180deg)}
+.hp .hp-acc details[open]>summary{padding-bottom:10px}
+.hp .hp-acc .bd{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:19px}
+.hp .hp-acc .bd p{margin:0}
+.hp .hp-acc .bd ol.hp-steps li>div>b{font-size:14px}
+.hp .hp-tip,.hp .hp-fix{display:flex;gap:10px;border-radius:12px;padding:10px 12px;font-size:13px;line-height:17px}
+.hp .hp-tip{background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
+.hp .hp-fix{background:color-mix(in srgb,var(--head) 13%,var(--panel))}
+.hp .hp-tip .g,.hp .hp-fix .g{flex:none;width:20px;height:20px;border-radius:999px;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px;margin-top:1px}
+.hp .hp-tip .g{background:var(--accent)}.hp .hp-fix .g{background:var(--head)}
+.hp .hp-tip>div>b,.hp .hp-fix>div>b{display:block}
+.hp .hp-fix>div>b{color:var(--head)}
+.hp .hp-tip ul,.hp .hp-fix ul{margin:4px 0 0;padding-left:16px}
+.hp .hp-tip li,.hp .hp-fix li{margin:2px 0}
+.hp .hp-tip>div>span:not(.mb),.hp .hp-fix>div>span:not(.mb){display:block;margin-top:2px}
+.hp dl.hp-kv{display:grid;grid-template-columns:104px 1fr;gap:6px 12px;font-size:13.5px;line-height:18px;margin:0}
+.hp dl.hp-kv dt{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding-top:1px}
+.hp dl.hp-kv dd{margin:0}
+.hp .dot{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px}
+.hp .dot.lv0{background:var(--lv0,#2e7d4f)}.hp .dot.lv1{background:var(--lv1,#e0a21b)}.hp .dot.lv2{background:var(--lv2,#b5491f)}
+.hp .mb{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:2px 10px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.hp .hp-wbar .bar{display:flex;height:12px;border-radius:999px;overflow:hidden;margin-top:6px}
+.hp .hp-wbar .bar span:nth-child(1){width:38%;background:var(--head)}.hp .hp-wbar .bar span:nth-child(2){width:22%;background:var(--sun,#e0a21b)}.hp .hp-wbar .bar span:nth-child(3){width:40%;background:var(--tail)}
+.hp .hp-wbar .lg{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.hp .hp-term{padding:13px 0;border-top:1px solid color-mix(in srgb,var(--line) 60%,var(--panel))}
+.hp .hp-term:first-child{border-top:0}
+.hp .hp-term b{display:block;font-size:15px;line-height:19px;margin-bottom:3px}
+.hp .hp-term p{margin:0;font-size:13.5px;line-height:18px;color:var(--muted)}
+.hp .hp-term em{font-style:normal;color:var(--ink);font-weight:600}
+.hp .hp-hit{display:block;width:100%;text-align:left;border:0;border-top:1px solid color-mix(in srgb,var(--line) 60%,var(--panel));background:none;color:var(--ink);font:inherit;padding:12px 0;cursor:pointer}
+.hp .hp-hit:first-child{border-top:0}
+.hp .hp-hit b{display:block;font-size:15px;line-height:19px}
+.hp .hp-hit span{display:block;font-size:12.5px;line-height:16px;color:var(--muted);margin-top:2px}
+.hp .hp-nomore{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);justify-content:center}
+.hp .hp-mail{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:999px;font-size:15px;font-weight:700;background:var(--brand);color:var(--brand-ink);text-decoration:none;margin-top:4px}
+.hp .hp-foot{text-align:center;font-size:12.5px;color:var(--muted)}
+.hp :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -1800,11 +1879,15 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
   </div>
   <p class="me-gl">Aide et compte</p>
   <div class="me-list">
-    <button type="button" class="me-row2" id="meHelp"><span class="me-lt"><b>Mode d'emploi</b></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button type="button" class="me-row2" id="meHelp"><span class="me-lt"><b>Aide</b><span>Mode d'emploi, dépannage, lexique</span></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     <button type="button" class="me-row2 no-guest" id="mePw"><span class="me-lt"><b>Changer mon mot de passe</b></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     <button type="button" class="me-row2 no-guest" id="meOut"><span class="me-lt"><b class="me-out">Se déconnecter</b></span></button>
   </div>
   <p class="me-del2 no-guest"><button type="button" class="linkbtn" id="meDel">Supprimer mon compte</button></p>
+</section>
+<section class="libpage help2" id="helpPage" hidden aria-labelledby="hpTitle">
+  <div class="lp-head"><h2 id="hpTitle">Aide</h2><button type="button" class="btn small pg-x">Fermer</button></div>
+  <div class="hp" id="hpBody"></div>
 </section>
 <section class="libpage pm-page" id="mapPage" hidden aria-labelledby="pmTitle">
   <div class="pm-top">
@@ -2189,41 +2272,6 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
   </main>
 </div>
 <footer>Données météo : <span id="wxCredit"><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span> · Fonds de carte © contributeurs OpenStreetMap, CyclOSM, OpenTopoMap, Esri. Les temps de passage sont une estimation à partir de vos réglages. · <a href="#" class="pub" id="loginLink" hidden>Accès privé</a><a href="admin-test.html" class="priv adm">Admin</a><span class="priv adm"> · </span><a href="#" class="priv" id="pwLink">Mon mot de passe</a><span class="priv"> · </span><a href="#" class="priv" id="logoutLink">Se déconnecter</a></footer>
-<dialog class="help" id="helpDlg" aria-labelledby="helpTitle">
-  <div class="hd"><h2 id="helpTitle">Comment ça marche ?</h2><button type="button" class="x" id="helpX" aria-label="Fermer">×</button></div>
-  <div class="bd">
-    <p>Sillage calcule ton heure de passage à chaque point d'un parcours et te donne la météo prévue à cet endroit, à ce moment-là. Trois modes selon ta sortie, et ton espace pour le reste&nbsp;:</p>
-    <div class="seg2 help-tabs" role="tablist" aria-label="Pages">
-      <button type="button" role="tab" data-h="ride">Sortie</button><button type="button" role="tab" data-h="ultra">Ultra</button><button type="button" role="tab" data-h="taf">Commute</button><button type="button" role="tab" data-h="more">Et aussi</button>
-    </div>
-    <ol data-h="ride">
-      <li><i>1</i><div><b>Importe une trace GPX</b><span>«&nbsp;Importer un GPX&nbsp;» dans les réglages, ou glisse le fichier sur la page. Export depuis Strava, Komoot, Garmin Connect, RideWithGPS… Le parcours est gardé dans ton compte et se retrouve sur tous tes appareils. «&nbsp;⇄ Inverser le sens&nbsp;» pour le rouler à l'envers.</span></div></li>
-      <li><i>2</i><div><b>Choisis ton départ et ton allure</b><span>Date, heure, vitesse sur le plat, vitesse de montée (VAM) et arrêts, en % ou en minutes. «&nbsp;Effet du vent&nbsp;» ralentit ou accélère la sortie selon le vent. Une boucle&nbsp;? Indique le nombre de tours. Les pastilles en haut des résultats y mènent directement.</span></div></li>
-      <li><i>3</i><div><b>Lis le résumé et la carte</b><span>Une phrase de synthèse, puis le détail&nbsp;: pluie, vent, rafales, températures et nuit. Carte colorée avec flèches de vent et vent animé, profil heure par heure, et la meilleure heure de départ entre 4 h et 16 h.</span></div></li>
-      <li><i>4</i><div><b>Garde la feuille de route</b><span>Horaires et météo point par point, en CSV, et «&nbsp;Exporter l'image&nbsp;» pour partager carte, vent et profil.</span></div></li>
-    </ol>
-    <ol data-h="ultra" hidden>
-      <li><i>1</i><div><b>Importe la trace de ton ultra ou de ton voyage</b><span>Même import qu'en Sortie&nbsp;; la trace peut faire des centaines de kilomètres.</span></div></li>
-      <li><i>2</i><div><b>Planifie jour par jour</b><span>Nombre de jours, date et heure de départ, découpage «&nbsp;Même distance&nbsp;» ou «&nbsp;Adapté au terrain&nbsp;» (même temps de pédalage chaque jour). Tu peux fixer une heure de départ et de fin différente chaque jour.</span></div></li>
-      <li><i>3</i><div><b>Vois chaque journée</b><span>Départ, fin estimée, km, D+, pédalage, pauses et nuit, avec sous chaque jour la météo heure par heure, le relief, le lever et le coucher du soleil et les villes traversées.</span></div></li>
-      <li><i>4</i><div><b>Trouve tes ravitos</b><span>Coche «&nbsp;Rechercher les lieux&nbsp;»&nbsp;: épiceries, boulangeries, restos, points d'eau et hébergements le long de la trace, ouverts ou non à ton passage, avec les plus longs tronçons sans ravito.</span></div></li>
-    </ol>
-    <ol data-h="taf" hidden>
-      <li><i>1</i><div><b>Choisis ton trajet maison → travail</b><span>Importe-le une fois et fais-en ton trajet Commute dans Moi&nbsp;: il s'ouvre tout seul sur Commute. Le retour se fait par la même trace dans l'autre sens, ou par un autre parcours («&nbsp;Trace du retour&nbsp;»).</span></div></li>
-      <li><i>2</i><div><b>Règle tes horaires</b><span>Heure de départ, ou heure d'arrivée au travail avec une marge&nbsp;: tu obtiens alors l'heure de départ conseillée. Heure du retour, et des horaires différents selon le jour si besoin. Vitesse moyenne seulement.</span></div></li>
-      <li><i>3</i><div><b>Aller et retour en un coup d'œil</b><span>Pour chaque trajet&nbsp;: carte, pastille verte, orange ou rouge (pluie, vent de face, rafales, froid, nuit), températures et vent ressenti.</span></div></li>
-      <li><i>4</i><div><b>Anticipe deux semaines</b><span>Les jours ouvrés des deux prochaines semaines aux mêmes horaires&nbsp;; touche un jour pour le voir en détail. L'heure de départ est une estimation&nbsp;: prévois une marge selon la circulation et la météo.</span></div></li>
-    </ol>
-    <ol data-h="more" hidden>
-      <li><i>1</i><div><b>Mes parcours</b><span>Tous tes parcours, avec recherche, tri, «&nbsp;Renommer&nbsp;» et «&nbsp;Supprimer&nbsp;». Touche un parcours pour l'ouvrir.</span></div></li>
-      <li><i>2</i><div><b>Mes sorties</b><span>Tes parcours du dossier Sortie classés du plus au moins favorable selon la météo, pour aujourd'hui ou les trois jours suivants, à l'heure de départ de ton choix.</span></div></li>
-      <li><i>3</i><div><b>Alertes météo</b><span>Dans Moi&nbsp;: une notification la veille au soir ou le matin même, avec la météo de ton parcours et un meilleur créneau s'il y en a un. Sur iPhone, installe d'abord l'appli&nbsp;: Partager → Sur l'écran d'accueil.</span></div></li>
-      <li><i>4</i><div><b>Moi</b><span>Tes réglages par mode, ton trajet Commute, le thème clair ou sombre, la langue (français ou anglais) et ton mot de passe.</span></div></li>
-    </ol>
-    <p class="note">Météo («&nbsp;Source météo&nbsp;»)&nbsp;: par défaut, le modèle gratuit le plus précis à l'endroit du parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, GFS + HRRR aux États-Unis, JMA au Japon, ECMWF ailleurs)&nbsp;; ou au choix une vingtaine de modèles nationaux et mondiaux, MET Norway ou Open-Meteo (16 jours)&nbsp;; au-delà de leur horizon, Open-Meteo prend le relais. Plus fiable à 2–3 jours qu'à 2 semaines. Les horaires de passage sont des estimations&nbsp;; les horaires d'ouverture viennent d'OpenStreetMap et peuvent être incomplets.</p>
-  </div>
-  <div class="ft"><label><input type="checkbox" id="helpNoMore"> Ne plus afficher au démarrage</label><button type="button" class="btn primary" id="helpOk" autofocus>C'est parti</button></div>
-</dialog>
 <dialog class="help guest-dlg" id="guestDlg" aria-labelledby="guestTitle">
   <div class="hd"><h2 id="guestTitle">Bienvenue sur Sillage</h2><button type="button" class="x" id="guestX" aria-label="Fermer">×</button></div>
   <div class="bd">
@@ -6654,21 +6702,135 @@ function track(event, extra) {
 try { if (!sessionStorage.getItem('pmr-visit') && hasSbToken()) { setTimeout(() => { if (document.body.classList.contains('gated') || !ACC.row) return; sessionStorage.setItem('pmr-visit', '1'); track('visit'); }, 2500); } } catch (e) {}
 
 
-// Mode d'emploi : bouton « ? » ; ouvert tout seul à l'arrivée d'un visiteur (mode public) tant qu'il n'a pas coché « Ne plus afficher ».
+// Aide v2.0 (07/11/2026) : page « Aide », ouverte par le bouton « ? » et par Moi → Aide ; ouverte toute seule à l'arrivée d'un nouveau
+// compte tant qu'il n'a pas coché « Ne plus afficher au démarrage ». Contenu dans helpData() (textes en français, traduits par lang.js).
 const HELP_KEY = 'pmr-help-seen';
-// Mode d'emploi : un onglet par page (Sortie, Ultra, Vélotaf), ouvert sur la page en cours
-function helpTab(m) {
-  document.querySelectorAll('#helpDlg .help-tabs button').forEach(b => { const on = b.dataset.h === m; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-selected', String(on)); });
-  document.querySelectorAll('#helpDlg ol[data-h]').forEach(o => { o.hidden = o.dataset.h !== m; });
+function helpData() {
+  const p = t => ({ k: 'p', t }), steps = items => ({ k: 'steps', items }), tip = (t, b) => ({ k: 'tip', t, b }), fix = (t, b) => ({ k: 'fix', t, b }), kv = rows => ({ k: 'kv', rows }), wbar = () => ({ k: 'wbar' });
+  return {
+    ui: {"title":T("Comment ça marche ?"),"intro":T("Sillage calcule ton heure de passage à chaque point de ta trace, puis te donne la météo prévue à cet endroit, à ce moment-là."),"search":T("Cherche : GPX, pluie, ravito, alerte…"),"first":T("Premiers pas · 2 minutes"),"sos":T("Ça ne marche pas ?"),"sosd":T("GPX refusé, pas de météo, alerte absente, connexion… les solutions pas à pas."),"soss":T("Trouve ton cas, suis les étapes."),"gloss":T("Lexique"),"glossd":T("VAM, ressenti, vent de face, D+, fiabilité…"),"glosss":T("Les mots de Sillage, en clair."),"back":T("Aide"),"why":T("Pourquoi : "),"todo":T("Ce que tu peux faire"),"still":T("Toujours bloqué·e ?"),"write":T("Écris-nous, on te répond"),"add":T("Pour qu’on aille vite, ajoute :"),"a1":T("ce que tu faisais (page, bouton)"),"a2":T("le message affiché, ou une capture d’écran"),"a3":T("ton appareil et ton navigateur (ou l’appli)"),"a4":T("le nom du parcours concerné"),"mail":T("Écrire à l’équipe"),"subj":T("Aide Sillage"),"body":T("Bonjour,\n\nCe que je faisais :\nCe qui s’est passé :\nParcours concerné :\n\n(Appareil : {0})"),"nores":T("Aucun résultat. Essaie un autre mot, ou ouvre « Ça ne marche pas ? »."),"nomore":T("Ne plus afficher au démarrage"),"topics":T("{0} sujets"),"results":T("{0} résultat(s)"),"in":T("dans")},
+    ui2: {"wbar_t":T("La barre « vent ressenti »"),"wbar_f":T("face 38 %"),"wbar_c":T("travers 22 %"),"wbar_b":T("dos 40 %"),"aria_search":T("Rechercher dans l’aide"),"aria_back":T("Retour à l’aide"),"aria_wbar":T("Exemple : 38 % de vent de face, 22 % de travers, 40 % de dos"),"menu_help":T("Aide"),"menu_help_d":T("Mode d’emploi, dépannage, lexique")},
+    start: steps([[T("Importe une trace GPX"),T("Bouton <b>Importer un GPX</b> dans Parcours. Choisis son dossier : Sortie, Ultra ou Commute.")],[T("Choisis ton départ et ton allure"),T("Date, heure, vitesse. Les réglages rapides sont en haut de l’écran.")],[T("Lis le verdict"),T("Une phrase, un niveau (vert, doré, rouille), puis la carte, la pluie, le vent, les températures.")],[T("Cherche un meilleur créneau"),T("La rangée d’heures montre les départs de 4 h à 16 h. Un appui, et tout se recalcule.")]]),
+    home: {"ride":T("Verdict, meilleure heure, boucles"),"ultra":T("Étapes, nuits, roadbook des ravitos"),"taf":T("Aller, retour, deux semaines"),"lib":T("Importer, ranger, renommer, exporter"),"map":T("Eau, boulangeries, abris, ateliers… et ajouter les tiens"),"out":T("Quelle sortie ce week-end ? Tes parcours classés"),"me":T("Réglages, alertes, affichage, compte")},
+    topics: [{id:"ride",ico:"ride",title:T("Sortie"),sub:T("Une sortie à la journée, de 20 à 200 km"),items:[{t:T("Importer mon parcours"),open:true,b:[steps([[T("Ouvre l’import"),T("Onglet <b>Parcours</b>, puis <span class=\"mb\">＋ Importer un GPX</span> en bas de l’écran. Sur ordinateur, tu peux aussi glisser le fichier sur la page.")],[T("Choisis le fichier"),T("N’importe quel nom convient (« trace.gpx (2) », sans extension…) : Sillage juge le contenu, pas le nom.")],[T("Range-le dans un dossier"),T("Sortie, Ultra ou Commute, puis <b>Valider</b>. La croix abandonne l’import sans rien enregistrer.")],[T("Attends le calcul"),T("Quelques secondes. Le parcours est gardé dans ton compte et se retrouve sur tous tes appareils.")]]),tip(T("Où trouver un GPX ?"),[T("<b>Strava</b> : ⋯ → Exporter l’itinéraire (GPX)"),T("<b>Komoot</b> : ⋯ → Télécharger le GPX"),T("<b>RideWithGPS</b> : Export → GPX Track"),T("<b>Garmin Connect</b> : ⚙ → Exporter vers GPX")]),fix(T("« Ce fichier n’est pas un GPX lisible »"),[T("Le fichier est peut-être un .fit, .tcx ou un PDF : exporte-le en <b>GPX</b>."),T("Reçu par WhatsApp ou mail ? Enregistre-le d’abord sur ton téléphone, puis importe-le depuis les Fichiers."),T("Ouvre-le dans un éditeur de texte : il doit commencer par &lt;?xml.")])]},{t:T("Régler départ et allure"),open:false,b:[steps([[T("Date et heure"),T("Prévisions jusqu’à environ 2 semaines ; plus fiables à 2–3 jours.")],[T("Vitesse sur le plat"),T("Ta vitesse moyenne sans relief. Mets une valeur honnête : tout le reste en découle.")],[T("Vitesse de montée (VAM)"),T("Mètres de D+ gagnés par heure en montée. 600 à 900 est courant en loisir.")],[T("Arrêts"),T("En pourcentage, ou en minutes (« 10 min toutes les 2 h »). Un casse-croûte long ? Compte-le ici.")],[T("Effet du vent"),T("Coché : le vent de face te ralentit et celui de dos t’accélère dans le calcul.")]]),tip(T("Raccourci"),T("Sur téléphone, la carte du haut (<span class=\"mb\">Départ</span> <span class=\"mb\">Vitesse</span> <span class=\"mb\">⚙</span>) ouvre directement le bon réglage."))]},{t:T("Comprendre le résumé"),open:false,b:[p(T("Le haut de l’écran répond à une question : <b>est-ce que ça vaut le coup ?</b>")),kv([[T("Niveau"),T("<span class=\"dot lv0\"></span>Favorable · <span class=\"dot lv1\"></span>Quelques réserves · <span class=\"dot lv2\"></span>Difficile")],[T("Phrase"),T("Les points gênants et les bons côtés : « Au sec, mais froid et vent de face ».")],[T("Heures"),T("Départ, arrivée estimée, durée.")],[T("Pluie"),T("Quantité, durée sous la pluie, créneau et km concernés, risque.")],[T("Vent"),T("Part du parcours en vent de face, de travers, de dos ; rafales ; effet sur ta vitesse.")],[T("Températures"),T("Air et ressenti, avec un conseil d’équipement.")]]),tip(T("Pourquoi « ressenti » ?"),T("C’est la température que ton corps perçoit à vélo : l’air plus le vent que tu fabriques en roulant. Il est souvent plus bas que l’air.")),wbar()]},{t:T("Lire la carte et le vent"),open:false,b:[p(T("Choisis ce que la trace colore : <span class=\"mb\">Vent ressenti</span> <span class=\"mb\">Température</span> <span class=\"mb\">Pluie</span> <span class=\"mb\">Soleil</span>")),kv([[T("Flèches"),T("Sens du vent à ton heure de passage, couleur = force.")],[T("Pastilles"),T("Ciel, température et vent sous chaque flèche.")],[T("Vent animé"),T("Particules qui montrent le vent ; le curseur sous la carte change l’heure. « Mon départ » revient à ton heure.")],[T("Affichage"),T("Bouton qui range les cases (flèches, ciel, animation).")]]),fix(T("La carte ne bouge pas quand je la fais défiler ?"),T("C’est voulu sur téléphone : un doigt fait défiler la page. Pince à deux doigts pour zoomer, ou passe en <b>Plein écran</b> pour la déplacer à un doigt."))]},{t:T("Choisir la meilleure heure de départ"),open:false,b:[p(T("Sous le verdict, une rangée de <b>13 départs, de 4 h à 16 h</b>. Hauteur et couleur = qualité de la sortie ; sous les départs peu favorables, la raison principale (« Pluie », « Rafales »…).")),p(T("Un appui sur une heure recalcule toute la page à ce départ. <span class=\"mb\">Partir à 14:00</span> fait pareil avec le meilleur créneau proposé.")),tip(T("Rien ne s’affiche ?"),T("La rangée a besoin des prévisions : si la date est trop lointaine, elle reste vide ou « Incomplet ». Essaie une date plus proche."))]},{t:T("Rouler une boucle (plusieurs tours)"),open:false,b:[steps([[T("Importe une boucle"),T("Une trace dont l’arrivée est à moins de 500 m du départ. Les réglages « Tours de la boucle » et « Pause (min) » apparaissent alors dans les réglages de la page Sortie.")],[T("Indique le nombre de tours"),T("De 1 à 50. La pause (10 min par défaut) est ajoutée à chaque fin de tour.")],[T("Lis tour par tour"),T("La carte « Météo tour par tour » donne pour chaque tour : départ, fin, km, D+, durée, ressenti, pluie, part de vent de face.")]]),p(T("Sur la carte, la trace est colorée d’après le <b>premier tour</b> seulement. Le profil marque « T2 », « T3 »… au début de chaque tour, et la feuille de route ajoute une ligne « Tour N au km… : départ à … après … de pause ».")),fix(T("« Ce parcours n’est pas une boucle »"),[T("L’arrivée est trop loin du départ (plus de 500 m) : un seul tour est calculé."),T("Corrige la trace dans ton outil de cartographie (ferme la boucle), puis réimporte-la.")])]},{t:T("Feuille de route et export"),open:false,b:[p(T("Sous le profil, la <b>feuille de route</b> liste tes passages : heure, km, altitude, ciel, ressenti, pluie, vent, et la pastille « pour toi » (de face, de dos, de travers). Les nuits apparaissent en lignes « Nuit au km… ».")),p(T("L’interrupteur <b>Afficher les lignes</b> masque ou montre les lignes du tableau ; l’export CSV reste complet dans tous les cas.")),steps([[T("Exporter en CSV"),T("Un tableau à ouvrir dans Excel ou Numbers : horaires et météo point par point, unités métriques.")],[T("Exporter l’image"),T("<span class=\"mb\">Exporter l’image</span> sur la carte : choisis <b>Image complète</b>, <b>Écran 16:9</b> ou <b>Story 9:16</b>. L’image est un PNG avec carte, verdict, vent et profil.")],[T("Partager"),T("Sur téléphone, la feuille de partage s’ouvre ; sur ordinateur, le fichier se télécharge.")]]),fix(T("L’image ne se partage pas ?"),[T("Laisse l’export finir (quelques secondes, plus si la carte est grande)."),T("Si le fond de carte reste uni, recharge la page : les tuiles n’étaient pas arrivées.")])]}]},
+      {id:"ultra",ico:"ultra",title:T("Ultra"),sub:T("Plusieurs jours, étapes et ravitos"),items:[{t:T("Lancer un ultra ou un voyage"),open:true,b:[steps([[T("Importe la trace"),T("Même import qu’en Sortie. Choisis le dossier <b>Ultra</b> : la trace peut faire des centaines de kilomètres.")],[T("Ouvre la page Ultra"),T("Onglet « Ultra » en haut de l’écran : la planification jour par jour apparaît sous la carte.")],[T("Choisis la date et l’heure de départ"),T("La météo couvre environ 2 semaines ; au-delà, les jours concernés restent sans météo.")]]),tip(T("Parcours de plus de 300 km"),T("Dans « Mes sorties », ils sont mis à part : « À planifier dans Ultra »."))]},{t:T("Découper en jours"),open:false,b:[steps([[T("Nombre de jours"),T("Avec − et + dans « Ton ultra en N jours » (de 1 à 30).")],[T("Mode de découpage"),T("<b>Même distance</b> : étapes de longueur égale. <b>Adapté au terrain</b> : même temps de pédalage chaque jour, d’après ta vitesse, ta VAM et les descentes.")],[T("Heures différentes chaque jour"),T("Active l’interrupteur : tu fixes une heure de départ et une heure de fin par jour. Une fin choisie arrête la journée là où tu es ; le reste de la trace se répartit sur les jours restants.")],[T("Revenir en arrière"),T("<span class=\"mb\">Réinitialiser</span> efface les heures choisies.")]])]},{t:T("Lire une journée"),open:false,b:[p(T("Chaque jour est une carte. <b>Repliée</b> : vignette de l’étape, date, horaires, « km a → b », D+, nuit. <b>Dépliée</b> :")),kv([[T("Tuiles"),T("Pédalage, pauses, nuit.")],[T("Carte"),T("Trace de l’étape en encre, départ vert, arrivée bleue. « Voir sur la carte » cadre l’étape sur la grande carte.")],[T("Graphe"),T("Météo heure par heure, relief, lever et coucher du soleil, villes traversées. Pose le doigt dessus : un point suit sur les deux cartes.")],[T("Phrase"),T("Ressenti, pluie, vent de face, nuit à la ville la plus proche, hébergements à moins d’1 km.")]]),fix(T("« Finit après le départ du jour N : pas de nuit »"),[T("L’étape se termine après l’heure prévue de départ du lendemain : aucune nuit possible."),T("Ajoute un jour avec +, ou avance l’heure de fin de cette étape.")])]},{t:T("Roadbook : ravitos et hébergements"),open:false,b:[steps([[T("Active la recherche"),T("Interrupteur « Rechercher les lieux » : sans lui, aucune recherche n’est lancée.")],[T("Règle la distance"),T("De 200 m à 2 km autour de la trace.")],[T("Filtre"),T("<span class=\"mb\">Seulement ouverts</span> ne garde que les lieux ouverts à ton heure de passage ; les pastilles filtrent par type.")],[T("Ouvre un jour"),T("Frise : départ, lieux, villes, tronçons sans ravito, nuit. Touche un lieu : fiche et bouton « Y aller ».")]]),tip(T("Tronçon sans ravito"),T("Plus de 30 km sans lieu ouvert à ton passage. Les lieux aux horaires inconnus comptent comme possibles : vérifie avant de compter dessus."))]},{t:T("Ma façon de rouler en ultra"),open:false,b:[kv([[T("Vitesse"),T("Sur le plat.")],[T("VAM"),T("Mètres de D+ par heure en montée.")],[T("Arrêts"),T("Par défaut 12 min toutes les heures de pédalage (20 %). Choix « % » ou « minutes ».")],[T("Vent"),T("Effet du vent sur ta vitesse, activable.")]]),p(T("Ces réglages sont dans le repli « Ma façon de rouler » de la carte de planification, avec leur résumé sur une ligne."))]}]},
+      {id:"taf",ico:"taf",title:T("Commute"),sub:T("Maison ↔ travail, aller et retour"),items:[{t:T("Fixer mon trajet"),open:true,b:[steps([[T("Importe l’aller"),T("Maison → travail, dans le dossier <b>Commute</b>.")],[T("Ouvre Moi → Mon trajet Commute"),T("Choisis l’aller, puis le retour : « À l’envers » (même trace) ou « Une autre trace ».")],[T("Retrouve-le"),T("Dès que tu ouvres Commute, ton trajet s’ouvre tout seul.")]]),tip(T("Trajet fixé = lecture seule"),T("« Mes trajets » n’est plus modifiable depuis Commute : « Modifier dans Moi » t’y emmène. Ouvrir un autre parcours bascule en Sortie."))]},{t:T("Régler mes horaires"),open:false,b:[steps([[T("Départ ou arrivée"),T("Pour l’aller, choisis l’heure de départ, ou l’heure d’arrivée au travail avec une marge (5 min par défaut).")],[T("Départ conseillé"),T("Avec l’arrivée choisie, Sillage calcule : « Pour arriver à 08:00 avec 5 min de marge, pars à 07:28 ».")],[T("Retour"),T("Heure de départ du travail. Cases par jour si tes horaires changent.")],[T("Vitesse"),T("Vitesse moyenne seulement (20 km/h par défaut).")]])]},{t:T("Lire la carte du jour"),open:false,b:[p(T("Sous « Mes trajets » : niveau du jour, un titre (« Aller au sec, retour sous la pluie »), puis une ligne par trajet avec horaires, pluie, ressenti, vent, conseil (veste de pluie, gants, lumières) et heure d’arrivée.")),p(T("Sur téléphone, un seul trajet est montré à la fois : choisis Aller ou Retour, l’autre est masqué. Le moins favorable s’affiche en premier."))]},{t:T("Que veulent dire les couleurs ?"),open:false,b:[kv([[T("<span class=\"dot lv2\"></span>Rouille"),T("Pluie à partir de 1 mm, ou vent de face moyen de 20 km/h ou plus.")],[T("<span class=\"dot lv1\"></span>Doré"),T("Quelques gouttes (0,2 mm), risque de pluie de 70 %, vent de face de 12 km/h, froid sous 4 °C, chaleur au-dessus de 30 °C, rafales fortes.")],[T("<span class=\"dot lv0\"></span>Vert"),T("Rien de gênant.")],[T("Nuit"),T("Si tu roules de nuit : « lumières ».")]])]},{t:T("Deux semaines d’un coup d’œil"),open:false,b:[p(T("Les jours ouvrés des deux prochaines semaines, aux mêmes horaires. Chaque trajet : pastille, ciel, températures, pluie, vent, et une flèche qui montre d’où vient le vent.")),p(T("Touche un jour : il se charge dans les cartes du dessus. Le week-end est regroupé en une ligne avec un lien vers Sortie.")),tip(T("Estimation"),T("L’heure de départ conseillée ne tient pas compte de la circulation : garde de la marge."))]}]},
+      {id:"lib",ico:"lib",title:T("Mes parcours"),sub:T("Importer, ranger, retrouver"),items:[{t:T("Importer et ranger"),open:true,b:[steps([[T("Touche « Importer un GPX »"),T("Pilule dorée en bas de Mes parcours.")],[T("Choisis un dossier"),T("Sortie, Ultra ou Commute. Un parcours déjà rangé n’est pas redemandé.")],[T("Abandonner"),T("La croix ou Échap demande confirmation : « Abandonner l’import ? La trace ne sera pas enregistrée. »")]])]},{t:T("Les dossiers"),open:false,b:[p(T("En haut de la page, les pastilles <b>Tous · Sortie · Ultra · Commute</b> avec le nombre de parcours. Chaque parcours s’ouvre dans la page de son dossier : un parcours Ultra t’emmène dans Ultra.")),tip(T("Changer de dossier"),T("Ouvre la fiche du parcours (⋯ ou appui long), puis choisis un dossier."))]},{t:T("La fiche d’un parcours"),open:false,b:[p(T("Touche une vignette pour <b>ouvrir</b> le parcours. Touche « ⋯ » ou fais un appui long pour la fiche :")),kv([[T("Ouvrir"),T("Dans la page de son dossier.")],[T("Dossier"),T("Trois cases pour le changer.")],[T("Renommer"),T("Champ dans la fiche, Entrée valide.")],[T("Inverser"),T("Le sens de roulage, gardé pour ce parcours.")],[T("Exporter"),T("Le GPX, par partage ou téléchargement.")],[T("Supprimer"),T("Deux appuis : le premier arme, le second confirme.")]])]},{t:T("Chercher et trier"),open:false,b:[p(T("La recherche ignore les accents et les majuscules. Le tri : Récents, Distance, Nom. Le nombre de parcours affichés est rappelé sous les pastilles."))]},{t:T("Une vignette reste vide"),open:false,b:[fix(T("Le fond de carte arrive en différé"),[T("Les vignettes se chargent au fil de l’eau : patiente quelques secondes."),T("Hors ligne, un dessin simple de la trace remplace la carte."),T("Les très longues traces peuvent demander plusieurs passages : referme et rouvre la page.")])]}]},
+      {id:"map",ico:"map",title:T("Carte des points"),sub:T("Eau, ravitos, abris, ateliers"),items:[{t:T("Ouvrir et filtrer"),open:true,b:[steps([[T("Zoome"),T("Les points apparaissent à partir du zoom 12. Sinon : « Zoome pour voir les points ».")],[T("Filtre"),T("8 types : eau potable, boulangerie, épicerie, bivouac, abri, café · resto, atelier vélo, recharge.")],[T("Un seul type"),T("Appui long (ou clic droit) sur un type. Refais-le pour tout réafficher, ou touche « Tout afficher ».")]])]},{t:T("Comprendre les points"),open:false,b:[kv([[T("Pâle, pointillé"),T("Point OpenStreetMap non vérifié.")],[T("Coche verte"),T("Confirmé par les cyclistes (« Oui, toujours là » dépasse « Non, disparu »).")],[T("Couleur vive"),T("Point ajouté par un·e cycliste.")],[T("Pastille dorée"),T("Point en cours de validation.")]])]},{t:T("La fiche d’un point"),open:false,b:[p(T("Type, auteur, infos (horaires, adresse, site). Puis <b>Toujours là ?</b> avec Oui / Non, les avis (note, texte, photo), « Signaler », « Laisser un avis » et « Y aller ».")),tip(T("Y aller"),T("Ouvre ton appli de navigation : Plans, Google Maps, Waze ou « Autre appli ». Itinéraire à vélo là où c’est possible."))]},{t:T("Ajouter un point"),open:false,b:[steps([[T("Place le repère"),T("Déplace la carte sous le « + », puis « Valider l’emplacement ».")],[T("Choisis le type"),T("« ← Déplacer le repère » revient en arrière.")],[T("Détails"),T("Nom, infos, avis, photo, puis « Publier le point ». Il est visible tout de suite, « en cours de validation ».")]]),fix(T("Bivouac"),T("Vérifie la réglementation locale avant de signaler un lieu."))]},{t:T("Me localiser et la boussole"),open:false,b:[kv([[T("Me localiser"),T("Point bleu et cône de direction. Déplacer la carte arrête le suivi.")],[T("Nord en haut"),T("La carte ne tourne pas.")],[T("Rotation au choix"),T("Deux doigts pour tourner.")],[T("Suivre la boussole"),T("La carte tourne avec ton téléphone.")]]),tip(T("Position"),T("Elle n’est jamais envoyée : tout reste sur ton appareil."))]}]},
+      {id:"out",ico:"out",title:T("Mes sorties"),sub:T("Quelle sortie ce week-end ?"),items:[{t:T("Quelle sortie ?"),open:true,b:[steps([[T("Choisis un jour"),T("Les jours défilent : aujourd’hui jusqu’à J+9. La pastille de chaque jour indique la fiabilité de la prévision.")],[T("Choisis l’heure"),T("Par défaut, celle de ta page Sortie.")],[T("Lis la réponse"),T("Le meilleur parcours en grande carte, puis les autres dans l’ordre.")]])]},{t:T("Lire le classement"),open:false,b:[p(T("Chaque parcours du <b>dossier Sortie</b> a une pastille (<span class=\"dot lv0\"></span>vert, <span class=\"dot lv1\"></span>doré, <span class=\"dot lv2\"></span>rouille), une phrase (« Au sec, mais fraîcheur ») et ses km et D+. « Mieux à 11:00 » propose un autre départ nettement meilleur.")),p(T("Touche une sortie : elle s’ouvre en page Sortie, à ce jour et à cette heure."))]},{t:T("Fiabilité du jour"),open:false,b:[p(T("Plus le jour est lointain, moins la prévision est sûre. La pastille donne un <b>ordre de grandeur</b> (≈ 95 % demain, ≈ 65 % à J+4, ≈ 30 % à J+9), pas une probabilité mesurée."))]},{t:T("Parcours à part"),open:false,b:[p(T("Les parcours de plus de 300 km sont sous « Sur plusieurs jours, à planifier dans Ultra » : touche-les pour les ouvrir dans Ultra."))]},{t:T("Rien dans la liste ?"),open:false,b:[fix(T("« Aucun parcours dans le dossier Sortie »"),[T("Seuls les parcours du dossier Sortie sont classés."),T("Déplace un parcours dans Sortie depuis sa fiche (Mes parcours → ⋯ → Dossier)."),T("Si un message parle d’une pause d’une minute, patiente : le service météo limite les demandes, le calcul reprend tout seul.")])]}]},
+      {id:"me",ico:"me",title:T("Moi"),sub:T("Réglages, alertes, compte"),items:[{t:T("Ma façon de rouler"),open:true,b:[steps([[T("Choisis le mode"),T("Sortie, Ultra ou Commute : chacun a ses réglages.")],[T("Règle avec − et +"),T("Vitesse de 12 à 40 km/h, VAM de 300 à 1 400, arrêts de 0 à 30 min par heure. Commute : vitesse moyenne seule.")]])]},{t:T("Mon trajet Commute"),open:false,b:[p(T("Deux choix : l’aller (maison → travail) et le retour (« À l’envers » ou « Une autre trace »). Seuls les parcours du dossier Commute sont proposés."))]},{t:T("Alertes météo"),open:false,b:[steps([[T("Active sur cet appareil"),T("Autorise les notifications. iPhone : installe d’abord Sillage (Partager → Sur l’écran d’accueil).")],[T("Choisis un parcours"),T("Un parcours enregistré dans ton compte, et une heure de départ.")],[T("Quand prévenir"),T("La veille à 20 h ou le matin à 7 h, les jours cochés. La ligne « Prochaine alerte » le confirme.")],[T("Tester ou couper"),T("« Envoyer l’alerte maintenant », ou « Couper les alertes ».")]])]},{t:T("Affichage"),open:false,b:[kv([[T("Thème"),T("Clair, sombre ou automatique.")],[T("Langue"),T("Français ou English.")],[T("Unités"),T("Métrique ou impérial ; °C ou °F, séparément.")],[T("Couleurs"),T("Standard, daltonisme rouge-vert, bleu-jaune, ou contraste élevé.")],[T("Animations"),T("Normales ou réduites.")],[T("Police"),T("Sillage ou « très lisible ».")]]),tip(T("La page se recharge"),T("Langue, unités et couleurs relancent la page : c’est normal."))]},{t:T("Compte"),open:false,b:[p(T("Changer mon mot de passe, me déconnecter, et tout en bas « Supprimer mon compte ».")),fix(T("Suppression définitive"),[T("Ton mot de passe est demandé."),T("Parcours, alertes et historique sont effacés, sans retour possible.")])]}]}],
+    trouble: [{t:T("Le GPX ne se charge pas"),why:T("Le fichier n’est pas un GPX, ou il est vide / tronqué."),todo:[T("Exporte-le à nouveau en <b>GPX</b> (pas .fit ni .tcx)."),T("Enregistre-le sur ton téléphone avant de l’importer."),T("Essaie sur un autre navigateur (Chrome, Safari)."),T("Une trace de plusieurs centaines de km peut prendre 10–20 s : patiente avant de réessayer.")]},
+      {t:T("« Météo indisponible » ou pas de météo"),why:T("Le service de prévisions n’a pas répondu à temps, ou la date dépasse l’horizon du modèle."),todo:[T("Recharge la page : le calcul repart de zéro."),T("Choisis une date plus proche (idéalement dans les 7 jours)."),T("Dans <b>Moi → Source météo</b>, repasse sur « Le plus précis selon le lieu ».")]},
+      {t:T("« Tu as utilisé toutes tes prévisions du jour »"),why:T("Chaque compte a un nombre de prévisions par jour (3 000 appels météo). Les longs parcours, Mes sorties et le vent animé en consomment le plus."),todo:[T("Le compteur repart chaque nuit (vers 1 h du matin en hiver, 2 h en été, heure de France)."),T("En attendant, les parcours déjà calculés restent visibles."),T("Désactive « Vent animé » si tu n’en as pas besoin.")]},
+      {t:T("La météo change d’un jour à l’autre"),why:T("Les prévisions sont réactualisées plusieurs fois par jour, et leur fiabilité baisse avec l’échéance."),todo:[T("Au-delà de 5 jours, regarde la tendance plus que l’heure exacte."),T("Recalcule la veille au soir, et le matin même."),T("Active les <b>alertes</b> pour être prévenu·e d’un changement.")]},
+      {t:T("Mes heures de passage ne collent pas"),why:T("Les horaires sont des estimations calculées avec ta vitesse, ta VAM et tes arrêts."),todo:[T("Compare ton allure réelle (Strava) à celle réglée dans <b>Moi → Ma façon de rouler</b>."),T("Ajoute les arrêts réels : café, photos, ravito."),T("Décoche « Effet du vent » pour voir l’écart.")]},
+      {t:T("Aucun ravito sur ma trace (Ultra)"),why:T("La recherche des lieux est désactivée, ou la distance max. est trop courte."),todo:[T("Active <b>Rechercher les lieux</b> dans le Roadbook."),T("Augmente « distance max. de la trace » (jusqu’à 2 km)."),T("Décoche « Seulement ouverts » si tu passes la nuit ou le dimanche."),T("Un trou signalé en rouille = tronçon de plus de 30 km sans ravito ouvert : prévois de l’eau et de la nourriture.")]},
+      {t:T("Je ne reçois pas les alertes météo"),why:T("Les alertes passent par les notifications du navigateur, à autoriser une fois."),todo:[T("Dans <b>Moi → Alertes météo</b>, touche « Activer sur cet appareil » et accepte."),T("<b>iPhone</b> : installe d’abord Sillage (Partager → Sur l’écran d’accueil, iOS 16.4 ou plus), puis active."),T("Choisis un parcours enregistré dans ton compte, et coche au moins un jour."),T("Test : « Envoyer l’alerte maintenant »."),T("Dans l’appli des stores, les alertes arrivent plus tard.")]},
+      {t:T("Je n’arrive pas à me connecter"),why:T("Mot de passe oublié, adresse non confirmée, ou ancienne session."),todo:[T("Saisis ton e-mail : si on te reconnaît, tu peux choisir <b>« Envoyer un code »</b> au lieu du mot de passe."),T("Compte créé hier ? Touche « Confirmer mon adresse » dans l’e-mail reçu (regarde les indésirables), ou « Renvoyer l’e-mail »."),T("Inscrit·e avec Apple ou Google ? Utilise le même bouton : c’est le même compte.")]},
+      {t:T("Mon trajet Commute ne s’ouvre pas"),why:T("Un trajet est « fixé » dans Moi : seul celui-là s’ouvre sur Commute."),todo:[T("Ouvre <b>Moi → Mon trajet Commute</b> pour le changer ou le retirer."),T("Ouvrir un autre parcours depuis Commute bascule vers Sortie, c’est normal."),T("Seuls les parcours du dossier <b>Commute</b> sont proposés : déplace-le depuis sa fiche (⋯ → Dossier).")]}],
+    gloss: [[T("Niveau : vert, doré, rouille"),T("<span class=\"dot lv0\"></span><em>Vert</em> : conditions favorables. <span class=\"dot lv1\"></span><em>Doré</em> : bien, avec quelques réserves. <span class=\"dot lv2\"></span><em>Rouille</em> : conditions difficiles. Toujours accompagné d’un mot, jamais la couleur seule.")],
+      [T("Ressenti"),T("Température perçue à vélo : l’air plus l’effet du vent que tu crées en roulant. C’est elle qui décide de la veste et des gants.")],
+      [T("Vent de face, de travers, de dos"),T("Vu depuis ta trace : <em>de face</em> te ralentit et fatigue, <em>de dos</em> te pousse, <em>de travers</em> demande de la vigilance. Les parts s’additionnent à 100 % du parcours.")],
+      [T("Rafales"),T("Pointes de vent, souvent bien plus fortes que le vent moyen. À partir de 50 km/h elles sont signalées comme gênantes, à 70 km/h comme dangereuses.")],
+      [T("VAM"),T("Vitesse Ascensionnelle Moyenne : mètres de dénivelé positif gagnés par heure en montée. 700 m/h = 700 m de D+ en une heure.")],
+      [T("D+ / D−"),T("Dénivelé positif cumulé (ce que tu montes) et négatif (ce que tu descends). Les petits écarts de moins de 3 m sont ignorés.")],
+      [T("Départ conseillé"),T("En Commute : l’heure à laquelle partir pour arriver à l’heure choisie, marge comprise. C’est une estimation : garde de la marge pour la circulation.")],
+      [T("Fiabilité (J+n)"),T("Plus la sortie est lointaine, moins la prévision est sûre. Dans Mes sorties, la pastille sous chaque jour : verte, dorée, rouille. C’est un ordre de grandeur, pas une probabilité mesurée.")],
+      [T("Modèle météo"),T("Le calcul qui produit la prévision. Par défaut, Sillage prend le plus précis là où tu roules (AROME en France, ICON en Allemagne…). Tu peux en choisir un autre dans Source météo.")],
+      [T("Dossier"),T("Sortie, Ultra ou Commute : chaque parcours est rangé dans l’un des trois. Ouvrir un parcours t’emmène dans la page de son dossier.")],
+      [T("Tronçon sans ravito"),T("Portion de plus de 30 km sans lieu de ravitaillement ouvert à ton heure de passage. Les lieux aux horaires inconnus comptent comme possibles.")],
+      [T("Pastille « pour toi »"),T("Dans la feuille de route : vent de face, de dos ou de travers pour toi, selon ta direction à cet endroit.")]]
+  };
 }
-document.querySelectorAll('#helpDlg .help-tabs button').forEach(b => b.addEventListener('click', () => helpTab(b.dataset.h)));
-function openHelp() { try { $('#helpNoMore').checked = !!localStorage.getItem(HELP_KEY); } catch (e) {} helpTab(S.mode === 'ultra' || S.mode === 'taf' ? S.mode : 'ride'); $('#helpDlg').showModal(); }
-function closeHelp() { try { if ($('#helpNoMore').checked) localStorage.setItem(HELP_KEY, '1'); else localStorage.removeItem(HELP_KEY); } catch (e) {} $('#helpDlg').close(); }
-$('#helpBtn').addEventListener('click', openHelp);
-$('#helpX').addEventListener('click', closeHelp);
-$('#helpOk').addEventListener('click', closeHelp);
-$('#helpDlg').addEventListener('cancel', e => { e.preventDefault(); closeHelp(); });
-$('#helpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) closeHelp(); });
+const HP = { view: 'home', d: null, idx: null };
+const HP_ICO = {
+  get ride() { return TAB_ICO.ride; }, get ultra() { return TAB_ICO.ultra; }, get taf() { return TAB_ICO.taf; },
+  lib: '<circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/>',
+  map: '<path d="M12 21c-4-5-7-8-7-11.5a7 7 0 0 1 14 0C19 13 16 16 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  out: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.5" r="2"/>',
+  me: '<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.8 4.3-5.5 7.5-5.5s6.1 1.7 7.5 5.5"/>',
+  sos: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>',
+  gloss: '<path d="M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  mail: '<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.5 7.5 12 13l8.5-5.5"/>'
+};
+const hpI = (k, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${HP_ICO[k] || ''}</svg>`;
+const HP_CHEV = '<path d="M9 6l6 6-6 6"/>', HP_CHEVD = '<path d="M6 9l6 6 6-6"/>';
+const hpTxt = h => String(h).replace(/<[^>]*>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+const hpNorm = s => hpTxt(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+function hpBlock(b, u2) {
+  if (b.k === 'p') return `<p>${b.t}</p>`;
+  if (b.k === 'steps') return `<ol class="hp-steps">${b.items.map((s, i) => `<li><i>${i + 1}</i><div><b>${s[0]}</b><span>${s[1]}</span></div></li>`).join('')}</ol>`;
+  if (b.k === 'tip' || b.k === 'fix') return `<div class="hp-${b.k}"><span class="g" aria-hidden="true">${b.k === 'tip' ? 'i' : '!'}</span><div><b>${b.t}</b>${Array.isArray(b.b) ? `<ul>${b.b.map(l => `<li>${l}</li>`).join('')}</ul>` : `<span>${b.b}</span>`}</div></div>`;
+  if (b.k === 'kv') return `<dl class="hp-kv">${b.rows.map(r => `<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl>`;
+  if (b.k === 'wbar') return `<div class="hp-wbar"><p class="hp-lbl">${u2.wbar_t}</p><div class="bar" role="img" aria-label="${escH(u2.aria_wbar)}"><span></span><span></span><span></span></div><div class="lg"><span>${u2.wbar_f}</span><span>${u2.wbar_c}</span><span>${u2.wbar_b}</span></div></div>`;
+  return '';
+}
+function hpDet(n, title, body, open) { return `<details${open ? ' open' : ''}><summary><span class="n">${String(n).padStart(2, '0')}</span><span>${title}</span><svg class="c" viewBox="0 0 24 24" aria-hidden="true">${HP_CHEVD}</svg></summary><div class="bd">${body}</div></details>`; }
+function hpBack() { return `<button type="button" class="hp-back" data-hp="home" aria-label="${escH(HP.d.ui2.aria_back)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>${HP.d.ui.back}</button>`; }
+function hpRow(view, ico, title, desc) { return `<button type="button" class="hp-row" data-hp="${view}"><span class="ic">${hpI(ico)}</span><span><b>${title}</b><span class="d">${desc}</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true">${HP_CHEV}</svg></button>`; }
+function hpMailHref() {
+  const u = HP.d.ui, dev = (navigator.userAgent || '').slice(0, 160);
+  return 'mailto:hello@sillage-ride.eu?subject=' + encodeURIComponent(u.subj) + '&body=' + encodeURIComponent(u.body.replace('{0}', dev));
+}
+function hpIndex() { // tout le contenu cherchable : { view, i, t (titre), s (texte sans balises), n (texte normalisé) }
+  const d = HP.d, out = [];
+  d.topics.forEach(tp => tp.items.forEach((it, i) => { const body = it.b.map(b => b.k === 'p' ? b.t : b.k === 'steps' ? b.items.map(s => s.join(' ')).join(' ') : b.k === 'kv' ? b.rows.map(r => r.join(' ')).join(' ') : (b.k === 'tip' || b.k === 'fix') ? b.t + ' ' + [].concat(b.b).join(' ') : '').join(' '); out.push({ view: tp.id, i, t: it.t, in: tp.title, s: hpTxt(body), n: hpNorm(it.t + ' ' + body + ' ' + tp.title) }); }));
+  d.trouble.forEach((c, i) => out.push({ view: 'trouble', i, t: c.t, in: d.ui.sos, s: hpTxt(c.why + ' ' + c.todo.join(' ')), n: hpNorm(c.t + ' ' + c.why + ' ' + c.todo.join(' ')) }));
+  d.gloss.forEach((g, i) => out.push({ view: 'gloss', i, t: g[0], in: d.ui.gloss, s: hpTxt(g[1]), n: hpNorm(g[0] + ' ' + g[1]) }));
+  return out;
+}
+function hpSearch(q) {
+  const ws = hpNorm(q).split(' ').filter(Boolean), ix = HP.ix || (HP.ix = hpIndex());
+  const hits = ws.length ? ix.filter(e => ws.every(w => e.n.includes(w))) : [];
+  const u = HP.d.ui;
+  if (!ws.length) return '';
+  if (!hits.length) return `<div class="hp-card"><p>${escH(u.nores)}</p></div>`;
+  return `<p class="hp-lbl">${escH(T('{0} résultat(s)', [hits.length]))}</p><div class="hp-card rows">${hits.slice(0, 30).map(e => { const k = hpNorm(q).split(' ')[0], at = Math.max(0, hpNorm(e.s).indexOf(k)); return `<button type="button" class="hp-hit" data-hp="${e.view}" data-i="${e.i}"><b>${e.t}</b><span>${escH(e.in)} · ${escH(e.s.slice(0, 90))}…</span></button>`; }).join('')}</div>`;
+}
+function hpRender(view = HP.view, open = null) {
+  const d = HP.d || (HP.d = helpData()), u = d.ui, u2 = d.ui2, B = $('#hpBody');
+  HP.view = view; let h = '';
+  if (view === 'home') {
+    h += `<div><h3>${u.title}</h3><p class="hp-sub">${u.intro}</p></div>`;
+    h += `<div class="hp-search"><svg viewBox="0 0 24 24" aria-hidden="true">${HP_ICO.search}</svg><input type="search" id="hpQ" placeholder="${escH(u.search)}" aria-label="${escH(u2.aria_search)}" autocomplete="off" enterkeyhint="search"></div>`;
+    h += `<div id="hpRes" hidden></div><div id="hpMain" class="hp">`;
+    h += `<section class="hp-card"><p class="hp-lbl">${u.first}</p>${hpBlock(d.start, u2)}</section>`;
+    h += `<section class="hp-card rows">${d.topics.map(tp => hpRow(tp.id, tp.ico, tp.title, d.home[tp.id])).join('')}</section>`;
+    h += `<button type="button" class="hp-sos" data-hp="trouble"><span class="ic">${hpI('sos')}</span><span><b>${u.sos}</b><span class="d">${u.sosd}</span></span><svg class="go" viewBox="0 0 24 24" aria-hidden="true">${HP_CHEV}</svg></button>`;
+    h += `<section class="hp-card rows">${hpRow('gloss', 'gloss', u.gloss, u.glossd)}</section>`;
+    h += `<label class="hp-nomore"><input type="checkbox" id="hpNoMore"> ${u.nomore}</label></div>`;
+  } else if (view === 'trouble') {
+    h += hpBack() + `<div class="hp-head"><span class="big rust">${hpI('sos', '')}</span><div><h3>${u.sos}</h3><p class="hp-sub">${u.soss}</p></div></div>`;
+    h += `<div class="hp-acc">${d.trouble.map((c, i) => hpDet(i + 1, c.t, `<p style="color:var(--muted)"><b style="color:var(--ink)">${u.why}</b>${c.why}</p>` + hpBlock({ k: 'fix', t: u.todo, b: c.todo }, u2), open === i || (open == null && i === 0))).join('')}</div>`;
+    h += `<section class="hp-card"><p class="hp-lbl">${u.still}</p><h4 style="margin:0;font-size:18px;font-weight:800">${u.write}</h4><p class="hp-sub" style="margin:0;font-size:13.5px">${u.add}</p><ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:19px"><li>${u.a1}</li><li>${u.a2}</li><li>${u.a3}</li><li>${u.a4}</li></ul><a class="hp-mail" href="${escH(hpMailHref())}">${hpI('mail', '')}${u.mail}</a></section>`;
+  } else if (view === 'gloss') {
+    h += hpBack() + `<div class="hp-head"><span class="big blue">${hpI('gloss', '')}</span><div><h3>${u.gloss}</h3><p class="hp-sub">${u.glosss}</p></div></div>`;
+    h += `<section class="hp-card rows">${d.gloss.map((g, i) => `<div class="hp-term" id="hpG${i}"><b>${g[0]}</b><p>${g[1]}</p></div>`).join('')}</section>`;
+  } else {
+    const tp = d.topics.find(x => x.id === view) || d.topics[0];
+    h += hpBack() + `<div class="hp-head"><span class="big">${hpI(tp.ico, '')}</span><div><h3>${tp.title}</h3><p class="hp-sub">${tp.sub}</p></div></div>`;
+    h += `<div class="hp-acc">${tp.items.map((it, i) => hpDet(i + 1, it.t, it.b.map(b => hpBlock(b, u2)).join(''), open === i || (open == null && it.open))).join('')}</div>`;
+  }
+  B.innerHTML = h + `<p class="hp-foot">Sillage · Beyond The Track</p>`;
+  const nm = $('#hpNoMore'); if (nm) { try { nm.checked = !!localStorage.getItem(HELP_KEY); } catch (e) {} }
+}
+function hpGo(view, open = null) {
+  hpRender(view, open); const pg = $('#helpPage'); pg.scrollTop = 0;
+  if (open != null) { const el = view === 'gloss' ? $('#hpG' + open) : $('#hpBody details[open]:nth-of-type(' + (open + 1) + ')'); if (el) setTimeout(() => el.scrollIntoView({ block: 'start' }), 30); }
+}
+function openHelp(view = 'home') { pageOpen('helpPage', '#tabMe'); hpGo(view); }
+$('#hpBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-hp]'); if (!b) return;
+  const i = b.dataset.i != null ? +b.dataset.i : null; hpGo(b.dataset.hp, i);
+});
+$('#hpBody').addEventListener('input', e => {
+  if (e.target.id !== 'hpQ') return;
+  const q = e.target.value.trim(), res = $('#hpRes'), main = $('#hpMain');
+  res.innerHTML = hpSearch(q); res.hidden = !q; main.hidden = !!q;
+});
+$('#hpBody').addEventListener('change', e => { if (e.target.id !== 'hpNoMore') return; try { if (e.target.checked) localStorage.setItem(HELP_KEY, '1'); else localStorage.removeItem(HELP_KEY); } catch (er) {} });
+$('#helpBtn').addEventListener('click', () => openHelp());
 try { if (!localStorage.getItem(HELP_KEY) && !GUEST) setTimeout(() => { if (!document.body.classList.contains('gated') && ACC.row && !ACC.row.is_admin) openHelp(); }, 2500); } catch (e) {}
 // Accès privé : connexion par mot de passe (compte unique), déconnexion ; la page se recharge pour changer de mode.
 $('#loginLink').addEventListener('click', e => { e.preventDefault(); $('#loginErr').hidden = true; $('#loginDlg').showModal(); $('#loginEmail').focus(); });
@@ -7397,7 +7559,7 @@ async function lpRename(id, name) {
 }
 $('#lpAll').addEventListener('click', lpOpen);
 // Pages plein écran (Mes parcours, Mes sorties, Moi) : une seule ouverte à la fois, onglet du bas allumé.
-const PAGES = ['libPage', 'outPage', 'mePage', 'mapPage'];
+const PAGES = ['libPage', 'outPage', 'mePage', 'mapPage', 'helpPage'];
 function pageOpen(pid, tabSel) {
   sheetClose();
   for (const q of PAGES) { const el = document.getElementById(q); if (el) el.hidden = q !== pid; }
@@ -7848,7 +8010,7 @@ $('#meDist').addEventListener('click', e => { const b = e.target.closest('button
 $('#meTemp').addEventListener('click', e => { const b = e.target.closest('button[data-u]'); if (b) setUnits({ temp: b.dataset.u }); });
 $('#meLang').addEventListener('click', e => { const b = e.target.closest('button[data-l]'); if (b) setLang(b.dataset.l); });
 $('#meTheme').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b) return; setTheme(b.dataset.t); for (const x of document.querySelectorAll('#meTheme button')) x.setAttribute('aria-pressed', String(x === b)); $('#meVTheme').textContent = b.textContent; });
-$('#meHelp').addEventListener('click', () => $('#helpBtn').click());
+$('#meHelp').addEventListener('click', () => openHelp());
 /* Accessibilité (28/10/2026) : couleurs, animations, police. Gardés dans localStorage pmr-a11y ({ cvd, motion, font }),
    appliqués en tête de page ; chaque changement recharge la page (échelles de couleur du script), puis rouvre Moi. */
 function a11yGet() { try { return JSON.parse(localStorage.getItem('pmr-a11y') || '{}') || {}; } catch (e) { return {}; } }
