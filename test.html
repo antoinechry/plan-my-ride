@@ -1158,6 +1158,37 @@ body.pm-placing .pm-loc{bottom:16px}
 .pm-big{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
 .pm-big img{max-width:100%;max-height:100%;border-radius:8px}
 @media (max-width:420px){.pm-legend{width:170px}.pm-legend b{font-size:13px}}
+/* Carte v2.0 (07/11/2026) : commandes sur le côté, recherche de ville, fiche en deux temps */
+.pm-ctl .pm-loc{position:static;width:44px;height:44px;bottom:auto}
+.pm-ctl .leaflet-control-layers{margin:0;float:none;position:relative;width:44px;height:44px;border-radius:999px;border:1px solid var(--line)!important;background:var(--panel);box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.1)}
+.pm-ctl .leaflet-control-layers-toggle{width:42px;height:42px;background-size:22px;border-radius:999px}
+.pm-ctl .leaflet-control-layers-expanded{position:absolute;top:0;right:0;width:auto;height:auto;border-radius:14px;z-index:20;color:var(--ink);padding:8px 10px;background:var(--panel)}
+.pm-search{position:absolute;z-index:5;display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,32,27,.08),0 4px 16px rgba(20,32,27,.1)}
+.pm-search>svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;flex:none}
+.pm-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font:16px var(--f-body)}
+.pm-qlist{position:absolute;left:0;right:0;margin:0;padding:6px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(20,32,27,.16);max-height:260px;overflow:auto}
+.pm-qlist[hidden]{display:none}
+.pm-qlist button{display:block;width:100%;text-align:left;min-height:44px;padding:6px 10px;border:0;background:transparent;border-radius:10px;color:var(--ink);font:inherit;cursor:pointer}
+.pm-qlist button b{display:block;font-weight:700}
+.pm-qlist button small,.pm-qlist .pm-qm{color:var(--muted);font-size:12.5px}
+.pm-qlist .pm-qm{display:block;padding:10px}
+.pm-quick{display:none}
+@media (min-width:701px){.pm-search{left:12px;top:12px;width:320px}.pm-qlist{top:calc(100% + 8px)}}
+@media (max-width:700px){
+  .pm-search{left:12px;right:150px;bottom:16px}
+  .pm-qlist{bottom:calc(100% + 8px)}
+  .pm-legend{bottom:76px;width:auto;flex-direction:row}
+  .pm-mapwrap:has(#pmSheet:not([hidden])) :is(.pm-search,.pm-add,.pm-legend){display:none}
+  #pmSheet:not(.pm-mini){max-height:68%}
+  #pmSheet.pm-mini{left:12px;right:12px;bottom:12px;max-height:none;overflow:visible;border:1px solid var(--line);border-radius:16px;padding:12px 14px 14px;cursor:pointer;box-shadow:0 1px 2px rgba(20,32,27,.08),0 8px 24px rgba(20,32,27,.18)}
+  #pmSheet.pm-mini::before{display:none}
+  #pmSheet.pm-mini #pmSheetBody>*:not(.pm-sh):not(.pm-quick){display:none}
+  #pmSheet.pm-mini .pm-sh h3{font-size:20px;margin:6px 0 2px}
+  #pmSheet.pm-mini .pm-x{width:32px;height:32px;font-size:15px;background:var(--bg);border:0}
+  #pmSheet.pm-mini .pm-quick{display:flex;gap:8px;margin-top:10px}
+  .pm-quick button{flex:1;min-height:46px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer}
+  .pm-quick button.go{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);font-weight:700}
+}
 /* Refonte v2.0 « D · tout garder, en plus clair » (essai du 06/11/2026, maquette canevas « Sillage v2.0 · écran Sortie ») :
    mêmes blocs que la v1.0, cartes arrondies, chiffres en Plex Mono, étiquettes en capitales, verdict en carte avec « Partir à … »,
    tuiles séparées, barre du vent ressenti, rangée d'heures de départ, pastilles « Pour vous » dans la feuille de route. */
@@ -1901,13 +1932,14 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
     <div class="pm-ctl">
       <button type="button" class="pm-round pm-cmp" id="pmCompass" aria-haspopup="menu" aria-expanded="false" aria-controls="pmOri" aria-label="Orientation de la carte : nord toujours en haut" title="Nord toujours en haut · toucher pour changer"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="n" d="M12 2.5l3.6 9.5H8.4z"/><path class="s" d="M12 21.5L8.4 12h7.2z"/></svg><span class="pm-cb" aria-hidden="true"></span></button>
       <button type="button" class="pm-round" id="pmRoute" aria-label="Recentrer sur mon parcours" title="Recentrer sur mon parcours" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h4"/><path d="M18 3.5a2.5 2.5 0 0 1 2.5 2.5c0 2-2.5 4.5-2.5 4.5S15.5 8 15.5 6A2.5 2.5 0 0 1 18 3.5z"/></svg></button>
+    <button type="button" class="pm-round pm-loc" id="pmLocate" aria-label="Me localiser" title="Me localiser"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="pm-cross"><circle cx="12" cy="12" r="6.5"/><circle class="pm-dot" cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></g><path class="pm-nav" d="M12 2.5l7 18-7-4-7 4z"/></svg></button>
     </div>
     <div class="pm-ori" id="pmOri" role="menu" aria-label="Orientation de la carte" hidden></div>
     <div class="pm-legend" role="group" aria-label="Sources des points">
       <button type="button" id="pmSrcOsm" aria-pressed="true"><span class="pm-sw osm" aria-hidden="true"></span><span><b>OpenStreetMap</b><small id="pmCntOsm"></small></span></button>
       <button type="button" id="pmSrcUsr" aria-pressed="true"><span class="pm-sw usr" aria-hidden="true"></span><span><b>Par les cyclistes</b><small id="pmCntUsr"></small></span></button>
     </div>
-    <button type="button" class="pm-round pm-loc" id="pmLocate" aria-label="Me localiser" title="Me localiser"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="pm-cross"><circle cx="12" cy="12" r="6.5"/><circle class="pm-dot" cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></g><path class="pm-nav" d="M12 2.5l7 18-7-4-7 4z"/></svg></button>
+    <div class="pm-search" id="pmSearch" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="pmQ" type="search" placeholder="Chercher une ville" aria-label="Chercher une ville" autocomplete="off" enterkeyhint="search"><ul class="pm-qlist" id="pmQList" hidden></ul></div>
     <button type="button" class="pm-add" id="pmAdd"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ajouter</button>
     <div class="pm-aim" id="pmAim" hidden aria-hidden="true"><span class="pm-aim-pin"></span><span class="pm-aim-stem"></span><span class="pm-aim-tip">Déplace la carte pour placer le repère</span></div>
     <div class="pm-sheet" id="pmSheet" hidden role="dialog" aria-labelledby="pmSheetTitle"><div id="pmSheetBody"></div></div>
@@ -8548,7 +8580,8 @@ function pmInitMap(rot) {
   const bases = makeBases(); let bn = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)');
   try { const sv = localStorage.getItem('pmr-pm-base'); if (sv && bases[sv]) bn = sv; } catch (e) {}
   bases[bn].addTo(PM.map);
-  L.control.layers(bases, null, { position: 'topright' }).addTo(PM.map);
+  const pmLay = L.control.layers(bases, null, { position: 'topright' }).addTo(PM.map);
+  const pmCtl = $('#mapPage .pm-ctl'); if (pmCtl) pmCtl.insertBefore(pmLay.getContainer(), $('#pmLocate'));
   PM.map.on('baselayerchange', e => { try { localStorage.setItem('pmr-pm-base', e.name); } catch (er) {} });
   PM.layer = L.layerGroup().addTo(PM.map);
   let v = null; try { v = JSON.parse(localStorage.getItem('pmr-pm-view') || 'null'); } catch (e) {}
@@ -8888,8 +8921,39 @@ document.addEventListener('visibilitychange', () => {
   pmCompSync();
 });
 
+/* recherche de ville (Nominatim, villes et villages seulement) */
+(function () {
+  const q = $('#pmQ'), ul = $('#pmQList'); if (!q) return;
+  let tm = 0, n = 0, rows = [];
+  const hide = () => { ul.hidden = true; ul.innerHTML = ''; };
+  const msg = t => { ul.innerHTML = `<li><span class="pm-qm">${escH(t)}</span></li>`; ul.hidden = false; };
+  async function go(txt) {
+    const my = ++n;
+    try {
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=8&featuretype=settlement&accept-language=' + LANG + '&q=' + encodeURIComponent(txt));
+      if (!r.ok) throw new Error('http');
+      const a = await r.json(); if (my !== n) return;
+      const seen = new Set();
+      rows = a.filter(x => { const k = x.display_name; if (seen.has(k)) return false; seen.add(k); return true; });
+      if (!rows.length) return msg(T("Aucune ville trouvée"));
+      ul.innerHTML = rows.map((x, i) => { const ad = x.address || {}; return `<li><button type="button" data-i="${i}"><b>${escH(x.name || x.display_name.split(',')[0])}</b><small>${escH([ad.county || ad.state, ad.country].filter(Boolean).join(' · '))}</small></button></li>`; }).join('');
+      ul.hidden = false;
+    } catch (e) { if (my === n) msg(T("Recherche indisponible")); }
+  }
+  q.addEventListener('input', () => { clearTimeout(tm); const v = q.value.trim(); if (v.length < 2) { n++; return hide(); } tm = setTimeout(() => go(v), 400); });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(tm); const v = q.value.trim(); if (v.length >= 2) go(v); } else if (e.key === 'Escape') { hide(); q.blur(); } });
+  ul.addEventListener('click', e => {
+    const b = e.target.closest('button[data-i]'); if (!b) return;
+    const x = rows[+b.dataset.i]; if (!x || !PM.map) return;
+    const bb = x.boundingbox && x.boundingbox.map(Number);
+    if (bb && bb.length === 4) PM.map.fitBounds([[bb[0], bb[2]], [bb[1], bb[3]]], { maxZoom: 14 }); else PM.map.setView([+x.lat, +x.lon], 13);
+    q.value = x.name || ''; q.blur(); hide();
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('#pmSearch')) hide(); });
+})();
+
 /* feuille du bas : fiche d'un point, ajout, avis */
-function pmSheet(html) { const s = $('#pmSheet'); $('#pmSheetBody').innerHTML = html; s.hidden = false; s.scrollTop = 0; }
+function pmSheet(html) { const s = $('#pmSheet'); s.classList.remove('pm-mini'); $('#pmSheetBody').innerHTML = html; s.hidden = false; s.scrollTop = 0; }
 function pmSheetClose() { $('#pmSheet').hidden = true; PM.sel = null; if (PM.placing) pmPlacingOff(); }
 function pmCanWrite() { return !GUEST && hasSbToken(); }
 function pmGuestSheet() {
@@ -8930,6 +8994,7 @@ function pmShow(it) {
       <h3 id="pmSheetTitle">${escH(title)}</h3>
       ${!u && it.name && pmKind(it.tags) ? `<span class="pm-src">${escH(pmKind(it.tags))}</span>` : ''}
     </div><button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Fermer"))}">✕</button></div>
+    <div class="pm-quick"><button type="button" class="go" data-q="nav">${escH(T("Y aller"))}</button><button type="button" data-q="rev">${escH(T("Avis"))}</button><button type="button" data-q="ok">${escH(T("Toujours là ?"))}</button></div>
     ${u && p.status === 'pending' ? `<p class="pm-pending">${pmSvg('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2').replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"')}${escH(T("Point en cours de validation"))}</p>` : ''}
     ${pmInfoRows(it)}
     <div class="pm-box" id="pmVotes"><p class="pm-msg">${escH(T("Chargement…"))}</p></div>
@@ -8944,6 +9009,7 @@ function pmShow(it) {
   $('#pmRevBtn').addEventListener('click', () => pmCanWrite() ? pmReviewForm(it) : pmGuestSheet());
   $('#pmNavBtn').addEventListener('click', e => { const n = $('#pmNav'), op = n.hidden; n.hidden = !op; e.currentTarget.setAttribute('aria-expanded', op); if (op) n.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
   const dm = $('#pmDelMine'); if (dm) dm.addEventListener('click', () => pmDeleteMine(it, dm));
+  if (matchMedia('(max-width:700px)').matches) $('#pmSheet').classList.add('pm-mini');
   pmLoadDetail(it);
 }
 async function pmLoadDetail(it) {
@@ -8977,7 +9043,18 @@ async function pmLoadDetail(it) {
     </div>${r.photo ? `<img src="${escH(PM_PHOTO + r.photo)}" alt="${escH(T("Photo de {0}", [r.author || T("un·e cycliste")]))}" loading="lazy" data-big>` : ''}</li>`).join('');
 }
 $('#pmSheet').addEventListener('click', async e => {
-  if (e.target.closest('[data-pm-close]')) return pmSheetClose();
+  const sh = $('#pmSheet');
+  if (sh.classList.contains('pm-mini')) { // petite carte : un appui la déplie, ✕ la ferme
+    if (e.target.closest('[data-pm-close]')) return pmSheetClose();
+    const q = e.target.closest('[data-q]');
+    sh.classList.remove('pm-mini'); sh.scrollTop = 0;
+    if (q) setTimeout(() => { if (q.dataset.q === 'nav') $('#pmNavBtn').click(); else if (q.dataset.q === 'rev') $('#pmRevBtn').click(); else $('#pmVotes').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60);
+    return;
+  }
+  if (e.target.closest('[data-pm-close]')) { // fiche dépliée : ✕ la replie en petite carte (téléphone)
+    if (PM.sel && $('#pmVotes') && matchMedia('(max-width:700px)').matches) { sh.classList.add('pm-mini'); sh.scrollTop = 0; return; }
+    return pmSheetClose();
+  }
   const img = e.target.closest('img[data-big]');
   if (img) { const d = document.createElement('div'); d.className = 'pm-big'; d.innerHTML = `<img src="${escH(img.src)}" alt="${escH(img.alt)}">`; d.addEventListener('click', () => d.remove()); document.body.appendChild(d); return; }
   const vb = e.target.closest('[data-v]');
