@@ -8989,7 +8989,7 @@ function pmShow(it) {
   const own = u && p.user_id === SB_UID;
   pmSheet(`<div class="pm-sh"><div>
       <div class="pm-badges"><span class="pm-tb${u ? '' : ' osm'}" style="--c:${t.col}">${pmSvg(t.d)}${escH(t.lbl)}</span>
-        <span class="pm-src">${u ? escH(p.author ? T("Ajouté par {0}", [p.author]) : T("Ajouté par un cycliste")) : escH(T("Source : © OpenStreetMap"))}</span>
+        <span class="pm-src">${u ? escH(T("Ajouté par un cycliste")) : escH(T("Source : © OpenStreetMap"))}</span>
         <span class="pm-ver" id="pmVer"${!u && PM.ver.has(it.ref) ? '' : ' hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${escH(T("Vérifié par les cyclistes"))}</span></div>
       <h3 id="pmSheetTitle">${escH(title)}</h3>
       ${!u && it.name && pmKind(it.tags) ? `<span class="pm-src">${escH(pmKind(it.tags))}</span>` : ''}
