@@ -8,7 +8,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 //     (amr « otp » / « magiclink » du jeton, déjà vérifié par Auth),
 //   → refuse si c'est le dernier administrateur actif,
 //   → retire le contact de Brevo (lettre d'info), s'il existe,
-//   → supprime l'utilisateur Auth : la cascade efface app_users, routes, push_alerts, push_subs, usage_log, activity_log.
+//   → efface les photos d'avis de la Carte (espace public `poi-photos/<user_id>/`, que la cascade ne touche pas),
+//   → supprime l'utilisateur Auth : la cascade efface app_users, routes, push_alerts, push_subs, usage_log, activity_log,
+//     poi, poi_review, poi_check, poi_report (points, avis, « toujours là », signalements).
 // Réponses : { ok: true } ; { error: 'auth' | 'password' | 'last_admin' | 'delete' }.
 // Secrets : BREVO_API_KEY (facultatif : sans lui, le contact Brevo n'est pas retiré).
 
@@ -73,6 +75,16 @@ Deno.serve(async (req: Request) => {
       if (!r.ok && r.status !== 404) console.error('brevo', r.status, (await r.text()).slice(0, 200));
     } catch (e) { console.error('brevo', String(e)); }
   }
+
+  // Photos des avis de la Carte : le fichier public resterait joignable par son adresse après la suppression des lignes.
+  try {
+    for (let guard = 0; guard < 20; guard++) {
+      const { data: files } = await db.storage.from('poi-photos').list(user.id, { limit: 100 });
+      if (!files || !files.length) break;
+      const { error: rmErr } = await db.storage.from('poi-photos').remove(files.map((f) => `${user.id}/${f.name}`));
+      if (rmErr) { console.error('photos', rmErr.message); return json({ error: 'delete', detail: 'photos' }, 500); }
+    }
+  } catch (e) { console.error('photos', String(e)); return json({ error: 'delete', detail: 'photos' }, 500); }
 
   const { error } = await db.auth.admin.deleteUser(user.id);
   if (error) return json({ error: 'delete', detail: error.message.slice(0, 200) }, 500);
