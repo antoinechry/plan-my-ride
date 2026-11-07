@@ -1249,7 +1249,7 @@ function pRender() {
     html = P.pois.filter(keep).map(p => { const t = PT[p.type] || ['?', '#888', ''];
       const nR = P.revs.filter(r => r.poi_key === 'p:' + p.id && r.status !== 'removed'), ph = nR.find(r => r.photo);
       return '<li class="pit"><span class="dot" style="background:' + t[1] + '">' + pSvg(t[2]) + '</span><div class="main"><div class="nm"><b>' + esc(p.name) + '</b><span class="ty">' + esc(t[0]) + '</span></div>'
-        + '<span class="meta">Ajouté par ' + esc(p.author || 'un·e cycliste') + ' · ' + pAgo(p.created_at) + ' · ' + nR.length + ' avis</span>'
+        + '<span class="meta">Ajouté par ' + 'un·e cycliste' + ' · ' + pAgo(p.created_at) + ' · ' + nR.length + ' avis</span>'
         + (p.details ? '<span class="txt">' + esc(p.details) + '</span>' : '') + '</div>'
         + (ph ? '<a href="' + esc(PHOTO + ph.photo) + '" target="_blank" rel="noopener"><img class="ph" src="' + esc(PHOTO + ph.photo) + '" alt="Photo jointe" loading="lazy"></a>' : '')
         + pStatus(p.status, p.osm_ref) + '<div class="acts"><a class="b sm" href="https://www.openstreetmap.org/?mlat=' + p.lat + '&mlon=' + p.lon + '#map=18/' + p.lat + '/' + p.lon + '" target="_blank" rel="noopener">Voir</a>' + pActs('p', p) + '</div>' + pDupHtml(p) + '</li>'; }).join('');
@@ -1257,7 +1257,7 @@ function pRender() {
     const nm = r => r.poi_name || (P.pois.find(p => 'p:' + p.id === r.poi_key) || {}).name || r.poi_key;
     html = P.revs.filter(keep).map(r => '<li class="pit"><div class="main"><div class="nm">' + (r.rating ? '<span class="stars" aria-label="' + r.rating + ' sur 5">' + '★★★★★'.slice(0, r.rating) + '☆☆☆☆☆'.slice(0, 5 - r.rating) + '</span>' : '')
       + '<b style="font-size:15px">sur « ' + esc(nm(r)) + ' »</b>' + (/^p:/.test(r.poi_key) ? '' : '<span class="ty">point OSM</span>') + (r.reports > 0 ? '<span class="prep">⚑ Signalé ' + r.reports + ' fois</span>' : '') + '</div>'
-      + (r.comment ? '<span class="txt">' + esc(r.comment) + '</span>' : '') + '<span class="meta">Par ' + esc(r.author || 'un·e cycliste') + ' · ' + pAgo(r.created_at) + '</span></div>'
+      + (r.comment ? '<span class="txt">' + esc(r.comment) + '</span>' : '') + '<span class="meta">Par ' + 'un·e cycliste' + ' · ' + pAgo(r.created_at) + '</span></div>'
       + (r.photo ? '<a href="' + esc(PHOTO + r.photo) + '" target="_blank" rel="noopener"><img class="ph" src="' + esc(PHOTO + r.photo) + '" alt="Photo jointe" loading="lazy"></a>' : '')
       + pStatus(r.status) + '<div class="acts">' + pActs('r', r) + '</div></li>').join('');
   }

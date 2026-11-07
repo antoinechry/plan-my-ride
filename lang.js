@@ -1131,6 +1131,7 @@ window.PMR_I18N = {
     "Pas encore d'avis": "No reviews yet",
     "Payant": "Paid",
     "Photo de {0}": "Photo by {0}",
+    "Photo d'un·e cycliste": "Photo by a cyclist",
     "Pièces, chambres à air, accueil…": "Parts, inner tubes, welcome…",
     "Place le repère au bon endroit en déplaçant la carte.": "Move the map to put the pin in the right spot.",
     "Plat ? Abrité du vent ? Autorisé ?": "Flat? Sheltered from the wind? Allowed?",

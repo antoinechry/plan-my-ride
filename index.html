@@ -7797,7 +7797,7 @@ async function poiMineOpen() {
   ul.innerHTML = ''; txt.textContent = T("Chargement…"); if (!d.open) d.showModal();
   let rows = [];
   try { const sb = await sbIfLogged(); if (!sb) throw 0;
-    const { data, error } = await sb.from('poi').select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').eq('user_id', SB_UID).order('created_at', { ascending: false }).limit(300);
+    const { data, error } = await sb.from('poi').select('id,user_id,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').eq('user_id', SB_UID).order('created_at', { ascending: false }).limit(300);
     if (error) throw error; rows = data || []; } catch (e) { txt.textContent = T("Liste indisponible pour l'instant."); return; }
   $('#meKPoi').textContent = rows.length;
   txt.textContent = rows.length ? T("Touche un point pour le voir sur la carte.") : T("Tu n'as pas encore ajouté de point. Sur la Carte, touche « Ajouter » pour partager une fontaine, un abri, un bivouac…");
@@ -8194,7 +8194,7 @@ async function pmLoadUsr(force) {
   if (!force && box === PM.usrBox) return;
   if (n - s > 8 || e - w > 12) return; // trop dézoomé : on garde ce qu'on a
   PM.usrBox = box;
-  const { data, error } = await sb.from('poi').select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at')
+  const { data, error } = await sb.from('poi').select('id,user_id,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at')
     .gte('lat', s).lte('lat', n).gte('lon', w).lte('lon', e).neq('status', 'removed').order('created_at', { ascending: false }).limit(800);
   if (error) { PM.usrBox = ''; return; }
   for (const [id, it] of PM.usr) if (it.poi.lat >= s && it.poi.lat <= n && it.poi.lon >= w && it.poi.lon <= e) PM.usr.delete(id);
@@ -8762,7 +8762,7 @@ async function pmLoadDetail(it) {
   const key = it.src === 'usr' ? it.key : it.ref, sb = await sbIfLogged();
   if (!sb || PM.sel !== it) return;
   const [rv, ck] = await Promise.all([
-    sb.from('poi_review').select('id,user_id,author,rating,comment,photo,status,created_at').eq('poi_key', key).neq('status', 'removed').order('created_at', { ascending: false }).limit(40),
+    sb.from('poi_review').select('id,user_id,rating,comment,photo,status,created_at').eq('poi_key', key).neq('status', 'removed').order('created_at', { ascending: false }).limit(40),
     sb.rpc('poi_checks', { keys: [key] })
   ]);
   if (PM.sel !== it) return;
@@ -8781,12 +8781,12 @@ async function pmLoadDetail(it) {
   $('#pmRevHead').textContent = revs.length ? T("Avis · {0} / 5 · {1} avis", [avg ? avg.toLocaleString(LOC, { maximumFractionDigits: 1 }) : '–', revs.length]) : T("Pas encore d'avis");
   $('#pmRevBtn').textContent = revs.length ? T("Laisser un avis") : T("Laisser le premier avis");
   $('#pmRevs').innerHTML = revs.map(r => `<li class="pm-rev"><div>
-      <div class="who"><span>${escH(r.user_id === SB_UID ? T("Toi") : (r.author || T("Un·e cycliste")))}</span><small>${escH(pmAgo(r.created_at))}</small></div>
+      <div class="who"><span>${escH(r.user_id === SB_UID ? T("Toi") : T("Un·e cycliste"))}</span><small>${escH(pmAgo(r.created_at))}</small></div>
       ${r.rating ? `<span class="stars" aria-label="${escH(T("{0} sur 5", [r.rating]))}">${pmStars(r.rating)}</span>` : ''}
       ${r.comment ? `<p>${escH(r.comment)}</p>` : ''}
       <div class="pm-meta"><span>${r.status === 'pending' ? escH(T("en validation")) : ''}</span>
         ${r.user_id === SB_UID ? `<button type="button" class="linkbtn" data-del="${r.id}">${escH(T("Supprimer"))}</button>` : pmCanWrite() ? `<button type="button" class="linkbtn" data-rep="${r.id}">${escH(T("Signaler"))}</button>` : ''}</div>
-    </div>${r.photo ? `<img src="${escH(PM_PHOTO + r.photo)}" alt="${escH(T("Photo de {0}", [r.author || T("un·e cycliste")]))}" loading="lazy" data-big>` : ''}</li>`).join('');
+    </div>${r.photo ? `<img src="${escH(PM_PHOTO + r.photo)}" alt="${escH(T("Photo d'un·e cycliste"))}" loading="lazy" data-big>` : ''}</li>`).join('');
 }
 $('#pmSheet').addEventListener('click', async e => {
   const sh = $('#pmSheet');
@@ -8997,7 +8997,7 @@ async function pmAddSend() {
     const sb = await sbIfLogged(); if (!sb) throw new Error(T("Connecte-toi pour ajouter un point."));
     const ll = f.ll || pmAimLatLng(), name = (f.name.trim() || t.lbl).slice(0, 80);
     const { data, error } = await sb.from('poi').insert({ type: f.type, name, lat: +ll.lat.toFixed(6), lon: +ll.lng.toFixed(6), details: f.details.trim().slice(0, 500) || null })
-      .select('id,user_id,author,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').single();
+      .select('id,user_id,type,name,lat,lon,details,hours,contact,osm_ref,status,created_at').single();
     if (error || !data) throw new Error(/row-level|policy|permission/i.test(error && error.message || '') ? T("Ton compte ne peut pas encore ajouter de point.") : T("Le point n'a pas pu être enregistré."));
     const it = { src: 'usr', key: 'p:' + data.id, type: data.type, name: data.name, lat: data.lat, lon: data.lon, poi: data };
     PM.usr.set(data.id, it);
