@@ -4340,12 +4340,8 @@ function expModel() {
         else if (w.tmin < 3) { lvl = 1; lbl = T("Froid"); } else if (w.head >= 50) { lvl = 1; lbl = T("Vent de face"); } }
       return { n: k + 1, date: dayFmt.format(new Date(d.a.t)), times: `${hm.format(new Date(d.a.t))} → ${whenTxt(d.b.t, d.a.t)}`,
         km: `km ${fD(d.a.km, 0)} → ${fD(d.b.km, 0)} · D+ ${fE(d.dplus)} ${UL.m}`, ride: T("{0} de selle · {1} de pauses", [durShort(d.rideH), durShort(d.pauseH)]),
-        temp: w ? T("ressenti {0} → {1} °C", [fT(w.tmin), fT(w.tmax)]) : '', lvl, lbl,
-        rg: [idxAtKm(d.a.km), idxAtKm(d.b.km)],
-        from: (planTown(d.a.km, 3000) || {}).name || T("km {0}", [fD(d.a.km, 0)]), to: (planTown(d.b.km, 3000) || {}).name || T("km {0}", [fD(d.b.km, 0)]),
-        nightTxt: d.night ? T("Nuit {0} · {1}", [(planTown(d.b.km, 3000) ? T("à {0}", [planTown(d.b.km, 3000).name]) : T("au km {0}", [fD(d.b.km, 0)])), durShort((d.night.to - d.night.from) / 3600e3)]) : T("Arrivée vers {0}", [hm.format(new Date(d.b.t))]) };
+        temp: w ? T("ressenti {0} → {1} °C", [fT(w.tmin), fT(w.tmax)]) : '', lvl, lbl };
     });
-    M.total = `${fD(S.P.total)} ${UL.km}`;
     M.rideH = days.reduce((s, d) => s + d.rideH, 0); M.nights = days.length - 1;
     const wdS = new Intl.DateTimeFormat(LOC, { weekday: 'short' });
     M.depFull = `${wdS.format(new Date(tl.start))} ${M.dep}`; M.arrFull = `${wdS.format(new Date(tl.end))} ${hm.format(new Date(tl.end))}`;
@@ -4380,14 +4376,12 @@ const expSlot = o => ({ slot: true, o });
 async function expFillMaps(A) {
   const fill = async s => { if (!s || !s.slot) return s; if (!s.w) return null; const cv = await expMapShot({ ...s.o, w: s.w, h: s.h }); if (cv && cv.missing) A.missing += cv.missing; return cv; };
   if (A.maps) for (let k = 0; k < A.maps.length; k++) A.maps[k] = await fill(A.maps[k]);
-  if (A.dayMaps) for (let k = 0; k < A.dayMaps.length; k++) A.dayMaps[k] = await fill(A.dayMaps[k]);
   A.map = await fill(A.map);
 }
 async function expAssets(M, fmt) {
   const A = { missing: 0 };
   if (M.mode === 'taf') { A.maps = []; for (let k = 0; k < 2; k++) A.maps[k] = DUO.maps[k] ? expSlot({ m: DUO.maps[k], rg: duoRange(k), arrows: false, sky: true }) : null; }
   else A.map = expSlot({});
-  if (M.mode === 'ultra' && fmt === 'full') A.dayMaps = (M.days || []).map(d => expSlot({ rg: d.rg, arrows: false, sky: false }));
   if (fmt === 'story') return A;
   const snap = cv => { if (!cv || !cv.width) return null; const o = document.createElement('canvas'); o.width = cv.width; o.height = cv.height; o.getContext('2d').drawImage(cv, 0, 0); return o; };
   const html = document.documentElement, prev = html.dataset.theme;
@@ -4398,7 +4392,7 @@ async function expAssets(M, fmt) {
       try { renderChart(); A.chart = snap($('#chart')); } finally { wr.style.cssText = ws; }
     }
     drawPlanWx();
-    if (M.mode === 'ultra' && fmt !== 'full') { // graphes du jour à la largeur de l'image (sur la page, ils suivent la largeur du tableau)
+    if (M.mode === 'ultra') { // graphes du jour à la largeur de l'image (sur la page, ils suivent la largeur du tableau)
       const gw = fmt === 'wide' ? 296 : 1056, box = document.createElement('div');
       box.style.cssText = `position:absolute;left:-10000px;top:0;width:${gw}px`; document.body.appendChild(box);
       A.days = (M.days || []).map((d, k) => { const cv = document.createElement('canvas'); cv.dataset.wx = k; box.appendChild(cv); try { drawDayWx(cv); } catch (e) { return null; } return snap(cv); });
@@ -4428,14 +4422,14 @@ function xFoot(c, M, P, A, x, y, w, small) {
   c.font = xF(400, small ? 10 : 12, P.fm);
   xT(c, xFit(c, `${M.credit} · © OpenStreetMap${A.missing ? T(" (fond partiel)") : ''} · ${T("horaires estimés")}`, w - rw - 24), x, y, c.font, P.muted);
 }
-function xLegend(c, P, x, y, w, noArr) {
+function xLegend(c, P, x, y, w) {
   let lx = x; const it = (col, txt) => { xR(c, lx, y - 8, 26, 8, 4, col); lx += 34; lx += xT(c, txt, lx, y, xF(400, 14, P.fd), P.muted) + 22; };
   if (S.metric === 'wind') { it(P.head, T("Vent de face")); it('#8f9a94', T("Travers ou faible")); it(P.tail, T("Vent de dos")); }
   else if (S.metric === 'temp') it(tempColor(15), T("Couleur : température ressentie"));
   else if (S.metric === 'rain') it(rainColor(2), T("Couleur : pluie"));
   else it(P.brand, T("Couleur : ensoleillement"));
   const r = T("Flèche : sens du vent · pastille : ciel, température, vent"); c.font = xF(400, 14, P.fd);
-  if (!noArr && lx + c.measureText(r).width < x + w) xT(c, r, x + w, y, c.font, P.muted, 'right');
+  if (lx + c.measureText(r).width < x + w) xT(c, r, x + w, y, c.font, P.muted, 'right');
 }
 function xTile(c, P, x, y, w, h, lbl, v, s, vs = 24, vcol) {
   xR(c, x, y, w, h, 16, P.card, P.line);
@@ -4526,37 +4520,25 @@ function expFull(c, M, A) {
   const vh = Math.max(M.mode === 'ultra' ? 210 : 200, 24 + 27 + 16 + tL * 34.5 + 6 + aL * 24 + 20), vw = (w - 16) * 3 / 5;
   xVerdict(c, M, P, x, y, vw, vh); xTimes(c, M, P, x + vw + 16, y, w - vw - 16, vh); y += vh + 16;
   if (M.mode !== 'ultra' && M.kpis.length) { const kw = (w - 48) / 4; M.kpis.forEach((k, i) => xTile(c, P, x + i * (kw + 16), y, kw, 120, ...k)); y += 120 + 16; }
-  if (M.mode === 'ultra') { // un jour, une carte (v2.0, 07/11/2026)
-    xLegend(c, P, x, y + 12, w, true); y += 36;
-    const cw2 = (w - 16) / 2, mapH = 190, ch = mapH + 150, cells = M.days.map(d => ({ d })).concat([{ sum: true }]);
-    cells.forEach((cell, i) => {
-      const cx = x + (i % 2) * (cw2 + 16), cy = y + Math.floor(i / 2) * (ch + 16), d = cell.d;
-      if (cell.sum) {
-        xR(c, cx, cy, cw2, ch, 16, '#14201B'); const ink = '#EEF1EC', mut = '#A3AEA8', oy = cy + Math.round((ch - 150) / 2);
-        xT(c, T("EN TOUT"), cx + 24, oy + 14, xF(500, 13, P.fm), mut); xT(c, M.total, cx + 24, oy + 66, xF(500, 40, P.fm), ink);
-        c.font = xF(400, 17, P.fd); xT(c, xFit(c, T("{0} de selle · {1} nuits", [durShort(M.rideH), M.nights]), cw2 - 48), cx + 24, oy + 102, c.font, ink);
-        c.font = xF(400, 14, P.fm); xT(c, xFit(c, M.sub.split(' · ')[1] || '', cw2 - 48), cx + 24, oy + 130, c.font, mut);
-        return;
-      }
-      xR(c, cx, cy, cw2, ch, 16, P.card, P.line);
-      const g = A.dayMaps && A.dayMaps[i];
-      c.save(); c.beginPath(); c.roundRect(cx, cy, cw2, mapH, [16, 16, 0, 0]); c.clip();
-      if (g) xDraw(c, g, cx, cy, cw2, mapH, 'cover'); else { c.fillStyle = P.line; c.fillRect(cx, cy, cw2, mapH); } c.restore();
-      const lab = `${T("Jour {0}", [d.n])} · ${d.date}`; c.font = xF(700, 15, P.fd); const lw = c.measureText(lab).width + 28;
-      xR(c, cx + 14, cy + 14, lw, 32, 16, '#14201B'); xT(c, lab, cx + 28, cy + 35, xF(700, 15, P.fd), '#FFFFFF');
-      const y0 = cy + mapH; c.font = xF(800, 20, P.fd); xT(c, xFit(c, `${d.from} → ${d.to}`, cw2 - 40), cx + 20, y0 + 32, c.font, P.ink);
-      xT(c, d.times, cx + 20, y0 + 58, xF(500, 16, P.fm), P.ink);
-      c.font = xF(400, 13, P.fm); xT(c, xFit(c, `${d.km} · ${d.ride.split(' · ')[0]}`, cw2 - 40), cx + 20, y0 + 80, c.font, P.muted);
-      xDot(c, cx + 26, y0 + 100, 6, d.lvl, P); c.font = xF(400, 14, P.fd); xT(c, xFit(c, d.lbl + (d.temp ? ' · ' + d.temp : ''), cw2 - 56), cx + 40, y0 + 105, c.font, P.ink);
-      c.font = xF(400, 13, P.fd); xT(c, xFit(c, d.nightTxt, cw2 - 40), cx + 20, y0 + 130, c.font, P.muted);
+  // carte
+  const mh = 560; xR(c, x, y, w, mh + 52, 16, P.card, P.line);
+  c.save(); c.beginPath(); c.roundRect(x, y, w, mh, [16, 16, 0, 0]); c.clip(); if (A.map) xDraw(c, A.map, x, y, w, mh, 'cover'); c.restore();
+  xLegend(c, P, x + 20, y + mh + 32, w - 40); y += mh + 52 + 16;
+  if (M.mode === 'ultra') {
+    xT(c, T("Jour par jour"), x, y + 26, xF(800, 24, P.fd), P.ink); y += 44;
+    M.days.forEach((d, k) => {
+      const g = A.days && A.days[k], gh = g ? Math.round(g.height / g.width * (w - 48)) : 0, h = 112 + (gh ? gh + 16 : 0);
+      xR(c, x, y, w, h, 16, P.card, P.line);
+      const jw = xT(c, T("Jour {0}", [d.n]), x + 24, y + 40, xF(800, 22, P.fd), P.ink); xT(c, d.date, x + 24 + jw + 12, y + 40, xF(400, 15, P.fd), P.muted);
+      c.font = xF(700, 13, P.fd); const pw = c.measureText(d.lbl).width + 30; xPill(c, x + w - 24 - pw, y + 18, d.lbl, d.lvl, P, 13);
+      const tw = xT(c, d.times, x + 24, y + 76, xF(500, 21, P.fm), P.ink);
+      c.font = xF(400, 14, P.fm); xT(c, xFit(c, d.km, w - 48 - tw - 24), x + 24 + tw + 24, y + 76, c.font, P.muted);
+      c.font = xF(400, 14, P.fd); xT(c, xFit(c, d.ride + (d.temp ? ' · ' + d.temp : ''), w - 48), x + 24, y + 100, c.font, P.muted);
+      if (g) xDraw(c, g, x + 24, y + 112, w - 48, gh, 'contain');
+      y += h + 12;
     });
-    y += Math.ceil(cells.length / 2) * (ch + 16) + 8;
-  } else {
-    const mh = 560; xR(c, x, y, w, mh + 52, 16, P.card, P.line);
-    c.save(); c.beginPath(); c.roundRect(x, y, w, mh, [16, 16, 0, 0]); c.clip(); if (A.map) xDraw(c, A.map, x, y, w, mh, 'cover'); c.restore();
-    xLegend(c, P, x + 20, y + mh + 32, w - 40); y += mh + 52 + 16;
-  }
-  if (M.mode !== 'ultra' && A.chart) {
+    y += 12;
+  } else if (A.chart) {
     const iw = w - 48, ih = Math.round(A.chart.height / A.chart.width * iw), h = ih + 70;
     xR(c, x, y, w, h, 16, P.card, P.line);
     xT(c, T("Au fil du parcours"), x + 24, y + 36, xF(700, 20, P.fd), P.ink);
