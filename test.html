@@ -5843,10 +5843,16 @@ function planWxHover(e) {
   if (duoK >= 0 && DUO.maps[duoK] && !DUO.hov[duoK]) DUO.hov[duoK] = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1 });
   const mk = duoK >= 0 ? DUO.hov[duoK] : hoverMarker;
   if (hm0 && mk) { const p = S.P.pts[idxAtKm(planKmAtT(t))]; mk.setLatLng([p.lat, p.lon]); if (!hm0.hasLayer(mk)) mk.addTo(hm0); }
+  // carte de l'étape (planification Ultra v2.0) : le même point, visible sans quitter la carte du jour
+  if (duoK < 0 && PLAN.m && cv.closest('#planRows')) {
+    if (!PLAN.hov) PLAN.hov = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 2, fillColor: cssVar('--accent'), fillOpacity: 1, interactive: false });
+    const p = S.P.pts[idxAtKm(planKmAtT(t))]; PLAN.hov.setLatLng([p.lat, p.lon]); if (!PLAN.m.hasLayer(PLAN.hov)) PLAN.hov.addTo(PLAN.m);
+  }
 }
 function planWxLeave() {
   if (PLAN.hoverCv) drawDayWx(PLAN.hoverCv); PLAN.hoverCv = null;
   if (map && hoverMarker && map.hasLayer(hoverMarker)) hoverMarker.remove();
+  if (PLAN.hov) PLAN.hov.remove();
   for (const mk of DUO.hov) if (mk) mk.remove();
 }
 $('#planRows').addEventListener('pointermove', planWxHover);
@@ -5951,7 +5957,7 @@ function planLeaflet(slot, d) {
   PLAN.el.setAttribute('aria-label', T("Carte de l'étape"));
   slot.replaceWith(PLAN.el);
   const all = planLatLngs(0, S.P.n - 1, 600), seg = planLatLngs(idxAtKm(d.a.km), idxAtKm(d.b.km), 400), panel = cssVar('--panel') || '#fff';
-  PLAN.lay.clearLayers();
+  PLAN.lay.clearLayers(); if (PLAN.hov) PLAN.hov.remove();
   L.polyline(all, { color: cssVar('--muted'), weight: 3, opacity: .45, interactive: false }).addTo(PLAN.lay);
   L.polyline(seg, { color: panel, weight: 8, opacity: .9, interactive: false }).addTo(PLAN.lay); L.polyline(seg, { color: cssVar('--ink'), weight: 4, interactive: false }).addTo(PLAN.lay);
   const pin = (p, col) => L.circleMarker(p, { radius: 6, color: panel, weight: 2, fillColor: col, fillOpacity: 1, interactive: false }).addTo(PLAN.lay);
