@@ -1436,6 +1436,86 @@ html[data-theme="dark"] .out-top .ot-map img{filter:brightness(.82)}
 .out2 .out-sec{margin:18px 4px 6px;font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
 .out2 .out-note{margin-top:16px}
 body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-sub{display:none}
+
+/* Ultra v2.0 (07/11/2026, maquette « A · Un jour, une carte » du canevas « Sillage v2.0 · blocs Ultra ») :
+   planification en cartes par jour (une dépliée : tuiles, carte de l'étape, graphe météo) et roadbook par jour
+   (lieux, villes, tronçons sans ravito et nuit sur une frise verticale). Le même jour est ouvert dans les deux blocs (PLAN.open). */
+#planCard .step{display:inline-flex;align-items:center;gap:2px}
+#planCard .card-head h2{font-size:18px}
+#planCard .step button{width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:18px;font-weight:700;cursor:pointer;line-height:1}
+#planCard .step #planDays{width:40px;text-align:center;font-family:var(--f-mono);font-size:18px;border:0;background:none;color:var(--ink);-moz-appearance:textfield;padding:0}
+#planCard .step #planDays::-webkit-outer-spin-button,#planCard .step #planDays::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.plan-speed{border-top:1px solid var(--line)}
+.plan-speed summary{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;padding:10px 14px;cursor:pointer;list-style:none;font-size:13px;color:var(--ink)}
+.plan-speed summary .lbl{font-family:var(--f-mono)}
+.plan-speed summary::-webkit-details-marker{display:none}
+.plan-speed summary::after{content:"";width:8px;height:8px;border-right:1.8px solid var(--muted);border-bottom:1.8px solid var(--muted);transform:rotate(45deg);margin-left:auto;flex:none;transition:transform .15s;order:2}
+.plan-speed summary #planSpeedSum{flex-basis:100%;color:var(--muted);order:3}
+.plan-speed[open] summary::after{transform:rotate(-135deg)}
+.plan-speed summary .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.plan-speed #planSpeedSlot{padding-top:4px}
+.plan-days{display:flex;flex-direction:column;gap:10px;padding:12px 14px 12px}
+.pday,.rbday{border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.pday.open,.rbday.open{border-color:var(--ink)}
+.pd-head,.rb-head{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;border-radius:14px}
+.pd-th{width:58px;height:40px;flex:none;border-radius:6px;background:var(--bg)}
+.pd-th .all{fill:none;stroke:var(--line);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pd-th .seg{fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.pd-th .a{fill:var(--tail)}.pd-th .b{fill:var(--rain)}
+.pd-txt,.rb-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pd-lbl,.rb-lbl{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+.pd-lbl .lbl,.rb-lbl .lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.pd-rng,.rb-rng{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.pd-time{font-family:var(--f-display);font-size:19px;line-height:1.2;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
+.pday.open .pd-time{font-size:24px}
+.pd-time .late{color:var(--head);font-size:.75em;vertical-align:middle}
+.pd-meta{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.pd-head .chev,.rb-head .chev{width:20px;height:20px;flex:none;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.pd-head[aria-expanded="true"] .chev,.rb-head[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.pd-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.pd-times{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;align-items:center}
+.pd-times label{display:flex;align-items:center;gap:6px}
+.pd-times input[type=time]{padding:4px 8px;font:inherit;font-size:14px;font-family:var(--f-mono)}
+.pd-times input.set{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pd-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pd-tiles>div{background:var(--bg);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pd-tiles .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.pd-tiles b{font-family:var(--f-mono);font-size:16px;font-weight:500;white-space:nowrap}
+.pd-tiles small{font-size:11px;color:var(--muted)}
+.pd-map{position:relative;border-radius:12px;overflow:hidden;background:var(--bg);isolation:isolate}
+.pd-lmap{height:190px;width:100%}
+.pd-lmap .leaflet-tile-pane{filter:saturate(.75)}
+.pd-tag{position:absolute;top:8px;left:8px;z-index:500;background:var(--ink);color:var(--bg);border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700}
+.pd-see{position:absolute;top:8px;right:8px;z-index:500;background:var(--panel);color:var(--ink);border:0;border-radius:999px;padding:5px 10px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.pd-body canvas[data-wx]{display:block;cursor:crosshair;touch-action:pan-y;width:100%}
+.pd-sum{margin:0}
+.plan-tot{padding:0 14px 12px;margin:0}
+.poi-tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.rb-days{display:flex;flex-direction:column;gap:10px;padding:12px 14px 12px}
+.rb-days:empty{display:none}
+.rb-sub{font-size:13.5px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rb-pill{font-size:11px;font-weight:600;border-radius:999px;padding:2px 7px;background:color-mix(in srgb,var(--head) 14%,var(--panel));color:var(--head);white-space:nowrap}
+.rbday .tl{list-style:none;margin:0;padding:0 14px 12px;position:relative}
+.rbday .tl::before{content:"";position:absolute;left:83px;top:22px;bottom:22px;width:2px;background:var(--line)}
+.rbday .tn{display:grid;grid-template-columns:54px 12px minmax(0,1fr);gap:0 10px;align-items:start;padding:7px 0;position:relative}
+.rbday .tn[data-id]{cursor:pointer}
+.rbday .tn .k{font-family:var(--f-mono);font-size:12px;line-height:14px;text-align:right;color:var(--ink)}
+.rbday .tn .k small{display:block;color:var(--muted);font-size:10.5px;font-family:var(--f-mono)}
+.rbday .tn .pt{width:12px;height:12px;border-radius:999px;background:var(--ink);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);margin-top:1px;box-sizing:border-box;position:relative;z-index:1}
+.rbday .tn .b{min-width:0}
+.rbday .tn .b b{display:block;font-size:14px;line-height:18px;font-weight:600}
+.rbday .tn .b span{display:block;font-size:12.5px;color:var(--muted);line-height:16px}
+.rbday .tn .b strong{color:var(--head)}
+.rbday .tn .b em{font-style:normal;font-weight:600}
+.rbday .tn .b em.open{color:var(--tail)}.rbday .tn .b em.closed{color:var(--head)}.rbday .tn .b em.unk{color:var(--muted);font-weight:500}
+.rbday .tn.town .pt{background:var(--panel);box-shadow:0 0 0 2px var(--ink)}
+.rbday .tn.start .pt{background:var(--tail)}
+.rbday .tn.night .pt{background:var(--rain);box-shadow:0 0 0 2px var(--rain)}
+.rbday .tn.gapn .pt{visibility:hidden}
+.rbday .tn.gapn::before{content:"";position:absolute;left:69px;top:0;bottom:0;width:2px;background:repeating-linear-gradient(180deg,var(--head) 0 5px,var(--panel) 5px 10px);z-index:1}
+.rbday .gapb{background:color-mix(in srgb,var(--head) 12%,var(--panel));border-radius:10px;padding:8px 10px}
+.rbday .gapb b,.rbday .gapb span{color:var(--head)}
+.rb-more{margin:0 14px 12px}
 </style>
 </head>
 <body>
@@ -1848,10 +1928,9 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
       <div class="legend" id="legend"></div>
     </section>
 
-    <section class="card" id="planCard" hidden>
-      <div class="card-head"><h2>Planification journalière</h2><span class="hint" id="planHint"></span></div>
+    <section class="card plan2" id="planCard" hidden>
+      <div class="card-head"><h2 id="planTitle">Planification journalière</h2><div class="step" id="planStep"><button type="button" data-d="-1" aria-label="Un jour de moins">−</button><input type="number" id="planDays" min="1" max="30" step="1" inputmode="numeric" aria-label="Nombre de jours"><button type="button" data-d="1" aria-label="Un jour de plus">+</button></div></div>
       <div class="plan-form">
-        <div class="field"><label class="label" for="planDays">Nombre de jours</label><input type="number" id="planDays" min="1" max="30" step="1" inputmode="numeric"></div>
         <div id="planStartSlot"></div>
         <div class="field">
           <span class="label" id="planSplitLbl">Découpage</span>
@@ -1863,15 +1942,12 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
         <label class="switch plan-custom"><input type="checkbox" id="planCustomOn" role="switch"><span class="track" aria-hidden="true"></span>Heures de départ et de fin différentes chaque jour</label>
         <button type="button" class="btn small" id="planReset" hidden title="Revenir aux heures de départ du jour 1 et aux fins calculées">Réinitialiser les heures</button>
       </div>
-      <div id="planSpeedSlot"></div>
-      <p class="hint plan-note" id="planNote"></p>
-      <div class="plan-scroll">
-        <table class="plan-table">
-          <thead><tr><th>Jour</th><th>Départ</th><th>Fin estimée</th><th class="num">Km</th><th class="num">D+</th><th class="num">Pédalage</th><th class="num">Pauses</th><th class="num">Nuit</th></tr></thead>
-          <tbody id="planRows"></tbody>
-          <tfoot id="planFoot"></tfoot>
-        </table>
-      </div>
+      <details class="plan-speed" id="planSpeed"><summary><span class="lbl">Ma façon de rouler</span><span id="planSpeedSum"></span></summary>
+        <div id="planSpeedSlot"></div>
+        <p class="hint plan-note" id="planNote"></p>
+      </details>
+      <div class="plan-days" id="planRows"></div>
+      <p class="hint plan-tot" id="planFoot"></p>
     </section>
 
     <section class="card" id="trendCard" hidden>
@@ -1911,24 +1987,27 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
       </div>
     </section>
 
-    <section class="card" id="poiCard" hidden>
+    <section class="card poi2" id="poiCard" hidden>
       <div class="card-head">
-        <h2>Ravitaillement et hébergement</h2>
-        <label class="arrows-toggle poi-on"><input type="checkbox" id="poiOn"> <b>Rechercher les lieux</b></label>
-        <label class="arrows-toggle"><input type="checkbox" id="poiOpenOnly"> Seulement ouverts à mon passage</label>
-        <label class="switch"><input type="checkbox" id="poiListOn" role="switch" checked><span class="track" aria-hidden="true"></span>Afficher la liste</label>
+        <h2>Roadbook · ravitos et hébergements</h2>
+        <label class="switch poi-on"><input type="checkbox" id="poiOn" role="switch"><span class="track" aria-hidden="true"></span><b>Rechercher les lieux</b></label>
       </div>
-      <p class="hint poi-off" id="poiOffHint" hidden>Coche « Rechercher les lieux » pour lister les commerces, restos, bars, stations, points d'eau et hébergements le long de la trace, avec leurs horaires à ton passage. La recherche interroge OpenStreetMap portion par portion : compte quelques minutes pour un long parcours ; le résultat est ensuite gardé 14 jours.</p>
+      <p class="hint poi-off" id="poiOffHint" hidden>Coche « Rechercher les lieux » pour lister les commerces, restos, bars, stations, points d'eau et hébergements le long de la trace, jour par jour, avec leurs horaires à ton passage. La recherche interroge OpenStreetMap portion par portion : compte quelques minutes pour un long parcours ; le résultat est ensuite gardé 14 jours.</p>
       <div class="poi-status" id="poiStatus" hidden></div>
+      <div class="poi-tools" id="poiTools">
+        <label class="arrows-toggle"><input type="checkbox" id="poiOpenOnly"> Seulement ouverts à mon passage</label>
+        <label class="switch"><input type="checkbox" id="poiListOn" role="switch"><span class="track" aria-hidden="true"></span>Liste complète</label>
+      </div>
       <div class="poi-chips" id="poiChips" role="group" aria-label="Types de lieux affichés"></div>
       <div class="poi-gaps" id="poiGaps"></div>
+      <div class="rb-days" id="rbDays"></div>
       <div class="poi-scroll" id="poiListWrap">
         <table class="poi-table">
           <thead><tr><th>Km</th><th>Passage</th><th>Lieu</th><th>Écart</th><th>À ton passage</th></tr></thead>
           <tbody id="poiRows"></tbody>
         </table>
       </div>
-      <p class="hint poi-credit">Données © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via Overpass. Horaires tels que saisis dans OpenStreetMap : à vérifier pour les lieux clés.</p>
+      <p class="hint poi-credit">Données © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via Overpass et base Sillage. Horaires tels que saisis dans OpenStreetMap, évalués à ton heure de passage : à vérifier pour les lieux clés ; les lieux sans horaires sont comptés comme possibles.</p>
     </section>
 
     <section class="card" id="chartCard">
@@ -5251,9 +5330,9 @@ function renderPois() {
   // recherche des lieux seulement quand « Rechercher les lieux » est cochée
   const want = $('#poiOn').checked;
   $('#poiOffHint').hidden = want;
-  for (const id of ['#poiChips', '#poiGaps', '#poiListWrap']) $(id).style.display = want ? '' : 'none';
-  $('#poiOpenOnly').closest('label').hidden = $('#poiListOn').closest('label').hidden = !want;
-  if (!want) { if (POI.ctl) POI.ctl.abort(); POI.seq++; POI.key = ''; POI.list = []; POI.loading = ''; POI.error = ''; renderPoiStatus(); return; }
+  for (const id of ['#poiChips', '#poiGaps', '#rbDays', '#poiTools']) $(id).style.display = want ? '' : 'none';
+  $('#poiListWrap').style.display = want && $('#poiListOn').checked ? '' : 'none';
+  if (!want) { if (POI.ctl) POI.ctl.abort(); POI.seq++; POI.key = ''; POI.list = []; POI.loading = ''; POI.error = ''; renderPoiStatus(); rbRender(); return; }
   if (!POI.key.startsWith(routeSig() + '|') || !POI.key.endsWith('|' + $('#poiRadius').value)) { poiEnsure(); }
   renderPoiStatus();
   const counts = {}; for (const p of POI.list) counts[p.g] = (counts[p.g] || 0) + 1;
@@ -5268,7 +5347,7 @@ function renderPois() {
   const shown = POI.list.filter(p => POI.groups.has(p.g) && (!openOnly || p.st.cls === 'open' || p.g === 'sleep' || p.g === 'water'))
     .sort((a, b) => a.km - b.km || a.off - b.off);
   POI.shown = shown;
-  renderPoiGaps();
+  renderPoiGaps(); rbRender();
   if (map) {
     POI.layer = L.layerGroup().addTo(map);
     for (const p of shown) {
@@ -5312,24 +5391,13 @@ function poiTip(p, link) {
 function renderPoiGaps() {
   const el = $('#poiGaps');
   if (!POI.list.length || !S.tl) { el.innerHTML = ''; return; }
-  const total = S.P.total, tl = S.tl;
-  const gapsOf = list => {
-    const kms = [...new Set(list.map(p => Math.round(p.km * 10) / 10))].sort((a, b) => a - b);
-    const marks = [0, ...kms, total], out = [];
-    for (let i = 1; i < marks.length; i++) out.push({ a: marks[i - 1], b: marks[i], len: marks[i] - marks[i - 1] });
-    return out.sort((x, y) => y.len - x.len);
-  };
-  const timeAt = km => tl.times[idxAtKm(km)];
-  const res = POI.list.filter(p => POI_GROUPS[p.g].resupply);
-  const open = res.filter(p => p.st && (p.st.cls === 'open' || (p.st.cls === 'unk' && !p.oh)));
-  const lines = [];
-  const g1 = gapsOf(res)[0];
-  if (g1) lines.push(T("Plus long tronçon sans ravitaillement : <b>{0} km</b> (km {1} → {2}).", [fD(g1.len, 0), fD(g1.a, 0), fD(g1.b, 0)]));
-  const g2 = gapsOf(open).filter(g => g.len >= 30).slice(0, 3);
-  for (const g of g2) lines.push(T("<span class=\"warn\">{0} km sans ravitaillement ouvert à ton passage</span> : km {1} → {2}, de {3} à {4}.", [fD(g.len, 0), fD(g.a, 0), fD(g.b, 0), whenTxt(timeAt(g.a), tl.start), whenTxt(timeAt(g.b), tl.start)]));
-  if (!g2.length && open.length) lines.push(T("Pas de tronçon de plus de {0} km sans ravitaillement ouvert (ou à horaires inconnus) à ton passage.", [fD(30, 0)]));
-  lines.push(T("<span class=\"hint\">Ouvert à ton passage : selon les horaires OpenStreetMap ; les lieux sans horaires renseignés sont comptés comme possibles.</span>"));
-  el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+  const gaps = poiGapList(), days = PLAN.tl === S.tl && PLAN.days.length ? PLAN.days : null;
+  const dayOf = km => days ? days.findIndex(d => km >= d.a.km - 0.05 && km <= d.b.km) + 1 : 0;
+  const dl = [...new Set(gaps.map(g => dayOf(g.a)).filter(Boolean))].sort((a, b) => a - b);
+  let txt = T("<b>{0} lieux</b> à moins de {1} de la trace", [POI.list.length, fOff(+$('#poiRadius').value)]);
+  if (gaps.length) txt += ' · <span class="warn">' + (gaps.length > 1 ? T("{0} tronçons sans ravito ouvert", [gaps.length]) : T("1 tronçon sans ravito ouvert")) + '</span>' + (dl.length ? ' (' + (dl.length > 1 ? T("jours {0}", [dl.join(', ')]) : T("jour {0}", [dl[0]])) + ')' : '');
+  else txt += ' · ' + T("pas de tronçon de plus de {0} km sans ravito ouvert", [fD(30, 0)]);
+  el.innerHTML = `<div>${txt}</div>`;
 }
 $('#poiRadius').addEventListener('change', () => { renderPois(); saveOpt(readOpt()); });
 $('#poiOpenOnly').addEventListener('change', () => { try { localStorage.setItem('pmr-poi-open', $('#poiOpenOnly').checked ? '1' : '0'); } catch (e) {} renderPois(); });
@@ -5341,11 +5409,7 @@ $('#poiChips').addEventListener('click', e => {
 });
 $('#poiRows').addEventListener('click', e => {
   if (e.target.closest('a')) return; // lien Google Maps : pas de zoom sur la carte
-  const tr = e.target.closest('tr[data-id]'); if (!tr || !map) return;
-  const p = POI.list.find(x => x.id === tr.dataset.id); if (!p) return;
-  map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15));
-  L.popup({ offset: [0, -4] }).setLatLng([p.lat, p.lon]).setContent(poiTip(p, true)).openOn(map);
-  $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const tr = e.target.closest('tr[data-id]'); if (tr) poiFocus(tr.dataset.id);
 });
 
 const durShort = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
@@ -5677,29 +5741,177 @@ $('#planRows').addEventListener('pointercancel', planWxLeave);
 for (const ev of ['pointermove', 'pointerdown']) { $('#lapRows').addEventListener(ev, planWxHover); $('#tafDuo').addEventListener(ev, e => { if (e.target.closest('canvas[data-wx]')) planWxHover(e); }); }
 $('#tafDuo').addEventListener('pointerleave', planWxLeave); $('#tafDuo').addEventListener('pointerout', e => { if (e.target.closest('canvas[data-wx]') && !e.relatedTarget?.closest?.('canvas[data-wx]')) planWxLeave(); });
 for (const ev of ['pointerleave', 'pointercancel']) $('#lapRows').addEventListener(ev, planWxLeave);
+/* Planification v2.0 (07/11/2026, maquette « A · Un jour, une carte ») : une carte par jour. Le jour ouvert (PLAN.open,
+   partagé avec le roadbook) montre tuiles pédalage / pauses / nuit, carte Leaflet de l'étape (planLeaflet), graphe météo
+   (drawDayWx, comme avant) et phrase de synthèse ; les autres jours : une ligne avec une vignette (planThumb). */
+function planThumb(ia, ib) { // vignette SVG 58 × 40 : toute la trace en gris, l'étape en encre
+  const P = S.P; if (!P) return '';
+  if (!P._thumb) {
+    const st = Math.max(1, Math.floor(P.n / 240)), c = Math.cos(P.pts[0].lat * RAD), q = [];
+    for (let i = 0; i < P.n; i += st) q.push([i, P.pts[i].lon * c, -P.pts[i].lat]); q.push([P.n - 1, P.pts[P.n - 1].lon * c, -P.pts[P.n - 1].lat]);
+    const xs = q.map(a => a[1]), ys = q.map(a => a[2]), x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0 || 1e-6, h = Math.max(...ys) - y0 || 1e-6;
+    const W = 58, H = 40, pad = 5, k = Math.min((W - 2 * pad) / w, (H - 2 * pad) / h), ox = (W - w * k) / 2, oy = (H - h * k) / 2;
+    P._thumb = q.map(a => [a[0], +(ox + (a[1] - x0) * k).toFixed(1), +(oy + (a[2] - y0) * k).toFixed(1)]);
+  }
+  const q = P._thumb, A = q.find(a => a[0] >= ia) || q[0], B = [...q].reverse().find(a => a[0] <= ib) || q[q.length - 1];
+  let seg = q.filter(a => a[0] >= ia && a[0] <= ib); if (seg.length < 2) seg = [A, B];
+  const path = l => 'M' + l.map(a => a[1] + ' ' + a[2]).join('L');
+  return `<svg class="pd-th" viewBox="0 0 58 40" aria-hidden="true"><path class="all" d="${path(q)}"/><path class="seg" d="${path(seg)}"/><circle class="a" cx="${A[1]}" cy="${A[2]}" r="2.6"/><circle class="b" cx="${B[1]}" cy="${B[2]}" r="2.6"/></svg>`;
+}
+// localité (PLACES, villes et bourgs ; villages à moins de 1,5 km) la plus proche d'un km de la trace, à moins de maxM mètres
+function planTown(km, maxM) {
+  if (!S.P || !PLACES.list.length) return null;
+  const p0 = S.P.pts[idxAtKm(km)]; let best = null, bd = maxM;
+  for (const p of PLACES.list) { const d = hav(p0, p) * 1000; if (d < bd && (p.place !== 'village' || d < 1500)) { bd = d; best = p; } }
+  return best;
+}
+// hébergements à moins d'un km du point de la trace au km donné, du plus proche au plus loin ({ name, type, dm })
+function planSleepNear(km) {
+  if (!S.P || !POI.list.length) return [];
+  const p0 = S.P.pts[idxAtKm(km)];
+  return POI.list.filter(p => p.g === 'sleep').map(p => ({ name: p.name, type: p.type, dm: Math.round(hav(p0, p) * 1000) })).filter(x => x.dm <= 1000).sort((a, b) => a.dm - b.dm);
+}
+// jour ouvert par défaut : celui en cours si l'ultra a commencé, sinon le premier
+function planToday(days) { const now = Date.now(); if (!days.length || now < days[0].a.t || now > days[days.length - 1].b.t) return 0; const k = days.findIndex(d => now <= d.b.t); return k < 0 ? 0 : k; }
+function planDaySum(d) {
+  const parts = [];
+  if (d.wx) { parts.push(T("Ressenti {0} → {1} °C", [fT(d.wx.tmin), fT(d.wx.tmax)])); parts.push(d.wx.rain >= 0.1 ? T("pluie {0} mm", [fR(d.wx.rain)]) : T("au sec")); if (d.wx.head >= 10) parts.push(T("vent de face {0} % du jour", [d.wx.head])); }
+  else parts.push(T("hors prévisions pour ce jour"));
+  const town = planTown(d.b.km, 3000);
+  if (d.night) { const sl = planSleepNear(d.b.km); parts.push((town ? T("nuit à {0}", [escH(town.name)]) : T("nuit au km {0}", [fD(d.b.km, 0)])) + (sl.length ? ' · ' + T("{0} à moins d'1 km", [sl.length > 1 ? T("{0} hébergements", [sl.length]) : T("1 hébergement")]) : '')); }
+  else parts.push(town ? T("arrivée à {0}", [escH(town.name)]) : T("arrivée"));
+  return parts.join(' · ');
+}
 function renderPlan() {
   const card = $('#planCard'), on = S.mode === 'ultra' && !!S.P && !!S.tl;
   card.hidden = !on; if (!on) return;
   const opt = readOpt(), days = daySummaries(), custom = opt.planCustom;
   const t0 = S.tl.start, defT = $('#time').value || '07:00';
+  PLAN.days = days; PLAN.tl = S.tl;
+  if (PLAN.open == null || PLAN.open >= days.length) PLAN.open = planToday(days);
   let late = 0;
-  const rows = days.map((d, k) => {
-    const startCell = k === 0 ? `<b>${hm.format(new Date(d.a.t))}</b>`
-      : custom ? T("<input type=\"time\" step=\"900\" data-day=\"{0}\" value=\"{1}\" aria-label=\"Heure de départ du jour {2}\">", [k, PLAN.times[k] || defT, k + 1])
-      : hm.format(new Date(d.a.t));
+  const chev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  const html = days.map((d, k) => {
     const isLate = d.night && d.night.late; if (isLate) late++;
-    // fin : modifiable (sauf le dernier jour) ; sans heure choisie, l'heure calculée au km de coupe
-    const endTxt = (custom && d.night ? T("<input type=\"time\" step=\"900\" data-end=\"{0}\" value=\"{1}\" class=\"{2}\" aria-label=\"Heure de fin du jour {3}\">", [k, PLAN.ends[k] || hm.format(new Date(d.b.t)), PLAN.ends[k] ? 'set' : '', k + 1]) : whenTxt(d.b.t, d.a.t)) + (isLate ? ' <span class="late" title="L\'étape finit après l\'heure de départ prévue le lendemain : pas de nuit">⚠</span>' : '');
-    return T("<tr><td>Jour {0}<br><span class=\"hint\">{1}</span></td><td>{2}</td><td>{3}</td>\n      <td class=\"num\">{4} km<br><span class=\"hint\">km {5} → {6}</span></td><td class=\"num\">{7} m</td>\n      <td class=\"num\">{8}</td><td class=\"num\">{9}</td>\n      <td class=\"num\">{10}</td></tr>\n      <tr class=\"plan-wx\"><td colspan=\"8\"><canvas data-wx=\"{11}\" aria-label=\"Météo du jour {12}\"></canvas></td></tr>", [k + 1, dayFmt.format(new Date(d.a.t)), startCell, endTxt, fD(d.dist, 0), fD(d.a.km, 0), fD(d.b.km, 0), fE(d.dplus), durShort(d.rideH), durShort(d.pauseH), d.night ? (d.night.to > d.night.from ? durShort((d.night.to - d.night.from) / 3600e3) + `<br><span class="hint">→ ${hm.format(new Date(d.night.to))}</span>` : '0 h 00') : T("<span class=\"hint\">arrivée</span>"), k, k + 1]);
+    const open = k === PLAN.open, ia = idxAtKm(d.a.km), ib = idxAtKm(d.b.km);
+    const nightH = d.night ? (d.night.to - d.night.from) / 3600e3 : 0;
+    const nightTxt = d.night ? (nightH > 0 ? T("nuit {0}", [durShort(nightH)]) : T("pas de nuit")) : T("arrivée");
+    const head = `<button type="button" class="pd-head" data-pd="${k}" aria-expanded="${open}">${open ? '' : planThumb(ia, ib)}
+      <span class="pd-txt"><span class="pd-lbl"><span class="lbl">${T("Jour {0} · {1}", [k + 1, dayFmt.format(new Date(d.a.t))])}</span>${open ? `<span class="pd-rng">${fD(d.a.km, 0)} → ${fD(d.b.km, 0)} ${UL.km}</span>` : ''}</span>
+      <b class="pd-time">${hm.format(new Date(d.a.t))} → ${hm.format(new Date(d.b.t))}${isLate ? ' <span class="late" title="' + escH(T("L'étape finit après l'heure de départ prévue le lendemain : pas de nuit")) + '">⚠</span>' : ''}</b>
+      <span class="pd-meta">${open ? fD(d.dist, 0) : fD(d.a.km, 0) + ' → ' + fD(d.b.km, 0)} ${UL.km} · D+ ${fE(d.dplus)} ${UL.m} · ${nightTxt}</span></span>${chev}</button>`;
+    if (!open) return `<article class="pday" data-k="${k}">${head}</article>`;
+    const times = custom ? `<div class="pd-times">${k ? T("<label>Départ <input type=\"time\" step=\"900\" data-day=\"{0}\" value=\"{1}\" aria-label=\"Heure de départ du jour {2}\"></label>", [k, PLAN.times[k] || defT, k + 1]) : `<span class="hint">${T("Départ {0}", [hm.format(new Date(d.a.t))])}</span>`}${d.night ? T("<label>Fin <input type=\"time\" step=\"900\" data-end=\"{0}\" value=\"{1}\" class=\"{2}\" aria-label=\"Heure de fin du jour {3}\"></label>", [k, PLAN.ends[k] || hm.format(new Date(d.b.t)), PLAN.ends[k] ? 'set' : '', k + 1]) : ''}</div>` : '';
+    const tiles = `<div class="pd-tiles"><div><span class="lbl">${T("Pédalage")}</span><b>${durShort(d.rideH)}</b></div><div><span class="lbl">${T("Pauses")}</span><b>${durShort(d.pauseH)}</b></div>
+      <div><span class="lbl">${d.night ? T("Nuit") : T("Arrivée")}</span><b>${d.night ? durShort(Math.max(0, nightH)) : hm.format(new Date(d.b.t))}</b>${d.night && nightH > 0 ? `<small>→ ${hm.format(new Date(d.night.to))}</small>` : ''}</div></div>`;
+    const mapEl = typeof L !== 'undefined' ? `<div class="pd-map"><div class="pd-mslot"></div><span class="pd-tag">${T("Étape du jour")}</span><button type="button" class="pd-see" data-see="${k}">${T("Voir sur la carte")}</button></div>` : '';
+    return `<article class="pday open" data-k="${k}">${head}<div class="pd-body">${times}${tiles}${mapEl}<canvas data-wx="${k}" aria-label="${escH(T("Météo du jour {0}", [k + 1]))}"></canvas><p class="pd-sum hint">${planDaySum(d)}</p></div></article>`;
   });
-  $('#planRows').innerHTML = rows.join('');
-  PLAN.days = days; drawPlanWx();
-  const sum = f => days.reduce((s, d) => s + f(d), 0);
-  $('#planFoot').innerHTML = days.length > 1 ? `<tr><td>Total</td><td></td><td>${whenTxt(S.tl.end, t0)}</td><td class="num">${fD(sum(d => d.dist), 0)} ${UL.km}</td><td class="num">${fE(sum(d => d.dplus))} ${UL.m}</td><td class="num">${durShort(sum(d => d.rideH))}</td><td class="num">${durShort(sum(d => d.pauseH))}</td><td class="num">${durShort(sum(d => d.night ? (d.night.to - d.night.from) / 3600e3 : 0))}</td></tr>` : '';
-  $('#planHint').textContent = opt.planDays > 1 ? (opt.planSplit === 'terrain' ? T("Étapes de même temps de pédalage.") : T("Étapes de même distance.")) : T("D'une traite.");
-  $('#planNote').innerHTML = T("Fin de journée estimée avec ta vitesse sur le plat ({0} km/h), ta VAM ({1} m/h) et tes arrêts courts ({2}){3} : réglages ci-dessus.{4}", [fV(opt.speed, 1), fE(opt.vam), pauseTxt(opt), opt.windOn ? T(", vent compris") : '', late ? T(" <span class=\"late\">⚠ {0} après l'heure de départ du lendemain : allonge le découpage, avance une heure de fin ou retarde un départ.</span>", [late > 1 ? T("{0} étapes finissent", [late]) : T("Une étape finit")]) : '']);
+  $('#planRows').innerHTML = html.join('');
+  drawPlanWx();
+  const slot = $('#planRows .pd-mslot'); if (slot && days[PLAN.open]) planLeaflet(slot, days[PLAN.open]);
+  const sum = f => days.reduce((s, d) => s + f(d), 0), nights = days.filter(d => d.night).length;
+  $('#planFoot').innerHTML = days.length > 1 ? T("Total : {0} km · D+ {1} m · {2} de pédalage · {3} de pauses · {4} · arrivée {5}", [fD(sum(d => d.dist), 0), fE(sum(d => d.dplus)), durShort(sum(d => d.rideH)), durShort(sum(d => d.pauseH)), nights === 1 ? T("1 nuit") : T("{0} nuits", [nights]), whenTxt(S.tl.end, t0)]) : '';
+  $('#planTitle').textContent = days.length > 1 ? T("Ton ultra en {0} jours", [days.length]) : T("Ton ultra d'une traite");
+  $('#planSpeedSum').textContent = `${fV(opt.speed, 1)} ${UL.kmh} · VAM ${fE(opt.vam)} ${UL.mh} · ${pauseTxt(opt)}${opt.windOn ? ' · ' + T("vent compris") : ''}`;
+  $('#planNote').innerHTML = (opt.planDays > 1 ? (opt.planSplit === 'terrain' ? T("Étapes de même temps de pédalage.") : T("Étapes de même distance.")) + ' ' : '') + T("Fin de journée estimée avec ta vitesse sur le plat ({0} km/h), ta VAM ({1} m/h) et tes arrêts courts ({2}){3} : réglages ci-dessus.{4}", [fV(opt.speed, 1), fE(opt.vam), pauseTxt(opt), opt.windOn ? T(", vent compris") : '', late ? T(" <span class=\"late\">⚠ {0} après l'heure de départ du lendemain : allonge le découpage, avance une heure de fin ou retarde un départ.</span>", [late > 1 ? T("{0} étapes finissent", [late]) : T("Une étape finit")]) : '']);
   $('#planCustomOn').closest('label').hidden = opt.planDays < 2;
   $('#planReset').hidden = !(custom && opt.planDays > 1 && (PLAN.times.some(Boolean) || PLAN.ends.some(Boolean)));
+  rbRender();
+}
+// carte Leaflet figée de l'étape ouverte : toute la trace en gris, l'étape en encre, départ vert, arrivée bleue ; un seul
+// élément gardé d'un rendu à l'autre (PLAN.el / PLAN.m), replacé dans la carte du jour ouvert
+function planLeaflet(slot, d) {
+  if (!slot || typeof L === 'undefined' || !S.P) return;
+  if (!PLAN.el) {
+    PLAN.el = document.createElement('div'); PLAN.el.className = 'pd-lmap'; PLAN.el.setAttribute('role', 'img');
+    PLAN.m = L.map(PLAN.el, { zoomControl: false, attributionControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, tap: false, zoomSnap: 0.25 });
+    PLAN.m.attributionControl.setPrefix(false);
+    const bases = makeBases(); let name = location.protocol === 'file:' ? 'Topo (Esri)' : T('Plan (OSM)');
+    try { const b = localStorage.getItem('pmr-base2'); if (b && bases[b] && !(location.protocol === 'file:' && b === T('Plan (OSM)'))) name = b; } catch (e) {}
+    bases[name].addTo(PLAN.m);
+    PLAN.lay = L.layerGroup().addTo(PLAN.m);
+  }
+  PLAN.el.setAttribute('aria-label', T("Carte de l'étape"));
+  slot.replaceWith(PLAN.el);
+  const all = planLatLngs(0, S.P.n - 1, 600), seg = planLatLngs(idxAtKm(d.a.km), idxAtKm(d.b.km), 400), panel = cssVar('--panel') || '#fff';
+  PLAN.lay.clearLayers();
+  L.polyline(all, { color: cssVar('--muted'), weight: 3, opacity: .45, interactive: false }).addTo(PLAN.lay);
+  L.polyline(seg, { color: panel, weight: 8, opacity: .9, interactive: false }).addTo(PLAN.lay); L.polyline(seg, { color: cssVar('--ink'), weight: 4, interactive: false }).addTo(PLAN.lay);
+  const pin = (p, col) => L.circleMarker(p, { radius: 6, color: panel, weight: 2, fillColor: col, fillOpacity: 1, interactive: false }).addTo(PLAN.lay);
+  pin(seg[0], cssVar('--tail')); pin(seg[seg.length - 1], d.night ? cssVar('--rain') : cssVar('--head'));
+  const fit = () => { PLAN.m.invalidateSize(); PLAN.m.fitBounds(L.latLngBounds(seg), { padding: [22, 22] }); };
+  requestAnimationFrame(fit);
+}
+function planLatLngs(i0, i1, n) { const P = S.P, st = Math.max(1, Math.floor((i1 - i0) / n)), o = []; for (let i = i0; i < i1; i += st) o.push([P.pts[i].lat, P.pts[i].lon]); o.push([P.pts[i1].lat, P.pts[i1].lon]); return o; }
+// ouvrir / fermer un jour (planification et roadbook ensemble) ; « Voir sur la carte » cadre la grande carte sur l'étape
+function planOpenDay(k, keepEl) {
+  const was = keepEl ? keepEl.getBoundingClientRect().top : null;
+  PLAN.open = PLAN.open === k ? -1 : k; renderPlan();
+  if (keepEl) { const el = $(`#rbDays [data-rb="${k}"]`); if (el) window.scrollBy(0, el.getBoundingClientRect().top - was); }
+}
+$('#planRows').addEventListener('click', e => {
+  const see = e.target.closest('button[data-see]');
+  if (see) { const d = PLAN.days[+see.dataset.see]; if (d && map) { map.fitBounds(L.latLngBounds(planLatLngs(idxAtKm(d.a.km), idxAtKm(d.b.km), 300)), { padding: [20, 20] }); $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
+  const h = e.target.closest('.pd-head[data-pd]'); if (h) planOpenDay(+h.dataset.pd);
+});
+$('#planStep').addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; $('#planDays').value = clamp(Math.round(+$('#planDays').value || 1) + +b.dataset.d, 1, 30); schedule(); });
+/* Roadbook par jour (07/11/2026) : sous les réglages des lieux, une carte par jour ; le jour ouvert (PLAN.open) déroule une
+   frise verticale au fil des km : départ (lever du soleil, ressenti), lieux affichés (POI.shown : types cochés, « ouverts
+   seulement »), villes et bourgs traversés (PLACES), tronçons sans ravito ouvert (poiGapList) en pointillés, nuit (localité,
+   hébergements à moins d'1 km). 18 lieux au plus par jour, les autres derrière « Les N autres lieux du jour ». */
+const RB = { all: {} };
+function poiGapList() { // tronçons d'au moins 30 km sans ravito ouvert (ou à horaires inconnus) à ton passage, du plus long au plus court
+  if (!POI.list.length || !S.tl) return [];
+  const res = POI.list.filter(p => POI_GROUPS[p.g].resupply), open = res.filter(p => p.st && (p.st.cls === 'open' || (p.st.cls === 'unk' && !p.oh)));
+  const kms = [...new Set(open.map(p => Math.round(p.km * 10) / 10))].sort((a, b) => a - b), marks = [0, ...kms, S.P.total], out = [];
+  for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 30) out.push({ a: marks[i - 1], b: marks[i], len: marks[i] - marks[i - 1] });
+  return out.sort((x, y) => y.len - x.len);
+}
+function rbRender() {
+  const el = $('#rbDays'); if (!el) return;
+  const on = S.mode === 'ultra' && S.P && S.tl && $('#poiOn').checked; if (!on) { el.innerHTML = ''; return; }
+  const days = PLAN.tl === S.tl && PLAN.days.length ? PLAN.days : daySummaries(), tl = S.tl, t0 = tl.start, gaps = poiGapList(), shown = POI.shown || [];
+  if (POI.list.length) renderPoiGaps();
+  const chev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  el.innerHTML = days.map((d, k) => {
+    const open = k === PLAN.open, inDay = shown.filter(p => p.km >= d.a.km && p.km <= d.b.km), dayGaps = gaps.filter(g => g.a < d.b.km && g.b > d.a.km);
+    const townEnd = planTown(d.b.km, 3000), sl = planSleepNear(d.b.km);
+    const sub = T("{0} lieux", [inDay.length]) + ' · ' + (d.night ? (townEnd ? T("nuit à {0}", [escH(townEnd.name)]) : T("nuit au km {0}", [fD(d.b.km, 0)])) : T("arrivée {0}", [hm.format(new Date(d.b.t))]))
+      + dayGaps.slice(0, 2).map(g => ` <span class="rb-pill">${T("{0} km sans ravito", [fD(g.len, 0)])}</span>`).join('') + (dayGaps.length > 2 ? ` <span class="rb-pill">+${dayGaps.length - 2}</span>` : '');
+    const head = `<button type="button" class="rb-head" data-rb="${k}" aria-expanded="${open}"><span class="rb-txt"><span class="rb-lbl"><span class="lbl">${T("Jour {0} · {1}", [k + 1, dayFmt.format(new Date(d.a.t))])}</span><span class="rb-rng">${fD(d.a.km, 0)} → ${fD(d.b.km, 0)} ${UL.km}</span></span><span class="rb-sub">${sub}</span></span>${chev}</button>`;
+    if (!open) return `<article class="rbday" data-k="${k}">${head}</article>`;
+    const nodes = [], km0 = d.a.km, p0 = S.P.pts[idxAtKm(km0)], sun = sunRiseSet(d.a.t, p0.lat, p0.lon), w0 = S.wx ? wxAt(sIdx(km0), d.a.t) : null, town0 = planTown(km0, 3000);
+    nodes.push({ km: km0, cls: 'start', t: d.a.t, b: k ? (town0 ? T("Reprise · {0}", [escH(town0.name)]) : T("Reprise")) : (town0 ? T("Départ · {0}", [escH(town0.name)]) : T("Départ")), s: [sun ? T("Lever {0}", [hm.format(new Date(sun.rise))]) : '', w0 ? T("{0} °C ressenti", [fT(w0.app)]) : ''].filter(Boolean).join(' · ') });
+    const prio = p => { const st = p.st ? p.st.cls : 'unk'; return p.g === 'sleep' ? 1 : st === 'open' ? 0 : st === 'closed' ? 3 : 2; };
+    const all = !!RB.all[k], max = 18, keep = all || inDay.length <= max ? null : new Set([...inDay].sort((a, b) => prio(a) - prio(b) || a.km - b.km).slice(0, max)), list = keep ? inDay.filter(p => keep.has(p)) : inDay, hidden = inDay.length - list.length;
+    for (const p of list) {
+      const g = POI_GROUPS[p.g], st = p.st || { cls: 'unk', txt: '' }, lastBefore = g.resupply ? gaps.find(gp => Math.abs(gp.a - p.km) < 0.06) : null;
+      nodes.push({ km: p.km, t: p.t, col: g.col, id: p.id, b: escH(p.name || p.type), s: `${escH(p.type)} · ${T("à {0}", [fOff(p.off)])}${st.txt && st.txt !== '—' ? ` · <em class="${st.cls}">${escH(st.txt)}</em>` : ''}${lastBefore ? ` · <strong>${T("dernier ravito avant {0} km", [fD(lastBefore.len, 0)])}</strong>` : ''}` });
+    }
+    for (const g of gaps) if (g.a >= d.a.km - 0.05 && g.a < d.b.km) nodes.push({ km: g.a + 0.11, cls: 'gapn', b: T("{0} km sans ravito ouvert", [fD(g.len, 0)]), s: T("km {0} → {1} · {2} → {3}", [fD(g.a, 0), fD(g.b, 0), whenTxt(tl.times[idxAtKm(g.a)], t0), whenTxt(tl.times[idxAtKm(g.b)], t0)]) });
+    for (const p of attachToRoute(PLACES.list)) if (p.place !== 'village' && p.km > d.a.km + 1 && p.km < d.b.km - 1 && p.off <= 1500) nodes.push({ km: p.km, t: tl.times[p.i], cls: 'town', b: escH(p.name), s: '' });
+    nodes.push(d.night ? { km: d.b.km, t: d.b.t, cls: 'night', b: townEnd ? T("Nuit · {0}", [escH(townEnd.name)]) : T("Nuit au km {0}", [fD(d.b.km, 0)]),
+      s: [d.night.to > d.night.from ? T("{0} jusqu'à {1}", [durShort((d.night.to - d.night.from) / 3600e3), hm.format(new Date(d.night.to))]) : T("pas de nuit : l'étape finit trop tard"),
+        sl.length ? T("{0} à moins d'1 km", [sl.length > 1 ? T("{0} hébergements", [sl.length]) : T("1 hébergement")]) + ` · ${escH(sl[0].name || sl[0].type)} ${T("à {0}", [fOff(sl[0].dm)])}` : (POI.groups.has('sleep') && POI.list.length ? T("aucun hébergement à moins d'1 km") : '')].filter(Boolean).join(' · ') }
+      : { km: d.b.km, t: d.b.t, cls: 'night', b: townEnd ? T("Arrivée · {0}", [escH(townEnd.name)]) : T("Arrivée"), s: '' });
+    nodes.sort((a, b) => a.km - b.km);
+    const li = n => `<li class="tn${n.cls ? ' ' + n.cls : ''}"${n.id ? ` data-id="${escH(n.id)}"` : ''}><span class="k">${n.cls === 'gapn' ? '' : `${T("km {0}", [fD(n.km, 0)])}<small>${n.t ? hm.format(new Date(n.t)) : ''}</small>`}</span><span class="pt"${n.col ? ` style="background:${n.col}"` : ''}></span><div class="b${n.cls === 'gapn' ? ' gapb' : ''}"><b>${n.b}</b>${n.s ? `<span>${n.s}</span>` : ''}</div></li>`;
+    const more = hidden > 0 ? `<button type="button" class="btn small rb-more" data-more="${k}">${T("Les {0} autres lieux du jour {1}", [hidden, k + 1])}</button>` : all && inDay.length > max ? `<button type="button" class="btn small rb-more" data-more="${k}">${T("Replier la liste")}</button>` : '';
+    return `<article class="rbday open" data-k="${k}">${head}<ol class="tl">${nodes.map(li).join('')}</ol>${more}</article>`;
+  }).join('');
+}
+$('#rbDays').addEventListener('click', e => {
+  const h = e.target.closest('.rb-head[data-rb]'); if (h) { planOpenDay(+h.dataset.rb, h); return; }
+  const m = e.target.closest('.rb-more[data-more]'); if (m) { RB.all[m.dataset.more] = !RB.all[m.dataset.more]; rbRender(); return; }
+  const li = e.target.closest('li[data-id]'); if (li) poiFocus(li.dataset.id);
+});
+// centre la grande carte sur un lieu et ouvre sa fiche (liste et roadbook)
+function poiFocus(id) {
+  if (!map) return; const p = POI.list.find(x => x.id === id); if (!p) return;
+  map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15));
+  L.popup({ offset: [0, -4] }).setLatLng([p.lat, p.lon]).setContent(poiTip(p, true) + `<br><span class="nav-row">${escH(T("Y aller"))} : ${navApps(p.lat, p.lon, p.name).map(x => navA(x)).join(' · ')}</span>`).openOn(map);
+  $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 /* ---------- page Vélotaf : aller et retour ---------- */
 /* La trace calculée = l'aller (trace chargée) puis le retour (même trace à l'envers, ou un autre parcours choisi :
@@ -7108,7 +7320,7 @@ function chipsRender() {
     + `</div>`;
 }
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const t = b.dataset.go; if (t === '@lib') { lpOpen(); return; }
-  if (t && !$('#settings').contains($(t))) { sheetClose(); $(t).scrollIntoView({ behavior: 'smooth', block: 'start' }); } else sheetOpen(t); });
+  if (t && !$('#settings').contains($(t))) { sheetClose(); const dt = $(t).closest('details'); if (dt) dt.open = true; $(t).scrollIntoView({ behavior: 'smooth', block: 'start' }); } else sheetOpen(t); });
 $('#revBtn').addEventListener('click', () => {
   if (!S.fwd) return;
   const rev = !S.rev;
@@ -7120,8 +7332,8 @@ function applyRows() { $('#rowsWrap').hidden = !$('#rowsOn').checked; try { loca
 try { const r = localStorage.getItem('pmr-rows'); if (r === '0' || (r == null && matchMedia('(max-width:700px)').matches)) $('#rowsOn').checked = false; } catch (e) {} // repliée par défaut sur téléphone
 $('#rowsOn').addEventListener('change', applyRows);
 // liste des lieux de la page Ultra : repliable (les catégories et les marqueurs de la carte restent), choix mémorisé
-function applyPoiList() { $('#poiListWrap').hidden = !$('#poiListOn').checked; try { localStorage.setItem('pmr-poi-list', $('#poiListOn').checked ? '1' : '0'); } catch (e) {} }
-try { if (localStorage.getItem('pmr-poi-list') === '0') $('#poiListOn').checked = false; } catch (e) {}
+function applyPoiList() { $('#poiListWrap').style.display = $('#poiListOn').checked && $('#poiOn').checked ? '' : 'none'; try { localStorage.setItem('pmr-poi-list2', $('#poiListOn').checked ? '1' : '0'); } catch (e) {} }
+try { if (localStorage.getItem('pmr-poi-list2') === '1') $('#poiListOn').checked = true; } catch (e) {} // v2.0 : repliée par défaut (le roadbook la remplace)
 $('#poiListOn').addEventListener('change', applyPoiList); applyPoiList();
 applyRows();
 $('#arrowsOn').addEventListener('change', () => { renderWindArrows(); renderLegend(); });
