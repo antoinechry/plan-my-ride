@@ -1359,6 +1359,20 @@ window.PMR_I18N = {
     "Inverser le sens": "Reverse direction",
     "Exporter le GPX": "Export the GPX",
     "Nouveau nom": "New name",
-    "Ouvrir": "Open"
+    "Ouvrir": "Open",
+    "Quelle sortie ?": "Which ride?",
+    "Tes parcours du dossier Sortie, classés selon la météo du jour et de l'heure que tu choisis.": "Your routes from the Ride folder, ranked by the weather on the day and time you pick.",
+    "Jour et heure": "Day and time",
+    "Le pourcentage sous chaque jour est la fiabilité estimée de la prévision : très bonne jusqu'à J+2, puis elle baisse avec l'échéance.": "The percentage under each day is the estimated reliability of the forecast: very good up to D+2, then it drops with lead time.",
+    "Le meilleur parcours": "The best route",
+    "Auj.": "Today",
+    "fiabilité {0} %": "reliability {0} %",
+    "Le meilleur {0}": "Best for {0}",
+    "Prévision incomplète sur ce parcours.": "Incomplete forecast on this route.",
+    "Ressenti {0} à {1} °C, pluie {2} mm, vent de face {3} %.": "Feels like {0} to {1} °C, rain {2} mm, headwind {3} %.",
+    "Mieux à {0}:00": "Better at {0}:00",
+    "Puis, dans l'ordre": "Then, in order",
+    "{0} parcours · {1} {2}": "{0} routes · {1} {2}",
+    "Plus de {0} km : plusieurs jours": "Over {0} km: several days"
   }
 };
