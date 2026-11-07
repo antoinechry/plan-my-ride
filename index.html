@@ -1560,7 +1560,8 @@ dialog.lp-dlg::backdrop{background:rgba(20,32,27,.38)}
   <aside class="settings" aria-label="Réglages de la sortie" id="settings">
     <div class="sheet-head"><h2>Réglages</h2><button type="button" class="btn small" id="sheetOk">OK</button></div>
     <label class="btn primary imp-btn" for="file">Importer un GPX</label>
-    <input type="file" id="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
+    <!-- pas de filtre accept (07/11/2026) : un GPX renommé « trace.gpx (2) » ou sans extension (WhatsApp, Fichiers) était grisé ou refusé par le sélecteur du téléphone ; parseGPX vérifie le contenu -->
+    <input type="file" id="file" hidden>
     <div class="route-card" id="routeCard">
       <span class="tag" id="routeTag">Aucune trace</span>
       <strong id="routeName">Pas encore de parcours</strong>
@@ -1654,7 +1655,7 @@ dialog.lp-dlg::backdrop{background:rgba(20,32,27,.38)}
       <div class="field">
         <label class="label" for="tafRet">Trace du retour</label>
         <select id="tafRet"></select>
-        <input type="file" id="tafFile" accept=".gpx,application/gpx+xml" hidden>
+        <input type="file" id="tafFile" hidden>
         <p class="hint">Par défaut, la trace de l'aller dans l'autre sens. Tu peux choisir un autre parcours enregistré ou importer un GPX.</p>
         <p class="lap-err" id="tafErr" role="alert" hidden></p>
       </div>
@@ -2120,6 +2121,8 @@ function bearing(a, b) {
 }
 
 function parseGPX(text) {
+  // espaces ou BOM avant <?xml (certains exports) : le parseur XML les refuse
+  text = String(text || '').replace(/^\uFEFF/, '').trim();
   const doc = new DOMParser().parseFromString(text, 'application/xml');
   if (doc.getElementsByTagName('parsererror').length) throw new Error(T("Ce fichier n'est pas un GPX lisible."));
   let nodes = [...doc.getElementsByTagNameNS('*', 'trkpt')];
@@ -4633,7 +4636,7 @@ function handleFile(file) {
   rd.onload = async () => {
     try {
       // On travaille sur la trace simplifiée (celle qui est enregistrée) : rouvrir le parcours donne exactement les mêmes calculs.
-      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts));
+      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx(\s*\(\d+\))?$/i, ''), pts = unpackPts(packPts(g.pts));
       const id0 = routeId(packPts(pts));
       // dossier de Mes parcours (06/11/2026) : demandé à l'import, sauf pour un parcours déjà rangé
       const known = LIB.list.find(x => x.id === id0), kind = known && known.kind ? known.kind : await kindAsk(name);
@@ -5742,7 +5745,7 @@ $('#tafFile').addEventListener('change', () => {
   const rd = new FileReader();
   rd.onload = async () => {
     try {
-      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx$/i, ''), pts = unpackPts(packPts(g.pts)), P = prepare(pts);
+      const g = parseGPX(rd.result), name = g.name || file.name.replace(/\.gpx(\s*\(\d+\))?$/i, ''), pts = unpackPts(packPts(g.pts)), P = prepare(pts);
       const id = routeId(packPts(pts));
       TAF.ret = TAF.id = id; TAF.P = P;
       await libSave(pts, name, P, false, 'taf'); // gardé dans « Mes parcours » (dossier Commute) sans changer la trace de l'aller
