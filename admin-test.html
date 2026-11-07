@@ -71,6 +71,12 @@ h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:44px;letter-s
 .tabs a{padding:10px 16px;font-weight:600;font-size:15px;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs a[aria-current=page]{font-weight:700;color:var(--accent);border-bottom-color:var(--accent)}
 
+.todo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.todo-h{grid-column:1/-1;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:-4px}
+.td{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.td b{font-size:17px}.td span.m{font-size:14px;color:var(--muted)}.td.warn{border-color:var(--warn)}
+.td .go{align-self:flex-start;min-height:40px;padding:0 16px;border-radius:999px;border:0;background:var(--ink);color:var(--bg);font:700 14px var(--f-body);cursor:pointer}
+.td .ok{font-size:14px;color:var(--ok);font-weight:600}
 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
 #aKpis{grid-template-columns:repeat(5,minmax(0,1fr))}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
@@ -360,6 +366,7 @@ dialog h2{margin-bottom:6px}
 
     <!-- ===== Vue d'ensemble ===== -->
     <div id="over" style="display:flex;flex-direction:column;gap:22px">
+      <section class="todo" aria-label="À faire maintenant" id="todo"></section>
       <section class="kpis" aria-label="Chiffres clés" id="kpis"></section>
 
       <div class="grid2">
@@ -595,7 +602,26 @@ function renderKpis(){
         + meter(mb.remaining / mb.quota, Math.round(mb.remaining / mb.quota * 100) + ' % du forfait restant') + '</div>'
       : k('Crédits meteoblue', '…', 'lecture du solde'))
     + omKpi();
+  renderTodo();
 }
+// « À faire maintenant » (07/11/2026, maquette Supervision A) : ce qui attend l'admin, avant les chiffres
+function renderTodo(){
+  const el = $('todo'); if (!el) return;
+  const pendU = S.users.filter(u => u.status === 'pending').length;
+  const nPoi = P.loaded ? P.pois.filter(p => p.status === 'pending').length : null, nRev = P.loaded ? P.revs.filter(r => r.status === 'pending').length : 0;
+  const rows = S.om || [], calls = rows.reduce((t, r) => t + Number(r.calls || 0), 0), req = rows.reduce((t, r) => t + (r.requests || 0), 0), hits = rows.reduce((t, r) => t + (r.hits || 0), 0), pct = Math.round(calls / 1e6 * 100);
+  const card = (t, m, extra, warn) => '<div class="td' + (warn ? ' warn' : '') + '"><b>' + t + '</b><span class="m">' + m + '</span>' + extra + '</div>';
+  const nP = nPoi == null ? null : nPoi + nRev;
+  el.innerHTML = '<div class="todo-h">À faire maintenant</div>'
+    + (nP == null ? card('Points et avis', 'lecture en cours…', '')
+      : nP ? card(nPoi + ' point' + (nPoi > 1 ? 's' : '') + (nRev ? ' · ' + nRev + ' avis' : '') + ' à valider', 'Ajoutés par les cyclistes, en attente de ta décision', '<button type="button" class="go" data-todo="poi">Voir les points</button>', true)
+      : card('Aucun point à valider', 'Rien en attente côté cartes et avis', '<span class="ok">✓ Rien à faire</span>'))
+    + (pendU ? card(pendU + ' compte' + (pendU > 1 ? 's' : '') + ' en attente', 'Demandes d\'accès à valider', '<button type="button" class="go" data-todo="pend">Voir les demandes</button>', true)
+      : card('Aucun compte en attente', 'Les inscriptions sont ouvertes : la confirmation par e-mail suffit', '<span class="ok">✓ Rien à faire</span>'))
+    + card('Open-Meteo : ' + pct + ' % du mois', nf.format(calls) + ' appels sur 1 million' + (req ? ' · ' + Math.round(hits / req * 100) + ' % servis par le cache' : ''), meter(Math.min(1, calls / 1e6), 'Open-Meteo : ' + pct + ' % du forfait utilisé'), pct >= 80);
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-todo]'); if (!b) return; if (b.dataset.todo === 'poi') setTab('poi'); else { const p = $('pendSec'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+
 // Open-Meteo « API Standard » : 1 million d'appels par mois (compteur om_usage du relais open-meteo)
 function omKpi(){
   const rows = S.om || [], calls = rows.reduce((t, r) => t + Number(r.calls || 0), 0);
@@ -1119,6 +1145,7 @@ async function pLoad() {
 function pBadge() {
   const n = P.pois.filter(p => p.status === 'pending').length + P.revs.filter(r => r.status === 'pending').length;
   $('poiCnt').textContent = n || ''; $('poiCnt').hidden = !n;
+  if (typeof renderTodo === 'function' && S.users) renderTodo();
 }
 async function pDupPump() {
   if (P.busy) return; P.busy = true;
