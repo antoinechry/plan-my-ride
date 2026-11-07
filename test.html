@@ -9003,8 +9003,7 @@ function pmShow(it) {
     <div id="pmRevForm"></div>
     <div class="pm-acts" id="pmActs"><button type="button" class="btn primary" id="pmRevBtn">${escH(T("Laisser un avis"))}</button><button type="button" class="btn" id="pmNavBtn" aria-expanded="false" aria-controls="pmNav">${escH(T("Y aller"))}</button></div>
     <div class="pm-nav" id="pmNav" hidden>${navApps(it.lat, it.lon, title).map(x => navA(x, 'nav-app')).join('')}<p class="hint">${escH(T("Le guidage s'ouvre dans l'appli choisie."))}</p></div>
-    ${u ? '' : `<a class="pm-osm-link" href="https://www.openstreetmap.org/${escH(it.ref)}" target="_blank" rel="noopener">${escH(T("Une info est fausse ? Corriger sur OpenStreetMap"))}</a>
-      <p class="hint" style="margin-top:8px">${escH(T("Données © les contributeurs d'OpenStreetMap, licence ODbL"))}</p>`}
+    ${u ? '' : `<p class="hint" style="margin-top:12px">${escH(T("Données © les contributeurs d'OpenStreetMap, licence ODbL"))}</p>`}
     ${own && p.status === 'pending' ? `<p style="margin-top:12px"><button type="button" class="linkbtn" id="pmDelMine">${escH(T("Supprimer mon point"))}</button></p>` : ''}`);
   $('#pmRevBtn').addEventListener('click', () => pmCanWrite() ? pmReviewForm(it) : pmGuestSheet());
   $('#pmNavBtn').addEventListener('click', e => { const n = $('#pmNav'), op = n.hidden; n.hidden = !op; e.currentTarget.setAttribute('aria-expanded', op); if (op) n.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
