@@ -1380,6 +1380,62 @@ dialog.lp-dlg::backdrop{background:rgba(20,32,27,.38)}
 @media (max-width:700px){
   dialog.lp-dlg{margin:auto 0 0;max-width:none;width:100%;border-radius:20px 20px 0 0;border-bottom:0;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 }
+
+/* Mes sorties v2.0 (07/11/2026, maquette « A · La question, puis la réponse » + jours qui défilent et fiabilité) */
+.out2 .lp-head h2{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.out2 .lp-count{margin:0 auto 12px;font-size:14px}
+.out2 .card{border-radius:16px}
+.out-pick{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.out-dwrap{position:relative;margin:0 -16px}
+.out-dwrap::after{content:"";position:absolute;top:0;bottom:0;right:0;width:36px;background:linear-gradient(90deg,transparent,var(--panel));pointer-events:none}
+.out2 .out-days{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 16px;border:0;background:none;border-radius:0;grid-template-columns:none}
+.out2 .out-days::-webkit-scrollbar{display:none}
+.out2 .out-days button{flex:none;width:68px;min-height:74px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font:inherit;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 0;cursor:pointer}
+.out2 .out-days button small{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.out2 .out-days button b{font-size:16px}
+.out2 .out-days button .f{font:500 11px var(--f-mono);margin-top:3px;border-radius:999px;padding:1px 6px;background:color-mix(in srgb,var(--tail) 15%,var(--panel));color:var(--lv0t,var(--tail))}
+.out2 .out-days button .f.m{background:color-mix(in srgb,var(--sun) 22%,var(--panel));color:var(--lv1t,#7a5200)}
+.out2 .out-days button .f.l{background:color-mix(in srgb,var(--head) 14%,var(--panel));color:var(--lv2t,var(--head))}
+.out2 .out-days button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.out2 .out-days button[aria-pressed="true"] small{color:color-mix(in srgb,var(--bg) 75%,var(--ink))}
+.out2 .out-when{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.out2 .out-when label{font-weight:600;color:var(--ink);flex:1}
+.out2 .out-when input{font-family:var(--f-mono)}
+.out-rel{margin:0;font-size:12.5px;line-height:16px}
+.out2 .out-prog{margin:0 auto 10px}
+.out-top{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.out-top .ot-map{position:relative;height:150px;background:var(--bg);overflow:hidden}
+.out-top .ot-map img{display:block;width:100%;height:100%;object-fit:cover}
+.out-top .ot-map .lp-thumb{width:100%;height:100%;border-radius:0}
+.out-top .ot-map .lp-thumb path{stroke:var(--ink)}
+html[data-theme="dark"] .out-top .ot-map img{filter:brightness(.82)}
+.ot-badge{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;background:var(--ink);color:var(--bg);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700}
+.ot-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.ot-body h3{margin:0;font-family:var(--f-display);font-size:22px;line-height:26px;font-weight:800}
+.ot-num{font:500 14px var(--f-mono)}
+.ot-txt{margin:0;font-size:15px;line-height:20px}
+.ot-acts{display:flex;gap:8px;margin-top:4px}
+.ot-acts .btn{min-height:46px;border-radius:999px;justify-content:center;font-size:15px;font-weight:700}
+.ot-acts .btn.primary{flex:1}
+.out-sub{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:14px 4px 6px;font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.out-sub span{font:400 12px var(--f-body);letter-spacing:0;text-transform:none}
+.out2 .out-list{gap:8px}
+.out2 .out-list .lp-item{display:block;border-radius:14px}
+.out2 .out-list .lp-open{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 10px;width:100%;grid-column:auto}
+.out2 .out-rank{flex:0 0 26px;width:26px;height:26px;border-radius:999px;background:var(--bg);display:grid;place-items:center;font:500 13px var(--f-mono);color:var(--ink)}
+.out2 .out-th{width:52px;height:40px;border-radius:8px;background:var(--bg);flex:none;overflow:hidden;display:grid;place-items:center}
+.out2 .out-th img{width:100%;height:100%;object-fit:cover;display:block}
+.out2 .out-th .lp-thumb{width:36px;height:36px;flex:none;border-radius:0}
+.out2 .out-list .lp-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.out2 .out-list .lp-txt b{font-size:15px;line-height:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.out2 .out-list .lp-txt .out-v{font-weight:400;font-size:13px!important;line-height:17px;color:var(--muted)!important;display:flex;align-items:flex-start;gap:6px}
+.out2 .out-list .lp-txt .out-v .out-pill{margin-top:4px}
+.out2 .out-list .lp-txt .out-vt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.out2 .out-list .lp-txt .out-best{font-size:13px;font-weight:600;color:var(--accent)!important}
+.out2 .out-km{font:500 12.5px var(--f-mono);color:var(--ink);flex:none;text-align:right;line-height:1.3}
+.out2 .out-sec{margin:18px 4px 6px;font:500 11px var(--f-mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.out2 .out-note{margin-top:16px}
+body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-sub{display:none}
 </style>
 </head>
 <body>
@@ -1469,15 +1525,18 @@ dialog.lp-dlg::backdrop{background:rgba(20,32,27,.38)}
     </div>
   </dialog>
 </section>
-<section class="libpage" id="outPage" hidden aria-labelledby="outTitle">
-  <div class="lp-head"><h2 id="outTitle">Mes sorties</h2><button type="button" class="btn small pg-x">Fermer</button></div>
-  <p class="hint lp-count">Tes parcours classés du plus au moins favorable selon la météo, avec pour chacun le modèle le plus précis à cet endroit.</p>
-  <div class="lp-tools">
-    <div class="seg2 out-days" id="outDays" role="group" aria-label="Jour de la sortie"></div>
-    <label class="out-when">Départ à <input type="time" id="outTime" step="900"> <span id="outPace"></span></label>
-  </div>
+<section class="libpage out2" id="outPage" hidden aria-labelledby="outTitle">
+  <div class="lp-head"><h2 id="outTitle">Quelle sortie ?</h2><button type="button" class="btn small pg-x">Fermer</button></div>
+  <p class="hint lp-count">Tes parcours du dossier Sortie, classés selon la météo du jour et de l'heure que tu choisis.</p>
+  <section class="card out-pick" aria-label="Jour et heure">
+    <div class="out-dwrap"><div class="out-days" id="outDays" role="group" aria-label="Jour de la sortie"></div></div>
+    <div class="out-when"><label for="outTime">Départ</label><input type="time" id="outTime" step="900"><span id="outPace"></span></div>
+    <p class="hint out-rel">Le pourcentage sous chaque jour est la fiabilité estimée de la prévision : très bonne jusqu'à J+2, puis elle baisse avec l'échéance.</p>
+  </section>
   <p class="out-prog" id="outProg" aria-live="polite"></p>
-  <ol class="lp-list" id="outList"></ol>
+  <section class="card out-top" id="outTop" hidden aria-label="Le meilleur parcours"></section>
+  <p class="out-sub" id="outSub" hidden></p>
+  <ol class="lp-list out-list" id="outList"></ol>
   <div id="outLong"></div>
   <p class="hint out-note">Météo : le modèle le plus précis à l'endroit de chaque parcours (AROME en France, ICON en Allemagne, Met Office au Royaume-Uni, ECMWF hors des zones couvertes…). Vitesse, montées et pauses : réglages de la page Sortie, vent compris. Touche un parcours pour l'ouvrir à ce jour et cette heure.</p>
 </section>
@@ -6747,8 +6806,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.b
 /* Page « Mes sorties » (essai du 24/10/2026) : tous les parcours enregistrés, météo AROME pour le jour choisi (aujourd'hui → J+3)
    à l'heure de départ choisie, réglages de la page Sortie ; classés du plus au moins favorable (score par heure de selle,
    pour ne pas avantager les parcours courts) ; meilleure heure de départ entre 6 h et 16 h si nettement meilleure. */
-const OUT = { day: 0, wx: {}, pts: {}, run: 0, res: [] };
-const OUT_MAXKM = 300;
+const OUT = { day: 0, wx: {}, pts: {}, run: 0, res: [], long: [] };
+const OUT_MAXKM = 300, OUT_DAYS = 10; // aujourd'hui → J+9 (07/11/2026)
+// fiabilité estimée d'une prévision selon l'échéance (ordre de grandeur des scores publiés par les services météo ; pas une probabilité mesurée)
+const OUT_REL = [95, 90, 85, 75, 65, 55, 45, 40, 35, 30];
+function outRel(k) { return OUT_REL[Math.min(k, OUT_REL.length - 1)]; }
 function outOpt() {
   let o = null;
   if (S.mode === 'ride') o = readOpt();
@@ -6817,17 +6879,22 @@ async function outFetch(id, date, to, smp) { // limite par minute d'Open-Meteo :
     }
   }
 }
-function outDays() { const t = new Date(); t.setHours(12, 0, 0, 0); return [0, 1, 2, 3].map(k => { const d = new Date(t); d.setDate(d.getDate() + k); return d; }); }
+function outDays() { const t = new Date(); t.setHours(12, 0, 0, 0); return Array.from({ length: OUT_DAYS }, (_, k) => { const d = new Date(t); d.setDate(d.getDate() + k); return d; }); }
+const outWd = new Intl.DateTimeFormat(LOC, { weekday: 'short' }), outDm = new Intl.DateTimeFormat(LOC, { day: 'numeric', month: 'short' });
 function outDaysRender() {
-  $('#outDays').innerHTML = outDays().map((d, k) => `<button type="button" data-k="${k}" aria-pressed="${k === OUT.day}">${k === 0 ? T("Aujourd'hui") : k === 1 ? T("Demain") : dayFmt.format(d).replace(/\.$/, '')}</button>`).join('');
+  $('#outDays').innerHTML = outDays().map((d, k) => { const rel = outRel(k), cls = rel >= 80 ? '' : rel >= 50 ? ' m' : ' l';
+    const lab = k === 0 ? T("Auj.") : k === 1 ? T("Demain") : outWd.format(d).replace(/\.$/, ''), num = k < 2 ? outWd.format(d).replace(/\.$/, '') + ' ' + d.getDate() : (d.getDate() === 1 ? outDm.format(d) : String(d.getDate()));
+    return `<button type="button" data-k="${k}" aria-pressed="${k === OUT.day}"><small>${lab}</small><b>${num}</b><span class="f${cls}" aria-label="${T("fiabilité {0} %", [rel])}">${rel} %</span></button>`; }).join('');
+  const cur = document.querySelector('#outDays button[aria-pressed="true"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
 async function outRun() {
   const id = ++OUT.run, opt = outOpt(), day = outDays()[OUT.day], date = ymd(day), time = $('#outTime').value || opt.time || '08:00';
   $('#outPace').textContent = `· ${fV(opt.speed, 1)} ${UL.kmh}`;
   const [hh, mm] = time.split(':').map(Number), t0 = new Date(day); t0.setHours(hh, mm, 0, 0);
-  const end = outDays()[3], to = new Date(day); to.setDate(to.getDate() + 1); const toD = to > end ? end : to;
+  const end = outDays()[OUT_DAYS - 1], to = new Date(day); to.setDate(to.getDate() + 1); const toD = to > end ? end : to;
   // seulement les parcours du dossier Sortie (06/11/2026, demande d'Antoine) : Ultra et Commute ont leurs propres pages
   const list = LIB.list.filter(m => kindOf(m) === 'ride'), res = [], long = [];
+  OUT.res = res; OUT.long = long; $('#outTop').hidden = true; $('#outSub').hidden = true;
   if (!list.length && LIB.list.length) { $('#outProg').textContent = ''; $('#outList').innerHTML = T("<li class=\"lp-empty\"><b>Aucun parcours dans le dossier Sortie.</b><br>Range-y un parcours depuis Mes parcours (menu « ⋯ »), ou importe un GPX : il sera classé ici selon la météo.</li>"); $('#outLong').innerHTML = ''; return; }
   if (!list.length) { $('#outProg').textContent = ''; $('#outList').innerHTML = T("<li class=\"lp-empty\"><b>Aucun parcours enregistré.</b><br>Importe un GPX : il sera classé ici selon la météo.</li>"); $('#outLong').innerHTML = ''; return; }
   let done = 0; const prog = () => { if (id === OUT.run) $('#outProg').textContent = done < list.length ? T("Météo de {0} parcours sur {1}…", [done, list.length]) : T("{0} parcours classés pour {1}, départ {2}.", [res.length, OUT.day === 0 ? T("aujourd'hui") : OUT.day === 1 ? T('demain') : dayFmt.format(day), time]); };
@@ -6853,37 +6920,51 @@ async function outRun() {
   };
   const queue = list.slice(); const worker = async () => { while (queue.length && id === OUT.run) await one(queue.shift()); };
   await Promise.all([worker(), worker()]);
+  if (id === OUT.run) { await lpMapsLoad(); outRender(res, long); lpFillMaps(list); }
 }
 function outRender(res, long) {
-  const t = lpThumbs(), ok = res.filter(r => r.sim).sort((a, b) => a.sc - b.sc), bad = res.filter(r => !r.sim);
-  $('#outList').innerHTML = ok.map((r, k) => {
-    const st = r.sim.st, h = outHead(st, r.R.P.total), th = t[r.m.id];
-    const svg = th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>';
-    const miss = st.missKm > r.R.P.total * 0.05;
-    const bestTxt = r.best && r.best.sc < r.sc - 2 && !miss ? T("Mieux à {0}:00 : {1}", [String(r.best.h).padStart(2, '0'), outHead(r.best.st, r.R.P.total).txt.charAt(0).toLowerCase() + outHead(r.best.st, r.R.P.total).txt.slice(1)]) : '';
-    return T("<li class=\"lp-item out-item\"><button type=\"button\" class=\"lp-open\" data-go=\"{0}\"><span class=\"out-rank\">{1}</span><svg class=\"lp-thumb\" viewBox=\"0 0 64 64\" aria-hidden=\"true\">{2}</svg>\n      <span class=\"lp-txt\"><b>{3}</b><span class=\"out-v\"><i class=\"out-pill {4}\"></i>{5}</span>\n      <span>{6} km · arrivée {7} · {8} mm · face {9} % · {10} à {11} °C ressentis</span>\n      {12}</span></button></li>", [r.m.id, k + 1, svg, escH(r.m.name), miss ? 'n' : h.lvl, miss ? T("Prévision incomplète") : escH(h.txt), fD(r.R.P.total), whenTxt(r.sim.end, r.sim.start), fR(st.rain), h.head, fT(st.amin), fT(st.amax), bestTxt ? `<span class="out-best">${escH(bestTxt)}</span>` : '']);
+  const t = lpThumbs(), ok = res.filter(r => r.sim).sort((a, b) => a.sc - b.sc), bad = res.filter(r => !r.sim), day = outDays()[OUT.day], time = $('#outTime').value || '08:00';
+  const dayTxt = OUT.day === 0 ? T("aujourd'hui") : OUT.day === 1 ? T('demain') : dayFmt.format(day);
+  const pic = (id, cls) => { const mp = LP.maps[lpMapKey(id)], th = t[id]; return mp ? `<img src="${mp}" alt="">` : `<svg class="lp-thumb ${cls || ''}" viewBox="0 0 64 64" aria-hidden="true">${th ? `<path d="${th.d}"/><circle cx="${th.s[0]}" cy="${th.s[1]}" r="3.5"/>` : '<path class="ph" d="M14 46 C20 20 44 44 50 18"/>'}</svg>`; };
+  const bestOf = r => { const miss = r.sim.st.missKm > r.R.P.total * 0.05; return r.best && r.best.sc < r.sc - 2 && !miss ? r.best : null; };
+  const top = ok[0];
+  if (top) {
+    const st = top.sim.st, h = outHead(st, top.R.P.total), miss = st.missKm > top.R.P.total * 0.05, best = bestOf(top);
+    $('#outTop').hidden = false;
+    $('#outTop').innerHTML = `<div class="ot-map">${pic(top.m.id)}<span class="ot-badge"><i class="out-pill ${miss ? 'n' : h.lvl}"></i>${escH(T("Le meilleur {0}", [dayTxt]))}</span></div>
+      <div class="ot-body"><h3>${escH(top.m.name)}</h3><span class="ot-num">${fD(top.R.P.total)} ${UL.km} · D+ ${fE(top.R.P.up || top.m.dplus || 0)} ${UL.m} · ${hm.format(new Date(top.sim.start))} → ${hm.format(new Date(top.sim.end))}</span>
+      <p class="ot-txt">${miss ? escH(T("Prévision incomplète sur ce parcours.")) : escH(h.txt) + '. ' + escH(T("Ressenti {0} à {1} °C, pluie {2} mm, vent de face {3} %.", [fT(st.amin), fT(st.amax), fR(st.rain), h.head]))}</p>
+      <div class="ot-acts"><button type="button" class="btn primary" data-go="${top.m.id}">${escH(T("Ouvrir dans Sortie"))}</button>${best ? `<button type="button" class="btn" data-go="${top.m.id}" data-h="${best.h}">${escH(T("Mieux à {0}:00", [String(best.h).padStart(2, '0')]))}</button>` : ''}</div></div>`;
+  } else $('#outTop').hidden = true;
+  const rest = ok.slice(1);
+  $('#outSub').hidden = !rest.length; $('#outSub').innerHTML = `${escH(T("Puis, dans l'ordre"))}<span>${escH(T("{0} parcours · {1} {2}", [ok.length, dayTxt, time]))}</span>`;
+  $('#outList').innerHTML = rest.map((r, k) => {
+    const st = r.sim.st, h = outHead(st, r.R.P.total), miss = st.missKm > r.R.P.total * 0.05, best = bestOf(r);
+    return `<li class="lp-item out-item"><button type="button" class="lp-open" data-go="${r.m.id}"><span class="out-rank">${k + 2}</span><span class="out-th">${pic(r.m.id)}</span>
+      <span class="lp-txt"><b>${escH(r.m.name)}</b><span class="out-v"><i class="out-pill ${miss ? 'n' : h.lvl}"></i><span class="out-vt">${miss ? escH(T("Prévision incomplète")) : escH(h.txt)}</span></span>${best ? `<span class="out-best">${escH(T("Mieux à {0}:00", [String(best.h).padStart(2, '0')]))}</span>` : ''}</span>
+      <span class="out-km">${fD(r.R.P.total, 0)} ${UL.km}<br>D+ ${fE(r.R.P.up || r.m.dplus || 0)}</span></button></li>`;
   }).join('') + bad.map(r => T("<li class=\"lp-empty\">{0} : météo indisponible ({1}).</li>", [escH(r.m.name), escH(r.err || T("tracé introuvable"))])).join('');
-  $('#outLong').innerHTML = long.length ? T("<p class=\"out-sec\">Sur plusieurs jours, à planifier dans Ultra</p><ul class=\"lp-list\">{0}</ul>", [long.map(m => `<li class="lp-item"><button type="button" class="lp-open" data-ultra="${m.id}"><span class="lp-txt"><b>${escH(m.name)}</b><span>${fD(m.km || 0, 0)} ${UL.km} · D+ ${fE(m.dplus || 0)} ${UL.m}</span></span></button></li>`).join('')]) : '';
+  $('#outLong').innerHTML = long.length ? T("<p class=\"out-sec\">Sur plusieurs jours, à planifier dans Ultra</p><ul class=\"lp-list out-list\">{0}</ul>", [long.map(m => `<li class="lp-item"><button type="button" class="lp-open" data-ultra="${m.id}"><span class="out-th">${pic(m.id)}</span><span class="lp-txt"><b>${escH(m.name)}</b><span class="out-v">${escH(T("Plus de {0} km : plusieurs jours", [fD(OUT_MAXKM, 0)]))}</span></span><span class="out-km">${fD(m.km || 0, 0)} ${UL.km}<br>D+ ${fE(m.dplus || 0)}</span></button></li>`).join('')]) : '';
 }
 function outOpen() {
   pageOpen('outPage', '#tabOut');
   logOnce('out', 'out');
   const o = outOpt(); if (!$('#outTime').value) $('#outTime').value = o.time || '08:00';
-  outDaysRender(); outRun();
+  if (OUT.day >= OUT_DAYS) OUT.day = 0; outDaysRender(); outRun();
 }
-async function outGo(id, mode) { // ouvrir le parcours (page Sortie au jour et à l'heure choisis, ou page Ultra)
+async function outGo(id, mode, h) { // ouvrir le parcours (page Sortie au jour et à l'heure choisis, ou page Ultra)
   pageClose(); window.scrollTo(0, 0);
   if (mode === 'ultra') { if (S.mode !== 'ultra') location.hash = '#ultra'; }
   else {
     if (S.mode !== 'ride') { history.replaceState(null, '', location.pathname + location.search); switchMode('ride'); }
-    $('#date').value = ymd(outDays()[OUT.day]); $('#time').value = $('#outTime').value || $('#time').value;
+    $('#date').value = ymd(outDays()[OUT.day]); $('#time').value = h != null ? String(h).padStart(2, '0') + ':00' : ($('#outTime').value || $('#time').value);
   }
   if (id !== LIB.current) await libOpen(id); else schedule();
 }
 $('#outAll').addEventListener('click', outOpen);
 $('#outDays').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; OUT.day = +b.dataset.k; outDaysRender(); outRun(); });
 $('#outTime').addEventListener('change', () => { if ($('#outTime').value) outRun(); });
-$('#outPage').addEventListener('click', e => { const b = e.target.closest('button[data-go], button[data-ultra]'); if (b) outGo(b.dataset.go || b.dataset.ultra, b.dataset.ultra ? 'ultra' : 'ride'); });
+$('#outPage').addEventListener('click', e => { const b = e.target.closest('button[data-go], button[data-ultra]'); if (b) outGo(b.dataset.go || b.dataset.ultra, b.dataset.ultra ? 'ultra' : 'ride', b.dataset.h != null ? +b.dataset.h : undefined); });
 
 $('#libPageX').addEventListener('click', lpClose);
 for (const a of document.querySelectorAll('.modes a, .tabbar a[data-mode]')) a.addEventListener('click', pageClose);
@@ -7004,6 +7085,7 @@ async function lpFillMaps(items) {
     LP.maps[base + '|' + m.id] = img; try { await idbRun('pois', 'readwrite', st => st.put({ key: 'thumb1|' + base + '|' + m.id, at: Date.now(), img })); } catch (e) {}
     const el = document.querySelector(`#lpList .lp-item[data-id="${m.id}"] .lp-map`); if (el && !el.querySelector('img')) { el.insertAdjacentHTML('afterbegin', `<img src="${img}" alt="">`); el.querySelector('.lp-thumb')?.remove(); }
     if (LP.sheet === m.id) lpSheetFill();
+    if (!$('#outPage').hidden && OUT.res.length) outRender(OUT.res, OUT.long);
   }));
   LP.mapsBusy = 0; if (!$('#libPage').hidden) lpFillMaps(items);
 }
