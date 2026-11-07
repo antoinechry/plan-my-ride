@@ -2807,7 +2807,7 @@ function wxSrc() {
 // meteoblue réservé aux admins depuis le 31/10/2026 : option « meteoblue (admin) » ajoutée au menu après Open-Meteo.
 // Le statut admin est gardé dans le navigateur (pmr-mb-admin) pour le premier calcul, puis confirmé par accessCheck ;
 // la fonction serveur `meteoblue` refuse de toute façon les autres comptes.
-let MB_ADMIN = false; try { MB_ADMIN = localStorage.getItem('pmr-mb-admin') === '1'; } catch (e) {}
+let MB_ADMIN = false; try { MB_ADMIN = localStorage.getItem('pmr-mb-admin') === '1' && !window.SILLAGE_NATIVE; } catch (e) {} // pas d'outils admin dans l'app des stores (07/11/2026)
 function mbAdmin(on) {
   MB_ADMIN = !!on;
   try { on ? localStorage.setItem('pmr-mb-admin', '1') : localStorage.removeItem('pmr-mb-admin'); } catch (e) {}
@@ -7009,8 +7009,9 @@ async function accessCheck() {
       return;
     }
     document.body.classList.remove('gated');
-    document.body.classList.toggle('admin', !!data.is_admin);
-    { const was = wxSrc(); mbAdmin(!!data.is_admin); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } trendUpdate(); }
+    const ADM = !!data.is_admin && !window.SILLAGE_NATIVE; // l'administration se fait depuis le site web, pas depuis l'app
+    document.body.classList.toggle('admin', ADM);
+    { const was = wxSrc(); mbAdmin(ADM); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } trendUpdate(); }
     if (guest) guestHello();
     try { localStorage.removeItem('pmr-invite'); } catch (e) {}
     try { if (!sessionStorage.getItem('pmr-act-open')) { sessionStorage.setItem('pmr-act-open', '1'); sessionStorage.setItem('pmr-act-mode-' + S.mode, '1'); logAct('open'); } } catch (e) {}
