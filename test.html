@@ -2840,8 +2840,9 @@ const locModel = k => k === 'met' ? 'metno_seamless' : OM_MODELS[k] ? OM_MODELS[
 const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if (isNaN(L.temp[j])) n++; return n > 0; });
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
+const DEMO_MET = { on: false }; // démo en ligne : Open-Meteo (clé payante, par le relais) ; si le relais refuse (plafond des invités, panne), MET Norway pour le reste de la visite
 function wxSrc() {
-  if (LIM) return 'met'; // mode démo et compte gratuit : MET Norway, gratuit pour nous
+  if (LIM && !(DEMO_WEB && !DEMO_MET.on)) return 'met'; // mode démo et compte gratuit : MET Norway, gratuit pour nous
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
   if (v === 'mb' && MB_ADMIN) return 'mb'; // meteoblue : comptes admin seulement (31/10/2026)
   if (WX_KEYS.includes(v)) return v; // meteoblue retiré pour tous le 29/10/2026 : un ancien choix « mb » d'un non-admin revient au plus précis selon le lieu
@@ -3087,7 +3088,15 @@ async function fetchMET() {
 // Prévisions de la source choisie. meteoblue (7 jours), AROME (4 jours) et MET Norway (9 jours) : au-delà de leur
 // horizon, Open-Meteo prend le relais (S.wxAlt) ; en cas d'échec, tout passe sur Open-Meteo avec une note.
 async function getWeather(src, from, to, today) {
-  if (LIM) { // mode démo et compte gratuit : MET Norway seulement (gratuit), sans relais Open-Meteo
+  if (DEMO_WEB && !DEMO_MET.on) { // démo en ligne : météo Open-Meteo payante, repli MET Norway
+    try { return await getWeather0(src, from, to, today); }
+    catch (e) { DEMO_MET.on = true; console.warn('démo : repli sur MET Norway', e && e.message); }
+    src = 'met';
+  }
+  return getWeather0(src, from, to, today);
+}
+async function getWeather0(src, from, to, today) {
+  if (LIM && (!DEMO_WEB || DEMO_MET.on)) { // mode démo et compte gratuit : MET Norway seulement (gratuit), sans relais Open-Meteo
     const end = new Date(today); end.setDate(end.getDate() + WX_DAYS.met - 1);
     if (from > end) throw new Error(T("la météo couvre les {0} prochains jours.", [WX_DAYS.met]));
     const r = await fetchMET(); return { wx: r.wx, alt: null, used: 'met', info: r };

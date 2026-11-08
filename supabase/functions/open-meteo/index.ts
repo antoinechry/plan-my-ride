@@ -13,6 +13,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // par lieu, max(1, variables / 10) × max(1, jours / 14)).
 // Quota par compte et par jour (UTC) depuis le 29/10/2026 : app_users.quota_om (appels décomptés, null = sans limite),
 // compteur om_user_day via om_user_add, seulement quand on appelle vraiment Open-Meteo (le cache ne compte pas).
+// Invités de la démo (status guest) : quota propre (app_users.quota_om) + plafond global par jour GUEST_DAY_CAP (om_guest_total).
 // Quota atteint → 429 { error, reason: 'quota', relay: true }, en-tête x-om: quota (la page n'essaie pas l'API gratuite).
 
 const CORS = {
@@ -31,6 +32,7 @@ const TTL = 30 * 60e3, TTL_ENS = 3 * 3600e3;
 // Scénarios par modèle d'ensemble (Open-Meteo compte chaque scénario comme un lieu de plus, à peu près)
 const ENS_MEMBERS: Record<string, number> = { gfs05: 31, gfs025: 31, gfs_seamless: 31, gem_global: 21, ecmwf_ifs025: 51, ecmwf_aifs025: 51, icon_seamless: 40 };
 const MAX_BODY = 4_000_000;
+const GUEST_DAY_CAP = 6000; // démo en ligne (08/11/2026) : appels décomptés par jour pour tous les invités ensemble ; au-delà, 429 quota (la page repasse sur MET Norway)
 
 function claims(jwt: string): { role?: string; sub?: string } {
   try { return JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch (_) { return {}; }
@@ -90,6 +92,11 @@ Deno.serve(async (req: Request) => {
   if (ens && !(acc && acc.status === 'active' && acc.is_admin)) return err('forbidden', 403); // tendance : essai réservé aux admins
   if (quota != null && Number(used?.calls || 0) + n > quota) {
     return out(JSON.stringify({ error: true, reason: 'quota', relay: true, used: Number(used?.calls || 0), quota }), 429, { 'x-om': 'quota' });
+  }
+
+  if (acc && acc.status === 'guest') { // plafond global des invités
+    const { data: tot } = await db.rpc('om_guest_total', { d: day });
+    if (Number(tot || 0) + n > GUEST_DAY_CAP) return out(JSON.stringify({ error: true, reason: 'quota', relay: true, guest: true }), 429, { 'x-om': 'quota' });
   }
 
   let r: Response;
