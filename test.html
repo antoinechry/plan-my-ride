@@ -3068,10 +3068,10 @@ async function fetchMET() {
         const worker = async () => { while (next < miss.length) { const i = next++; got[i] = await metPoint(miss[i]); } };
         await Promise.all(Array.from({ length: Math.min(MET_PAR, miss.length) }, worker));
       }
-      const c = metCacheRead();
-      miss.forEach((p, i) => { c[metKey(p)] = got[i]; });
-      metCacheWrite(c);
-      return c;
+      const c = metCacheRead(), fresh = {};
+      miss.forEach((p, i) => { c[metKey(p)] = fresh[metKey(p)] = got[i]; });
+      metCacheWrite(c); // peut élaguer des entrées (plus de 60) : on rend aussi les nouvelles, sinon un ultra de 40 points en perdait (« reading 'q' »)
+      return { ...c, ...fresh };
     })().finally(() => MET_PENDING.delete(rk)));
     cache = { ...cache, ...(await MET_PENDING.get(rk)) };
   }
