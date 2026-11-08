@@ -931,6 +931,7 @@ body.guest .no-guest{display:none!important}
 body:not(.guest) .guest-only{display:none!important}
 /* Compte gratuit (30/10/2026) : body.free ; démo ou gratuit : body.lim */
 body.lim .no-lim{display:none!important}
+html.demo-web body.lim #flowOnLbl,html.demo-web body.lim #flowBar{display:revert!important}
 body:not(.free) .free-only{display:none!important}
 dialog.plus-dlg .p-prices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
 dialog.plus-dlg .p-prices div{padding:10px;border:1px solid var(--line);border-radius:10px;text-align:center}
@@ -3125,6 +3126,7 @@ const DEMO_D0 = {
 };
 const DEMO_TEMP = { 'demo-s65': [12.5, 4.5], 'demo-s60': [10.5, 3], 'demo-s112': [25.5, 6], 'demo-u1128': [15, 6], taf: [10, 3.5] }; // température moyenne et demi-amplitude du jour de départ (pic vers 15 h)
 function demoWx(from, to) {
+  FLOW_GRIDS.length = 0; // le vent animé d'exemple se refait d'après la météo d'exemple de cette trace
   const smp = wxSmp(), P = wxTrk(), id = S.mode === 'taf' ? 'taf' : (LIB.current || 'demo-s65');
   const base = S.mode === 'taf' ? DEMO_TAF_D0 : new Date(DEMO_START.getFullYear(), DEMO_START.getMonth(), DEMO_START.getDate());
   const T0 = S.mode === 'taf' ? DEMO_TAF_D0.getTime() : DEMO_START.getTime();
@@ -4103,7 +4105,7 @@ function drawArrowsOn(m, rg, kOff, noArrows) {
    l'espace sur des cases de 10 px. Un moteur par carte (`flowEngine`) : carte principale (heure du curseur sous la
    carte, point du cycliste à cette heure) et cartes Aller / Retour du Commute (heure du milieu du trajet). */
 const FLOW = { on: false, t: null, start: null, a: 0, rider: null, status: '', main: null };
-try { FLOW.on = !LIM && localStorage.getItem('pmr-flow') !== '0'; } catch (e) {} // mode démo et compte gratuit : pas de vent animé (grilles Open-Meteo)
+try { FLOW.on = (!LIM || DEMO_WEB) && localStorage.getItem('pmr-flow') !== '0'; } catch (e) {} // mode démo et compte gratuit : pas de vent animé (grilles Open-Meteo) ; démo en ligne : champ de vent d'exemple (demoFlowGrid)
 $('#flowOn').checked = FLOW.on; $('#flowOn2').checked = FLOW.on;
 const flowAllowed = () => !!map && !!S.tl && S.mode !== 'taf' && FLOW.on;
 function flowSpan() {
@@ -4116,6 +4118,7 @@ async function flowGrid(vb, d0, d1) {
   const ok = g => g.d0 <= d0 && g.d1 >= d1 && g.bounds.contains(vb) && (g.lat1 - g.lat0) < (vb.getNorth() - vb.getSouth()) * 4;
   const hit = FLOW_GRIDS.find(ok); if (hit) return hit;
   for (const [g, pr] of FLOW_PENDING) if (ok(g)) return pr;
+  if (DEMO_WEB) { const g = demoFlowGrid(vb, d0, d1); FLOW_GRIDS.unshift(g); FLOW_GRIDS.length = Math.min(FLOW_GRIDS.length, 6); return g; }
   const pad = vb.pad(0.35), N = 9, lat0 = pad.getSouth(), lat1 = pad.getNorth(), lon0 = pad.getWest(), lon1 = pad.getEast(), la = [], lo = [];
   for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { la.push((lat0 + (lat1 - lat0) * i / (N - 1)).toFixed(3)); lo.push((lon0 + (lon1 - lon0) * j / (N - 1)).toFixed(3)); }
   const meta = { N, lat0, lat1, lon0, lon1, d0, d1, bounds: L.latLngBounds([lat0, lon0], [lat1, lon1]) };
@@ -4133,6 +4136,29 @@ async function flowGrid(vb, d0, d1) {
   FLOW_PENDING.set(meta, pr);
   try { return await pr; } finally { FLOW_PENDING.delete(meta); }
 }
+// Démo en ligne : grille de vent d'exemple, tirée de la météo d'exemple (S.wx aux points d'échantillonnage de la trace) :
+// chaque case prend le vent des points voisins (pondération par l'inverse de la distance) avec un léger tourbillon
+// lent (± 18° et ± 20 %) pour que l'animation ne soit pas uniforme. Aucun appel réseau.
+function demoFlowGrid(vb, d0, d1) {
+  const pad = vb.pad(0.35), N = 9, lat0 = pad.getSouth(), lat1 = pad.getNorth(), lon0 = pad.getWest(), lon1 = pad.getEast();
+  const smp = wxSmp(), wx = S.wxBase || S.wx || [], day0 = Date.parse(d0 + 'T00:00:00Z') / 1000, n = (Math.round((Date.parse(d1 + 'T00:00:00Z') / 1000 - day0) / 3600) + 24);
+  const u = new Float32Array(N * N * n), v = new Float32Array(N * N * n), coslat = Math.cos((lat0 + lat1) / 2 * RAD);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const la = lat0 + (lat1 - lat0) * i / (N - 1), lo = lon0 + (lon1 - lon0) * j / (N - 1), k = i * N + j;
+    const w = smp.map((s, q) => { const dy = s.lat - la, dx = (s.lon - lo) * coslat; return 1 / (0.0004 + dx * dx + dy * dy); });
+    const sw = w.reduce((a, b) => a + b, 0) || 1;
+    for (let h = 0; h < n; h++) {
+      let uu = 0, vv = 0;
+      for (let q = 0; q < smp.length; q++) { const L = wx[q]; if (!L) continue;
+        const ix = clamp(Math.round((day0 + h * 3600 - L.t0) / 3600), 0, L.n - 1), sp = L.ws[ix] || 0, d = (L.wd[ix] || 0) * RAD;
+        uu += -sp * Math.sin(d) * w[q]; vv += -sp * Math.cos(d) * w[q]; }
+      uu /= sw; vv /= sw;
+      const sw0 = Math.sin(i * 1.3 + j * 0.9 + h * 0.11), rot = sw0 * 18 * RAD, f = 1 + 0.2 * Math.sin(i * 0.7 - j * 1.1 + h * 0.07);
+      u[k * n + h] = (uu * Math.cos(rot) - vv * Math.sin(rot)) * f; v[k * n + h] = (uu * Math.sin(rot) + vv * Math.cos(rot)) * f;
+    }
+  }
+  return { N, lat0, lat1, lon0, lon1, d0, d1, bounds: L.latLngBounds([lat0, lon0], [lat1, lon1]), n, t0: day0, u, v };
+}
 // o = { map(), time(), span(), allowed(), status(txt) }
 function flowEngine(o) {
   const E = { cv: null, field: null, parts: [], raf: 0, frames: 0, vis: true, grid: null, seq: 0, cell: 10 }, m = o.map();
@@ -4142,6 +4168,7 @@ function flowEngine(o) {
   E.off = () => { E.stop(); E.hide(); };
   E.load = async () => {
     if (!o.allowed()) { E.off(); return; }
+    if (!m._loaded) return; // carte pas encore cadrée (getBounds lèverait « Set map center and zoom first »)
     const [a, b] = o.span(), today = new Date(); today.setHours(0, 0, 0, 0);
     const lastDay = new Date(today); lastDay.setDate(lastDay.getDate() + 15);
     const d0 = ymd(new Date(Math.max(a, today.getTime() - 60 * 864e5))), d1 = ymd(new Date(Math.min(b, lastDay.getTime())));
