@@ -1,9 +1,14 @@
-# Traces du mode démo
+# Traces de démonstration
 
-Traces d'exemple ouvertes en mode démo (sans compte), noms attendus par `DEMO` dans `test.html` / `index.html` :
+Utilisées par le mode démo (`DEMO` dans test.html) et par la démo en ligne sillage-ride.eu/demo/.
 
-- `sortie-40.gpx`, `sortie-70.gpx`, `sortie-150.gpx` (page Sortie ; 70 km ouverte par défaut)
-- `ultra-1200.gpx` (page Ultra)
-- `velotaf-10.gpx` (page Vélotaf)
+| Fichier | Page | Nom affiché |
+|---|---|---|
+| sortie-col-du-marais.gpx | Sortie (trace par défaut) | Col du Marais · 65 km |
+| sortie-entre-2-catalognes.gpx | Sortie | Entre 2 catalognes · 112 km |
+| sortie-schluchsee.gpx | Sortie | Schluchsee · Todtmoos · 60 km |
+| ultra-chasing-the-sun.gpx | Ultra | Chasing the Sun · 1 128 km |
+| commute-teste-pyla-aller.gpx | Commute (aller) | La Teste → Pyla · 9,6 km |
+| commute-pyla-teste-retour.gpx | Commute (retour) | Pyla → La Teste · 7,4 km |
 
-Copiées dans l'app par `app/scripts/build-www.mjs`.
+Horodatages retirés, traces simplifiées. Fabrication de la démo en ligne : `python3 tools/build-demo.py ../sillage-site/demo`.

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
+<script>try{if(window.SILLAGE_DEMO_WEB||/[?&]demoweb=1\b/.test(location.search))document.documentElement.classList.add('demo-web');}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -1716,6 +1717,34 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
 .hp .hp-mail{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:999px;font-size:15px;font-weight:700;background:var(--brand);color:var(--brand-ink);text-decoration:none;margin-top:4px}
 .hp .hp-foot{text-align:center;font-size:12.5px;color:var(--muted)}
 .hp :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Démo en accès libre (08/11/2026) */
+#demoBoot{display:none}
+html.demo-web body.gated #demoBoot{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;text-align:center;background:var(--bg);color:var(--ink);padding:24px}
+html.demo-web body.gated #gate{display:none!important}
+#demoBoot .db-t{display:block;font:800 34px var(--f-display);margin-bottom:8px}
+#demoBoot p{margin:6px 0 14px;color:var(--mute,#5b6b62)}
+
+/* Visite guidée de la démo (TOUR, 08/11/2026) */
+#tour{position:fixed;inset:0;z-index:10000;pointer-events:none}
+#tour[hidden]{display:none}
+#tour .tour-ring{position:fixed;border:3px solid var(--brand);border-radius:16px;box-shadow:0 0 0 3px rgba(20,32,27,.55),0 0 0 9999px rgba(20,32,27,.18);pointer-events:none;transition:all .25s ease}
+#tour .tour-ring.none{display:none}
+#tour svg.tour-arrow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#tour svg.tour-arrow path{fill:none;stroke:var(--brand);stroke-width:3.5;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
+#tour svg.tour-arrow polygon{fill:var(--brand);stroke:var(--brand);stroke-width:1;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
+#tour .tour-card{position:fixed;width:min(340px,calc(100vw - 24px));background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:14px 16px 14px;box-shadow:0 12px 40px rgba(0,0,0,.35);pointer-events:auto}
+#tour .tour-k{display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute,#5b6b62);margin-bottom:6px}
+#tour .tour-skip{background:none;border:0;padding:2px 0;font:600 12px var(--f-body);color:var(--accent);text-decoration:underline;cursor:pointer;text-transform:none;letter-spacing:0}
+#tour h3{margin:0 0 4px;font:700 17px/1.25 var(--f-display)}
+#tour p{margin:0 0 12px;font-size:14px;line-height:1.45}
+#tour .tour-acts{display:flex;gap:8px;justify-content:flex-end}
+#tour .tour-dots{display:flex;gap:4px;margin-right:auto;align-items:center}
+#tour .tour-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+#tour .tour-dots i.on{background:var(--brand)}
+@media (max-width:700px){#tour .tour-card{border-radius:16px 16px 14px 14px}}
+@media (prefers-reduced-motion:reduce){#tour .tour-ring{transition:none}}
+html[data-motion="reduce"] #tour .tour-ring{transition:none}
 </style>
 </head>
 <body>
@@ -1805,6 +1834,7 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
 </div>
 <div class="test-band" id="testBand" hidden>🧪 <b>Version test</b> : nouveautés en essai avant la mise en ligne. Mêmes parcours et réglages que la version normale. <a href="./">Revenir à la version normale</a></div>
 <div class="guest-band guest-only" id="guestBand"></div>
+<div id="demoBoot"><div class="db-in"><b class="db-t">Sillage</b><p id="demoBootLoad">Ouverture de la démo…</p><p id="demoBootMsg"></p><a class="btn primary" id="demoBootBack" href="/" hidden>Retour au site</a></div></div>
 <header class="top">
   <div class="brand">
     <h1><svg class="mark" width="40" height="36" viewBox="0 0 110 100" aria-hidden="true"><defs><mask id="mkTop"><rect width="110" height="100" fill="#fff"/><circle cx="70" cy="48" r="31" fill="#000"/></mask></defs><g class="mk-ink" mask="url(#mkTop)"><circle cx="44" cy="56" r="15"/><rect x="18" y="58" width="56" height="16" rx="8"/></g><circle class="mk-ring" cx="70" cy="48" r="26"/><path class="mk-ray" d="M82 48h5M78.5 56.5l3.5 3.5M70 60v5M61.5 56.5L58 60M58 48h-5M61.5 39.5L58 36M70 36v-5M78.5 39.5L82 36"/><circle class="mk-sun" cx="70" cy="48" r="8"/><path class="mk-rain" d="M28 82l-3 9M41 82l-3 9M54 82l-3 9"/></svg>Sillage</h1>
@@ -2311,9 +2341,9 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
     <p class="g-msg" id="guestMsg" hidden></p>
     <p>Tu découvres Sillage en mode démo, sur des traces d'exemple&nbsp;:</p>
     <ul class="g-rules">
-      <li><b>Sortie</b><span>Trois boucles d'exemple de 40, 70 et 150&nbsp;km. Choisis la date et l'heure de départ dans les 9 prochains jours.</span></li>
-      <li><b>Ultra</b><span>Un ultra d'environ 1&nbsp;200&nbsp;km, découpé par nombre de jours, avec les ravitos et les hébergements le long de la trace.</span></li>
-      <li><b>Commute</b><span>Un trajet de 10&nbsp;km, aller et retour, aujourd'hui, demain et après-demain.</span></li>
+      <li><b>Sortie</b><span>Trois boucles d'exemple : Col du Marais (65&nbsp;km), Entre 2 catalognes (112&nbsp;km) et Schluchsee · Todtmoos (60&nbsp;km). Choisis la date et l'heure de départ dans les 9 prochains jours.</span></li>
+      <li><b>Ultra</b><span>Chasing the Sun, de Strasbourg à Argelès-sur-Mer (environ 1&nbsp;130&nbsp;km), découpé par nombre de jours, avec les ravitos et les hébergements le long de la trace.</span></li>
+      <li><b>Commute</b><span>Un trajet de La Teste-de-Buch à Pyla-sur-Mer (9,6&nbsp;km à l'aller, 7,4&nbsp;km au retour par une autre trace), aujourd'hui, demain et après-demain.</span></li>
       <li><b>Météo</b><span>MET Norway (Institut météorologique norvégien), sur 9 jours.</span></li>
       <li><b>Rien n'est enregistré</b><span>Pas d'import de GPX en mode démo.</span></li>
     </ul>
@@ -2401,7 +2431,7 @@ body.lim #outPage .out-pick,body.lim #outPage .out-top,body.lim #outPage .out-su
 (() => {
 // Page de test (test.html) : même code que index.html ; bandeau, titre, pas de mesure d'audience.
 const IS_TEST = /\/test\.html$/.test(location.pathname);
-if (IS_TEST) { document.getElementById('testBand').hidden = false; document.title = '🧪 ' + document.title; }
+if (IS_TEST && !document.documentElement.classList.contains('demo-web')) { document.getElementById('testBand').hidden = false; document.title = '🧪 ' + document.title; }
 'use strict';
 /* ---------- langue (depuis le 25/10/2026) ----------
    Les textes du code restent en français ; T('texte', [a, b]) les traduit avec le dictionnaire de lang.js
@@ -2510,6 +2540,9 @@ var GUEST = (() => { try { return !!localStorage.getItem('pmr-guest') && !!local
 var FREE = (() => { try { return !GUEST && localStorage.getItem('pmr-plan') === 'free' && !!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'); } catch (e) { return false; } })();
 var LIM = GUEST || FREE;
 if (GUEST) document.body.classList.add('guest');
+// Démo en accès libre sur le site (sillage-ride.eu/demo/, 08/11/2026) : la page injecte window.SILLAGE_DEMO_WEB ; sans compte, un
+// compte invité est créé tout seul (guestStart) et la visite guidée (TOUR) accompagne chaque vue. ?demoweb=1 pour l'essayer en test.
+var DEMO_WEB = !!window.SILLAGE_DEMO_WEB || (/[?&]demoweb=1\b/.test(location.search));
 if (FREE) document.body.classList.add('free');
 if (LIM) document.body.classList.add('lim');
 
@@ -5150,7 +5183,7 @@ function initInputs() {
     if (now.getHours() * 60 + now.getMinutes() >= bh * 60 + bm) d.setDate(d.getDate() + 1);
     $('#date').value = ymd(d);
   }
-  $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; { const fx = S.mode === 'taf' ? tafFixed() : null; if (fx) TAF.ret = fx.ret; } tafRenderSel();
+  $('#tafBack').value = def.tafBack || '17:30'; TAF.ret = def.tafRet || ''; { const fx = S.mode === 'taf' ? tafFixed() : null; if (fx) TAF.ret = fx.ret; } if (GUEST) TAF.ret = S.mode === 'taf' ? DEMO_RET : ''; tafRenderSel();
   setSeg('#tafGoSeg', def.tafGoMode === 'arr' ? 'arr' : 'dep'); $('#tafMargin').value = def.tafMargin != null && isFinite(+def.tafMargin) ? def.tafMargin : 5;
   $('#tafPerDay').checked = !!def.tafPerDay; TAF.days = def.tafDays && typeof def.tafDays === 'object' ? def.tafDays : {};
   for (let d = 1; d <= 5; d++) { const e = TAF.days[d] || {}; document.querySelector(`#tafDays [data-go="${d}"]`).value = e.go || def.time; document.querySelector(`#tafDays [data-back="${d}"]`).value = e.back || def.tafBack || '17:30'; }
@@ -5165,7 +5198,7 @@ function initInputs() {
   $('#laps').value = clamp(Math.round(+def.laps || 1), 1, 50);
   $('#lapPause').value = isFinite(+def.lapPause) && def.lapPause !== '' && def.lapPause != null ? clamp(Math.round(+def.lapPause), 0, 240) : 10;
   $('#poiRadius').value = String([200, 500, 1000, 2000].includes(+def.poiRadius) ? def.poiRadius : 500);
-  $('#planDays').value = clamp(Math.round(+def.planDays || 3), 1, 30); setSeg('#planSplitSeg', def.planSplit === 'terrain' ? 'terrain' : 'km');
+  $('#planDays').value = clamp(Math.round(+(GUEST && !(saved && saved.planDays) ? 8 : def.planDays) || 3), 1, 30); setSeg('#planSplitSeg', def.planSplit === 'terrain' ? 'terrain' : 'km');
   PLAN.ends = Array.isArray(def.planEnds) ? def.planEnds.slice(0, 30) : [];
   $('#planCustomOn').checked = !!def.planCustom; PLAN.times = Array.isArray(def.planTimes) ? def.planTimes.slice(0, 30) : [];
   syncOutputs();
@@ -5204,7 +5237,7 @@ function switchMode(m) {
   saveOpt(readOpt()); // réglages de la page qu'on quitte
   const from = S.mode; S.mode = m;
   applyModeUI(); initInputs(); applyModeUI(); renderPois(); renderPlan();
-  if (GUEST) { demoSwitch(m); logOnce('mode-' + m, 'mode'); return; } // mode démo : la trace d'exemple de cette page
+  if (GUEST) { demoSwitch(m); logOnce('mode-' + m, 'mode'); tourView(m); return; } // mode démo : la trace d'exemple de cette page, et sa visite guidée
   // compte gratuit : la trace ouverte compte pour la nouvelle page si elle n'y a jamais été chargée (Ultra à part)
   if (FREE && S.P && LIB.current && ftKind(m) !== ftKind(from)) freeUse(LIB.current, m).then(ok => { if (!ok && S.mode === m) freeUnload(); });
   schedule();
@@ -6296,6 +6329,8 @@ function weekDays(start) {
 const isWorkDay = d => d.getDay() >= 1 && d.getDay() <= 5;
 // trace du retour enregistrée dans « Mes parcours » (navigateur, sinon compte)
 async function tafLoad(id) {
+  const dm = GUEST && DEMO.find(x => x.id === id); // mode démo : trace d'exemple
+  if (dm) { try { return prepare(unpackPts(await demoPts(dm))); } catch (e) { return null; } }
   let rec = null;
   try { rec = await idbRun('pts', 'readonly', st => st.get(id)); } catch (e) {}
   if (!rec) { const sb = await sbIfLogged(); if (sb) { const { data } = await sb.from('routes').select('pts').eq('user_id', SB_UID).eq('id', id).maybeSingle(); if (data) rec = { id, pts: data.pts }; } }
@@ -6635,6 +6670,7 @@ function duoMap(k) {
   const key = S.lapN + ':' + k;
   if (DUO.fit[k] !== key && m.getContainer().offsetWidth) { DUO.fit[k] = key; m.fitBounds(L.latLngBounds(ll), { padding: [20, 20] }); }
   if (DUO.winds[k]) DUO.winds[k].remove();
+  if (!m._loaded) { DUO.winds[k] = null; return; } // carte masquée (un seul trajet à la fois sur téléphone) : pas encore de vue
   DUO.winds[k] = drawArrowsOn(m, rg, P.d[rg[0]], true); // Vélotaf : pas de flèches, seulement ciel et température
 }
 
@@ -6976,10 +7012,10 @@ function logOnce(key, event, extra) {
 }
 async function accessCheck() {
   const ret = authReturn(); if (ret) { await ret; return; }
-  if (!hasSbToken()) { gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
+  if (!hasSbToken()) { if (DEMO_WEB) { demoBoot(); return; } gateShow(INVITE || location.hash === '#inscription' ? 'up' : 'in'); return; }
   try {
     const sb = await sbClient(); const { data: { session } } = await sb.auth.getSession();
-    if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} gateShow('in'); return; }
+    if (!session) { try { localStorage.removeItem(SB_TOKEN_KEY); } catch (e) {} if (DEMO_WEB) { demoBoot(); return; } gateShow('in'); return; }
     const { data } = await sb.from('app_users').select('status,pmr,is_admin,prenom,quota_mb,plan,plus_until').eq('user_id', session.user.id).maybeSingle();
     ACC.row = data || null;
     const guest = !!data && data.status === 'guest';
@@ -7189,13 +7225,15 @@ $('#gateOut').addEventListener('click', async () => { try { const sb = await sbC
    Traces d'exemple seulement (DEMO, fichiers du dossier demo/), pas d'import, rien d'enregistré ; MET Norway sur 9 jours ;
    Commute sur 3 jours ; ravitos sur toute la trace ; export image sans filigrane. */
 const DEMO = [
-  { id: 'demo-s40', mode: 'ride', file: 'demo/sortie-40.gpx', name: 'Sortie · 40 km', km: 40 },
-  { id: 'demo-s70', mode: 'ride', file: 'demo/sortie-70.gpx', name: 'Sortie · 70 km', km: 70 },
-  { id: 'demo-s150', mode: 'ride', file: 'demo/sortie-150.gpx', name: 'Sortie · 150 km', km: 150 },
-  { id: 'demo-u1200', mode: 'ultra', file: 'demo/ultra-1200.gpx', name: 'Ultra · 1 200 km', km: 1200 },
-  { id: 'demo-t10', mode: 'taf', file: 'demo/velotaf-10.gpx', name: 'Commute · 10 km', km: 10 }
+  { id: 'demo-s65', mode: 'ride', file: 'demo/sortie-col-du-marais.gpx', name: 'Col du Marais · 65 km', km: 65 },
+  { id: 'demo-s112', mode: 'ride', file: 'demo/sortie-entre-2-catalognes.gpx', name: 'Entre 2 catalognes · 112 km', km: 112 },
+  { id: 'demo-s60', mode: 'ride', file: 'demo/sortie-schluchsee.gpx', name: 'Schluchsee · Todtmoos · 60 km', km: 60 },
+  { id: 'demo-u1128', mode: 'ultra', file: 'demo/ultra-chasing-the-sun.gpx', name: 'Chasing the Sun · 1 128 km', km: 1128 },
+  { id: 'demo-t10', mode: 'taf', file: 'demo/commute-teste-pyla-aller.gpx', name: 'Commute · La Teste → Pyla · 9,6 km', km: 9.6 },
+  { id: 'demo-t7', mode: 'taf', file: 'demo/commute-pyla-teste-retour.gpx', name: 'Commute · Pyla → La Teste (retour) · 7,4 km', km: 7.4 }
 ];
-const DEMO_DEF = { ride: 'demo-s70', ultra: 'demo-u1200', taf: 'demo-t10' };
+const DEMO_DEF = { ride: 'demo-s65', ultra: 'demo-u1128', taf: 'demo-t10' };
+const DEMO_RET = 'demo-t7'; // retour du trajet Commute d'exemple (une autre trace que l'aller, dans l'autre sens)
 const DEMO_PTS = {};
 async function demoPts(d) {
   if (DEMO_PTS[d.id]) return DEMO_PTS[d.id];
@@ -7213,10 +7251,16 @@ function demoSwitch(m) { // en changeant de page, la trace d'exemple de cette pa
   const cur = DEMO.find(d => d.id === LIB.current);
   if (!cur || cur.mode !== m) libOpen(DEMO_DEF[m]); else schedule();
 }
+const GUP = () => T(DEMO_WEB ? "Me prévenir de la sortie de l'app" : "Créer mon compte gratuit");
 function guestBand() {
   if (!GUEST) return;
+  if (DEMO_WEB) {
+    $('#guestBand').innerHTML = `<span><b>${escH(T("Démo"))}</b> · ${escH(T("Sillage sur des traces d'exemple, avec la vraie météo."))}</span>`
+      + `<span class="gb-acts"><button type="button" class="lnk" data-tour-replay>${escH(T("Rejouer la visite"))}</button><a class="lnk" href="/">${escH(T("← Retour au site"))}</a></span>`;
+    return;
+  }
   $('#guestBand').innerHTML = `<span><b>${escH(T("Mode démo"))}</b> · ${escH(T("Sillage sur des traces d'exemple."))}</span>`
-    + `<span class="gb-acts"><button type="button" class="lnk" data-guest-rules>${escH(T("Ce que permet la démo"))}</button><button type="button" class="lnk" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></span>`;
+    + `<span class="gb-acts"><button type="button" class="lnk" data-guest-rules>${escH(T("Ce que permet la démo"))}</button><button type="button" class="lnk" data-guest-up>${escH(GUP())}</button></span>`;
 }
 function guestDlg(msg) {
   $('#guestMsg').hidden = !msg; $('#guestMsg').textContent = msg || '';
@@ -7225,17 +7269,181 @@ function guestDlg(msg) {
 }
 function guestHello() {
   guestBand();
+  if (DEMO_WEB) { for (const b of document.querySelectorAll('[data-guest-up]')) b.textContent = GUP(); setTimeout(() => tourView(S.mode), 900); return; } // la visite guidée remplace le message d'accueil
   try { if (sessionStorage.getItem('pmr-guest-hi')) return; sessionStorage.setItem('pmr-guest-hi', '1'); } catch (e) {}
   setTimeout(() => guestDlg(''), 600);
 }
-const guestLock = (title, txt) => `<li class="guest-lock"><b>${escH(title)}</b><p>${escH(txt)}</p><button type="button" class="btn small primary" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></li>`;
+const guestLock = (title, txt) => `<li class="guest-lock"><b>${escH(title)}</b><p>${escH(txt)}</p><button type="button" class="btn small primary" data-guest-up>${escH(GUP())}</button></li>`;
 const plusLock = (title, txt) => `<li class="guest-lock"><b>${escH(title)}</b><p>${escH(txt)}</p><button type="button" class="btn small primary" data-plus>${escH(T("Découvrir Sillage.cc +"))}</button></li>`;
 async function guestEnd(toSignup) { // quitte la démo ; vers la création de compte si demandé
+  if (DEMO_WEB) { location.href = toSignup ? '/#newsletter' : '/'; return; } // démo du site : retour à la vitrine (liste d'attente de l'app)
   try { const sb = await sbClient(); await sb.auth.signOut({ scope: 'local' }); } catch (e) {}
   try { localStorage.removeItem(SB_TOKEN_KEY); if (toSignup) localStorage.removeItem('pmr-guest'); sessionStorage.removeItem('pmr-guest-hi'); } catch (e) {}
   if (toSignup) location.hash = 'inscription';
   location.reload();
 }
+
+/* ---------- visite guidée de la démo (TOUR, 08/11/2026) ----------
+   Une flèche et une bulle par étape, une série par vue (Sortie, Ultra, Commute, Mes parcours, Mes sorties, Carte, Moi), montrée
+   une seule fois (pmr-tour) ; « Passer la visite » l'éteint (pmr-tour-off), « Rejouer la visite » (bandeau) la relance.
+   Une étape dont l'élément n'existe pas ou n'est pas visible (téléphone / ordinateur) est sautée. */
+const TOUR_STEPS = {
+  intro: [
+    { t: "Bienvenue dans la démo de Sillage", p: "Tu essaies Sillage sur des traces d'exemple, avec la vraie météo des prochains jours. Cette visite te montre l'essentiel en une minute." },
+    { sel: '.top .modes', t: "Trois façons de rouler", p: "Sortie pour une journée, Ultra pour plusieurs jours, Commute pour ton trajet quotidien. Chaque page a sa propre trace d'exemple." },
+    { sel: '.tabbar', t: "Tes autres pages", p: "Mes parcours, la Carte des points utiles, Mes sorties et Moi : touche-les pour les découvrir, une courte explication t'attend à chaque fois." }
+  ],
+  ride: [
+    { sel: '#chips', t: "Ton départ en un coup d'œil", p: "Touche le parcours, le jour, l'heure ou la vitesse : tout est recalculé aussitôt avec la météo de ce créneau." },
+    { sel: '#verdict', t: "Le verdict d'abord", p: "Une phrase te dit si la sortie sera belle ou difficile : pluie, vent de face, froid, rafales. Dessous, le détail heure par heure." },
+    { sel: '#mapCard', t: "La météo sur ta trace", p: "Des flèches de vent, le ciel et la température à l'endroit et à l'heure où tu passes. Zoome pour voir le détail." },
+    { sel: '#stats', t: "Les chiffres clés", p: "Durée, vent ressenti (face, travers, dos), températures et pluie sur tout le parcours." },
+    { sel: '#optCard', t: "Et si tu partais plus tard ?", p: "Chaque barre est une heure de départ. Touches-en une pour voir tout de suite ce que ça change, et trouve le meilleur créneau." },
+    { sel: '#chartCard', t: "Le profil heure par heure", p: "Relief, pluie en barres et vent ressenti à chaque heure de roulage. Passe le doigt dessus pour lire un point précis." }
+  ],
+  ultra: [
+    { sel: '#planCard .card-head', t: "Ton ultra, jour par jour", p: "Choisis le nombre de jours et l'heure de départ : Sillage découpe la trace et calcule chaque étape avec la météo du moment." },
+    { sel: '#planRows', t: "Une carte par jour", p: "Touche un jour pour voir son étape sur la carte, son graphe météo, le lever et le coucher du soleil, et la ville de la nuit." },
+    { sel: '#poiCard', t: "Ravitos et hébergements", p: "Les lieux à moins de 500 m de ta trace, ouverts ou fermés à l'heure où tu passes, et les tronçons sans ravito à anticiper." },
+    { sel: '#mapCard', t: "Toute la trace sur la carte", p: "Le vent et les ravitos sont dessinés le long du parcours. Zoome pour voir chaque tronçon." }
+  ],
+  taf: [
+    { sel: '#tafTrips', t: "Ton trajet, aller et retour", p: "Ici l'aller va de La Teste à Pyla, et le retour prend une autre route. Sillage affiche l'écart de distance et de temps." },
+    { sel: '#tafDay', t: "Aujourd'hui d'abord", p: "Le verdict de l'aller et du retour, avec le conseil qui va avec : veste de pluie, gants, lumières, rafales." },
+    { sel: '#tafDuo', t: "Deux cartes, deux trajets", p: "Chaque trajet a sa carte, sa météo à l'heure de passage et son graphe. Passe le doigt sur le graphe pour suivre la carte." },
+    { sel: '#weekCard', t: "Les prochains jours", p: "Une ligne par jour avec la météo de l'aller et du retour. Touche un jour pour le voir en détail." }
+  ],
+  libPage: [
+    { sel: '#lpKind', t: "Tes parcours, rangés par dossier", p: "Sortie, Ultra ou Commute : un parcours s'ouvre dans la page de son dossier. Ici, ce sont des traces d'exemple." },
+    { sel: '#lpList .lp-item', t: "Une vignette par parcours", p: "Touche une vignette pour l'ouvrir. Le bouton ⋯ ouvre la fiche : renommer, inverser le sens, exporter le GPX." }
+  ],
+  outPage: [
+    { sel: '#outPage .out-pick', t: "Quelle sortie ?", p: "Choisis un jour et une heure : Sillage classe tous tes parcours du plus au moins favorable selon la météo. Réservé aux comptes de l'app." }
+  ],
+  mapPage: [
+    { sel: '#pmChips', t: "Les points utiles", p: "Eau potable, boulangeries, bivouacs, abris, ateliers vélo… Touche un type pour l'afficher ou le masquer, appui long pour l'isoler." },
+    { sel: '#pmLocate', t: "Ma position", p: "Pour te situer sur la carte et voir ce qu'il y a autour de toi. Ta position reste sur ton appareil." },
+    { sel: '#pmAdd', t: "Ajouter un point", p: "Les cyclistes ajoutent, vérifient et notent les points. Cette fonction demande un compte dans l'app." }
+  ],
+  mePage: [
+    { sel: '#meModeSeg', t: "Ma façon de rouler", p: "Ta vitesse sur le plat, ta vitesse en montée (VAM) et tes arrêts : Sillage calcule les horaires avec ton rythme, pas celui d'un autre." }
+  ]
+};
+const TOUR = { seen: {}, off: false, key: '', steps: [], i: 0, el: null, timer: 0, run: 0 };
+try { TOUR.seen = JSON.parse(localStorage.getItem('pmr-tour') || '{}') || {}; TOUR.off = !!localStorage.getItem('pmr-tour-off'); } catch (e) {}
+const tourSave = () => { try { localStorage.setItem('pmr-tour', JSON.stringify(TOUR.seen)); } catch (e) {} };
+const tourVis = el => !!el && el.getClientRects().length > 0 && !el.closest('[hidden]');
+function tourEl() {
+  if ($('#tour')) return $('#tour');
+  const d = document.createElement('div'); d.id = 'tour'; d.hidden = true;
+  d.innerHTML = '<div class="tour-ring none"></div><svg class="tour-arrow" aria-hidden="true"><path d=""/><polygon points=""/></svg>'
+    + '<div class="tour-card" role="dialog" aria-labelledby="tourT"><div class="tour-k"><span id="tourN"></span><button type="button" class="tour-skip" id="tourSkip"></button></div>'
+    + '<h3 id="tourT"></h3><p id="tourP"></p><div class="tour-acts"><span class="tour-dots" id="tourDots"></span><button type="button" class="btn small" id="tourPrev"></button><button type="button" class="btn small primary" id="tourNext"></button></div></div>';
+  document.body.appendChild(d);
+  $('#tourSkip').addEventListener('click', () => tourStop(true));
+  $('#tourPrev').addEventListener('click', () => tourGo(TOUR.i - 1));
+  $('#tourNext').addEventListener('click', () => { if (TOUR.i >= TOUR.steps.length - 1) tourStop(false); else tourGo(TOUR.i + 1); });
+  document.addEventListener('keydown', e => {
+    if ($('#tour').hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tourStop(true); }
+    else if (e.key === 'ArrowRight') $('#tourNext').click(); else if (e.key === 'ArrowLeft' && TOUR.i > 0) $('#tourPrev').click();
+  }, true);
+  const again = () => { if (!$('#tour').hidden) tourPlace(); };
+  window.addEventListener('resize', again); window.addEventListener('scroll', again, true);
+  return d;
+}
+function tourStop(skipAll) {
+  TOUR.run++; clearInterval(TOUR.timer); TOUR.key = '';
+  const d = $('#tour'); if (d) d.hidden = true;
+  if (skipAll) { TOUR.off = true; try { localStorage.setItem('pmr-tour-off', '1'); } catch (e) {} }
+}
+function tourView(key, force) { // montre la visite de cette vue (une seule fois, sauf force)
+  if (!GUEST) return;
+  const run = ++TOUR.run; clearInterval(TOUR.timer);
+  const d = $('#tour'); if (d) d.hidden = true;
+  if (TOUR.off && !force) return;
+  const mode = key === 'ride' || key === 'ultra' || key === 'taf';
+  const keys = [];
+  if (mode && (force || !TOUR.seen.intro)) keys.push('intro');
+  if (TOUR_STEPS[key] && (force || !TOUR.seen[key])) keys.push(key);
+  if (!keys.length) return;
+  const t0 = Date.now();
+  const ready = () => { // la vue est affichée et calculée
+    if (run !== TOUR.run) return;
+    const open = document.querySelector('dialog[open]');
+    const ok = mode ? (S.mode === key && S.P && S.tl && !$('#results').hidden && !document.body.classList.contains('lib-open'))
+      : (document.body.classList.contains('lib-open') && !!$('#' + key) && !$('#' + key).hidden);
+    if (ok && !open) { for (const k of keys) TOUR.seen[k] = true; tourSave(); tourRun(keys.flatMap(k => TOUR_STEPS[k])); }
+    else if (Date.now() - t0 < 20000) setTimeout(ready, 350);
+  };
+  setTimeout(ready, mode ? 600 : 450);
+}
+function tourRun(steps) {
+  const run = ++TOUR.run; TOUR.steps = steps; TOUR.i = 0; tourEl().hidden = false;
+  TOUR.timer = setInterval(() => { if (run === TOUR.run) tourPlace(); }, 1200);
+  tourGo(0);
+}
+function tourGo(i) {
+  const n = TOUR.steps.length; if (i < 0) i = 0;
+  const dir = i >= TOUR.i ? 1 : -1;
+  while (i >= 0 && i < n && TOUR.steps[i].sel && !tourVis(document.querySelector(TOUR.steps[i].sel))) i += dir; // étape sans élément visible : on saute
+  if (i < 0) i = 0;
+  if (i >= n) { tourStop(false); return; }
+  TOUR.i = i; const st = TOUR.steps[i];
+  $('#tourN').textContent = T("Étape {0} sur {1}", [i + 1, n]);
+  $('#tourSkip').textContent = T("Passer la visite");
+  $('#tourT').textContent = T(st.t); $('#tourP').textContent = T(st.p);
+  $('#tourPrev').textContent = T("Retour"); $('#tourPrev').hidden = i === 0;
+  $('#tourNext').textContent = i === n - 1 ? T("Compris") : T("Suivant");
+  $('#tourDots').innerHTML = TOUR.steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
+  const el = st.sel ? document.querySelector(st.sel) : null;
+  if (el) { const r = el.getBoundingClientRect(); const tall = r.height > innerHeight * .6; try { el.scrollIntoView({ block: tall ? 'start' : 'center', behavior: reducedMotion() ? 'auto' : 'smooth' }); } catch (e) {} }
+  tourPlace(); setTimeout(tourPlace, 350); setTimeout(tourPlace, 800);
+  try { $('#tourNext').focus({ preventScroll: true }); } catch (e) {}
+}
+function tourPlace() {
+  const d = $('#tour'); if (!d || d.hidden) return;
+  const st = TOUR.steps[TOUR.i]; if (!st) return;
+  const card = d.querySelector('.tour-card'), ring = d.querySelector('.tour-ring'), svg = d.querySelector('svg.tour-arrow');
+  const vw = innerWidth, vh = innerHeight, narrow = vw <= 700;
+  const el = st.sel ? document.querySelector(st.sel) : null, ok = tourVis(el);
+  const cw = card.offsetWidth, ch = card.offsetHeight, left0 = narrow ? 12 : 108, topMin = narrow ? 70 : 12;
+  const tb = $('.tabbar'), botMax = narrow && tb && tourVis(tb) ? vh - tb.getBoundingClientRect().height - 10 : vh - 12;
+  if (!ok) { // étape sans cible : bulle au centre
+    ring.classList.add('none'); svg.querySelector('path').setAttribute('d', ''); svg.querySelector('polygon').setAttribute('points', '');
+    card.style.left = Math.max(12, (vw - cw) / 2 + (narrow ? 0 : 48)) + 'px'; card.style.top = Math.max(topMin, (vh - ch) / 2) + 'px'; return;
+  }
+  const r0 = el.getBoundingClientRect(), pad = 6;
+  const L = Math.max(r0.left - pad, 4), T0 = Math.max(r0.top - pad, 4), R = Math.min(r0.right + pad, vw - 4), B = Math.min(r0.bottom + pad, vh - 4);
+  const vis = R > L && B > T0;
+  if (!vis) { ring.classList.add('none'); return; }
+  ring.classList.remove('none');
+  ring.style.left = L + 'px'; ring.style.top = T0 + 'px'; ring.style.width = (R - L) + 'px'; ring.style.height = (B - T0) + 'px';
+  const cy = (T0 + B) / 2, below = cy < (topMin + botMax) / 2; // cible dans la moitié haute : bulle en bas, et l'inverse
+  const cx = (L + R) / 2;
+  let top = below ? botMax - ch : topMin;
+  if (!narrow) { // grand écran : bulle près de la cible quand la place le permet
+    if (B + 24 + ch <= botMax) top = B + 24; else if (T0 - 24 - ch >= topMin) top = T0 - 24 - ch;
+  }
+  top = Math.min(Math.max(top, topMin), botMax - ch);
+  const left = Math.min(Math.max(narrow ? (vw - cw) / 2 : cx - cw / 2, left0), vw - cw - 12);
+  card.style.left = left + 'px'; card.style.top = top + 'px';
+  // flèche : du bord de la bulle vers le bord de la cible (pas s'il y a recouvrement)
+  const overlap = !(top + ch < T0 - 6 || top > B + 6);
+  const path = svg.querySelector('path'), head = svg.querySelector('polygon');
+  if (overlap) { path.setAttribute('d', ''); head.setAttribute('points', ''); return; }
+  const up = top > B; // bulle sous la cible : la flèche monte
+  const x0 = Math.min(Math.max(cx, left + 24), left + cw - 24), y0 = up ? top - 2 : top + ch + 2;
+  const x1 = Math.min(Math.max(x0, L + 20), R - 20), y1 = up ? B + 4 : T0 - 4;
+  const dx = x1 - x0, dy = y1 - y0, midy = (y0 + y1) / 2, bend = Math.abs(dx) < 8 ? 0 : dx * .15;
+  const k = 14, ang = Math.atan2(dy - 0, dx * .3 + (dy > 0 ? 1 : -1) * .001), ux = Math.cos(ang), uy = Math.sin(ang);
+  path.setAttribute('d', `M${x0} ${y0} Q${x0 + bend} ${midy} ${x1 - ux * k * .5} ${y1 - uy * k * .5}`);
+  const hx = x1, hy = y1, nx = -uy, ny = ux;
+  head.setAttribute('points', `${hx},${hy} ${hx - ux * k + nx * k * .55},${hy - uy * k + ny * k * .55} ${hx - ux * k - nx * k * .55},${hy - uy * k - ny * k * .55}`);
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-tour-replay]')) { e.preventDefault(); TOUR.off = false; try { localStorage.removeItem('pmr-tour-off'); } catch (err) {} tourView(document.body.classList.contains('lib-open') ? (PAGES.find(q => { const x = document.getElementById(q); return x && !x.hidden; }) || S.mode) : S.mode, true); }
+});
 /* ---------- compte gratuit (30/10/2026) ----------
    Nouvelles traces comptées par la fonction SQL free_trace (5 Sortie / Commute et 3 Ultra par mois UTC ; une trace déjà
    comptée ne compte plus) : à l'import, à l'ouverture d'un parcours et en passant sur une autre page avec la trace ouverte.
@@ -7281,21 +7489,25 @@ $('#plusX').addEventListener('click', () => $('#plusDlg').close());
 $('#meGuestRules').addEventListener('click', () => guestDlg(''));
 $('#meGuestEnd').addEventListener('click', () => guestEnd(false));
 // écran d'accès : « Découvrir sans compte »
+async function guestStart() { // ouvre (ou crée) le compte invité du mode démo ; lève une erreur lisible
+  const sb = await sbClient();
+  let cred = null; try { cred = JSON.parse(localStorage.getItem('pmr-guest') || 'null'); } catch (e) {}
+  if (cred && cred.email && cred.password) { const { error } = await sb.auth.signInWithPassword({ email: cred.email, password: cred.password }); if (!error) return; }
+  const r = await fetch(SB_URL + '/functions/v1/guest-start', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: '{}' });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.ok) throw new Error(j.error === 'limit' ? T("Trop de visites sans compte depuis cette connexion aujourd'hui. Crée un compte gratuit, ou réessaie demain.")
+    : T("La visite sans compte n'est pas disponible pour l'instant. Réessaie dans un moment."));
+  try { localStorage.setItem('pmr-guest', JSON.stringify({ email: j.email, password: j.password })); sessionStorage.removeItem('pmr-guest-hi'); } catch (e) {}
+  const { error } = await sb.auth.signInWithPassword({ email: j.email, password: j.password }); if (error) throw error;
+}
 $('#gateGuest').addEventListener('click', async () => {
   const b = $('#gateGuest'); b.disabled = true; gateErr('');
-  try {
-    const sb = await sbClient();
-    let cred = null; try { cred = JSON.parse(localStorage.getItem('pmr-guest') || 'null'); } catch (e) {}
-    if (cred && cred.email && cred.password) { const { error } = await sb.auth.signInWithPassword({ email: cred.email, password: cred.password }); if (!error) { location.reload(); return; } }
-    const r = await fetch(SB_URL + '/functions/v1/guest-start', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: '{}' });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok) throw new Error(j.error === 'limit' ? T("Trop de visites sans compte depuis cette connexion aujourd'hui. Crée un compte gratuit, ou réessaie demain.")
-      : T("La visite sans compte n'est pas disponible pour l'instant. Réessaie dans un moment."));
-    try { localStorage.setItem('pmr-guest', JSON.stringify({ email: j.email, password: j.password })); sessionStorage.removeItem('pmr-guest-hi'); } catch (e) {}
-    const { error } = await sb.auth.signInWithPassword({ email: j.email, password: j.password }); if (error) throw error;
-    location.reload();
-  } catch (err) { gateErr(err.message || String(err)); b.disabled = false; }
+  try { await guestStart(); location.reload(); } catch (err) { gateErr(err.message || String(err)); b.disabled = false; }
 });
+async function demoBoot() { // démo en accès libre : pas d'écran de connexion, le compte invité s'ouvre tout seul
+  try { await guestStart(); location.reload(); }
+  catch (err) { const m = $('#demoBootMsg'); if (m) { m.textContent = err.message || String(err); } const l = $('#demoBootLoad'); if (l) l.hidden = true; const a = $('#demoBootBack'); if (a) a.hidden = false; }
+}
 accessCheck();
 // Dernière source météo utilisée sur le parcours courant (colonne routes.wx, lue par la carte des GPX de la page Admin)
 function routeWxNote(used) {
@@ -7605,6 +7817,7 @@ function pageOpen(pid, tabSel) {
   document.body.classList.add('lib-open'); document.getElementById(pid).scrollTop = 0;
   for (const a of document.querySelectorAll('.tabbar [aria-current]')) a.removeAttribute('aria-current');
   const tb = tabSel && $(tabSel); if (tb) tb.setAttribute('aria-current', 'page');
+  if (GUEST && typeof tourView === 'function') tourView(pid);
 }
 function pageClose() {
   if (!PAGES.some(q => { const el = document.getElementById(q); return el && !el.hidden; })) return;
@@ -8986,7 +9199,7 @@ function pmCanWrite() { return !GUEST && hasSbToken(); }
 function pmGuestSheet() {
   pmSheet(`<div class="pm-sh"><h3 id="pmSheetTitle">${escH(T("Avec un compte gratuit"))}</h3><button type="button" class="pm-x" data-pm-close aria-label="${escH(T("Fermer"))}">✕</button></div>
     <p class="pm-msg">${escH(T("Crée ton compte pour ajouter des points, laisser des avis et des photos. La carte reste consultable en démo."))}</p>
-    <div class="pm-acts"><button type="button" class="btn primary" data-guest-up>${escH(T("Créer mon compte gratuit"))}</button></div>`);
+    <div class="pm-acts"><button type="button" class="btn primary" data-guest-up>${escH(GUP())}</button></div>`);
 }
 function pmInfoRows(it) {
   const rows = [];
