@@ -4,7 +4,8 @@ window.PMR_I18N = {
   en: {
     /* démo en accès libre et visite guidée (08/11/2026) */
     "Bienvenue dans la démo de Sillage": "Welcome to the Sillage demo",
-    "Tu essaies Sillage sur des traces d'exemple, avec la vraie météo des prochains jours. Cette visite te montre l'essentiel en une minute.": "You are trying Sillage on sample routes, with the real forecast for the next days. This tour shows the essentials in one minute.",
+    "Tu essaies Sillage sur des traces d'exemple, avec une météo d'exemple (pas une prévision). Cette visite te montre l'essentiel en une minute.": "You are trying Sillage on sample routes, with sample weather (not a forecast). This tour shows the essentials in one minute.",
+    "Météo d'exemple (pas une prévision)": "Sample weather (not a forecast)",
     "Trois façons de rouler": "Three ways to ride",
     "Sortie pour une journée, Ultra pour plusieurs jours, Commute pour ton trajet quotidien. Chaque page a sa propre trace d'exemple.": "Ride for a day out, Ultra for several days, Commute for your daily trip. Each page has its own sample route.",
     "Tes autres pages": "Your other pages",
@@ -57,7 +58,7 @@ window.PMR_I18N = {
     "Suivant": "Next",
     "Compris": "Got it",
     "Démo": "Demo",
-    "Sillage sur des traces d'exemple, avec la vraie météo.": "Sillage on sample routes, with the real forecast.",
+    "Sillage sur des traces d'exemple. Météo d'exemple, pas une prévision.": "Sillage on sample routes. Sample weather, not a forecast.",
     "Rejouer la visite": "Replay the tour",
     "← Retour au site": "← Back to the site",
     "Me prévenir de la sortie de l'app": "Tell me when the app is out",

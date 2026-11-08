@@ -2840,9 +2840,8 @@ const locModel = k => k === 'met' ? 'metno_seamless' : OM_MODELS[k] ? OM_MODELS[
 const omGaps = wx => wx.some(L => { let n = 0; for (let j = 0; j < L.n; j++) if (isNaN(L.temp[j])) n++; return n > 0; });
 const MB_PENDING = new Map();
 const MB_USAGE = 'pmr-mb-usage', MB_USAGE_TTL = 10 * 60e3;
-const DEMO_MET = { on: false }; // démo en ligne : Open-Meteo (clé payante, par le relais) ; si le relais refuse (plafond des invités, panne), MET Norway pour le reste de la visite
 function wxSrc() {
-  if (LIM && !(DEMO_WEB && !DEMO_MET.on)) return 'met'; // mode démo et compte gratuit : MET Norway, gratuit pour nous
+  if (LIM) return 'met'; // mode démo et compte gratuit : MET Norway, gratuit pour nous
   let v = ''; try { v = localStorage.getItem('pmr-wxsrc') || ''; } catch (e) {}
   if (v === 'mb' && MB_ADMIN) return 'mb'; // meteoblue : comptes admin seulement (31/10/2026)
   if (WX_KEYS.includes(v)) return v; // meteoblue retiré pour tous le 29/10/2026 : un ancien choix « mb » d'un non-admin revient au plus précis selon le lieu
@@ -3085,18 +3084,94 @@ async function fetchMET() {
   return { wx: wxSmp().map(s => mbSample(s, pts, L)), points: pts.length, at: Math.min(...pts.map(p => cache[metKey(p)].at)) };
 }
 
+/* ---------- météo d'exemple de la démo en ligne (08/11/2026, choix d'Antoine : des scénarios réalistes et contrastés, pas la vraie météo) ----------
+   Aucun appel réseau : demoWx() fabrique, pour chaque point d'échantillonnage, des séries horaires de même forme que fetchOM.
+   Les scénarios sont accrochés à l'heure de départ proposée (DEMO_START) pour que le résultat soit le même quel que soit le jour de la visite ;
+   changer l'heure de départ change le résultat (créneau sec, etc.). Un scénario par trace d'exemple pour le jour de départ,
+   des journées types (DEMO_DAYS) pour les autres jours. */
+const DEMO_START = (() => { // départ proposé : l'heure de la visite (arrondie), entre 7 h et 15 h ; sinon demain 9 h (ou aujourd'hui 9 h le matin tôt)
+  const n = new Date(), d = new Date(n); let h = n.getHours() + (n.getMinutes() >= 30 ? 1 : 0);
+  if (h >= 16) { d.setDate(d.getDate() + 1); h = 9; } else if (h < 7) h = 9;
+  d.setHours(h, 0, 0, 0); return d;
+})();
+const DEMO_TAF_D0 = (() => { const n = new Date(), d = new Date(n); d.setHours(0, 0, 0, 0); if (n.getHours() * 60 + n.getMinutes() >= 17 * 60 + 30) d.setDate(d.getDate() + 1); return d; })();
+const dsm = (x, a, b) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const dwin = (x, a, b, e = 0.6) => dsm(x, a - e, a + e) * (1 - dsm(x, b - e, b + e)); // 0 → 1 → 0 entre a et b (heures)
+const dnoise = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v) - 0.5; }; // bruit déterministe, -0,5 à 0,5
+// Journées types : t = écart de température, pr = pluie (mm/h, fonction de l'heure locale), cc, ws, gu, rel (angle d'où vient le vent par rapport au sens de la marche : 0 = de face, 180 = dans le dos), sun
+const DEMO_DAYS = {
+  sun:    { t: 0,  cc: 12, ws: 9,  gu: 20, rel: 150, sun: .9,  pr: () => 0 },
+  cloud:  { t: -2, cc: 78, ws: 12, gu: 26, rel: 90,  sun: .2,  pr: () => 0 },
+  front:  { t: -3, cc: 95, ws: 20, gu: 38, rel: 30,  sun: 0,   pr: h => 1.8 * dwin(h, 9, 18, 1.5) },
+  wind:   { t: -6, cc: 45, ws: 32, gu: 62, rel: 20,  sun: .5,  pr: () => 0 },
+  storm:  { t: 3,  cc: 40, ws: 14, gu: 30, rel: 120, sun: .7,  pr: h => 7 * dwin(h, 16.5, 19, .5), storm: true },
+  mild:   { t: 1,  cc: 60, ws: 10, gu: 22, rel: 120, sun: .35, pr: () => 0 },
+  amshower: { t: -1, cc: 88, ws: 14, gu: 30, rel: 60, sun: .1, pr: h => 1.5 * dwin(h, 6.5, 9.5, .5) },
+  shower: { t: -1, cc: 80, ws: 15, gu: 34, rel: 60,  sun: .2,  pr: h => 1.4 * dwin(h, 10, 11.5, .4) + 1.8 * dwin(h, 14, 16, .4) },
+};
+// Une journée d'Ultra (jours 0, 1, 2…) : soleil, front pluvieux, jour froid et venteux, soleil, orage en fin d'après-midi, couvert doux, soleil, averses
+const DEMO_ULTRA = ['sun', 'front', 'wind', 'sun', 'storm', 'mild', 'sun', 'shower'];
+const DEMO_GENERIC = ['sun', 'cloud', 'shower', 'sun', 'wind', 'mild', 'front', 'sun', 'cloud'];
+// Jour de départ de chaque trace d'exemple : fonction (τ = heures depuis le départ, x = position 0 à 1 sur la trace, lap = 0 aller / 1 retour) → même forme qu'une journée type
+const DEMO_D0 = {
+  'demo-s65': (tau, x) => ({ t: 0, cc: 10, ws: x < .5 ? 10 : 9, gu: x < .5 ? 20 : 21, rel: x < .5 ? 170 : 55, sun: .95, pr: () => 0, alt: 3 }), // belles conditions, vent dans le dos à l'aller, un peu de face au retour
+  'demo-s60': (tau, x) => { // froid, averses à partir d'1 h 30, rafales ; éclaircie au bout de 5 h
+    const w = dwin(tau, 1.5, 5.3, .5), cl = dsm(tau, 4.5, 6.5);
+    return { t: -6.5 + 3.5 * cl, cc: 92 - 55 * cl, ws: 17 + 9 * w - 6 * cl, gu: 30 + 30 * w - 14 * cl, rel: x < .65 ? 25 : 80, sun: .1 + .6 * cl, alt: 3,
+      pr: () => 2.6 * w * (.55 + .45 * Math.sin(Math.PI * clamp(x * 1.4 + .1, 0, 1))) };
+  },
+  'demo-s112': (tau, x) => ({ t: 0, cc: 4, ws: x < .45 ? 14 : 25, gu: x < .45 ? 28 : 44, rel: x < .45 ? 110 : 10, sun: 1, pr: () => 0, alt: 2 }), // chaud, vent de face sur la seconde moitié
+  'taf': (tau, x, lap) => ({ t: lap ? 1.5 : 0, cc: lap ? 94 : 35, ws: lap ? 25 : 9, gu: lap ? 46 : 18, rel: lap ? 8 : 175, sun: lap ? 0 : .6, pr: h => (lap ? 3 : 0) * dwin(h, 15.5, 21, .6) }), // aller au sec, retour sous la pluie et face au vent
+};
+const DEMO_TEMP = { 'demo-s65': [12.5, 4.5], 'demo-s60': [10.5, 3], 'demo-s112': [25.5, 6], 'demo-u1128': [15, 6], taf: [10, 3.5] }; // température moyenne et demi-amplitude du jour de départ (pic vers 15 h)
+function demoWx(from, to) {
+  const smp = wxSmp(), P = wxTrk(), id = S.mode === 'taf' ? 'taf' : (LIB.current || 'demo-s65');
+  const base = S.mode === 'taf' ? DEMO_TAF_D0 : new Date(DEMO_START.getFullYear(), DEMO_START.getMonth(), DEMO_START.getDate());
+  const T0 = S.mode === 'taf' ? DEMO_TAF_D0.getTime() : DEMO_START.getTime();
+  const [mean, amp] = DEMO_TEMP[id] || [13, 4];
+  const t0 = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate()) / 1000;
+  const n = Math.max(24, Math.round((Date.UTC(to.getFullYear(), to.getMonth(), to.getDate()) / 1000 - t0) / 3600) + 24);
+  const m = Math.max(1, Math.round(P.n * 0.6 / P.total)); // ~600 m de chaque côté pour le sens de la marche
+  return smp.map((s, k) => {
+    const x = smp.length > 1 ? k / (smp.length - 1) : 0, lap = P.pts[s.i] && P.pts[s.i].lap ? 1 : 0;
+    const a = P.pts[Math.max(0, s.i - m)], b = P.pts[Math.min(P.n - 1, s.i + m)];
+    const hd = (Math.atan2(Math.sin((b.lon - a.lon) * RAD) * Math.cos(b.lat * RAD), Math.cos(a.lat * RAD) * Math.sin(b.lat * RAD) - Math.sin(a.lat * RAD) * Math.cos(b.lat * RAD) * Math.cos((b.lon - a.lon) * RAD)) / RAD + 360) % 360;
+    const L = { t0, n, temp: new Float32Array(n), app: new Float32Array(n), pr: new Float32Array(n), prob: new Float32Array(n), code: new Float32Array(n),
+      cc: new Float32Array(n), ws: new Float32Array(n), wd: new Float32Array(n), gust: new Float32Array(n), day: new Float32Array(n), sun: new Float32Array(n) };
+    const dayCache = {};
+    for (let j = 0; j < n; j++) {
+      const ms = (t0 + j * 3600) * 1000, dt = new Date(ms), lh = dt.getHours() + dt.getMinutes() / 60;
+      const dkey = dt.getFullYear() * 400 + dt.getMonth() * 32 + dt.getDate();
+      const sr = dayCache[dkey] || (dayCache[dkey] = sunRiseSet(ms, s.lat, s.lon) || { rise: ms - 6 * 3600e3, set: ms + 6 * 3600e3 });
+      const dn = Math.round((new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()) - base) / 864e5), tau = (ms - T0) / 3600e3;
+      let r, tOff = 0;
+      if (dn === 0 && DEMO_D0[id]) r = DEMO_D0[id](tau, x, lap);
+      else if (id === 'demo-u1128') { r = DEMO_DAYS[DEMO_ULTRA[((dn % 8) + 8) % 8]]; tOff = (44 - s.lat) * .35; }
+      else if (id === 'taf') r = DEMO_DAYS[['sun', 'cloud', 'amshower', 'sun', 'mild'][((dn % 5) + 5) % 5]];
+      else r = DEMO_DAYS[DEMO_GENERIC[((dn % DEMO_GENERIC.length) + DEMO_GENERIC.length) % DEMO_GENERIC.length]];
+      const nz = dnoise(k, j);
+      // température : cycle du jour (pic à 15 h), écart de la journée type, un peu plus froid en altitude
+      let temp = mean + amp * Math.cos(2 * Math.PI * (lh - 15) / 24) + (r.t || 0) + tOff - (r.alt || 0) * Math.sin(Math.PI * x) * 0.5 + nz * .6;
+      const pr = Math.max(0, (r.pr ? r.pr(lh) : 0) * (1 + nz * .5));
+      const ws = Math.max(1, r.ws * (1 + nz * .25)), gu = Math.max(ws, r.gu * (1 + nz * .2));
+      const cc = clamp(r.cc + (pr > .2 ? 4 : 0) + nz * 12, 0, 100);
+      const isDay = ms >= sr.rise && ms <= sr.set ? 1 : 0;
+      const code = pr >= 5 ? (r.storm ? 95 : 65) : pr >= 1.5 ? 63 : pr >= .3 ? (r.storm || (r.pr && cc < 90) ? 80 : 61) : cc >= 85 ? 3 : cc >= 45 ? 2 : cc >= 15 ? 1 : 0;
+      L.temp[j] = temp; L.pr[j] = pr; L.cc[j] = cc; L.ws[j] = ws; L.gust[j] = gu; L.day[j] = isDay; L.code[j] = code;
+      L.wd[j] = (hd + r.rel + nz * 14 + 360) % 360; // d'où vient le vent = sens de la marche + angle de la journée type
+      L.app[j] = temp > 24 ? temp + (temp - 24) * .25 - ws * .03 : temp - ws * .1 - (pr > .3 ? 1.5 : 0) - (ws > 20 ? (ws - 20) * .08 : 0); // ressenti : plus chaud que l'air en pleine chaleur, refroidi par le vent et la pluie sinon
+      L.prob[j] = pr > .1 ? Math.min(100, 55 + pr * 25) : cc > 70 ? 20 : 4;
+      L.sun[j] = isDay ? clamp(r.sun * (1 - cc / 140) + nz * .1, 0, 1) * 3600 : 0;
+    }
+    return L;
+  });
+}
+
 // Prévisions de la source choisie. meteoblue (7 jours), AROME (4 jours) et MET Norway (9 jours) : au-delà de leur
 // horizon, Open-Meteo prend le relais (S.wxAlt) ; en cas d'échec, tout passe sur Open-Meteo avec une note.
 async function getWeather(src, from, to, today) {
-  if (DEMO_WEB && !DEMO_MET.on) { // démo en ligne : météo Open-Meteo payante, repli MET Norway
-    try { return await getWeather0(src, from, to, today); }
-    catch (e) { DEMO_MET.on = true; console.warn('démo : repli sur MET Norway', e && e.message); }
-    src = 'met';
-  }
-  return getWeather0(src, from, to, today);
-}
-async function getWeather0(src, from, to, today) {
-  if (LIM && (!DEMO_WEB || DEMO_MET.on)) { // mode démo et compte gratuit : MET Norway seulement (gratuit), sans relais Open-Meteo
+  if (DEMO_WEB) return { wx: demoWx(from, to), alt: null, used: 'demo', info: null }; // démo en ligne : météo d'exemple, aucun appel réseau
+  if (LIM) { // mode démo et compte gratuit : MET Norway seulement (gratuit), sans relais Open-Meteo
     const end = new Date(today); end.setDate(end.getDate() + WX_DAYS.met - 1);
     if (from > end) throw new Error(T("la météo couvre les {0} prochains jours.", [WX_DAYS.met]));
     const r = await fetchMET(); return { wx: r.wx, alt: null, used: 'met', info: r };
@@ -3132,7 +3207,8 @@ const OM_LINK = '<a href="https://open-meteo.com" target="_blank" rel="noopener"
 const WX_LINK = { mb: MB_LINK, om: OM_LINK,
   arome: T("<a href=\"https://meteofrance.com\" target=\"_blank\" rel=\"noopener\">Météo-France</a> (AROME, ARPEGE) via {0}", [OM_LINK]),
   met: '<a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (CC BY 4.0)' };
-const WX_TXT = { mb: 'meteoblue', om: 'Open-Meteo.com (CC BY 4.0)', arome: T("Météo-France (AROME, ARPEGE) via Open-Meteo.com (CC BY 4.0)"), met: 'MET Norway (CC BY 4.0)' };
+const WX_TXT = { mb: 'meteoblue', om: 'Open-Meteo.com (CC BY 4.0)', arome: T("Météo-France (AROME, ARPEGE) via Open-Meteo.com (CC BY 4.0)"), met: 'MET Norway (CC BY 4.0)', demo: T("Météo d'exemple (pas une prévision)") };
+WX_LINK.demo = T("Météo d'exemple (pas une prévision)");
 for (const [k, m] of Object.entries(OM_MODELS)) if (k !== 'arome') {
   WX_TXT[k] = m.org + ' (' + m.mdl + ') via Open-Meteo.com (CC BY 4.0)';
   WX_LINK[k] = '<a href="' + m.url + '" target="_blank" rel="noopener">' + m.org + '</a> (' + m.mdl + ') via ' + OM_LINK;
@@ -5206,9 +5282,8 @@ function initInputs() {
   tafPerDayUI();
   $('#time').value = def.time;
   if (S.mode === 'ride') { let rt = ''; try { rt = sessionStorage.getItem('pmr-ride-time') || ''; sessionStorage.removeItem('pmr-ride-time'); } catch (e) {} if (rt) $('#time').value = rt; }
-  if (DEMO_WEB && S.mode !== 'taf') { // démo en ligne : la météo d'aujourd'hui, à l'heure de la visite (arrondie à l'heure la plus proche)
-    const nw = new Date(), h = Math.min(23, nw.getHours() + (nw.getMinutes() >= 30 ? 1 : 0)), p2 = n => String(n).padStart(2, '0');
-    $('#date').value = ymd(nw); $('#time').value = p2(h) + ':00'; }
+  if (DEMO_WEB && S.mode !== 'taf') { // démo en ligne : départ proposé de la météo d'exemple (l'heure de la visite, ou demain 9 h le soir)
+    $('#date').value = ymd(DEMO_START); $('#time').value = String(DEMO_START.getHours()).padStart(2, '0') + ':00'; }
   $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = clamp(Math.round(+def.pause || 0), 0, 40);
   setSeg('#pauseSeg', def.pauseMode === 'min' ? 'min' : 'pct');
   $('#pauseMin').value = isFinite(+def.pauseMin) && def.pauseMin !== '' && def.pauseMin != null ? clamp(Math.round(+def.pauseMin), 0, 120) : 10;
@@ -7274,7 +7349,7 @@ const GUP = () => T(DEMO_WEB ? "Me prévenir de la sortie de l'app" : "Créer mo
 function guestBand() {
   if (!GUEST) return;
   if (DEMO_WEB) {
-    $('#guestBand').innerHTML = `<span><b>${escH(T("Démo"))}</b> · ${escH(T("Sillage sur des traces d'exemple, avec la vraie météo."))}</span>`
+    $('#guestBand').innerHTML = `<span><b>${escH(T("Démo"))}</b> · ${escH(T("Sillage sur des traces d'exemple. Météo d'exemple, pas une prévision."))}</span>`
       + `<span class="gb-acts"><button type="button" class="lnk" data-tour-replay>${escH(T("Rejouer la visite"))}</button><a class="lnk" href="/">${escH(T("← Retour au site"))}</a></span>`;
     return;
   }
@@ -7308,7 +7383,7 @@ async function guestEnd(toSignup) { // quitte la démo ; vers la création de co
    Une étape dont l'élément n'existe pas ou n'est pas visible (téléphone / ordinateur) est sautée. */
 const TOUR_STEPS = {
   intro: [
-    { t: "Bienvenue dans la démo de Sillage", p: "Tu essaies Sillage sur des traces d'exemple, avec la vraie météo des prochains jours. Cette visite te montre l'essentiel en une minute." },
+    { t: "Bienvenue dans la démo de Sillage", p: "Tu essaies Sillage sur des traces d'exemple, avec une météo d'exemple (pas une prévision). Cette visite te montre l'essentiel en une minute." },
     { sel: '.top .modes', t: "Trois façons de rouler", p: "Sortie pour une journée, Ultra pour plusieurs jours, Commute pour ton trajet quotidien. Chaque page a sa propre trace d'exemple." },
     { sel: '.tabbar', t: "Tes autres pages", p: "Mes parcours, la Carte des points utiles, Mes sorties et Moi : touche-les pour les découvrir, une courte explication t'attend à chaque fois." }
   ],
