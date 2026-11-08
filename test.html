@@ -5196,6 +5196,9 @@ function initInputs() {
   tafPerDayUI();
   $('#time').value = def.time;
   if (S.mode === 'ride') { let rt = ''; try { rt = sessionStorage.getItem('pmr-ride-time') || ''; sessionStorage.removeItem('pmr-ride-time'); } catch (e) {} if (rt) $('#time').value = rt; }
+  if (DEMO_WEB && S.mode !== 'taf') { // démo en ligne : la météo d'aujourd'hui, à l'heure de la visite (arrondie à l'heure la plus proche)
+    const nw = new Date(), h = Math.min(23, nw.getHours() + (nw.getMinutes() >= 30 ? 1 : 0)), p2 = n => String(n).padStart(2, '0');
+    $('#date').value = ymd(nw); $('#time').value = p2(h) + ':00'; }
   $('#speed').value = def.speed; $('#vam').value = def.vam; $('#pause').value = clamp(Math.round(+def.pause || 0), 0, 40);
   setSeg('#pauseSeg', def.pauseMode === 'min' ? 'min' : 'pct');
   $('#pauseMin').value = isFinite(+def.pauseMin) && def.pauseMin !== '' && def.pauseMin != null ? clamp(Math.round(+def.pauseMin), 0, 120) : 10;
