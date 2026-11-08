@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<script>try{if(window.SILLAGE_DEMO_WEB||/[?&]demoweb=1\b/.test(location.search))document.documentElement.classList.add('demo-web');}catch(e){}</script>
+<script>try{if(window.SILLAGE_DEMO_WEB||/[?&]demoweb=1\b/.test(location.search))document.documentElement.classList.add('demo-web');window.SB_TOKEN_NAME=document.documentElement.classList.contains('demo-web')?'sb-sillage-demo-auth-token':'sb-bsypkdsnhiepvcnhmfsm-auth-token';}catch(e){window.SB_TOKEN_NAME='sb-bsypkdsnhiepvcnhmfsm-auth-token';}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* thème choisi (clair / sombre), sinon celui de l'appareil ; appliqué avant l'affichage */try{var t=localStorage.getItem('pmr-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -1747,11 +1747,13 @@ html.demo-web body.gated #gate{display:none!important}
 @media (max-width:700px){#tour .tour-card{border-radius:16px 16px 14px 14px}}
 @media (prefers-reduced-motion:reduce){#tour .tour-ring{transition:none}}
 html[data-motion="reduce"] #tour .tour-ring{transition:none}
+/* démo en accès libre : copie très réduite de l'app, sans compte ni connexion */
+html.demo-web #tabOut,html.demo-web #tabMe,html.demo-web .rail-admin,html.demo-web #pmAdd,html.demo-web #outAll,html.demo-web .lp-imp,html.demo-web label.imp-btn,html.demo-web #loginLink,html.demo-web #logoutLink,html.demo-web #meDel,html.demo-web #alBox,html.demo-web #exportImg,html.demo-web #exportImg2,html.demo-web .adm{display:none!important}
 </style>
 </head>
 <body>
 <script>/* retour de Google / Apple / lien de connexion par e-mail (04/11/2026) : jetons gardés pour accessCheck, adresse nettoyée avant le script principal */try{var h0=location.hash;if(/access_token=|error_description=/.test(h0)&&!/type=recovery/.test(h0)){sessionStorage.setItem('pmr-auth-ret',h0.slice(1));history.replaceState(null,'',location.pathname+location.search)}}catch(e){}</script>
-<script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
+<script>/* accès réservé : sans session, écran de connexion ; ?invite=CODE garde le code du lien testeur */try{var m=location.search.match(/[?&]invite=([\w-]{4,40})/);if(m)localStorage.setItem('pmr-invite',m[1]);if(!localStorage.getItem(window.SB_TOKEN_NAME))document.body.classList.add('public','gated')}catch(e){document.body.classList.add('public','gated')}</script>
 <div class="gate gate2" id="gate" data-step="home">
   <div class="gate-wrap">
     <div class="gate-band">
@@ -2538,8 +2540,8 @@ const S = { P: null, samples: [], wx: null, wxKey: '', tl: null, metric: 'wind',
 //   Mes sorties / alertes / vent animé réservés à Sillage.cc +, export avec filigrane ;
 // - Sillage.cc + (app_users.plan = 'full', ou plus_until dans le futur, ou admin) : tout.
 // LIM = démo ou gratuit (règles communes : MET Norway, 3 jours de vélotaf, pas de vent animé).
-var GUEST = (() => { try { return !!localStorage.getItem('pmr-guest') && !!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'); } catch (e) { return false; } })();
-var FREE = (() => { try { return !GUEST && localStorage.getItem('pmr-plan') === 'free' && !!localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token'); } catch (e) { return false; } })();
+var GUEST = (() => { try { return !!localStorage.getItem('pmr-guest') && !!localStorage.getItem(window.SB_TOKEN_NAME); } catch (e) { return false; } })();
+var FREE = (() => { try { return !GUEST && localStorage.getItem('pmr-plan') === 'free' && !!localStorage.getItem(window.SB_TOKEN_NAME); } catch (e) { return false; } })();
 var LIM = GUEST || FREE;
 if (GUEST) document.body.classList.add('guest');
 // Démo en accès libre sur le site (sillage-ride.eu/demo/, 08/11/2026) : la page injecte window.SILLAGE_DEMO_WEB ; sans compte, un
@@ -5309,7 +5311,7 @@ function sbClient() {
   if (SBP) return SBP;
   return SBP = (async () => {
     if (!window.supabase) await loadScript(SB_JS);
-    const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: window.SB_TOKEN_NAME } });
     // lien « Mot de passe oublié ? » : Supabase ouvre une session de récupération, on demande le nouveau mot de passe
     sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') pwOpen(true); });
     return sb;
@@ -6746,7 +6748,7 @@ $('#planRows').addEventListener('change', e => {
 // dans ton compte (table Supabase `routes`) pour le retrouver sur tes autres appareils.
 // Points simplifiés (un point tous les ~5 m, 5 décimales, altitude au décimètre). Le dernier parcours se rouvre au démarrage.
 const LIB = { list: [], current: '', db: null, delArm: 0 };
-const SB_TOKEN_KEY = 'sb-bsypkdsnhiepvcnhmfsm-auth-token';
+const SB_TOKEN_KEY = window.SB_TOKEN_NAME;
 const hasSbToken = () => { try { return !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) { return false; } };
 // Mesure d'audience de la version publique (table Supabase `pmr_visits`, ajout seul pour les visiteurs, lecture
 // réservée au propriétaire). Identifiant aléatoire gardé dans le navigateur, sans cookie ; la fonction pmr-track ajoute une
@@ -7775,7 +7777,7 @@ async function lpFillThumbs() { // miniatures manquantes : depuis le navigateur,
 }
 function lpRender() {
   const t = lpThumbs(), n = LIB.list.length, q = fold($('#lpQ').value).trim().split(/\s+/).filter(Boolean);
-  $('#lpCount').textContent = GUEST ? T("Traces d'exemple du mode démo. Crée ton compte gratuit pour importer les tiennes.")
+  $('#lpCount').textContent = GUEST ? (document.documentElement.classList.contains('demo-web') ? T("Traces d'exemple du mode démo.") : T("Traces d'exemple du mode démo. Crée ton compte gratuit pour importer les tiennes."))
     : n ? T('{0} parcours ', [n]) + (hasSbToken() ? T("dans ton compte, sur tous tes appareils.") : T("sur ce navigateur.")) + (FREE ? ' ' + T("Le compte gratuit en garde {0} au plus.", [FREE_MAX_ROUTES]) : '') : '';
   let items = LIB.list.filter(r => q.every(w => fold(r.name).includes(w)));
   // dossiers (06/11/2026) : compte par dossier sur les pastilles, liste filtrée sur le dossier choisi
@@ -8218,7 +8220,7 @@ function meSet(m, k, v) {
   try { localStorage.setItem(ME_KEY[m], JSON.stringify(o)); } catch (e) {}
 }
 function meRender() {
-  let who = ''; try { const t = JSON.parse(localStorage.getItem('sb-bsypkdsnhiepvcnhmfsm-auth-token') || 'null'); who = t && t.user ? t.user.email : ''; } catch (e) {}
+  let who = ''; try { const t = JSON.parse(localStorage.getItem(window.SB_TOKEN_NAME) || 'null'); who = t && t.user ? t.user.email : ''; } catch (e) {}
   if (GUEST) who = '';
   if (FREE) { const L = FT.left; $('#mePlanTxt').textContent = (L ? T("Nouvelles traces restantes ce mois-ci : {0} Sortie ou Commute, {1} Ultra (compteur remis à zéro le {2}). ", [L.std_left, L.ultra_left, ftResetTxt(L.reset)]) : '')
     + T("Le compte gratuit garde {0} parcours, avec la météo MET Norway sur 9 jours.", [FREE_MAX_ROUTES]); if (!L && !FT.asked) { FT.asked = 1; freeLeft().then(x => { if (x) meRender(); }); } }
