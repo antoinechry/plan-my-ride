@@ -2849,10 +2849,12 @@ function wxSrc() {
 // meteoblue réservé aux admins depuis le 31/10/2026 : option « meteoblue (admin) » ajoutée au menu après Open-Meteo.
 // Le statut admin est gardé dans le navigateur (pmr-mb-admin) pour le premier calcul, puis confirmé par accessCheck ;
 // la fonction serveur `meteoblue` refuse de toute façon les autres comptes.
-let MB_ADMIN = false; try { MB_ADMIN = localStorage.getItem('pmr-mb-admin') === '1' && !window.SILLAGE_NATIVE; } catch (e) {} // pas d'outils admin dans l'app des stores (07/11/2026)
+const DEMO_NOADM = !!window.SILLAGE_DEMO_WEB || /[?&]demoweb=1/.test(location.search); // démo en ligne : jamais d'outils admin (08/11/2026)
+let MB_ADMIN = false; try { MB_ADMIN = localStorage.getItem('pmr-mb-admin') === '1' && !window.SILLAGE_NATIVE && !DEMO_NOADM; } catch (e) {} // pas d'outils admin dans l'app des stores (07/11/2026)
 function mbAdmin(on) {
+  if (DEMO_NOADM) on = false;
   MB_ADMIN = !!on;
-  try { on ? localStorage.setItem('pmr-mb-admin', '1') : localStorage.removeItem('pmr-mb-admin'); } catch (e) {}
+  if (!DEMO_NOADM) try { on ? localStorage.setItem('pmr-mb-admin', '1') : localStorage.removeItem('pmr-mb-admin'); } catch (e) {}
   const sel = $('#wxSrcSel'); if (!sel) return;
   let o = sel.querySelector('option[value="mb"]');
   if (on && !o) { o = document.createElement('option'); o.value = 'mb'; o.textContent = T("meteoblue (admin)"); (sel.querySelector('option[value="om"]') || sel.lastElementChild).after(o); }
@@ -7054,7 +7056,7 @@ async function accessCheck() {
       return;
     }
     document.body.classList.remove('gated');
-    const ADM = !!data.is_admin && !window.SILLAGE_NATIVE; // l'administration se fait depuis le site web, pas depuis l'app
+    const ADM = !!data.is_admin && !window.SILLAGE_NATIVE && !DEMO_NOADM; // l'administration se fait depuis le site web, pas depuis l'app
     document.body.classList.toggle('admin', ADM);
     { const was = wxSrc(); mbAdmin(ADM); if (wxSrc() !== was) { S.wxInfo = null; S.wxFallback = ''; renderWxSrc(); if (S.P) schedule(); } trendUpdate(); }
     if (guest) guestHello();
