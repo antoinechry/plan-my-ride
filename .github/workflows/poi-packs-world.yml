@@ -1,0 +1,145 @@
+# Packs de points utiles pour le reste du monde (tout sauf l'Europe, déjà faite par poi-packs.yml, et sauf la Chine).
+# Liste des zones tirée de l'index de Geofabrik : un pack par pays (par État pour les États-Unis).
+# Même chaîne que poi-packs.yml : osmium tags-filter (tools/poi-packs/filter.txt) → osmium export → tools/poi-packs/build.py.
+# Publiés dans la même release « poi-packs » ; index.json est fusionné avec celui déjà publié.
+# Données © OpenStreetMap contributors, licence ODbL.
+name: Packs de points OSM (monde)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/poi-packs-world.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: poi-world
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      batches: ${{ steps.list.outputs.batches }}
+    steps:
+      - id: list
+        run: |
+          curl -fsSL --retry 3 -o idx.json https://download.geofabrik.de/index-v1-nogeom.json
+          python3 - <<'EOF'
+          import json, os
+          feats = [f["properties"] for f in json.load(open("idx.json"))["features"]]
+          by = {p["id"]: p for p in feats}
+          CONT = {"africa", "asia", "australia-oceania", "central-america", "north-america", "south-america"}
+          DONE = {"canary-islands", "morocco", "algeria", "tunisia", "libya", "egypt"}  # déjà dans la release
+          SKIP = {"china"} | DONE
+          SPLIT = {"us"}  # trop gros d'un bloc : un pack par État
+          out = []
+          for p in feats:
+              par = p.get("parent")
+              if p["id"] in ("russia", "antarctica") and not par or par in CONT:
+                  if p["id"] in SKIP: continue
+                  if p["id"] in SPLIT:
+                      out += [c for c in feats if c.get("parent") == p["id"]]
+                  else:
+                      out.append(p)
+          rows = []
+          for p in out:
+              iso = p.get("iso3166-1:alpha2") or []
+              if isinstance(iso, str): iso = [iso]
+              par = p.get("parent")
+              cc = ("US-" + p["id"].upper()[:20]) if par == "us" else ("-".join(iso) if iso else p["id"])
+              rows.append({"id": p["id"], "name": p.get("name", p["id"]), "cc": cc, "url": p["urls"]["pbf"],
+                           "slug": ("us-" if par == "us" else "") + p["id"]})
+          rows.sort(key=lambda r: r["slug"])
+          n = 4
+          batches = [{"b": i // n, "regions": rows[i:i + n]} for i in range(0, len(rows), n)]
+          print(len(rows), "zones,", len(batches), "lots")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as o:
+              o.write("batches=" + json.dumps(batches, separators=(",", ":")) + "\n")
+          EOF
+
+  pack:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 4   # pas plus de 4 téléchargements à la fois chez Geofabrik
+      matrix:
+        batch: ${{ fromJSON(needs.plan.outputs.batches) }}
+    name: lot ${{ matrix.batch.b }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Outils
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+      - name: Packs du lot
+        env:
+          REGIONS: ${{ toJSON(matrix.batch.regions) }}
+        run: |
+          mkdir -p out
+          echo "$REGIONS" > regions.json
+          python3 - <<'EOF'
+          import json, subprocess, os, sys
+          for r in json.load(open("regions.json")):
+              slug, cc = r["slug"], r["cc"]
+              print("::group::" + r["name"], flush=True)
+              try:
+                  subprocess.run(["curl", "-fsSL", "--retry", "3", "-o", "in.osm.pbf", r["url"]], check=True)
+                  subprocess.run(["osmium", "tags-filter", "in.osm.pbf", "-e", "tools/poi-packs/filter.txt", "-o", "f.osm.pbf", "--overwrite"], check=True)
+                  os.remove("in.osm.pbf")
+                  subprocess.run(["osmium", "export", "f.osm.pbf", "-f", "geojsonseq", "-a", "type,id", "--geometry-types=point,polygon", "-o", "f.geojsonseq", "--overwrite"], check=True)
+                  res = subprocess.run([sys.executable, "tools/poi-packs/build.py", "f.geojsonseq", f"out/{slug}.ndjson.gz", cc], check=True, capture_output=True, text=True).stdout.strip().splitlines()[-1]
+                  s = json.loads(res); s["name"] = r["name"]; s["geofabrik"] = r["id"]
+                  json.dump(s, open(f"out/{slug}.json", "w"), ensure_ascii=False)
+                  print(res, flush=True)
+              except Exception as e:
+                  print("::warning::" + r["name"] + " : " + str(e), flush=True)
+              for f in ("in.osm.pbf", "f.osm.pbf", "f.geojsonseq"):
+                  if os.path.exists(f): os.remove(f)
+              print("::endgroup::", flush=True)
+          EOF
+          ls -lh out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: world-${{ matrix.batch.b }}
+          path: out/*
+          retention-days: 30
+          if-no-files-found: ignore
+
+  publish:
+    needs: pack
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: packs, pattern: world-*, merge-multiple: true }
+      - name: Index fusionné
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release view poi-packs -R "$REPO" >/dev/null 2>&1 || gh release create poi-packs -R "$REPO" --title "Packs de points OSM" --notes "Points utiles par pays pour Sillage. Données © OpenStreetMap contributors (ODbL), extraits Geofabrik." --latest=false
+          gh release download poi-packs -R "$REPO" -p index.json -O old-index.json 2>/dev/null || echo '{"packs":[]}' > old-index.json
+          cd packs
+          python3 - <<'EOF'
+          import json, glob, os, datetime
+          old = json.load(open("../old-index.json"))
+          packs = {p["file"]: p for p in old.get("packs", [])}
+          for f in sorted(glob.glob("*.json")):
+              s = json.load(open(f)); gz = f[:-5] + ".ndjson.gz"
+              if os.path.exists(gz): s["file"] = gz; s["bytes"] = os.path.getsize(gz); packs[gz] = s
+          idx = {"built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "source": "OpenStreetMap (ODbL) via Geofabrik",
+                 "packs": sorted(packs.values(), key=lambda p: p["file"])}
+          json.dump(idx, open("index.json", "w"), ensure_ascii=False, indent=1)
+          print(len(idx["packs"]), "packs,", sum(p["total"] for p in idx["packs"]), "points,", round(sum(p["bytes"] for p in idx["packs"]) / 1e6, 1), "Mo")
+          EOF
+      - name: Envoi dans la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd packs
+          ls *.ndjson.gz >/dev/null 2>&1 && gh release upload poi-packs *.ndjson.gz -R "$REPO" --clobber
+          gh release upload poi-packs index.json -R "$REPO" --clobber
