@@ -8836,7 +8836,11 @@ async function pkIndex() {
   return PK.idx;
 }
 const pkOwn = (lat, lon) => PK.cell.get(Math.floor(lat * PK.q) + ':' + Math.floor(lon * PK.q)) || null;
-const pkAllowed = p => !FREE || (PK.stored && PK.stored.has(p.file)); // gratuit : seulement le pays déjà gardé
+// Compte gratuit : un seul pays hors ligne (règle voulue par Antoine), coupée pendant la phase de test (12/11/2026) :
+// passer PK_FREE_ONE à true pour l'appliquer.
+const PK_FREE_ONE = false;
+const PK_LIM = () => FREE && PK_FREE_ONE;
+const pkAllowed = p => !PK_LIM() || (PK.stored && PK.stored.has(p.file)); // gratuit : seulement le pays déjà gardé
 // Packs à lire pour un rectangle : ceux qui possèdent un de ses carrés (ou, avec un ancien index, ceux dont le rectangle le touche).
 function pkPacksFor(s, w, n, e) {
   const ps = (PK.idx?.packs || []);
@@ -8952,7 +8956,7 @@ async function pkWarn(force) {
 }
 function pkDlgShow(cs, P) {
   const d = $('#pkDlg'), need = cs.filter(c => c.st === 'need').sort((x, y) => (y.k1 - y.k0) - (x.k1 - x.k0));
-  const room = FREE ? (PK.stored.size ? 0 : 1) : need.length, get = need.slice(0, room);
+  const room = PK_LIM() ? (PK.stored.size ? 0 : 1) : need.length, get = need.slice(0, room);
   const ST = { base: '✓ ' + T("Inclus"), have: '✓ ' + T("Sur ton téléphone"), none: T("En ligne seulement") };
   const row = c => `<div class="pk-row ${c.st}" data-f="${escH(c.p ? c.p.file : '')}"><span class="pk-cc">${escH(c.p ? (c.p.cc || '').slice(0, 2) || '·' : c.id === '#base' ? 'FR' : '·')}</span>`
     + `<span class="pk-nm">${escH(c.name)}<small>${T("km {0} → {1}", [fD(c.k0, 0), fD(c.k1, 0)])}</small></span>`
@@ -8964,7 +8968,7 @@ function pkDlgShow(cs, P) {
     ? T("Il te manque les points utiles de {0} pays. Sans eux, la Carte et le roadbook auront besoin du réseau là-bas.", [need.length])
     : T("Tous les points utiles de ta trace sont déjà sur ton téléphone.");
   $('#pkRows').innerHTML = cs.map(row).join('');
-  $('#pkFree').hidden = !(FREE && need.length);
+  $('#pkFree').hidden = !(PK_LIM() && need.length);
   $('#pkFreeTxt').textContent = room
     ? T("Compte gratuit : un seul pays hors ligne. On te propose le plus long de ta trace, {0}.", [get[0] ? get[0].name : ''])
     : T("Compte gratuit : tu as déjà un pays hors ligne. Sillage.cc + garde tous les pays de tes traces.");
