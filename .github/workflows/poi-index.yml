@@ -1,5 +1,6 @@
 # Index des packs de points OSM (release « poi-packs ») : refait après chaque tâche de packs, ou à la main.
-# Pour chaque pack : nombre de points par type, rectangle couvert (bbox s, w, n, e), taille. Retire les zones exclues.
+# Pour chaque pack : nombre de points par type, rectangle couvert (bbox s, w, n, e), taille, version (ver),
+# et les carrés de 0,25° dont il est le pack principal (cells, en plages) : c'est ce qui dit quel pays couvre un lieu. Retire les zones exclues.
 # C'est ce fichier que l'app lit pour savoir quel pack couvre une zone.
 name: Index des packs de points OSM
 
@@ -37,25 +38,44 @@ jobs:
         run: |
           cd packs
           python3 - <<'EOF'
-          import json, glob, gzip, os, datetime
+          import json, glob, gzip, os, datetime, hashlib
           old = {p.get("file"): p for p in json.load(open("old-index.json")).get("packs", [])}
+          Q = 4  # carrés de 0,25° : à qui appartient chaque carré (le pack qui y a le plus de points)
+          owner = {}  # carré -> (points, fichier)
           packs = []
           for gz in sorted(glob.glob("*.ndjson.gz")):
-              s = w = 1e9; n = e = -1e9; types = {}; total = 0; cc = None
+              s = w = 1e9; n = e = -1e9; types = {}; total = 0; cc = None; cnt = {}
               with gzip.open(gz, "rt", encoding="utf-8") as f:
                   for line in f:
                       r = json.loads(line); total += 1
                       types[r["type"]] = types.get(r["type"], 0) + 1
                       s, n, w, e = min(s, r["lat"]), max(n, r["lat"]), min(w, r["lon"]), max(e, r["lon"])
                       cc = cc or r.get("cc")
+                      k = (int(r["lat"] * Q // 1), int(r["lon"] * Q // 1)); cnt[k] = cnt.get(k, 0) + 1
               if not total: continue
+              for k, v in cnt.items():
+                  if v > owner.get(k, (0, ""))[0]: owner[k] = (v, gz)
               o = old.get(gz, {})
+              ver = hashlib.sha1(open(gz, "rb").read()).hexdigest()[:12]
               packs.append({"file": gz, "cc": cc or o.get("cc"), "name": o.get("name") or (cc or gz), "geofabrik": o.get("geofabrik"),
-                            "total": total, "types": types, "bytes": os.path.getsize(gz),
+                            "total": total, "types": types, "bytes": os.path.getsize(gz), "ver": ver,
                             "bbox": [round(s, 4), round(w, 4), round(n, 4), round(e, 4)]})
-          idx = {"built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "source": "OpenStreetMap (ODbL) via Geofabrik", "packs": packs}
+          # cellules de chaque pack en plages [lat, lon début, lon fin] (unités de 0,25°)
+          mine = {}
+          for (a, b), (v, gz) in owner.items(): mine.setdefault(gz, {}).setdefault(a, []).append(b)
+          for p in packs:
+              runs = []
+              for a, bs in sorted(mine.get(p["file"], {}).items()):
+                  bs.sort(); b0 = prev = bs[0]
+                  for b in bs[1:] + [None]:
+                      if b is not None and b == prev + 1: prev = b; continue
+                      runs.append([a, b0, prev])
+                      if b is not None: b0 = prev = b
+              p["cells"] = runs
+          idx = {"built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "source": "OpenStreetMap (ODbL) via Geofabrik", "q": Q, "packs": packs}
           json.dump(idx, open("index.json", "w"), ensure_ascii=False, separators=(",", ":"))
-          print(len(packs), "packs,", sum(p["total"] for p in packs), "points,", round(sum(p["bytes"] for p in packs) / 1e6, 1), "Mo")
+          print(len(packs), "packs,", sum(p["total"] for p in packs), "points,", round(sum(p["bytes"] for p in packs) / 1e6, 1), "Mo,",
+                sum(len(p["cells"]) for p in packs), "plages, index", round(os.path.getsize("index.json") / 1e3), "ko")
           EOF
       - name: Envoi
         env:

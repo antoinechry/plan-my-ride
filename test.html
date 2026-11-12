@@ -400,6 +400,27 @@ dialog.exp-dlg::backdrop{background:rgba(0,0,0,.4)}
   @keyframes kdUp{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
 }
 html[data-motion="reduce"] dialog.kind-dlg{animation:none}
+/* Ultra : pays traversés et packs de points hors ligne (12/11/2026) */
+.pk-kick{font:600 11px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:2px 44px 6px 0}
+.pk-dlg h2{margin:0 0 6px}
+.pk-rows{margin:12px 0 10px;border-top:1px solid var(--line)}
+.pk-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.pk-cc{font:600 12px var(--f-mono);min-width:34px;height:26px;border-radius:7px;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 6%,var(--panel))}
+.pk-row.need .pk-cc{background:color-mix(in srgb,var(--sun) 22%,var(--panel));color:color-mix(in srgb,var(--sun) 55%,var(--ink))}
+.pk-nm{flex:1;font-size:15px;font-weight:600;min-width:0}
+.pk-nm small{display:block;font-weight:400;font-size:12.5px;color:var(--muted);margin-top:2px}
+.pk-st{font-size:13px;font-weight:600;text-align:right}
+.pk-row.base .pk-st,.pk-row.have .pk-st{color:var(--tail)}
+.pk-row.need .pk-st{font:500 13px var(--f-mono)}
+.pk-row.none .pk-st{color:var(--muted);font-weight:400}
+.pk-free{margin:4px 0 10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--sun) 12%,var(--panel));font-size:13.5px;line-height:1.4}
+.pk-free p{margin:0 0 8px}
+.pk-wifi{display:flex;align-items:center;justify-content:space-between;font-size:14px;margin:4px 0 12px;cursor:pointer}
+.pk-wifi input{width:20px;height:20px;accent-color:var(--tail)}
+.pk-msg{margin:0 0 10px;font-size:13.5px;color:var(--head)}
+.pk-go{width:100%;min-height:48px;font-size:16px;justify-content:center;text-align:center}
+.pk-later{display:block;margin:10px auto 0;background:none;border:0;color:var(--accent);font:600 14.5px var(--f-body);cursor:pointer;padding:6px 12px}
+.pk-foot{text-align:center;margin:6px 0 0;font-size:12px;color:var(--muted)}
 .kind-opts .ki{grid-row:span 2;justify-self:center;width:30px;height:30px;color:var(--ink)}
 .kind-opts .ki svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .lp-kind{grid-template-columns:repeat(4,1fr)}
@@ -2393,6 +2414,19 @@ html.demo-web #tabOut,html.demo-web #tabMe,html.demo-web .rail-admin,html.demo-w
     <button type="button" data-kind="taf" aria-pressed="false"><i class="ki" aria-hidden="true"></i><b>Commute</b><span>Mes trajets maison ⇄ travail</span></button>
   </div>
   <div class="exp-foot"><button type="button" class="btn primary" id="kindOk" disabled>Valider</button></div>
+</dialog>
+<dialog class="exp-dlg kind-dlg pk-dlg" id="pkDlg" aria-labelledby="pkTitle">
+  <button type="button" class="kd-x" id="pkX" aria-label="Fermer" title="Fermer">×</button>
+  <div class="pk-kick" id="pkKick"></div>
+  <h2 id="pkTitle">Ta trace traverse plusieurs pays</h2>
+  <p class="hint" id="pkTxt"></p>
+  <div class="pk-rows" id="pkRows"></div>
+  <div class="pk-free" id="pkFree" hidden><p id="pkFreeTxt"></p><button type="button" class="btn small" data-plus>Découvrir Sillage.cc +</button></div>
+  <label class="pk-wifi" id="pkWifiRow"><span>Seulement en Wi-Fi</span><input type="checkbox" id="pkWifi" checked></label>
+  <p class="pk-msg" id="pkMsg" hidden></p>
+  <button type="button" class="btn primary pk-go" id="pkGo">Télécharger</button>
+  <button type="button" class="pk-later" id="pkLater">Plus tard</button>
+  <p class="pk-foot">Les pays téléchargés restent sur ton téléphone, même sans réseau.</p>
 </dialog>
 <dialog class="login" id="loginDlg">
   <form id="loginForm">
@@ -8766,34 +8800,64 @@ async function pmFromBase(k) {
   return items;
 }
 /* Packs de points OSM par pays (test.html, 12/11/2026) : fichiers de la release « poi-packs » du dépôt, lus par le relais
-   poi-pack (GitHub n'autorise pas la lecture directe depuis une page). index.json donne le rectangle couvert par chaque pack ;
-   un pack est téléchargé une fois (IndexedDB store pois, clé pk1|fichier, refait quand l'index change), puis parcouru
-   pour la zone demandée (élargie de 0,3°) et rangé par carrés de 0,1° en mémoire. Ordre : base Sillage, packs, Overpass. */
+   poi-pack (GitHub n'autorise pas la lecture directe depuis une page). index.json donne pour chaque pack son rectangle,
+   sa version (ver) et les carrés de 0,25° dont il est le pack principal (cells, en plages : c'est ce qui dit quel pays
+   couvre un lieu, les rectangles se chevauchant). Index gardé dans IndexedDB (clé pkidx1, 6 h). Un pack est téléchargé
+   une fois (store pois, clé pk1|fichier, refait quand sa version change), puis parcouru pour la zone demandée (élargie
+   de 0,3°) et rangé par carrés de 0,1° en mémoire. Ordre : base Sillage, packs, Overpass. Compte gratuit : un seul pays
+   hors ligne, choisi dans le panneau d'avertissement d'Ultra (pkWarn), pas de téléchargement automatique. */
 const PK_ON = IS_TEST;
 const PK_URL = SB_URL + '/functions/v1/poi-pack?f=';
-const PK = { idx: null, at: 0, blobs: new Map(), tiles: new Map(), done: new Set(), scans: new Map() };
+const PK = { idx: null, at: 0, q: 4, cell: new Map(), noCells: true, blobs: new Map(), tiles: new Map(), done: new Set(), scans: new Map(), stored: null };
+function pkPrep(idx) {
+  idx.packs = (idx.packs || []).filter(p => Array.isArray(p.bbox));
+  PK.q = idx.q || 4; PK.cell = new Map(); PK.noCells = !idx.packs.some(p => p.cells);
+  for (const p of idx.packs) for (const [a, b0, b1] of (p.cells || [])) for (let b = b0; b <= b1; b++) PK.cell.set(a + ':' + b, p);
+  PK.idx = idx;
+}
+async function pkStored() { // packs déjà sur l'appareil
+  if (PK.stored) return PK.stored;
+  const st = new Set();
+  try { const ks = await idbRun('pois', 'readonly', o => o.getAllKeys(IDBKeyRange.bound('pk1|', 'pk1|￿'))); for (const k of ks || []) st.add(String(k).slice(4)); } catch (e) {}
+  return (PK.stored = st);
+}
 async function pkIndex() {
   if (PK.idx && Date.now() - PK.at < 30 * 60e3) return PK.idx;
-  try { const c = JSON.parse(localStorage.getItem('pmr-pk-idx') || 'null'); if (c && Date.now() - c.at < 6 * 3600e3 && c.idx) { PK.idx = c.idx; PK.at = c.at; return PK.idx; } } catch (e) {}
+  if (!PK.idx) {
+    try { const c = await idbRun('pois', 'readonly', o => o.get('pkidx1')); if (c && c.idx && Date.now() - c.at < 6 * 3600e3) { pkPrep(c.idx); PK.at = c.at; await pkStored(); return PK.idx; } } catch (e) {}
+  }
   try {
     const r = await fetch(PK_URL + 'index.json'); if (!r.ok) throw new Error('index ' + r.status);
-    const idx = await r.json(); idx.packs = (idx.packs || []).filter(p => Array.isArray(p.bbox));
-    PK.idx = idx; PK.at = Date.now();
-    try { localStorage.setItem('pmr-pk-idx', JSON.stringify({ at: PK.at, idx })); } catch (e) {}
-  } catch (e) { if (!PK.idx) PK.idx = { packs: [] }; PK.at = Date.now() - 25 * 60e3; } // nouvel essai dans 5 min
+    const idx = await r.json(); pkPrep(idx); PK.at = Date.now();
+    idbRun('pois', 'readwrite', o => o.put({ key: 'pkidx1', at: PK.at, idx })).catch(() => {});
+  } catch (e) { if (!PK.idx) pkPrep({ packs: [] }); PK.at = Date.now() - 25 * 60e3; } // nouvel essai dans 5 min
+  try { localStorage.removeItem('pmr-pk-idx'); } catch (e) {} // ancien emplacement de l'index
+  await pkStored();
   return PK.idx;
 }
-const pkCovering = (s, w, n, e) => (PK.idx?.packs || []).filter(p => p.bbox[0] < n && p.bbox[2] > s && p.bbox[1] < e && p.bbox[3] > w);
-const pkTileHas = k => { const [a, o] = k.split(':').map(Number); return pkCovering(a * PM_TILE, o * PM_TILE, (a + 1) * PM_TILE, (o + 1) * PM_TILE).length > 0; };
+const pkOwn = (lat, lon) => PK.cell.get(Math.floor(lat * PK.q) + ':' + Math.floor(lon * PK.q)) || null;
+const pkAllowed = p => !FREE || (PK.stored && PK.stored.has(p.file)); // gratuit : seulement le pays déjà gardé
+// Packs à lire pour un rectangle : ceux qui possèdent un de ses carrés (ou, avec un ancien index, ceux dont le rectangle le touche).
+function pkPacksFor(s, w, n, e) {
+  const ps = (PK.idx?.packs || []);
+  if (PK.noCells) return ps.filter(p => p.bbox[0] < n && p.bbox[2] > s && p.bbox[1] < e && p.bbox[3] > w && pkAllowed(p));
+  const out = new Set(), q = PK.q;
+  for (let a = Math.floor(s * q); a <= Math.floor((n - 1e-9) * q); a++) for (let b = Math.floor(w * q); b <= Math.floor((e - 1e-9) * q); b++) {
+    const p = PK.cell.get(a + ':' + b); if (p && pkAllowed(p)) out.add(p);
+  }
+  return [...out];
+}
+const pkTileRect = k => { const [a, o] = k.split(':').map(Number); return [a * PM_TILE, o * PM_TILE, (a + 1) * PM_TILE, (o + 1) * PM_TILE]; };
+const pkTileHas = k => pkPacksFor(...pkTileRect(k)).length > 0;
 async function pkBlob(p) {
   if (PK.blobs.has(p.file)) return PK.blobs.get(p.file);
-  const key = 'pk1|' + p.file, built = PK.idx.built + '|' + p.bytes;
+  const key = 'pk1|' + p.file, ver = p.ver || (PK.idx.built + '|' + p.bytes);
   const job = (async () => {
     let rec = null; try { rec = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
-    if (rec && rec.built === built && rec.blob) return rec.blob;
+    if (rec && rec.built === ver && rec.blob) return rec.blob;
     const r = await fetch(PK_URL + encodeURIComponent(p.file)); if (!r.ok) throw new Error('pack ' + r.status);
     const blob = await r.blob();
-    idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), built, blob })).catch(() => {});
+    await idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), built: ver, blob })).then(() => { (PK.stored || (PK.stored = new Set())).add(p.file); }, () => {});
     return blob;
   })();
   PK.blobs.set(p.file, job); job.catch(() => PK.blobs.delete(p.file));
@@ -8810,7 +8874,8 @@ async function pkScan(p, s, w, n, e) {
     const j = l.indexOf('"lon":', i); const lon = parseFloat(l.slice(j + 6, j + 20)); if (!(lon >= w && lon < e)) return;
     let r; try { r = JSON.parse(l); } catch (x) { return; }
     const k = Math.floor(lat / PM_TILE) + ':' + Math.floor(lon / PM_TILE);
-    let t = PK.tiles.get(k); if (!t) PK.tiles.set(k, (t = [])); t.push(r);
+    let t = PK.tiles.get(k); if (!t) PK.tiles.set(k, (t = [])); else if (t.some(x => x.id === r.id)) return; // un point en double aux frontières
+    t.push(r);
   };
   for (;;) {
     const { value, done } = await rd.read(); if (done) break;
@@ -8819,19 +8884,25 @@ async function pkScan(p, s, w, n, e) {
   }
   if (buf) line(buf);
 }
-// Points des carrés demandés (clés « a:o » de 0,1°), en un seul passage par pack pour toute la zone.
+// Points des carrés demandés (clés « a:o » de 0,1°). Les packs lus sont ceux des carrés demandés (pas ceux de la marge) ;
+// les carrés de la marge ne sont marqués faits que si tous leurs packs ont été lus.
 async function pkTiles(keys) {
   await pkIndex();
   const need = keys.filter(k => !PK.done.has(k));
   if (need.length) {
-    let a0 = 1e9, a1 = -1e9, o0 = 1e9, o1 = -1e9;
-    for (const k of need) { const [a, o] = k.split(':').map(Number); a0 = Math.min(a0, a); a1 = Math.max(a1, a); o0 = Math.min(o0, o); o1 = Math.max(o1, o); }
+    let a0 = 1e9, a1 = -1e9, o0 = 1e9, o1 = -1e9; const packs = new Map();
+    for (const k of need) {
+      const [a, o] = k.split(':').map(Number); a0 = Math.min(a0, a); a1 = Math.max(a1, a); o0 = Math.min(o0, o); o1 = Math.max(o1, o);
+      for (const p of pkPacksFor(...pkTileRect(k))) packs.set(p.file, p);
+    }
     a0 -= 3; a1 += 3; o0 -= 3; o1 += 3; // 0,3° de marge : les carrés voisins sont prêts quand on déplace la carte
-    const s = a0 * PM_TILE, n = (a1 + 1) * PM_TILE, w = o0 * PM_TILE, e = (o1 + 1) * PM_TILE, zk = [a0, a1, o0, o1].join(',');
+    const s = a0 * PM_TILE, n = (a1 + 1) * PM_TILE, w = o0 * PM_TILE, e = (o1 + 1) * PM_TILE, zk = [a0, a1, o0, o1, ...packs.keys()].join(',');
     if (!PK.scans.has(zk)) {
       const job = (async () => {
-        for (const p of pkCovering(s, w, n, e)) await pkScan(p, s, w, n, e);
-        for (let a = a0; a <= a1; a++) for (let o = o0; o <= o1; o++) PK.done.add(a + ':' + o);
+        for (const p of packs.values()) await pkScan(p, s, w, n, e);
+        for (let a = a0; a <= a1; a++) for (let o = o0; o <= o1; o++) {
+          const k = a + ':' + o; if (pkPacksFor(...pkTileRect(k)).every(p => packs.has(p.file))) PK.done.add(k);
+        }
       })();
       PK.scans.set(zk, job); job.finally(() => PK.scans.delete(zk));
     }
@@ -8839,6 +8910,91 @@ async function pkTiles(keys) {
   }
   return new Map(keys.map(k => [k, PK.tiles.get(k) || []]));
 }
+/* Ultra : pays traversés par la trace et packs manquants (12/11/2026, maquette validée par Antoine). À la première ouverture
+   de la Carte après le chargement d'une trace Ultra (une fois par trace : localStorage pmr-pk-warn), panneau #pkDlg :
+   un pays par ligne (km d'entrée → sortie, « Inclus » si la base Sillage couvre déjà ses km, « Sur ton téléphone », sinon
+   la taille), « Seulement en Wi-Fi » (pmr-pk-wifi, appliqué quand le navigateur connaît le type de connexion),
+   « Télécharger les N pays ». Compte gratuit : un seul pays hors ligne (le plus long sur la trace), puis Sillage.cc +. */
+function pkCcName(p) {
+  if (p && /^[A-Z]{2}$/.test(p.cc || '')) { try { const n = new Intl.DisplayNames([LOC], { type: 'region' }).of(p.cc); if (n && n !== p.cc) return n; } catch (e) {} }
+  return (p && (p.name || p.cc)) || '';
+}
+const pkMo = b => T("{0} Mo", [Math.max(1, Math.round(b / 1e6)).toLocaleString(LOC)]);
+async function pkRoute(P) {
+  await pkIndex(); await pmCoverage();
+  const by = new Map(), order = []; let cur = null, next = 0;
+  for (let i = 0; i < P.n; i++) {
+    const km = P.d[i]; if (km < next && i < P.n - 1) continue; next = km + 1; // un point par km
+    const pt = P.pts[i], p = pkOwn(pt.lat, pt.lon), base = pmCovered(Math.floor(pt.lat / PM_TILE) + ':' + Math.floor(pt.lon / PM_TILE));
+    const id = p ? p.file : (base ? '#base' : (cur || '#none')); cur = id;
+    let c = by.get(id); if (!c) { by.set(id, (c = { id, p, k0: km, k1: km, n: 0, nb: 0 })); order.push(c); }
+    c.k1 = km; c.n++; if (base) c.nb++;
+  }
+  const out = order.filter(c => c.n >= 3 || order.length === 1); // quelques km de frontière ne font pas un pays
+  for (const c of out) {
+    c.name = c.p ? pkCcName(c.p) : c.id === '#base' ? T("France et frontières") : T("Hors des packs");
+    c.st = c.nb >= 0.95 * c.n ? 'base' : !c.p ? 'none' : PK.stored.has(c.p.file) ? 'have' : 'need';
+  }
+  return out;
+}
+function pkSeen(sig, add) {
+  let a = []; try { a = JSON.parse(localStorage.getItem('pmr-pk-warn') || '[]'); } catch (e) {}
+  if (!add) return a.includes(sig);
+  a = [sig, ...a.filter(x => x !== sig)].slice(0, 60); try { localStorage.setItem('pmr-pk-warn', JSON.stringify(a)); } catch (e) {}
+}
+async function pkWarn(force) {
+  if (!PK_ON || S.mode !== 'ultra' || !S.P || GUEST) return;
+  const P = S.P, sig = routeSig(); if (!force && pkSeen(sig)) return;
+  let cs; try { cs = await pkRoute(P); } catch (e) { return; }
+  if (S.P !== P || $('#mapPage').hidden || !PK.idx.packs.length) return;
+  if (!force && !cs.some(c => c.st === 'need')) return;
+  pkSeen(sig, true); pkDlgShow(cs, P);
+}
+function pkDlgShow(cs, P) {
+  const d = $('#pkDlg'), need = cs.filter(c => c.st === 'need').sort((x, y) => (y.k1 - y.k0) - (x.k1 - x.k0));
+  const room = FREE ? (PK.stored.size ? 0 : 1) : need.length, get = need.slice(0, room);
+  const ST = { base: '✓ ' + T("Inclus"), have: '✓ ' + T("Sur ton téléphone"), none: T("En ligne seulement") };
+  const row = c => `<div class="pk-row ${c.st}" data-f="${escH(c.p ? c.p.file : '')}"><span class="pk-cc">${escH(c.p ? (c.p.cc || '').slice(0, 2) || '·' : c.id === '#base' ? 'FR' : '·')}</span>`
+    + `<span class="pk-nm">${escH(c.name)}<small>${T("km {0} → {1}", [fD(c.k0, 0), fD(c.k1, 0)])}</small></span>`
+    + `<span class="pk-st">${c.st === 'need' ? escH(pkMo(c.p.bytes)) : escH(ST[c.st])}</span></div>`;
+  const tot = get.reduce((s, c) => s + c.p.bytes, 0), wifi = (() => { try { return localStorage.getItem('pmr-pk-wifi') !== '0'; } catch (e) { return true; } })();
+  $('#pkKick').textContent = T("Ultra · {0} · {1} km", [S.name || T("Ma trace"), fD(P.total, 0)]);
+  $('#pkTitle').textContent = cs.length > 1 ? T("Ta trace traverse {0} pays", [cs.length]) : T("Ta trace reste dans un pays");
+  $('#pkTxt').textContent = need.length
+    ? T("Il te manque les points utiles de {0} pays. Sans eux, la Carte et le roadbook auront besoin du réseau là-bas.", [need.length])
+    : T("Tous les points utiles de ta trace sont déjà sur ton téléphone.");
+  $('#pkRows').innerHTML = cs.map(row).join('');
+  $('#pkFree').hidden = !(FREE && need.length);
+  $('#pkFreeTxt').textContent = room
+    ? T("Compte gratuit : un seul pays hors ligne. On te propose le plus long de ta trace, {0}.", [get[0] ? get[0].name : ''])
+    : T("Compte gratuit : tu as déjà un pays hors ligne. Sillage.cc + garde tous les pays de tes traces.");
+  $('#pkWifi').checked = wifi; $('#pkWifiRow').hidden = !get.length;
+  const go = $('#pkGo'); go.hidden = !get.length; go.disabled = false; go.dataset.done = '';
+  go.textContent = get.length === 1 ? T("Télécharger {0} · {1}", [get[0].name, pkMo(tot)]) : T("Télécharger les {0} pays · {1}", [get.length, pkMo(tot)]);
+  $('#pkMsg').hidden = true; $('#pkLater').textContent = get.length ? T("Plus tard") : T("Fermer");
+  d._get = get;
+  if (!d.open) d.showModal();
+}
+async function pkDownload() {
+  const d = $('#pkDlg'), go = $('#pkGo'), msg = $('#pkMsg'), get = d._get || [];
+  if (go.dataset.done) { d.close(); return; }
+  const wifi = $('#pkWifi').checked; try { localStorage.setItem('pmr-pk-wifi', wifi ? '1' : '0'); } catch (e) {}
+  const cn = navigator.connection;
+  if (wifi && cn && cn.type === 'cellular') { msg.hidden = false; msg.textContent = T("Tu es en données mobiles. Décoche « Seulement en Wi-Fi » ou réessaie en Wi-Fi."); return; }
+  go.disabled = true; msg.hidden = true; let fail = [];
+  for (let i = 0; i < get.length; i++) {
+    const c = get[i]; go.textContent = T("Téléchargement · {0}/{1} · {2}…", [i + 1, get.length, c.name]);
+    try { await pkBlob(c.p); const r = d.querySelector(`.pk-row[data-f="${CSS.escape(c.p.file)}"]`); if (r) { r.className = 'pk-row have'; r.querySelector('.pk-st').textContent = '✓ ' + T("Sur ton téléphone"); } }
+    catch (e) { fail.push(c.name); }
+  }
+  go.disabled = false;
+  if (fail.length) { msg.hidden = false; msg.textContent = T("Téléchargement impossible pour {0}. Réessaie plus tard.", [fail.join(', ')]); go.textContent = T("Réessayer"); d._get = get.filter(c => fail.includes(c.name)); }
+  else { go.textContent = T("C'est prêt"); go.dataset.done = '1'; $('#pkLater').hidden = true; }
+  PK.done.clear(); pmLoadOsm();
+}
+$('#pkGo').addEventListener('click', pkDownload);
+$('#pkLater').addEventListener('click', () => { $('#pkDlg').close(); $('#pkLater').hidden = false; });
+$('#pkX').addEventListener('click', () => { $('#pkDlg').close(); $('#pkLater').hidden = false; });
 const pkPm = rows => rows.filter(r => PM_TYPES[r.type]).map(r => ({ src: 'osm', ref: r.id, type: r.type, name: r.name || '', lat: r.lat, lon: r.lon, tags: { ...(r.t || {}), ...(r.name ? { name: r.name } : {}) } }));
 // Page Ultra : portions dont tous les carrés sont couverts par un pack (même logique que poiFromBase).
 async function poiFromPacks(P, chunks, radius) {
@@ -9107,6 +9263,7 @@ async function pmOpen() {
     pmLoadOsm(); pmLoadUsr(true);
     pmLocResume(!fresh && !fo); pmCompSync();
     if (fo) { PM.usr.set(fo.poi.id, fo); pmRender(); pmShow(fo); }
+    else if (PK_ON && S.mode === 'ultra') pkWarn().catch(() => {}); // trace Ultra : pays sans pack sur l'appareil
   }, 30);
 }
 $('#tabMap').addEventListener('click', pmOpen);
