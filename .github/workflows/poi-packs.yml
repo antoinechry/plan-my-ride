@@ -1,0 +1,151 @@
+# Packs de points utiles par pays (Europe + Afrique du Nord), tirés d'OpenStreetMap.
+# Pour chaque pays : extrait Geofabrik → osmium tags-filter (tools/poi-packs/filter.txt)
+# → osmium export → tools/poi-packs/build.py → <code>.ndjson.gz
+# Les fichiers sont publiés dans la release « poi-packs » du dépôt (rien dans le code du site),
+# puis seront déposés sur l'hébergement OVH et poussés dans Supabase plus tard.
+# Données © OpenStreetMap contributors, licence ODbL.
+name: Packs de points OSM
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Codes pays séparés par des virgules (vide = tous)"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths: ["tools/poi-packs/**", ".github/workflows/poi-packs.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: poi-packs
+  cancel-in-progress: false
+
+jobs:
+  pack:
+    name: ${{ matrix.cc }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 4   # pas plus de 4 téléchargements à la fois chez Geofabrik
+      matrix:
+        include:
+          - { cc: AL, path: europe/albania }
+          - { cc: AD, path: europe/andorra }
+          - { cc: AT, path: europe/austria }
+          - { cc: PT-AZ, path: europe/azores }
+          - { cc: BY, path: europe/belarus }
+          - { cc: BE, path: europe/belgium }
+          - { cc: BA, path: europe/bosnia-herzegovina }
+          - { cc: BG, path: europe/bulgaria }
+          - { cc: HR, path: europe/croatia }
+          - { cc: CY, path: europe/cyprus }
+          - { cc: CZ, path: europe/czech-republic }
+          - { cc: DK, path: europe/denmark }
+          - { cc: EE, path: europe/estonia }
+          - { cc: FO, path: europe/faroe-islands }
+          - { cc: FI, path: europe/finland }
+          - { cc: FR, path: europe/france }
+          - { cc: GE, path: europe/georgia }
+          - { cc: DE, path: europe/germany }
+          - { cc: GB, path: europe/united-kingdom }
+          - { cc: GR, path: europe/greece }
+          - { cc: GG-JE, path: europe/guernsey-jersey }
+          - { cc: HU, path: europe/hungary }
+          - { cc: IS, path: europe/iceland }
+          - { cc: IE, path: europe/ireland-and-northern-ireland }
+          - { cc: IM, path: europe/isle-of-man }
+          - { cc: IT, path: europe/italy }
+          - { cc: XK, path: europe/kosovo }
+          - { cc: LV, path: europe/latvia }
+          - { cc: LI, path: europe/liechtenstein }
+          - { cc: LT, path: europe/lithuania }
+          - { cc: LU, path: europe/luxembourg }
+          - { cc: MK, path: europe/macedonia }
+          - { cc: MT, path: europe/malta }
+          - { cc: MD, path: europe/moldova }
+          - { cc: MC, path: europe/monaco }
+          - { cc: ME, path: europe/montenegro }
+          - { cc: NL, path: europe/netherlands }
+          - { cc: NO, path: europe/norway }
+          - { cc: PL, path: europe/poland }
+          - { cc: PT, path: europe/portugal }
+          - { cc: RO, path: europe/romania }
+          - { cc: RS, path: europe/serbia }
+          - { cc: SK, path: europe/slovakia }
+          - { cc: SI, path: europe/slovenia }
+          - { cc: ES, path: europe/spain }
+          - { cc: SE, path: europe/sweden }
+          - { cc: CH, path: europe/switzerland }
+          - { cc: TR, path: europe/turkey }
+          - { cc: UA, path: europe/ukraine }
+          - { cc: ES-CN, path: africa/canary-islands }
+          - { cc: MA, path: africa/morocco }
+          - { cc: DZ, path: africa/algeria }
+          - { cc: TN, path: africa/tunisia }
+          - { cc: LY, path: africa/libya }
+          - { cc: EG, path: africa/egypt }
+    steps:
+      - name: Pays demandé ?
+        id: want
+        run: |
+          only="${{ github.event.inputs.only }}"
+          if [ -z "$only" ] || echo ",$only," | tr -d ' ' | grep -qi ",${{ matrix.cc }},"; then echo "go=1" >> "$GITHUB_OUTPUT"; else echo "go=0" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.want.outputs.go == '1'
+      - name: Outils
+        if: steps.want.outputs.go == '1'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+      - name: Extrait Geofabrik
+        if: steps.want.outputs.go == '1'
+        run: curl -fsSL --retry 3 -o in.osm.pbf "https://download.geofabrik.de/${{ matrix.path }}-latest.osm.pbf" && ls -lh in.osm.pbf
+      - name: Filtre et export
+        if: steps.want.outputs.go == '1'
+        run: |
+          osmium tags-filter in.osm.pbf -e tools/poi-packs/filter.txt -o f.osm.pbf --overwrite
+          rm in.osm.pbf
+          osmium export f.osm.pbf -f geojsonseq -a type,id --geometry-types=point,polygon -o f.geojsonseq --overwrite
+      - name: Pack
+        if: steps.want.outputs.go == '1'
+        run: |
+          mkdir -p out
+          python3 tools/poi-packs/build.py f.geojsonseq "out/${{ matrix.cc }}.ndjson.gz" "${{ matrix.cc }}" | tee "out/${{ matrix.cc }}.json"
+          ls -lh out
+      - uses: actions/upload-artifact@v4
+        if: steps.want.outputs.go == '1'
+        with:
+          name: pack-${{ matrix.cc }}
+          path: out/*
+          retention-days: 30
+
+  publish:
+    needs: pack
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: packs, pattern: pack-*, merge-multiple: true }
+      - name: Index des packs
+        run: |
+          cd packs
+          python3 - <<'EOF'
+          import json, glob, os, datetime
+          idx = {"built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "source": "OpenStreetMap (ODbL) via Geofabrik", "packs": []}
+          for f in sorted(glob.glob("*.json")):
+              if f == "index.json": continue
+              s = json.load(open(f)); gz = f[:-5] + ".ndjson.gz"
+              if os.path.exists(gz): s["file"] = gz; s["bytes"] = os.path.getsize(gz); idx["packs"].append(s)
+          json.dump(idx, open("index.json", "w"), ensure_ascii=False, indent=1)
+          print(len(idx["packs"]), "packs,", sum(p["total"] for p in idx["packs"]), "points,", round(sum(p["bytes"] for p in idx["packs"]) / 1e6, 1), "Mo")
+          EOF
+      - name: Release « poi-packs »
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release view poi-packs -R "$REPO" >/dev/null 2>&1 || gh release create poi-packs -R "$REPO" --title "Packs de points OSM" --notes "Points utiles par pays pour Sillage. Données © OpenStreetMap contributors (ODbL), extraits Geofabrik." --latest=false
+          gh release upload poi-packs packs/*.ndjson.gz packs/index.json -R "$REPO" --clobber

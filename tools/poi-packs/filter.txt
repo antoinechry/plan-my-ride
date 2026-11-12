@@ -1,0 +1,4 @@
+nwr/amenity=drinking_water,water_point,fountain,cafe,restaurant,fast_food,pub,bar,biergarten,shelter,bicycle_repair_station,device_charging_station,charging_station,fuel,pharmacy
+nwr/man_made=water_tap
+nwr/shop=bakery,pastry,convenience,supermarket,general,greengrocer,farm,bicycle,butcher,deli,kiosk
+nwr/tourism=camp_site,camp_pitch,wilderness_hut,alpine_hut,hotel,motel,hostel,guest_house,chalet
