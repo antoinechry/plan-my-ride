@@ -5660,6 +5660,17 @@ async function poiEnsure(force) {
     chunks.length = 0; chunks.push(...base.rest);
     POI.list = attachToRoute([...seen.values()]).filter(p => p.off <= radius); renderPois();
   }
+  // Packs par pays (test.html, 12/11/2026) : portions hors de la base Sillage mais couvertes par un pack, sans Overpass.
+  if (PK_ON && chunks.length) {
+    POI.loading = T("Lecture des lieux…"); renderPoiStatus();
+    let pk = null; try { pk = await poiFromPacks(S.P, chunks, radius); } catch (e) {}
+    if (seq !== POI.seq) return;
+    if (pk) {
+      for (const it of pk.items) if (!seen.has(it.id)) seen.set(it.id, it);
+      chunks.length = 0; chunks.push(...pk.rest);
+      POI.list = attachToRoute([...seen.values()]).filter(p => p.off <= radius); renderPois();
+    }
+  }
   const progress = () => { POI.loading = chunks.length > 1 ? T("Recherche des lieux le long de la trace… ({0}/{1} portions)", [done, chunks.length]) : T("Recherche des lieux le long de la trace…"); };
   progress(); renderPoiStatus();
   const worker = async () => {
@@ -8754,13 +8765,120 @@ async function pmFromBase(k) {
   }
   return items;
 }
+/* Packs de points OSM par pays (test.html, 12/11/2026) : fichiers de la release « poi-packs » du dépôt, lus par le relais
+   poi-pack (GitHub n'autorise pas la lecture directe depuis une page). index.json donne le rectangle couvert par chaque pack ;
+   un pack est téléchargé une fois (IndexedDB store pois, clé pk1|fichier, refait quand l'index change), puis parcouru
+   pour la zone demandée (élargie de 0,3°) et rangé par carrés de 0,1° en mémoire. Ordre : base Sillage, packs, Overpass. */
+const PK_ON = IS_TEST;
+const PK_URL = SB_URL + '/functions/v1/poi-pack?f=';
+const PK = { idx: null, at: 0, blobs: new Map(), tiles: new Map(), done: new Set(), scans: new Map() };
+async function pkIndex() {
+  if (PK.idx && Date.now() - PK.at < 30 * 60e3) return PK.idx;
+  try { const c = JSON.parse(localStorage.getItem('pmr-pk-idx') || 'null'); if (c && Date.now() - c.at < 6 * 3600e3 && c.idx) { PK.idx = c.idx; PK.at = c.at; return PK.idx; } } catch (e) {}
+  try {
+    const r = await fetch(PK_URL + 'index.json'); if (!r.ok) throw new Error('index ' + r.status);
+    const idx = await r.json(); idx.packs = (idx.packs || []).filter(p => Array.isArray(p.bbox));
+    PK.idx = idx; PK.at = Date.now();
+    try { localStorage.setItem('pmr-pk-idx', JSON.stringify({ at: PK.at, idx })); } catch (e) {}
+  } catch (e) { if (!PK.idx) PK.idx = { packs: [] }; PK.at = Date.now() - 25 * 60e3; } // nouvel essai dans 5 min
+  return PK.idx;
+}
+const pkCovering = (s, w, n, e) => (PK.idx?.packs || []).filter(p => p.bbox[0] < n && p.bbox[2] > s && p.bbox[1] < e && p.bbox[3] > w);
+const pkTileHas = k => { const [a, o] = k.split(':').map(Number); return pkCovering(a * PM_TILE, o * PM_TILE, (a + 1) * PM_TILE, (o + 1) * PM_TILE).length > 0; };
+async function pkBlob(p) {
+  if (PK.blobs.has(p.file)) return PK.blobs.get(p.file);
+  const key = 'pk1|' + p.file, built = PK.idx.built + '|' + p.bytes;
+  const job = (async () => {
+    let rec = null; try { rec = await idbRun('pois', 'readonly', st => st.get(key)); } catch (e) {}
+    if (rec && rec.built === built && rec.blob) return rec.blob;
+    const r = await fetch(PK_URL + encodeURIComponent(p.file)); if (!r.ok) throw new Error('pack ' + r.status);
+    const blob = await r.blob();
+    idbRun('pois', 'readwrite', st => st.put({ key, at: Date.now(), built, blob })).catch(() => {});
+    return blob;
+  })();
+  PK.blobs.set(p.file, job); job.catch(() => PK.blobs.delete(p.file));
+  return job;
+}
+// Parcourt un pack et range dans PK.tiles les points du rectangle (lecture rapide de lat / lon avant le JSON complet).
+async function pkScan(p, s, w, n, e) {
+  const blob = await pkBlob(p);
+  const rd = blob.stream().pipeThrough(new DecompressionStream('gzip')).pipeThrough(new TextDecoderStream()).getReader();
+  let buf = '';
+  const line = l => {
+    const i = l.indexOf('"lat":'); if (i < 0) return;
+    const lat = parseFloat(l.slice(i + 6, i + 20)); if (!(lat >= s && lat < n)) return;
+    const j = l.indexOf('"lon":', i); const lon = parseFloat(l.slice(j + 6, j + 20)); if (!(lon >= w && lon < e)) return;
+    let r; try { r = JSON.parse(l); } catch (x) { return; }
+    const k = Math.floor(lat / PM_TILE) + ':' + Math.floor(lon / PM_TILE);
+    let t = PK.tiles.get(k); if (!t) PK.tiles.set(k, (t = [])); t.push(r);
+  };
+  for (;;) {
+    const { value, done } = await rd.read(); if (done) break;
+    buf += value; let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) { line(buf.slice(0, nl)); buf = buf.slice(nl + 1); }
+  }
+  if (buf) line(buf);
+}
+// Points des carrés demandés (clés « a:o » de 0,1°), en un seul passage par pack pour toute la zone.
+async function pkTiles(keys) {
+  await pkIndex();
+  const need = keys.filter(k => !PK.done.has(k));
+  if (need.length) {
+    let a0 = 1e9, a1 = -1e9, o0 = 1e9, o1 = -1e9;
+    for (const k of need) { const [a, o] = k.split(':').map(Number); a0 = Math.min(a0, a); a1 = Math.max(a1, a); o0 = Math.min(o0, o); o1 = Math.max(o1, o); }
+    a0 -= 3; a1 += 3; o0 -= 3; o1 += 3; // 0,3° de marge : les carrés voisins sont prêts quand on déplace la carte
+    const s = a0 * PM_TILE, n = (a1 + 1) * PM_TILE, w = o0 * PM_TILE, e = (o1 + 1) * PM_TILE, zk = [a0, a1, o0, o1].join(',');
+    if (!PK.scans.has(zk)) {
+      const job = (async () => {
+        for (const p of pkCovering(s, w, n, e)) await pkScan(p, s, w, n, e);
+        for (let a = a0; a <= a1; a++) for (let o = o0; o <= o1; o++) PK.done.add(a + ':' + o);
+      })();
+      PK.scans.set(zk, job); job.finally(() => PK.scans.delete(zk));
+    }
+    await PK.scans.get(zk);
+  }
+  return new Map(keys.map(k => [k, PK.tiles.get(k) || []]));
+}
+const pkPm = rows => rows.filter(r => PM_TYPES[r.type]).map(r => ({ src: 'osm', ref: r.id, type: r.type, name: r.name || '', lat: r.lat, lon: r.lon, tags: { ...(r.t || {}), ...(r.name ? { name: r.name } : {}) } }));
+// Page Ultra : portions dont tous les carrés sont couverts par un pack (même logique que poiFromBase).
+async function poiFromPacks(P, chunks, radius) {
+  if (!PK_ON || !chunks.length) return null;
+  await pkIndex(); if (!PK.idx.packs.length) return null;
+  const m = (radius + 300) / 111000, tiles = new Set(), rest = [];
+  for (const ch of chunks) {
+    const keys = new Set(); let last = null;
+    for (let i = ch[0]; i <= ch[ch.length - 1]; i++) {
+      const p = P.pts[i]; if (last && i < ch[ch.length - 1] && Math.abs(p.lat - last.lat) + Math.abs(p.lon - last.lon) < 0.003) continue; last = p;
+      const mo = m / Math.max(0.2, Math.cos(p.lat * RAD));
+      for (const la of [p.lat - m, p.lat + m]) for (const lo of [p.lon - mo, p.lon + mo]) keys.add(Math.floor(la * 10) + ':' + Math.floor(lo * 10));
+    }
+    if ([...keys].every(pkTileHas)) keys.forEach(k => tiles.add(k)); else rest.push(ch);
+  }
+  if (!tiles.size) return null;
+  // une trace d'ultra traverse plusieurs pays : on lit par blocs de 2° pour ne pas parcourir un pack sur toute la trace d'un coup
+  const groups = new Map();
+  for (const k of tiles) { const [a, o] = k.split(':').map(Number), g = Math.floor(a / 20) + ':' + Math.floor(o / 20); (groups.get(g) || groups.set(g, []).get(g)).push(k); }
+  const items = [];
+  for (const ks of groups.values()) {
+    const got = await pkTiles(ks);
+    for (const rows of got.values()) for (const r of rows) {
+      const tags = { ...(r.t || {}), ...(r.name ? { name: r.name } : {}) }, cls = classifyPoi(tags); if (!cls) continue;
+      items.push({ id: r.id.replace('/', ''), lat: r.lat, lon: r.lon, g: cls[0], type: cls[1], name: r.name || tags.brand || '', oh: tags.opening_hours || '',
+        web: tags.website || tags['contact:website'] || '', tel: tags.phone || tags['contact:phone'] || '' });
+    }
+  }
+  return { items, rest };
+}
 async function pmLoadOsm() {
   if (!PM.map || PM.map.getZoom() < PM_MINZ) { pmStatus(); return; }
   const keys = pmTilesInView().slice(0, 36);
   PM.queue = PM.queue.filter(k => keys.includes(k)); // on oublie les carrés qui ne sont plus à l'écran
   await pmCoverage();
+  if (PK_ON) await pkIndex();
+  const pkKeys = [];
   for (const k of keys) {
     if (PM.tiles.has(k) || PM.busy.has(k) || PM.queue.includes(k)) continue;
+    if (PK_ON && !pmCovered(k) && pkTileHas(k)) { pkKeys.push(k); PM.busy.add(k); continue; } // pack du pays
     if (pmCovered(k)) { // base Sillage : lecture directe, sans passer par Overpass
       PM.busy.add(k); PM.running++; pmStatus();
       pmFromBase(k).then(items => { PM.tiles.set(k, true); PM.failed = 0; pmAddItems(items); })
@@ -8773,6 +8891,12 @@ async function pmLoadOsm() {
     PM.busy.delete(k);
     if (rec && Date.now() - rec.at < PM_TTL) { PM.tiles.set(k, true); pmAddItems(rec.items); continue; }
     PM.queue.push(k);
+  }
+  if (pkKeys.length) {
+    PM.running++; pmStatus();
+    pkTiles(pkKeys).then(got => { for (const [k, rows] of got) { PM.tiles.set(k, true); pmAddItems(pkPm(rows)); } PM.failed = 0; })
+      .catch(() => { PM.queue.push(...pkKeys.filter(k => !PM.tiles.has(k))); }) // pack injoignable : Overpass
+      .finally(() => { pkKeys.forEach(k => PM.busy.delete(k)); PM.running--; pmRender(); pmPump(); });
   }
   pmRender(); pmPump();
 }

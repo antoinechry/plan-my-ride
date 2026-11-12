@@ -1,0 +1,64 @@
+# Index des packs de points OSM (release « poi-packs ») : refait après chaque tâche de packs, ou à la main.
+# Pour chaque pack : nombre de points par type, rectangle couvert (bbox s, w, n, e), taille. Retire les zones exclues.
+# C'est ce fichier que l'app lit pour savoir quel pack couvre une zone.
+name: Index des packs de points OSM
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Packs de points OSM", "Packs de points OSM (monde)"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: poi-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Packs publiés
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir packs && cd packs
+          for f in israel-and-palestine.ndjson.gz; do   # zones exclues à la demande d'Antoine
+            gh release delete-asset poi-packs "$f" -R "$REPO" -y 2>/dev/null && echo "retiré : $f" || true
+          done
+          gh release download poi-packs -R "$REPO" -p 'index.json' -O old-index.json 2>/dev/null || echo '{"packs":[]}' > old-index.json
+          gh release download poi-packs -R "$REPO" -p '*.ndjson.gz'
+          ls | wc -l
+      - name: Index
+        run: |
+          cd packs
+          python3 - <<'EOF'
+          import json, glob, gzip, os, datetime
+          old = {p.get("file"): p for p in json.load(open("old-index.json")).get("packs", [])}
+          packs = []
+          for gz in sorted(glob.glob("*.ndjson.gz")):
+              s = w = 1e9; n = e = -1e9; types = {}; total = 0; cc = None
+              with gzip.open(gz, "rt", encoding="utf-8") as f:
+                  for line in f:
+                      r = json.loads(line); total += 1
+                      types[r["type"]] = types.get(r["type"], 0) + 1
+                      s, n, w, e = min(s, r["lat"]), max(n, r["lat"]), min(w, r["lon"]), max(e, r["lon"])
+                      cc = cc or r.get("cc")
+              if not total: continue
+              o = old.get(gz, {})
+              packs.append({"file": gz, "cc": cc or o.get("cc"), "name": o.get("name") or (cc or gz), "geofabrik": o.get("geofabrik"),
+                            "total": total, "types": types, "bytes": os.path.getsize(gz),
+                            "bbox": [round(s, 4), round(w, 4), round(n, 4), round(e, 4)]})
+          idx = {"built": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "source": "OpenStreetMap (ODbL) via Geofabrik", "packs": packs}
+          json.dump(idx, open("index.json", "w"), ensure_ascii=False, separators=(",", ":"))
+          print(len(packs), "packs,", sum(p["total"] for p in packs), "points,", round(sum(p["bytes"] for p in packs) / 1e6, 1), "Mo")
+          EOF
+      - name: Envoi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh release upload poi-packs packs/index.json -R "$REPO" --clobber
