@@ -31,6 +31,7 @@ jobs:
           CONT = {"africa", "asia", "australia-oceania", "central-america", "north-america", "south-america"}
           DONE = {"canary-islands", "morocco", "algeria", "tunisia", "libya", "egypt"}  # déjà dans la release
           SKIP = {"china", "israel-and-palestine"} | DONE  # exclus à la demande d'Antoine
+          SKIP |= {"sea", "south-africa-and-lesotho"}  # doublons de packs de pays (Asie du Sud-Est, Afrique du Sud)
           SPLIT = {"us"}  # trop gros d'un bloc : un pack par État
           out = []
           for p in feats:

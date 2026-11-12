@@ -28,7 +28,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           mkdir packs && cd packs
-          for f in israel-and-palestine.ndjson.gz; do   # zones exclues à la demande d'Antoine
+          for f in israel-and-palestine.ndjson.gz sea.ndjson.gz south-africa-and-lesotho.ndjson.gz ile-de-clipperton.ndjson.gz; do   # zones exclues (Antoine) et doublons / packs vides
             gh release delete-asset poi-packs "$f" -R "$REPO" -y 2>/dev/null && echo "retiré : $f" || true
           done
           gh release download poi-packs -R "$REPO" -p 'index.json' -O old-index.json 2>/dev/null || echo '{"packs":[]}' > old-index.json
