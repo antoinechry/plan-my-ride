@@ -6,10 +6,7 @@
 name: Packs de points OSM (monde)
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [".github/workflows/poi-packs-world.yml"]
+  workflow_dispatch:   # lancement à la main seulement (Actions → Packs de points OSM (monde) → Run workflow)
 
 permissions:
   contents: write
@@ -33,7 +30,7 @@ jobs:
           by = {p["id"]: p for p in feats}
           CONT = {"africa", "asia", "australia-oceania", "central-america", "north-america", "south-america"}
           DONE = {"canary-islands", "morocco", "algeria", "tunisia", "libya", "egypt"}  # déjà dans la release
-          SKIP = {"china"} | DONE
+          SKIP = {"china", "israel-and-palestine"} | DONE  # exclus à la demande d'Antoine
           SPLIT = {"us"}  # trop gros d'un bloc : un pack par État
           out = []
           for p in feats:
