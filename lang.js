@@ -1950,6 +1950,9 @@ window.PMR_I18N = {
     "Téléchargement · {0}/{1} · {2}…": "Downloading · {0}/{1} · {2}…",
     "Téléchargement impossible pour {0}. Réessaie plus tard.": "Couldn't download {0}. Try again later.",
     "C'est prêt": "All set",
-    "Les pays téléchargés restent sur ton téléphone, même sans réseau.": "Downloaded countries stay on your phone, even without a signal."
+    "Les pays téléchargés restent sur ton téléphone, même sans réseau.": "Downloaded countries stay on your phone, even without a signal.",
+    "Dossier des parcours": "Route folder",
+    "Aucun parcours dans ce dossier": "No routes in this folder",
+    "Choisis un parcours…": "Choose a route…"
   }
 };

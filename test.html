@@ -915,6 +915,7 @@ body:not(.admin) .me-adm{display:none}
 .me-mseg button{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink);border-radius:999px;min-height:40px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
 .me-mseg button svg{width:18px;height:18px;flex:none}
 .me-mseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.al-kind{margin-top:6px}.al-kind small{font:600 11px var(--f-mono);opacity:.7}
 .me-step{display:flex;align-items:center;gap:10px;margin-top:12px}
 .me-step .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .me-step .t b{font-size:15px;font-weight:600}
@@ -1945,6 +1946,8 @@ html.demo-web #tabOut,html.demo-web #tabMe,html.demo-web .rail-admin,html.demo-w
     <div id="alBox" class="no-lim">
       <div class="me-btns al-dev"><button type="button" class="btn small primary" id="alOn">Activer sur cet appareil</button><span class="al-state" id="alState"></span></div>
       <details class="me-more" id="alMore"><summary><span class="me-lt"><b>Régler les alertes</b><span>Parcours, heure, la veille ou le matin, jours</span></span><svg class="me-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></summary>
+      <span class="al-l">Dossier</span>
+      <div class="me-mseg al-kind" id="alKind" role="group" aria-label="Dossier des parcours"></div>
       <label class="al-l" for="alRoute">Parcours</label>
       <select id="alRoute" class="me-sel"></select>
       <div class="al-grid">
@@ -8596,10 +8599,17 @@ function alRender() {
   $('#alOn').hidden = !alCan() || dev;
   $('#alState').textContent = dev ? (on ? T("✓ Alertes actives sur cet appareil") : T("✓ Cet appareil peut recevoir les alertes")) : '';
   $('#alState').classList.toggle('on', dev && on);
-  const rem = LIB.list.filter(x => x.remote).sort((a, b) => a.name.localeCompare(b.name, LANG));
-  $('#alRoute').innerHTML = (rem.length ? '' : T("<option value=\"\">Aucun parcours dans ton compte</option>"))
+  // Dossier choisi d'abord (12/11/2026, demande d'Antoine) : Sortie / Commute / Ultra, puis seulement ses parcours.
+  const all = LIB.list.filter(x => x.remote).sort((a, b) => a.name.localeCompare(b.name, LANG));
+  const cur = r.route_id && all.find(x => x.id === r.route_id);
+  if (!AL.kind) AL.kind = cur ? kindOf(cur) : 'ride';
+  const cnt = k => all.filter(x => kindOf(x) === k).length;
+  $('#alKind').innerHTML = ['ride', 'taf', 'ultra'].map(k => `<button type="button" data-ak="${k}" aria-pressed="${k === AL.kind}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TAB_ICO[k] || ''}</svg>${escH(kindName(k))} <small>${cnt(k)}</small></button>`).join('');
+  const rem = all.filter(x => kindOf(x) === AL.kind);
+  $('#alRoute').innerHTML = (rem.length ? '' : (all.length ? `<option value="">${escH(T("Aucun parcours dans ce dossier"))}</option>` : T("<option value=\"\">Aucun parcours dans ton compte</option>")))
     + rem.map(x => `<option value="${escH(x.id)}"${x.id === r.route_id ? ' selected' : ''}>${escH(x.name)} · ${fD(x.km || 0)} ${UL.km}</option>`).join('');
-  if (r.route_id && !rem.some(x => x.id === r.route_id)) $('#alRoute').insertAdjacentHTML('afterbegin', `<option value="${escH(r.route_id)}" selected>${escH(r.route_name || T("Parcours"))}</option>`);
+  if (r.route_id && !rem.some(x => x.id === r.route_id) && (!cur || kindOf(cur) === AL.kind)) $('#alRoute').insertAdjacentHTML('afterbegin', `<option value="${escH(r.route_id)}" selected>${escH(r.route_name || T("Parcours"))}</option>`);
+  else if (rem.length && !rem.some(x => x.id === r.route_id)) $('#alRoute').insertAdjacentHTML('afterbegin', `<option value="" selected>${escH(T("Choisis un parcours…"))}</option>`);
   $('#alTime').value = r.dep_time || '09:00'; $('#alWhen').value = r.notify || 'eve';
   const days = new Set(r.days || []);
   $('#alDays').innerHTML = AL_DAYS.map((l, i) => `<button type="button" data-d="${i + 1}" aria-pressed="${days.has(i + 1)}" title="${AL_DAYN[i]}">${l}</button>`).join('');
@@ -8620,7 +8630,7 @@ async function alSave(patch) {
   const sb = await sbIfLogged(); if (!sb) { alMsg(T("Connecte-toi pour régler les alertes.")); return false; }
   const { data: { session } } = await sb.auth.getSession(); if (!session) return false;
   const cur = AL.row || alDefaults(), g = meGet('ride'), opt = $('#alRoute').selectedOptions[0];
-  const row = { ...cur, ...patch, user_id: session.user.id, route_id: $('#alRoute').value || null, route_name: opt ? opt.textContent.replace(/ · [\d,.]+ (km|mi)$/, '') : null,
+  const row = { ...cur, ...patch, user_id: session.user.id, route_id: $('#alRoute').value || cur.route_id || null, route_name: $('#alRoute').value && opt ? opt.textContent.replace(/ · [\d,.]+ (km|mi)$/, '') : (cur.route_name || null),
     dep_time: $('#alTime').value || '09:00', notify: $('#alWhen').value, days: [...document.querySelectorAll('#alDays button[aria-pressed="true"]')].map(b => +b.dataset.d),
     speed: g.speed, vam: g.vam, lang: LANG, dist: UNITS.mi ? 'mi' : 'km', temp: UNITS.f ? 'f' : 'c', tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris', page: location.origin + location.pathname, updated_at: new Date().toISOString() };
   delete row.last_sent;
@@ -8644,6 +8654,8 @@ $('#alOn').addEventListener('click', async () => {
   } catch (e) { alMsg(T("Activation impossible : {0}", [String(e.message || e)])); }
   finally { b.disabled = false; alRender(); }
 });
+$('#alKind').addEventListener('click', e => { const b = e.target.closest('button[data-ak]'); if (!b || b.dataset.ak === AL.kind) return;
+  AL.kind = b.dataset.ak; alRender(); }); // la liste ne montre plus que ce dossier ; le parcours de l'alerte ne change que quand on en choisit un
 for (const id of ['#alRoute', '#alTime', '#alWhen']) $(id).addEventListener('change', async () => { if (await alSave({})) { alMsg(T("Enregistré.")); alRender(); } });
 $('#alDays').addEventListener('click', async e => {
   const b = e.target.closest('button[data-d]'); if (!b) return;
